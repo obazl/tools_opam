@@ -1,0 +1,5 @@
+load("@obazl_rules_opam//opam/_rules:opampkg.bzl", "opam_pkg")
+
+package(default_visibility = ["//visibility:public"])
+
+{OPAM_PKGS}
