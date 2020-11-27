@@ -37,3 +37,12 @@ git_repository(
 
 load("@io_bazel_stardoc//:setup.bzl", "stardoc_repositories")
 stardoc_repositories()
+
+################################################################
+## META parser tools
+
+load("//bzl:repos.bzl", "opam_fetch_repos")
+opam_fetch_repos()
+
+load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependencies")
+rules_foreign_cc_dependencies()

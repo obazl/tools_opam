@@ -21,6 +21,48 @@ DEBUG_QUIET = False
 # OPAMROOT = "OPAMROOT"
 
 ################################################################
+def _config_pkgs(repo_ctx):
+
+    packages = []
+
+    ## we need to run both opam and ocamlfind list
+    ## opam includes pinned local pkgs, ocamlfind does not
+    ## ocamlfind includes subpackages like ppx_derivine.eq, opam does  not
+    ## then we use collections.uniq to dedup.
+    pkgs = repo_ctx.execute(["opam", "list"]).stdout.splitlines()
+    for pkg in pkgs:
+        if not pkg.startswith("#"):
+            packages.append(pkg.split(" ")[0])
+            pkgs = repo_ctx.execute(["ocamlfind", "list"]).stdout.splitlines()
+    for pkg in pkgs:
+        packages.append(pkg.split(" ")[0])
+        pkgs = collections.uniq(pkgs)
+
+    opam_pkgs = []
+    findlib_pkgs = []
+    repo_ctx.report_progress("constructing OPAM pkg rules...")
+    # for pkg in collections.uniq(packages):
+    ## WARNING: this is slow
+    # print("PKG rule for %s" % p)
+    for [pkg, version] in repo_ctx.attr.pkgs.items():
+        # print("PKG: %s" % pkg)
+        ppx = is_ppx_driver(repo_ctx, pkg)
+        # print("PPX: %s" % ppx)
+        opam_pkgs.append(
+            "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
+        )
+        findlib_pkgs.append(
+            "findlib_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
+        )
+        # print("ocamlfind pkgs:")
+        # for p in opam_pkgs:
+        #   print(p)
+    ocamlfind_pkgs = "\n".join(opam_pkgs)
+    findlib_pkgs = "\n".join(findlib_pkgs)
+
+    return ocamlfind_pkgs, findlib_pkgs
+
+################################################################
 def _opam_repo_localhost_findlib(repo_ctx):
     print("opam/_bootstrap:opam.bzl _opam_repo_localhost_findlib(repo_ctx)")
     repo_ctx.report_progress("Bootstrapping localhost_findlib OPAM...")
@@ -34,7 +76,7 @@ def _opam_repo_localhost_findlib(repo_ctx):
 
     #### opam pinning
     pin = True
-    if len(repo_ctx.attr.pins):
+    if len(repo_ctx.attr.pins) > 0:
         rootpath = str(repo_ctx.path(Label("@//:WORKSPACE.bazel")))[:-16]
         # print("ROOT DIR: %s" % rootpath)
 
@@ -57,42 +99,10 @@ def _opam_repo_localhost_findlib(repo_ctx):
     # if verbose:
     #     print("opamroot: " + opamroot)
 
-    packages = []
-
-    ## we need to run both opam and ocamlfind list
-    ## opam includes pinned local pkgs, ocamlfind does not
-    ## ocamlfind includes subpackages like ppx_derivine.eq, opam does  not
-    ## then we use collections.uniq to dedup.
-    pkgs = repo_ctx.execute(["opam", "list"]).stdout.splitlines()
-    for pkg in pkgs:
-        if not pkg.startswith("#"):
-            packages.append(pkg.split(" ")[0])
-    pkgs = repo_ctx.execute(["ocamlfind", "list"]).stdout.splitlines()
-    for pkg in pkgs:
-        packages.append(pkg.split(" ")[0])
-    pkgs = collections.uniq(pkgs)
-
-    opam_pkgs = []
-    findlib_pkgs = []
-    repo_ctx.report_progress("constructing OPAM pkg rules...")
-    # for pkg in collections.uniq(packages):
-        ## WARNING: this is slow
-        # print("PKG rule for %s" % p)
-    for [pkg, version] in repo_ctx.attr.pkgs.items():
-        # print("PKG: %s" % pkg)
-        ppx = is_ppx_driver(repo_ctx, pkg)
-        # print("PPX: %s" % ppx)
-        opam_pkgs.append(
-            "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
-        )
-        findlib_pkgs.append(
-            "findlib_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
-        )
-    # print("ocamlfind pkgs:")
-    # for p in opam_pkgs:
-    #   print(p)
-    ocamlfind_pkgs = "\n".join(opam_pkgs)
-    findlib_pkgs = "\n".join(findlib_pkgs)
+    ocamlfind_pkgs = {}
+    findlib_pkgs = {}
+    if len(repo_ctx.attr.pkgs) > 0:
+        ocamlfind_pkgs, findlib_pkgs = _config_pkgs(repo_ctx)
 
     opambin = repo_ctx.which("opam") # "/usr/local/Cellar/opam/2.0.7/bin"
     # if "OPAM_SWITCH_PREFIX" in repo_ctx.os.environ:
@@ -113,28 +123,24 @@ def _opam_repo_localhost_findlib(repo_ctx):
     repo_ctx.file("WORKSPACE", "", False)
     repo_ctx.template(
         "BUILD.bazel",
-        Label("//opam/_templates:BUILD.opam"),
+        Label("//opam/_templates:opam.BUILD.bazel"),
         executable = False,
-        # substitutions = { "{opam_pkgs}": ocamlfind_pkgs }
-    )
-    repo_ctx.template(
-        "pkg/BUILD.bazel",
-        Label("//opam/_templates:BUILD.opam.pkg"),
-        executable = False,
-        substitutions = { # "{has_pkg_values}": has_pkgs,
-                          "{OPAM_PKGS}": ocamlfind_pkgs }
     )
     repo_ctx.template(
         "findlib/BUILD.bazel",
-        Label("//opam/_templates:BUILD.opam.findlib"),
+        Label("//opam/_templates:opam.findlib.BUILD.bazel"),
         executable = False,
-        substitutions = { # "{has_pkg_values}": has_pkgs,
-                          "{FINDLIB_PKGS}": findlib_pkgs }
+        substitutions = { "{FINDLIB_PKGS}": findlib_pkgs }
+    )
+    repo_ctx.template(
+        "pkg/BUILD.bazel",
+        Label("//opam/_templates:opam.pkg.BUILD.bazel"),
+        executable = False,
+        substitutions = { "{OPAM_PKGS}": ocamlfind_pkgs }
     )
 
 ##############################
 def _opam_repo_impl(repo_ctx):
-    # repo_ctx.report_progress("Bootstrapping OPAM... hermetic? {}".format(repo_ctx.attr.hermetic))
 
     if repo_ctx.attr.hermetic:
         opam_repo_hermetic(repo_ctx)
@@ -155,7 +161,8 @@ _opam_repo = repository_rule(
             default = True
         ),
         pkgs = attr.string_dict(
-            doc = "Dictionary of OPAM packages (name: version) to install."
+            doc = "Dictionary of OPAM packages (name: version) to install.",
+            default = {}
         ),
         pins = attr.string_dict(
             doc = "Dictionariy of pkgs to pin (name: path)"
@@ -199,16 +206,16 @@ _opam_repo_hidden = repository_rule(
 def opam_configure(hermetic = False,
                    opam = None,
                    switch = "4.07.1",
-                   pkgs = None):
+                   # pkgs = None
+                   ):
     if hermetic:
         if not opam:
             fail("Hermetic builds require a list of OPAM deps.")
 
-    if opam:
+    pins = {}
+    if opam != None:
         if hasattr(opam, "pins"):
             pins = opam.pins
-        else:
-            pins = {}
 
     ## if local opam/obazl preconfigured, just use local_repository to point to it
     ## no need to bootstrap a repo in that case
@@ -217,7 +224,13 @@ def opam_configure(hermetic = False,
     ## a fast tool we can call to do it
     # _opam_repo_hidden(name="_opam")
 
-    _opam_repo(name="opam", hermetic = hermetic,
-               pkgs = opam.packages if opam else {},
+    pkgs = {}
+    if opam != None:
+        if opam.packages:
+            pkgs = opam.packages
+
+    _opam_repo(name="opam",
+               hermetic = hermetic,
+               pkgs = pkgs,
                pins = pins)
     # native.local_repository(name = "zopam", path = "/Users/gar/.obazl/opam")
