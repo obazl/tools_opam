@@ -64,7 +64,7 @@ def _config_pkgs(repo_ctx):
 
 ################################################################
 def _opam_repo_localhost_findlib(repo_ctx):
-    print("opam/_bootstrap:opam.bzl _opam_repo_localhost_findlib(repo_ctx)")
+    # print("opam/_bootstrap:opam.bzl _opam_repo_localhost_findlib(repo_ctx)")
     repo_ctx.report_progress("Bootstrapping localhost_findlib OPAM...")
 
     # print("CURRENT SYSTEM: %s" % repo_ctx.os.name)
@@ -72,7 +72,7 @@ def _opam_repo_localhost_findlib(repo_ctx):
     # for item in env.items():
     #     print("ENV ENTRY: %s" % str(item))
 
-    print("ROOT WS DIRECTORY: %s" % str(repo_ctx.path(Label("@//:WORKSPACE.bazel")))[:-16])
+    # print("ROOT WS DIRECTORY: %s" % str(repo_ctx.path(Label("@//:WORKSPACE.bazel")))[:-16])
 
     #### opam pinning
     pin = True
