@@ -4,68 +4,81 @@ load(":hermetic.bzl", "opam_repo_hermetic")
 
 load(":ppx.bzl", "is_ppx_driver")
 
-# load("//implementation:common.bzl",
-#     "OCAML_VERSION")
-
 # 4.07.1 broken on XCode 12:
 # https://discuss.ocaml.org/t/ocaml-4-07-1-fails-to-build-with-apple-xcode-12/6441/15
-OCAML_VERSION = "4.08.0"
-OCAMLBUILD_VERSION = "0.14.0"
-OCAMLFIND_VERSION = "1.8.1"
-COMPILER_NAME = "ocaml-base-compiler.%s" % OCAML_VERSION
-OPAM_ROOT_DIR = ".opam_root_dir"
-# Set to false to see debug messages
-DEBUG_QUIET = False
-
-# # The path to the root opam directory within external
-# OPAMROOT = "OPAMROOT"
+# OCAML_VERSION = "4.08.0"
+# OCAMLBUILD_VERSION = "0.14.0"
+# OCAMLFIND_VERSION = "1.8.1"
+# COMPILER_NAME = "ocaml-base-compiler.%s" % OCAML_VERSION
+# OPAM_ROOT_DIR = ".opam_root_dir"
+# # Set to false to see debug messages
+# DEBUG_QUIET = False
 
 ################################################################
 def _config_pkgs(repo_ctx):
-
-    packages = []
+    repo_ctx.report_progress("configuring OPAM pkgs...")
 
     ## we need to run both opam and ocamlfind list
     ## opam includes pinned local pkgs, ocamlfind does not
     ## ocamlfind includes subpackages like ppx_derivine.eq, opam does  not
     ## then we use collections.uniq to dedup.
-    pkgs = repo_ctx.execute(["opam", "list"]).stdout.splitlines()
-    for pkg in pkgs:
-        if not pkg.startswith("#"):
-            packages.append(pkg.split(" ")[0])
-            pkgs = repo_ctx.execute(["ocamlfind", "list"]).stdout.splitlines()
-    for pkg in pkgs:
-        packages.append(pkg.split(" ")[0])
-        pkgs = collections.uniq(pkgs)
 
-    opam_pkgs = []
-    findlib_pkgs = []
+    opam_pkg_list = repo_ctx.execute(["opam", "list"]).stdout.splitlines()
+    opam_pkgs = {}
+    for pkg_desc in opam_pkg_list:
+        if not pkg_desc.startswith("#"):
+            [pkg, sep, rest] = pkg_desc.partition(" ")
+            pkg = pkg.strip(" ")
+            rest = rest.strip(" ")
+            [version, sep, rest] = rest.partition(" ")
+            version = version.strip(" ")
+            opam_pkgs[pkg] = version
+
+    findlib_pkg_list = repo_ctx.execute(["ocamlfind", "list"]).stdout.splitlines()
+    findlib_pkgs = {}
+    for pkg_desc in findlib_pkg_list:
+        [pkg, version] = pkg_desc.split("(version: ")
+        pkg = pkg.strip(" ")
+        version = version.strip(" ").rstrip(")")
+        findlib_pkgs[pkg] = version
+
+    opam_pkg_rules = []
+    findlib_pkg_rules = []
     repo_ctx.report_progress("constructing OPAM pkg rules...")
-    # for pkg in collections.uniq(packages):
-    ## WARNING: this is slow
-    # print("PKG rule for %s" % p)
+    ## FIXME: uniqify?
     for [pkg, version] in repo_ctx.attr.pkgs.items():
-        # print("PKG: %s" % pkg)
-        ppx = is_ppx_driver(repo_ctx, pkg)
-        # print("PPX: %s" % ppx)
-        opam_pkgs.append(
-            "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
-        )
-        findlib_pkgs.append(
-            "findlib_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
-        )
-        # print("ocamlfind pkgs:")
-        # for p in opam_pkgs:
-        #   print(p)
-    ocamlfind_pkgs = "\n".join(opam_pkgs)
-    findlib_pkgs = "\n".join(findlib_pkgs)
+        findlib_version = findlib_pkgs.get(pkg)
+        if findlib_version == version:
+            ppx = is_ppx_driver(repo_ctx, pkg)
+            opam_pkg_rules.append(
+                "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
+            )
+            findlib_pkg_rules.append(
+                "findlib_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
+            )
+        else:
+            opam_version = opam_pkgs.get(pkg)
+            if opam_version == version:
+                ppx = is_ppx_driver(repo_ctx, pkg)
+                opam_pkg_rules.append(
+                    "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
+                )
+                findlib_pkg_rules.append(
+                    "findlib_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
+                )
+            else:
+                fail("Bad version for pkg {p}. Wanted {v}, found installed: opam {ov}, findlib {fv}.".format(
+                    p=pkg, v=version, ov=opam_version, fv=findlib_version))
 
-    return ocamlfind_pkgs, findlib_pkgs
+    ocamlfind_pkgs = "\n".join(opam_pkg_rules)
+    findlib_pkg_rules = "\n".join(findlib_pkg_rules)
+
+    return ocamlfind_pkgs, findlib_pkg_rules
 
 ################################################################
 def _opam_repo_localhost_findlib(repo_ctx):
     # print("opam/_bootstrap:opam.bzl _opam_repo_localhost_findlib(repo_ctx)")
-    repo_ctx.report_progress("Bootstrapping localhost_findlib OPAM...")
+    repo_ctx.report_progress("bootstrapping localhost_findlib OPAM repo...")
 
     # print("CURRENT SYSTEM: %s" % repo_ctx.os.name)
     env = repo_ctx.os.environ
@@ -77,6 +90,7 @@ def _opam_repo_localhost_findlib(repo_ctx):
     #### opam pinning
     pin = True
     if len(repo_ctx.attr.pins) > 0:
+        repo_ctx.report_progress("pinning OPAM pkgs...")
         rootpath = str(repo_ctx.path(Label("@//:WORKSPACE.bazel")))[:-16]
         # print("ROOT DIR: %s" % rootpath)
 
@@ -87,7 +101,7 @@ def _opam_repo_localhost_findlib(repo_ctx):
                 # print("ALREADY PINNED: %s" % pkg)
             # else:
                 pkg_path = rootpath + "/" + path
-                print("PINNING {pkg} to {path}".format(pkg = pkg, path = path))
+                # print("PINNING {pkg} to {path}".format(pkg = pkg, path = path))
                 repo_ctx.report_progress("Pinning {path} (may take a while)...".format(pkg = pkg, path = path))
                 pinout = repo_ctx.execute(["opam", "pin", "-v", "-y", "add", pkg_path])
                 if pinout.return_code != 0:
