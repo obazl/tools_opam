@@ -262,20 +262,14 @@ def opam_configure(hermetic = False,
             pkgs = opam.packages
 
     pin_paths = {}
-    if opam != None:
-        if opam.pins:
-            if hasattr(opam.pins, "paths"):
-                pin_paths = opam.pins.paths
-
     pin_versions = {}
-    if opam != None:
-        if opam.pins:
-            if hasattr(opam.pins, "versions"):
-                pin_versions = opam.pins.versions
-
     pins_install = False
     if opam != None:
-        if opam.pins:
+        if hasattr(opam, "pins"):
+            if hasattr(opam.pins, "paths"):
+                pin_paths = opam.pins.paths
+            if hasattr(opam.pins, "versions"):
+                pin_versions = opam.pins.versions
             if hasattr(opam.pins, "install"):
                 pins_install = opam.pins.install
 
