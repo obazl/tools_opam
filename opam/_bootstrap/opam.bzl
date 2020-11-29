@@ -270,13 +270,19 @@ def opam_configure(hermetic = False,
     pin_versions = {}
     if opam != None:
         if opam.pins:
-            if opam.pins.versions:
+            if hasattr(opam.pins, "versions"):
                 pin_versions = opam.pins.versions
+
+    pins_install = False
+    if opam != None:
+        if opam.pins:
+            if hasattr(opam.pins, "install"):
+                pins_install = opam.pins.install
 
     _opam_repo(name="opam",
                hermetic = hermetic,
                pkgs = pkgs,
-               pins_install = opam.pins.install,
+               pins_install = pins_install,
                pin_paths = pin_paths,
                pin_versions = pin_versions)
     # native.local_repository(name = "zopam", path = "/Users/gar/.obazl/opam")
