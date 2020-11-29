@@ -89,25 +89,39 @@ def _opam_repo_localhost_findlib(repo_ctx):
 
     #### opam pinning
     pin = True
-    if len(repo_ctx.attr.pins) > 0:
-        repo_ctx.report_progress("pinning OPAM pkgs...")
+    pins = []
+    if len(repo_ctx.attr.pin_paths) > 0:
+        repo_ctx.report_progress("pinning OPAM pkgs to paths...")
         rootpath = str(repo_ctx.path(Label("@//:WORKSPACE.bazel")))[:-16]
         # print("ROOT DIR: %s" % rootpath)
 
         pins = repo_ctx.execute(["opam", "pin", "list", "-s"]).stdout.splitlines()
         # print("INSTALLED PINS: %s" % pins)
-        for [pkg, path] in repo_ctx.attr.pins.items():
+        for [pkg, path] in repo_ctx.attr.pin_paths.items():
             if not pkg in pins:
-                # print("ALREADY PINNED: %s" % pkg)
-            # else:
                 pkg_path = rootpath + "/" + path
-                # print("PINNING {pkg} to {path}".format(pkg = pkg, path = path))
                 repo_ctx.report_progress("Pinning {path} (may take a while)...".format(pkg = pkg, path = path))
                 pinout = repo_ctx.execute(["opam", "pin", "-v", "-y", "add", pkg_path])
                 if pinout.return_code != 0:
                     print("ERROR opam pin rc: %s" % pinout.return_code)
                     print("ERROR stdout: %s" % pinout.stdout)
                     print("ERROR stderr: %s" % pinout.stderr)
+                    fail("OPAM pin add cmd failed")
+
+    if len(repo_ctx.attr.pin_versions) > 0:
+        repo_ctx.report_progress("pinning OPAM pkgs to versions...")
+        if len(pins) == 0:
+            pins = repo_ctx.execute(["opam", "pin", "list", "-s"]).stdout.splitlines()
+        for [pkg, version] in repo_ctx.attr.pin_versions.items():
+            if not pkg in pins:
+                repo_ctx.report_progress("Pinning {pkg} to {v} (may take a while)...".format(
+                    pkg = pkg, v = version))
+                pinout = repo_ctx.execute(["opam", "pin", "-v", "-y", "add", pkg, version])
+                if pinout.return_code != 0:
+                    print("ERROR opam pin rc: %s" % pinout.return_code)
+                    print("ERROR stdout: %s" % pinout.stdout)
+                    print("ERROR stderr: %s" % pinout.stderr)
+                    fail("OPAM pin add cmd failed")
 
     opamroot = repo_ctx.execute(["opam", "var", "prefix"]).stdout.strip()
     # if verbose:
@@ -178,7 +192,11 @@ _opam_repo = repository_rule(
             doc = "Dictionary of OPAM packages (name: version) to install.",
             default = {}
         ),
-        pins = attr.string_dict(
+        pins_install = attr.bool(default = True),
+        pin_paths = attr.string_dict(
+            doc = "Dictionariy of pkgs to pin (name: path)"
+        ),
+        pin_versions = attr.string_dict(
             doc = "Dictionariy of pkgs to pin (name: path)"
         )
     )
@@ -243,8 +261,22 @@ def opam_configure(hermetic = False,
         if opam.packages:
             pkgs = opam.packages
 
+    pin_paths = {}
+    if opam != None:
+        if opam.pins:
+            if hasattr(opam.pins, "paths"):
+                pin_paths = opam.pins.paths
+
+    pin_versions = {}
+    if opam != None:
+        if opam.pins:
+            if opam.pins.versions:
+                pin_versions = opam.pins.versions
+
     _opam_repo(name="opam",
                hermetic = hermetic,
                pkgs = pkgs,
-               pins = pins)
+               pins_install = opam.pins.install,
+               pin_paths = pin_paths,
+               pin_versions = pin_versions)
     # native.local_repository(name = "zopam", path = "/Users/gar/.obazl/opam")
