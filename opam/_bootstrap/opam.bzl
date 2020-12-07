@@ -1,4 +1,6 @@
+load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@bazel_skylib//lib:collections.bzl", "collections")
+load("@bazel_skylib//lib:types.bzl", "types")
 
 load(":hermetic.bzl", "opam_repo_hermetic")
 
@@ -15,16 +17,66 @@ load(":ppx.bzl", "is_ppx_driver")
 # DEBUG_QUIET = False
 
 ################################################################
-def _config_pkgs(repo_ctx):
+def _config_opam_pkgs(repo_ctx):
     repo_ctx.report_progress("configuring OPAM pkgs...")
 
-    ## we need to run both opam and ocamlfind list
-    ## opam includes pinned local pkgs, ocamlfind does not
-    ## ocamlfind includes subpackages like ppx_derivine.eq, opam does  not
-    ## then we use collections.uniq to dedup.
+    ## FIXME: packages distibuted with the compiler can be hardcoded?
+    ## e.g. compiler-libs.common
+    ## but then we would have to keep a list for each compiler version...
 
-    opam_pkg_list = repo_ctx.execute(["opam", "list"]).stdout.splitlines()
-    opam_pkgs = {}
+    print("Switch name: %s" % repo_ctx.attr.switch_name)
+    # print("Switch version: %s" % repo_ctx.attr.switch_version)
+    print("Switch compiler: %s" % repo_ctx.attr.switch_compiler)
+
+    if "OBAZL_SWITCH" in repo_ctx.os.environ:
+        print("OBAZL_SWITCH = %s" % repo_ctx.os.environ["OBAZL_SWITCH"])
+        switch_name = repo_ctx.os.environ["OBAZL_SWITCH"]
+        print("Using '{s}' from OBAZL_SWITCH env var.".format(s = switch_name))
+        env_switch = True
+    else:
+        switch_name = repo_ctx.attr.switch_name  # + "-" + repo_ctx.attr.switch_version
+
+    result = repo_ctx.execute(["opam", "switch", switch_name])
+    if result.return_code == 5: # Not found
+        if env_switch:
+            repo_ctx.report_progress("SWITCH {s} from env var OBAZL_SWITCH not found.".format(s = switch_name))
+            fail("\n\nERROR: OBAZL_SWITCH name '{s}' not found. To create a new switch, either do so from the command line or configure the switch in the opam config file (by convention, \"bzl/opam.bzl\").\n\n".format(s = switch_name))
+        else:
+            repo_ctx.report_progress("SWITCH {s} not found; creating".format(s = switch_name))
+            print("SWITCH {s} not found; creating".format(s = switch_name))
+            result = repo_ctx.execute(["opam", "switch", "create",
+                                       switch_name, repo_ctx.attr.switch_compiler])
+            if result.return_code == 0:
+                repo_ctx.report_progress("SWITCH {s} created. Configuring...".format(s = switch_name))
+                print("SWITCH {s} created.  Configuring...".format(s = switch_name))
+                print("SWITCH CREATED: %s" % result.stdout)
+            else:
+                print("SWITCH CREATE ERROR: %s" % result.return_code)
+                print("SWITCH CREATE STDERR: %s" % result.stderr)
+                print("SWITCH CREATE STDOUT: %s" % result.stdout)
+                return
+    elif result.return_code != 0:
+        print("SWITCH RC: %s" % result.return_code)
+        print("SWITCH STDERR: %s" % result.stderr)
+        print("SWITCH STDOUT: %s" % result.stdout)
+        return
+
+    # fetch and parse list of installed opam pkgs
+    opam_pkg_list = repo_ctx.execute(["opam", "list"]).stdout
+    # print("OPAM_PKG_LIST: %s" % opam_pkg_list)
+
+    ## WARNING: because Bazel parallelizes actions, there is no
+    ## guarantee that the following pin list action will occur before
+    ## pinning actions below. So it does not necessarily tell us what
+    ## was pinned before we started.
+    # opam_pin_list = repo_ctx.execute(["opam", "pin", "list"]).stdout
+    # print("OPAM_PIN_LIST: %s" % opam_pin_list)
+
+    opam_pkg_list = opam_pkg_list.splitlines()
+    opam_pkgs     = {}
+    missing       = {}
+    bad_version   = {}
+
     for pkg_desc in opam_pkg_list:
         if not pkg_desc.startswith("#"):
             [pkg, sep, rest] = pkg_desc.partition(" ")
@@ -34,6 +86,123 @@ def _config_pkgs(repo_ctx):
             version = version.strip(" ")
             opam_pkgs[pkg] = version
 
+    opam_pkg_rules = []
+    repo_ctx.report_progress("constructing OPAM pkg rules...")
+    for [pkg, version] in repo_ctx.attr.opam_pkgs.items():
+        # print("Pkg: {p} {v}".format(p=pkg, v=version))
+        # findlib_version = findlib_pkgs.get(pkg)
+        # if findlib_version == version:
+        #     ppx = is_ppx_driver(repo_ctx, pkg)
+        #     opam_pkg_rules.append(
+        #         "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
+        #     )
+        #     findlib_pkg_rules.append(
+        #         "findlib_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
+        #     )
+        # else:
+        opam_version = opam_pkgs.get(pkg)
+        if opam_version == None:
+            print("Pkg {p} not found".format(p=pkg))
+            missing[pkg] = version
+        else:
+            # print("opam_version: %s" % opam_version)
+            if opam_version == version:
+                ppx = is_ppx_driver(repo_ctx, pkg)
+                opam_pkg_rules.append(
+                    "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
+                )
+                # findlib_pkg_rules.append(
+                #     "findlib_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
+                # )
+            else:
+                bad_version[pkg] = version
+                # fail("Bad version for pkg {p}. Wanted {v}, found installed: opam {ov}.".format(
+                #     p=pkg, v=version, ov=opam_version))
+
+    if len(missing) > 0:
+        repo_ctx.report_progress("Missing packages: %s" % missing)
+        print("Missing packages: %s" % missing)
+        if repo_ctx.attr.install:
+            for [pkg, version] in missing.items():
+                repo_ctx.report_progress("Installing {p} {v}".format(p=pkg, v=version))
+                print("installing {p} {v}".format(p=pkg, v=version))
+                result = repo_ctx.execute(["opam", "install", "-y",
+                                           pkg + "." + version])
+                if result.return_code == 0:
+                    repo_ctx.report_progress("Installed {p} {v}".format(p=pkg, v=version))
+                    print("installed {p} {v}".format(p=pkg, v=version))
+                    if repo_ctx.attr.pin:
+                        result = repo_ctx.execute(["opam", "pin", pkg, version])
+                        if result.return_code == 0:
+                            repo_ctx.report_progress("Pinned {p} {v}".format(p=pkg, v=version))
+                            print("pinned {p} {v}".format(p=pkg, v=version))
+                            ppx = is_ppx_driver(repo_ctx, pkg)
+                            opam_pkg_rules.append(
+                                "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
+                            )
+                        else:
+                            print("PIN ERROR RC: %s" % result.return_code)
+                            print("PIN STDERR: %s" % result.stderr)
+                            print("PIN STDOUT: %s" % result.stdout)
+                            return
+                else:
+                    print("ERROR: OPAM INSTALL {p} RC: {rc}".format(p=pkg, rc=result.return_code))
+                    print("STDERR: %s" % result.stderr)
+                    print("STDOUT: %s" % result.stdout)
+                    return
+
+    if len(bad_version) > 0:
+        repo_ctx.report_progress("Bad version packages: %s" % bad_version)
+        print("Bad_Version packages: %s" % bad_version)
+        if repo_ctx.attr.install:
+            for [pkg, version] in bad_version.items():
+                repo_ctx.report_progress("Removing {p}".format(p=pkg))
+                print("removing {p}".format(p=pkg))
+                result = repo_ctx.execute(["opam", "remove", "-y", pkg])
+                if result.return_code == 0:
+                    repo_ctx.report_progress("Removed {p}".format(p=pkg))
+                    print("removed {p}".format(p=pkg))
+                else:
+                    print("Error in removal of {p}".format(p=pkg))
+                    print("REMOVAL RC: %s" % result.return_code)
+                    print("REMOVAL STDOUT: %s" % result.stdout)
+                    print("REMOVAL STDERR: %s" % result.stderr)
+                    fail("REMOVAL ERROR")
+
+                repo_ctx.report_progress("Installing {p} {v}".format(p=pkg, v=version))
+                print("installing {p} {v}".format(p=pkg, v=version))
+                result = repo_ctx.execute(["opam", "install", "-y",
+                                           pkg + "." + version])
+                if result.return_code == 0:
+                    repo_ctx.report_progress("Installed {p} {v}".format(p=pkg, v=version))
+                    print("installed {p} {v}".format(p=pkg, v=version))
+                    result = repo_ctx.execute(["opam", "pin", pkg, version])
+                    if result.return_code == 0:
+                        repo_ctx.report_progress("Pinned {p} {v}".format(p=pkg, v=version))
+                        print("pinned {p} {v}".format(p=pkg, v=version))
+                        ppx = is_ppx_driver(repo_ctx, pkg)
+                        opam_pkg_rules.append(
+                            "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
+                        )
+                    else:
+                        print("PIN RC: %s" % result.return_code)
+                        print("PIN STDERR: %s" % result.stderr)
+                        print("PIN STDOUT: %s" % result.stdout)
+                else:
+                    print("RC: %s" % result.return_code)
+                    print("STDERR: %s" % result.stderr)
+                    print("STDOUT: %s" % result.stdout)
+
+    opam_pkgs = "\n".join(opam_pkg_rules)
+    return opam_pkgs
+
+def _config_findlib_pkgs(repo_ctx):
+    repo_ctx.report_progress("configuring FINDLIB pkgs...")
+
+    ## FIXME: packages distibuted with the compiler can be hardcoded?
+    ## e.g. compiler-libs.common
+    ## but then we would have to keep a list for each compiler version...
+
     findlib_pkg_list = repo_ctx.execute(["ocamlfind", "list"]).stdout.splitlines()
     findlib_pkgs = {}
     for pkg_desc in findlib_pkg_list:
@@ -42,38 +211,37 @@ def _config_pkgs(repo_ctx):
         version = version.strip(" ").rstrip(")")
         findlib_pkgs[pkg] = version
 
-    opam_pkg_rules = []
     findlib_pkg_rules = []
-    repo_ctx.report_progress("constructing OPAM pkg rules...")
+    repo_ctx.report_progress("constructing FINDLIB pkg rules...")
     ## FIXME: uniqify?
-    for [pkg, version] in repo_ctx.attr.pkgs.items():
+    # for [pkg, version] in repo_ctx.attr.findlib_pkgs.items():
+    for pkg in repo_ctx.attr.findlib_pkgs:
         findlib_version = findlib_pkgs.get(pkg)
-        if findlib_version == version:
-            ppx = is_ppx_driver(repo_ctx, pkg)
-            opam_pkg_rules.append(
-                "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
-            )
-            findlib_pkg_rules.append(
-                "findlib_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
-            )
-        else:
-            opam_version = opam_pkgs.get(pkg)
-            if opam_version == version:
-                ppx = is_ppx_driver(repo_ctx, pkg)
-                opam_pkg_rules.append(
-                    "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
-                )
-                findlib_pkg_rules.append(
-                    "findlib_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
-                )
-            else:
-                fail("Bad version for pkg {p}. Wanted {v}, found installed: opam {ov}, findlib {fv}.".format(
-                    p=pkg, v=version, ov=opam_version, fv=findlib_version))
+        # if findlib_version == version:
+        #     ppx = is_ppx_driver(repo_ctx, pkg)
+        findlib_pkg_rules.append(
+            "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = "False" )
+        )
+            # findlib_pkg_rules.append(
+            #     "findlib_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
+            # )
+        # else:
+        #     opam_version = opam_pkgs.get(pkg)
+        #     if opam_version == version:
+        #         ppx = is_ppx_driver(repo_ctx, pkg)
+        #         opam_pkg_rules.append(
+        #             "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
+        #         )
+        #         findlib_pkg_rules.append(
+        #             "findlib_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
+        #         )
+        # else:
+        #     fail("Bad version for pkg {p}. Wanted {v}, found installed: opam {ov}, findlib {fv}.".format(
+        #         p=pkg, v=version, fv=findlib_version))
 
-    ocamlfind_pkgs = "\n".join(opam_pkg_rules)
     findlib_pkg_rules = "\n".join(findlib_pkg_rules)
 
-    return ocamlfind_pkgs, findlib_pkg_rules
+    return findlib_pkg_rules
 
 ################################################################
 def _opam_repo_localhost_findlib(repo_ctx):
@@ -81,58 +249,67 @@ def _opam_repo_localhost_findlib(repo_ctx):
     repo_ctx.report_progress("bootstrapping localhost_findlib OPAM repo...")
 
     # print("CURRENT SYSTEM: %s" % repo_ctx.os.name)
-    env = repo_ctx.os.environ
+    # env = repo_ctx.os.environ
     # for item in env.items():
     #     print("ENV ENTRY: %s" % str(item))
-
     # print("ROOT WS DIRECTORY: %s" % str(repo_ctx.path(Label("@//:WORKSPACE.bazel")))[:-16])
 
     #### opam pinning
-    pin = True
-    pins = []
-    if len(repo_ctx.attr.pin_paths) > 0:
-        repo_ctx.report_progress("pinning OPAM pkgs to paths...")
-        rootpath = str(repo_ctx.path(Label("@//:WORKSPACE.bazel")))[:-16]
-        # print("ROOT DIR: %s" % rootpath)
+    # pin = True
+    # pins = []
+    # if len(repo_ctx.attr.pin_paths) > 0:
+    #     repo_ctx.report_progress("pinning OPAM pkgs to paths...")
+    #     rootpath = str(repo_ctx.path(Label("@//:WORKSPACE.bazel")))[:-16]
+    #     # print("ROOT DIR: %s" % rootpath)
 
-        pins = repo_ctx.execute(["opam", "pin", "list", "-s"]).stdout.splitlines()
-        # print("INSTALLED PINS: %s" % pins)
-        for [pkg, path] in repo_ctx.attr.pin_paths.items():
-            if not pkg in pins:
-                pkg_path = rootpath + "/" + path
-                repo_ctx.report_progress("Pinning {path} (may take a while)...".format(pkg = pkg, path = path))
-                pinout = repo_ctx.execute(["opam", "pin", "-v", "-y", "add", pkg_path])
-                if pinout.return_code != 0:
-                    print("ERROR opam pin rc: %s" % pinout.return_code)
-                    print("ERROR stdout: %s" % pinout.stdout)
-                    print("ERROR stderr: %s" % pinout.stderr)
-                    fail("OPAM pin add cmd failed")
+    #     pins = repo_ctx.execute(["opam", "pin", "list", "-s"]).stdout.splitlines()
+    #     # print("INSTALLED PINS: %s" % pins)
+    #     for [pkg, path] in repo_ctx.attr.pin_paths.items():
+    #         if not pkg in pins:
+    #             pkg_path = rootpath + "/" + path
+    #             repo_ctx.report_progress("Pinning {path} (may take a while)...".format(pkg = pkg, path = path))
+    #             pinout = repo_ctx.execute(["opam", "pin", "-v", "-y", "add", pkg_path])
+    #             if pinout.return_code != 0:
+    #                 print("ERROR opam pin rc: %s" % pinout.return_code)
+    #                 print("ERROR stdout: %s" % pinout.stdout)
+    #                 print("ERROR stderr: %s" % pinout.stderr)
+    #                 fail("OPAM pin add cmd failed")
 
-    if len(repo_ctx.attr.pin_versions) > 0:
-        repo_ctx.report_progress("pinning OPAM pkgs to versions...")
-        if len(pins) == 0:
-            pins = repo_ctx.execute(["opam", "pin", "list", "-s"]).stdout.splitlines()
-        for [pkg, version] in repo_ctx.attr.pin_versions.items():
-            if not pkg in pins:
-                repo_ctx.report_progress("Pinning {pkg} to {v} (may take a while)...".format(
-                    pkg = pkg, v = version))
-                pinout = repo_ctx.execute(["opam", "pin", "-v", "-y", "add", pkg, version])
-                if pinout.return_code != 0:
-                    print("ERROR opam pin rc: %s" % pinout.return_code)
-                    print("ERROR stdout: %s" % pinout.stdout)
-                    print("ERROR stderr: %s" % pinout.stderr)
-                    fail("OPAM pin add cmd failed")
+    # if len(repo_ctx.attr.pin_versions) > 0:
+    #     repo_ctx.report_progress("pinning OPAM pkgs to versions...")
+    #     if len(pins) == 0:
+    #         pins = repo_ctx.execute(["opam", "pin", "list", "-s"]).stdout.splitlines()
+    #     for [pkg, version] in repo_ctx.attr.pin_versions.items():
+    #         if not pkg in pins:
+    #             repo_ctx.report_progress("Pinning {pkg} to {v} (may take a while)...".format(
+    #                 pkg = pkg, v = version))
+    #             pinout = repo_ctx.execute(["opam", "pin", "-v", "-y", "add", pkg, version])
+    #             if pinout.return_code != 0:
+    #                 print("ERROR opam pin rc: %s" % pinout.return_code)
+    #                 print("ERROR stdout: %s" % pinout.stdout)
+    #                 print("ERROR stderr: %s" % pinout.stderr)
+    #                 fail("OPAM pin add cmd failed")
 
     opamroot = repo_ctx.execute(["opam", "var", "prefix"]).stdout.strip()
     # if verbose:
     #     print("opamroot: " + opamroot)
 
-    ocamlfind_pkgs = {}
+    opam_pkgs = {}
     findlib_pkgs = {}
-    if len(repo_ctx.attr.pkgs) > 0:
-        ocamlfind_pkgs, findlib_pkgs = _config_pkgs(repo_ctx)
+    if len(repo_ctx.attr.opam_pkgs) > 0:
+        opam_pkgs = _config_opam_pkgs(repo_ctx)
+        # opam_pkgs, findlib_pkgs = _config_pkgs(repo_ctx)
 
-    opambin = repo_ctx.which("opam") # "/usr/local/Cellar/opam/2.0.7/bin"
+    # print("OPAMPKGS: %s" % opam_pkgs)
+
+    if len(repo_ctx.attr.findlib_pkgs) > 0:
+        findlib_pkgs = _config_findlib_pkgs(repo_ctx)
+
+    # print("FINDLIB PKGS: %s" % findlib_pkgs)
+
+    opam_pkgs = opam_pkgs + "\n" + findlib_pkgs
+
+    # opambin = repo_ctx.which("opam") # "/usr/local/Cellar/opam/2.0.7/bin"
     # if "OPAM_SWITCH_PREFIX" in repo_ctx.os.environ:
     #     opampath = repo_ctx.os.environ["OPAM_SWITCH_PREFIX"] + "/bin"
     # else:
@@ -154,27 +331,34 @@ def _opam_repo_localhost_findlib(repo_ctx):
         Label("//opam/_templates:opam.BUILD.bazel"),
         executable = False,
     )
-    repo_ctx.template(
-        "findlib/BUILD.bazel",
-        Label("//opam/_templates:opam.findlib.BUILD.bazel"),
-        executable = False,
-        substitutions = { "{FINDLIB_PKGS}": findlib_pkgs }
-    )
-    repo_ctx.template(
-        "pkg/BUILD.bazel",
-        Label("//opam/_templates:opam.pkg.BUILD.bazel"),
-        executable = False,
-        substitutions = { "{OPAM_PKGS}": ocamlfind_pkgs }
-    )
+    # if len(findlib_pkgs) > 0:
+    #     repo_ctx.template(
+    #         "findlib/BUILD.bazel",
+    #         Label("//opam/_templates:opam.findlib.BUILD.bazel"),
+    #         executable = False,
+    #         substitutions = { "{FINDLIB_PKGS}": findlib_pkgs }
+    #     )
+    if len(opam_pkgs) > 0:
+        repo_ctx.template(
+            "pkg/BUILD.bazel",
+            Label("//opam/_templates:opam.pkg.BUILD.bazel"),
+            executable = False,
+            substitutions = { "{OPAM_PKGS}": opam_pkgs }
+        )
+    else:
+        print("\n\n\t\tWARNING: you have not listed any OPAM package dependencies.  Deps of the form \"@opam//pkg:\" will fail.\n\n")
 
 ##############################
 def _opam_repo_impl(repo_ctx):
 
-    if repo_ctx.attr.hermetic:
-        opam_repo_hermetic(repo_ctx)
-    else:
+    # x = repo_ctx.read("bzl/opam.bzl")
+    # print("READ x: %s" % x)
+    # if repo_ctx.attr.hermetic:
+    #     opam_repo_hermetic(repo_ctx)
+    # else:
         # bootstrap @opam with opam_findlib rules
-        _opam_repo_localhost_findlib(repo_ctx)
+    _opam_repo_localhost_findlib(repo_ctx)
+
     # else:
     # bootstrap @opam with ocaml_import rules
     #     _opam_repo_localhost_imports(repo_ctx)  ## uses bazel rules with ocaml_import
@@ -185,12 +369,20 @@ _opam_repo = repository_rule(
     configure = True,
     local = True,
     attrs = dict(
-        hermetic = attr.bool(
-            default = True
-        ),
-        pkgs = attr.string_dict(
+        hermetic        = attr.bool( default = True ),
+        verify          = attr.bool( default = True ),
+        install         = attr.bool( default = True ),
+        pin             = attr.bool( default = True ),
+        switch_name     = attr.string(),
+        # switch_version  = attr.string(),
+        switch_compiler = attr.string(),
+        opam_pkgs = attr.string_dict(
             doc = "Dictionary of OPAM packages (name: version) to install.",
-            default = {}
+            # default = {"foo": "bar"}
+        ),
+        findlib_pkgs = attr.string_list(
+            doc = "List of findlib packages to install.",
+            # default = []
         ),
         pins_install = attr.bool(default = True),
         pin_paths = attr.string_dict(
@@ -198,7 +390,8 @@ _opam_repo = repository_rule(
         ),
         pin_versions = attr.string_dict(
             doc = "Dictionariy of pkgs to pin (name: path)"
-        )
+        ),
+        _switch = attr.string(default = "default")
     )
 )
 
@@ -235,19 +428,90 @@ _opam_repo_hidden = repository_rule(
 )
 
 ################################################################
-def opam_configure(hermetic = False,
-                   opam = None,
-                   switch = "4.07.1",
-                   # pkgs = None
-                   ):
+def opam_configure(
+        opam = None,
+        switch   = None,
+        hermetic = False,
+        verify   = True,
+        install  = True,
+        pin      = True,
+        # pkgs = None
+):
+    """
+OPAM Structure: 
+    opam_version := string
+    switches    := dict(name string, switch struct
+Switch struct:
+    compiler := version string
+    packages := dict(name string, pkg spec)
+Pkg spec:
+    "pkg name": ["version_string"]
+              | ["version_string", ["sublib_a", "sublib_b"]]
+              | "path/to/pin"
+# First form pins version, second pins version plus findlib subpackages, third pins path
+
+# Example:
+
+PACKAGES = {
+    "base": ["v0.12.0"],
+    "ocaml-compiler-libs": ["v0.11.0", ["compiler-libs.common"]],
+    "ppx_expect": ["v0.12.0", ["ppx_expect.collector"]],
+    "ppx_inline_test": ["v0.12.0", ["ppx_inline_test.runtime-lib"]],
+    "ppxlib": ["0.8.1"],
+    "stdio": ["v0.12.0"],
+}
+
+opam = struct(
+    opam_version = "2.0",
+    switches = {
+        "mina-0.1.0": struct(    # first entry is default
+            compiler = "4.07.1",  # compiler version
+            packages = PACKAGES
+        ),
+        "4.07.1": struct(
+            name     = "4.07.1",
+            compiler = "4.07.1",  # compiler version
+            packages = PACKAGES
+        )
+    }
+)
+"""
+    if opam == None:
+        print("ERROR: opam arg required")
+        return
+
+    if switch == None:
+        print("ERROR: switch arg required")
+        return
+
     if hermetic:
         if not opam:
             fail("Hermetic builds require a list of OPAM deps.")
 
-    pins = {}
-    if opam != None:
-        if hasattr(opam, "pins"):
-            pins = opam.pins
+    if hasattr(opam, "switches"):
+        if (not types.is_dict(opam.switches)):
+                fail("opam.switches must be a dict")
+
+        switch_struct = opam.switches[switch]
+        if switch_struct == None:
+            print("ERROR: switch {s} not defined in config file".format(s=switch))
+            return
+        switch_name = switch
+        # if hasattr(switch, "name"):
+        #     switch_name = switch.name
+        # else:
+        #     print("ERROR: opam switch must have name field")
+        #     return
+        # if hasattr(switch, "version"):
+        #     switch_version = switch.version
+        # else:
+        #     print("ERROR: opam switch must have version field")
+        #     return
+        if hasattr(switch_struct, "compiler"):
+            switch_compiler = switch_struct.compiler
+        else:
+            print("ERROR: opam switch must have compiler version field")
+            return
 
     ## if local opam/obazl preconfigured, just use local_repository to point to it
     ## no need to bootstrap a repo in that case
@@ -256,27 +520,60 @@ def opam_configure(hermetic = False,
     ## a fast tool we can call to do it
     # _opam_repo_hidden(name="_opam")
 
-    pkgs = {}
-    if opam != None:
-        if opam.packages:
-            pkgs = opam.packages
-
+    opam_pkgs    = {}
+    findlib_pkgs = []
     pin_paths = {}
-    pin_versions = {}
-    pins_install = False
-    if opam != None:
-        if hasattr(opam, "pins"):
-            if hasattr(opam.pins, "paths"):
-                pin_paths = opam.pins.paths
-            if hasattr(opam.pins, "versions"):
-                pin_versions = opam.pins.versions
-            if hasattr(opam.pins, "install"):
-                pins_install = opam.pins.install
+
+    if switch_struct.packages:
+        if (not types.is_dict(switch_struct.packages)):
+            fail("switch.packages must be a dict")
+        for [pkg, spec] in switch_struct.packages.items():
+            if types.is_list(spec):
+                if len(spec) == 0:
+                    findlib_pkgs.append(pkg)
+                elif len(spec) == 1:  # contains version string
+                    opam_pkgs[pkg] =  spec[0]
+                elif len(spec) == 2:  # contains tuple of sublibs
+                    if types.is_list(spec[1]):
+                        opam_pkgs[pkg] =  spec[0]
+                        ## FIXME: verify second element is list of strings
+                        findlib_pkgs.extend(spec[1])
+                    else:
+                        fail("switch.packages value entries 2nd element must be list of sublibs")
+                else:
+                    fail("switch.packages value must be a list of length zero, one or two")
+            elif types.is_string(spec): # path/to/pin
+                pin_paths[pkg] = spec
+
+            else:
+                fail("switch.packages value entries must be list or string")
+
+    # print("OPAM_PKGS: %s" % opam_pkgs)
+    # print("FINDLIB_PKGS: %s" % findlib_pkgs)
+
+    # pin_versions = {}
+    # pins_install = False
+    # if opam != None:
+    #     if hasattr(opam, "pins"):
+    #         if hasattr(opam.pins, "paths"):
+    #             pin_paths = opam.pins.paths
+    #         if hasattr(opam.pins, "versions"):
+    #             pin_versions = opam.pins.versions
+    #         if hasattr(opam.pins, "install"):
+    #             pins_install = opam.pins.install
 
     _opam_repo(name="opam",
+               # switch   = switch,
                hermetic = hermetic,
-               pkgs = pkgs,
-               pins_install = pins_install,
-               pin_paths = pin_paths,
-               pin_versions = pin_versions)
+               verify   = verify,
+               install  = install,
+               pin      = pin,
+               switch_name = switch_name,
+               # switch_version = switch_version,
+               switch_compiler = switch_compiler,
+               opam_pkgs = opam_pkgs,
+               findlib_pkgs = findlib_pkgs,
+               pin_paths = pin_paths)
+               # pins_install = pins_install,
+               # pin_versions = pin_versions)
     # native.local_repository(name = "zopam", path = "/Users/gar/.obazl/opam")
