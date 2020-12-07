@@ -26,9 +26,8 @@ def _config_opam_pkgs(repo_ctx):
     ## e.g. compiler-libs.common
     ## but then we would have to keep a list for each compiler version...
 
-    print("Switch name: %s" % repo_ctx.attr.switch_name)
-    # print("Switch version: %s" % repo_ctx.attr.switch_version)
-    print("Switch compiler: %s" % repo_ctx.attr.switch_compiler)
+    # print("Switch name: %s" % repo_ctx.attr.switch_name)
+    # print("Switch compiler: %s" % repo_ctx.attr.switch_compiler)
 
     if "OBAZL_SWITCH" in repo_ctx.os.environ:
         print("OBAZL_SWITCH = %s" % repo_ctx.os.environ["OBAZL_SWITCH"])
@@ -302,7 +301,6 @@ def _opam_repo_localhost_findlib(repo_ctx):
     if len(repo_ctx.attr.opam_pkgs) > 0:
         opam_pkgs = _config_opam_pkgs(repo_ctx)
         # opam_pkgs, findlib_pkgs = _config_pkgs(repo_ctx)
-    print("_SWITCH: %s" % g_switch_name)
 
     # print("OPAMPKGS: %s" % opam_pkgs)
 
