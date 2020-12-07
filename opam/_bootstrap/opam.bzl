@@ -16,6 +16,8 @@ load(":ppx.bzl", "is_ppx_driver")
 # # Set to false to see debug messages
 # DEBUG_QUIET = False
 
+g_switch_name = ""
+
 ################################################################
 def _config_opam_pkgs(repo_ctx):
     repo_ctx.report_progress("configuring OPAM pkgs...")
@@ -30,25 +32,26 @@ def _config_opam_pkgs(repo_ctx):
 
     if "OBAZL_SWITCH" in repo_ctx.os.environ:
         print("OBAZL_SWITCH = %s" % repo_ctx.os.environ["OBAZL_SWITCH"])
-        switch_name = repo_ctx.os.environ["OBAZL_SWITCH"]
-        print("Using '{s}' from OBAZL_SWITCH env var.".format(s = switch_name))
+        g_switch_name = repo_ctx.os.environ["OBAZL_SWITCH"]
+        print("Using '{s}' from OBAZL_SWITCH env var.".format(s = g_switch_name))
         env_switch = True
     else:
-        switch_name = repo_ctx.attr.switch_name  # + "-" + repo_ctx.attr.switch_version
+        g_switch_name = repo_ctx.attr.switch_name  # + "-" + repo_ctx.attr.switch_version
+        env_switch = False
 
-    result = repo_ctx.execute(["opam", "switch", switch_name])
+    result = repo_ctx.execute(["opam", "switch", g_switch_name])
     if result.return_code == 5: # Not found
         if env_switch:
-            repo_ctx.report_progress("SWITCH {s} from env var OBAZL_SWITCH not found.".format(s = switch_name))
-            fail("\n\nERROR: OBAZL_SWITCH name '{s}' not found. To create a new switch, either do so from the command line or configure the switch in the opam config file (by convention, \"bzl/opam.bzl\").\n\n".format(s = switch_name))
+            repo_ctx.report_progress("SWITCH {s} from env var OBAZL_SWITCH not found.".format(s = g_switch_name))
+            fail("\n\nERROR: OBAZL_SWITCH name '{s}' not found. To create a new switch, either do so from the command line or configure the switch in the opam config file (by convention, \"bzl/opam.bzl\").\n\n".format(s = g_switch_name))
         else:
-            repo_ctx.report_progress("SWITCH {s} not found; creating".format(s = switch_name))
-            print("SWITCH {s} not found; creating".format(s = switch_name))
+            repo_ctx.report_progress("SWITCH {s} not found; creating".format(s = g_switch_name))
+            print("SWITCH {s} not found; creating".format(s = g_switch_name))
             result = repo_ctx.execute(["opam", "switch", "create",
-                                       switch_name, repo_ctx.attr.switch_compiler])
+                                       g_switch_name, repo_ctx.attr.switch_compiler])
             if result.return_code == 0:
-                repo_ctx.report_progress("SWITCH {s} created. Configuring...".format(s = switch_name))
-                print("SWITCH {s} created.  Configuring...".format(s = switch_name))
+                repo_ctx.report_progress("SWITCH {s} created. Configuring...".format(s = g_switch_name))
+                print("SWITCH {s} created.  Configuring...".format(s = g_switch_name))
                 print("SWITCH CREATED: %s" % result.stdout)
             else:
                 print("SWITCH CREATE ERROR: %s" % result.return_code)
@@ -299,6 +302,7 @@ def _opam_repo_localhost_findlib(repo_ctx):
     if len(repo_ctx.attr.opam_pkgs) > 0:
         opam_pkgs = _config_opam_pkgs(repo_ctx)
         # opam_pkgs, findlib_pkgs = _config_pkgs(repo_ctx)
+    print("_SWITCH: %s" % g_switch_name)
 
     # print("OPAMPKGS: %s" % opam_pkgs)
 
@@ -357,7 +361,10 @@ def _opam_repo_impl(repo_ctx):
     #     opam_repo_hermetic(repo_ctx)
     # else:
         # bootstrap @opam with opam_findlib rules
-    _opam_repo_localhost_findlib(repo_ctx)
+    hermetics = _opam_repo_localhost_findlib(repo_ctx)
+
+
+    # return { "foo": "bar" }
 
     # else:
     # bootstrap @opam with ocaml_import rules
@@ -373,8 +380,8 @@ _opam_repo = repository_rule(
         verify          = attr.bool( default = True ),
         install         = attr.bool( default = True ),
         pin             = attr.bool( default = True ),
+
         switch_name     = attr.string(),
-        # switch_version  = attr.string(),
         switch_compiler = attr.string(),
         opam_pkgs = attr.string_dict(
             doc = "Dictionary of OPAM packages (name: version) to install.",
@@ -384,14 +391,14 @@ _opam_repo = repository_rule(
             doc = "List of findlib packages to install.",
             # default = []
         ),
-        pins_install = attr.bool(default = True),
+        # pins_install = attr.bool(default = True),
         pin_paths = attr.string_dict(
             doc = "Dictionariy of pkgs to pin (name: path)"
         ),
-        pin_versions = attr.string_dict(
-            doc = "Dictionariy of pkgs to pin (name: path)"
-        ),
-        _switch = attr.string(default = "default")
+        # pin_versions = attr.string_dict(
+        #     doc = "Dictionariy of pkgs to pin (name: path)"
+        # ),
+        # _switch = attr.string(default = "default")
     )
 )
 
@@ -462,7 +469,7 @@ PACKAGES = {
 }
 
 opam = struct(
-    opam_version = "2.0",
+    version = "2.0",
     switches = {
         "mina-0.1.0": struct(    # first entry is default
             compiler = "4.07.1",  # compiler version
@@ -481,7 +488,7 @@ opam = struct(
         return
 
     if switch == None:
-        print("ERROR: switch arg required")
+        print("ERROR in workspace code: opam_configure fn missing required arg 'switch'.")
         return
 
     if hermetic:
@@ -563,17 +570,16 @@ opam = struct(
     #             pins_install = opam.pins.install
 
     _opam_repo(name="opam",
-               # switch   = switch,
                hermetic = hermetic,
                verify   = verify,
                install  = install,
                pin      = pin,
                switch_name = switch_name,
-               # switch_version = switch_version,
                switch_compiler = switch_compiler,
                opam_pkgs = opam_pkgs,
                findlib_pkgs = findlib_pkgs,
                pin_paths = pin_paths)
+
                # pins_install = pins_install,
                # pin_versions = pin_versions)
     # native.local_repository(name = "zopam", path = "/Users/gar/.obazl/opam")
