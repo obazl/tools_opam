@@ -356,17 +356,17 @@ def _opam_repo_localhost_findlib(repo_ctx):
 
     if len(repo_ctx.attr.pin_paths) > 0:
         pinned_paths = _pin_paths(repo_ctx)
-    print("PINNED PATHS: %s" % pinned_paths)
+    # print("PINNED PATHS: %s" % pinned_paths)
 
     if len(repo_ctx.attr.opam_pkgs) > 0:
         opam_pkgs = _config_opam_pkgs(repo_ctx)
 
-    print("OPAMPKGS: %s" % opam_pkgs)
+    # print("OPAMPKGS: %s" % opam_pkgs)
 
     if len(repo_ctx.attr.findlib_pkgs) > 0:
         findlib_pkgs = _config_findlib_pkgs(repo_ctx)
 
-    print("FINDLIB PKGS: %s" % findlib_pkgs)
+    # print("FINDLIB PKGS: %s" % findlib_pkgs)
 
     opam_pkgs = opam_pkgs + "\n" + findlib_pkgs + "\n" + pinned_paths
     # print("PKGS:\n%s" % opam_pkgs)
