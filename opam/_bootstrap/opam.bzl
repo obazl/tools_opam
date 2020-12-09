@@ -1,6 +1,11 @@
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository") # buildifier: disable=load
+load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")  # buildifier: disable=load
+
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@bazel_skylib//lib:collections.bzl", "collections")
 load("@bazel_skylib//lib:types.bzl", "types")
+
+load("@obazl_tools_bazel//tools/functions:strings.bzl", "tokenize")
 
 load(":hermetic.bzl", "opam_repo_hermetic")
 
@@ -46,12 +51,22 @@ def _config_opam_pkgs(repo_ctx):
         else:
             repo_ctx.report_progress("SWITCH {s} not found; creating".format(s = g_switch_name))
             print("SWITCH {s} not found; creating".format(s = g_switch_name))
-            result = repo_ctx.execute(["opam", "switch", "create",
-                                       g_switch_name, repo_ctx.attr.switch_compiler])
+            result = repo_ctx.execute(["opam", "switch", "create", g_switch_name, "--empty"])
             if result.return_code == 0:
-                repo_ctx.report_progress("SWITCH {s} created. Configuring...".format(s = g_switch_name))
-                print("SWITCH {s} created.  Configuring...".format(s = g_switch_name))
-                print("SWITCH CREATED: %s" % result.stdout)
+                repo_ctx.report_progress("SWITCH {s} created. Installing {c} (may take a while)".format(
+                    s = g_switch_name, c = "ocaml-base-compiler." + repo_ctx.attr.switch_compiler
+                ))
+            else:
+                print("SWITCH CREATE ERROR: %s" % result.return_code)
+                print("SWITCH CREATE STDERR: %s" % result.stderr)
+                print("SWITCH CREATE STDOUT: %s" % result.stdout)
+                return
+            result = repo_ctx.execute(["opam", "install", "-y", "--switch=" + g_switch_name,
+                                       "ocaml-base-compiler." + repo_ctx.attr.switch_compiler])
+            if result.return_code == 0:
+                repo_ctx.report_progress("SWITCH {s}: {c} installed.".format(
+                    s = g_switch_name, c = "ocaml-base-compiler." + repo_ctx.attr.switch_compiler
+                ))
             else:
                 print("SWITCH CREATE ERROR: %s" % result.return_code)
                 print("SWITCH CREATE STDERR: %s" % result.stderr)
@@ -92,16 +107,7 @@ def _config_opam_pkgs(repo_ctx):
     repo_ctx.report_progress("constructing OPAM pkg rules...")
     for [pkg, version] in repo_ctx.attr.opam_pkgs.items():
         # print("Pkg: {p} {v}".format(p=pkg, v=version))
-        # findlib_version = findlib_pkgs.get(pkg)
-        # if findlib_version == version:
-        #     ppx = is_ppx_driver(repo_ctx, pkg)
-        #     opam_pkg_rules.append(
-        #         "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
-        #     )
-        #     findlib_pkg_rules.append(
-        #         "findlib_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
-        #     )
-        # else:
+
         opam_version = opam_pkgs.get(pkg)
         if opam_version == None:
             print("Pkg {p} not found".format(p=pkg))
@@ -198,6 +204,7 @@ def _config_opam_pkgs(repo_ctx):
     opam_pkgs = "\n".join(opam_pkg_rules)
     return opam_pkgs
 
+###################################
 def _config_findlib_pkgs(repo_ctx):
     repo_ctx.report_progress("configuring FINDLIB pkgs...")
 
@@ -245,37 +252,79 @@ def _config_findlib_pkgs(repo_ctx):
 
     return findlib_pkg_rules
 
-################################################################
-def _opam_repo_localhost_findlib(repo_ctx):
-    # print("opam/_bootstrap:opam.bzl _opam_repo_localhost_findlib(repo_ctx)")
-    repo_ctx.report_progress("bootstrapping localhost_findlib OPAM repo...")
+#########################
+def _pin_paths(repo_ctx):
+    repo_ctx.report_progress("pinning OPAM pkgs to paths...")
+    print("_PIN_PATHS")
 
-    # print("CURRENT SYSTEM: %s" % repo_ctx.os.name)
-    # env = repo_ctx.os.environ
-    # for item in env.items():
-    #     print("ENV ENTRY: %s" % str(item))
-    # print("ROOT WS DIRECTORY: %s" % str(repo_ctx.path(Label("@//:WORKSPACE.bazel")))[:-16])
+    pin = True
+    pins = []
+    pinned_pkg_rules = []
+    print("PINNED_PKG_RULES: %s" % "\n".join(pinned_pkg_rules))
+    fail("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 
-    #### opam pinning
-    # pin = True
-    # pins = []
+    pinlist = repo_ctx.execute(["opam", "pin", "list"]).stdout.splitlines()
+
     # if len(repo_ctx.attr.pin_paths) > 0:
-    #     repo_ctx.report_progress("pinning OPAM pkgs to paths...")
-    #     rootpath = str(repo_ctx.path(Label("@//:WORKSPACE.bazel")))[:-16]
-    #     # print("ROOT DIR: %s" % rootpath)
+    rootpath = str(repo_ctx.path(Label("@//:WORKSPACE.bazel")))[:-16]
+    print("ROOT DIR: %s" % rootpath)
 
-    #     pins = repo_ctx.execute(["opam", "pin", "list", "-s"]).stdout.splitlines()
-    #     # print("INSTALLED PINS: %s" % pins)
-    #     for [pkg, path] in repo_ctx.attr.pin_paths.items():
-    #         if not pkg in pins:
-    #             pkg_path = rootpath + "/" + path
-    #             repo_ctx.report_progress("Pinning {path} (may take a while)...".format(pkg = pkg, path = path))
-    #             pinout = repo_ctx.execute(["opam", "pin", "-v", "-y", "add", pkg_path])
-    #             if pinout.return_code != 0:
-    #                 print("ERROR opam pin rc: %s" % pinout.return_code)
-    #                 print("ERROR stdout: %s" % pinout.stdout)
-    #                 print("ERROR stderr: %s" % pinout.stderr)
-    #                 fail("OPAM pin add cmd failed")
+    # x = tokenize("   foo bar     baz	buz   ")
+    # print("X: %s" % x)
+    # fail("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+
+    pinned_paths = {}
+    for pin in pinlist:
+        tokens = tokenize(pin)
+        print("TOKENS: %s" % tokens)
+        [name, kind, spec] = tokens
+        if kind == "version":
+            pins.append(name)
+        else:
+            pinned_paths[name] = spec
+    for [name, spec] in pinned_paths.items():
+        print("PINNED PATH: {n} {s}".format(
+            n=name.strip(),
+            # k=kind.strip(),
+            s=spec.strip()
+        ))
+
+     # kinds: git, git+file, rsync
+
+    # TODO
+    #  check the path. for now, i  to the user to make sure
+    # t
+    # e pinning is correct, using the opam command line.
+
+    # TODO: install before pinning?
+
+    for [pkg, path] in repo_ctx.attr.pin_paths.items():
+    # for pkg in repo_ctx.attr.pin_paths:
+        if pkg in pins:
+            ppx = is_ppx_driver(repo_ctx, pkg)
+            pinned_pkg_rules.append(
+                "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = "False" )
+            )
+        else:
+            pkg_path = rootpath + "/" + path
+            repo_ctx.report_progress("Pinning {path} (may take a while)...".format(path = path))
+
+            ## FIXME: add --switch
+            pinout = repo_ctx.execute(["opam", "pin", "-v", "-y", "add", pkg_path])
+
+            if pinout.return_code == 0:
+                repo_ctx.report_progress("Pinned {path}.".format(path = path))
+                ppx = is_ppx_driver(repo_ctx, pkg)
+                pinned_pkg_rules.append(
+                    "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = "False" )
+                )
+            else:
+                print("ERROR opam pin rc: %s" % pinout.return_code)
+                print("ERROR stdout: %s" % pinout.stdout)
+                print("ERROR stderr: %s" % pinout.stderr)
+                fail("OPAM pin add cmd failed")
+
+    return "\n".join(pinned_pkg_rules)
 
     # if len(repo_ctx.attr.pin_versions) > 0:
     #     repo_ctx.report_progress("pinning OPAM pkgs to versions...")
@@ -292,24 +341,35 @@ def _opam_repo_localhost_findlib(repo_ctx):
     #                 print("ERROR stderr: %s" % pinout.stderr)
     #                 fail("OPAM pin add cmd failed")
 
+###########################################
+def _opam_repo_localhost_findlib(repo_ctx):
+    # print("opam/_bootstrap:opam.bzl _opam_repo_localhost_findlib(repo_ctx)")
+    repo_ctx.report_progress("bootstrapping localhost_findlib OPAM repo...")
+
     opamroot = repo_ctx.execute(["opam", "var", "prefix"]).stdout.strip()
     # if verbose:
     #     print("opamroot: " + opamroot)
 
-    opam_pkgs = {}
-    findlib_pkgs = {}
+    opam_pkgs    = ""
+    findlib_pkgs = ""
+    pinned_paths = ""
+
+    if len(repo_ctx.attr.pin_paths) > 0:
+        pinned_paths = _pin_paths(repo_ctx)
+    print("PINNED PATHS: %s" % pinned_paths)
+
     if len(repo_ctx.attr.opam_pkgs) > 0:
         opam_pkgs = _config_opam_pkgs(repo_ctx)
-        # opam_pkgs, findlib_pkgs = _config_pkgs(repo_ctx)
 
-    # print("OPAMPKGS: %s" % opam_pkgs)
+    print("OPAMPKGS: %s" % opam_pkgs)
 
     if len(repo_ctx.attr.findlib_pkgs) > 0:
         findlib_pkgs = _config_findlib_pkgs(repo_ctx)
 
-    # print("FINDLIB PKGS: %s" % findlib_pkgs)
+    print("FINDLIB PKGS: %s" % findlib_pkgs)
 
-    opam_pkgs = opam_pkgs + "\n" + findlib_pkgs
+    opam_pkgs = opam_pkgs + "\n" + findlib_pkgs + "\n" + pinned_paths
+    # print("PKGS:\n%s" % opam_pkgs)
 
     # opambin = repo_ctx.which("opam") # "/usr/local/Cellar/opam/2.0.7/bin"
     # if "OPAM_SWITCH_PREFIX" in repo_ctx.os.environ:
@@ -533,6 +593,7 @@ opam = struct(
         if (not types.is_dict(switch_struct.packages)):
             fail("switch.packages must be a dict")
         for [pkg, spec] in switch_struct.packages.items():
+            # print("PKG: {p} SPEC: {s}".format(p=pkg, s=spec))
             if types.is_list(spec):
                 if len(spec) == 0:
                     findlib_pkgs.append(pkg)
@@ -549,6 +610,7 @@ opam = struct(
                     fail("switch.packages value must be a list of length zero, one or two")
             elif types.is_string(spec): # path/to/pin
                 pin_paths[pkg] = spec
+                print("PIN PATH: {p} {s}".format(p=pkg, s=pin_paths[pkg]))
 
             else:
                 fail("switch.packages value entries must be list or string")
@@ -566,6 +628,13 @@ opam = struct(
     #             pin_versions = opam.pins.versions
     #         if hasattr(opam.pins, "install"):
     #             pins_install = opam.pins.install
+
+    maybe(
+        git_repository,
+        name = "obazl_tools_bazel",
+        remote = "https://github.com/obazl/tools_bazel",
+        branch = "main",
+    )
 
     _opam_repo(name="opam",
                hermetic = hermetic,
