@@ -493,7 +493,7 @@ _opam_repo_hidden = repository_rule(
 )
 
 ################################################################
-def opam_configure(
+def configure(
         opam = None,
         switch   = None,
         hermetic = False,

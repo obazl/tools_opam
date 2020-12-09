@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//opam/_bootstrap:opam.bzl", _opam_configure = "opam_configure")
+load("//opam/_bootstrap:opam.bzl", _configure = "configure")
 
-opam_configure = _opam_configure
+configure = _configure
