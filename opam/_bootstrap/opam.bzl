@@ -500,6 +500,8 @@ def _opam_repo_impl(repo_ctx):
     result = repo_ctx.execute(["opam", "config", "var", "switch"])
     if result.return_code == 0:
         current_switch = result.stdout.strip()
+    elif result.return_code == 5: # not found
+        current_switch = "None"
     else:
         print("OPAM cmd 'opam config var switch' ERROR RC: %s" % result.return_code)
         print("cmd STDOUT: %s" % result.stdout)
@@ -508,17 +510,18 @@ def _opam_repo_impl(repo_ctx):
 
     repo_ctx.report_progress("Current OPAM switch: %s" % current_switch)
     print("Current OPAM switch: %s" % current_switch)
-    repo_ctx.report_progress("Setting OPAM switch to: %s" % repo_ctx.attr.switch_name)
-    print("Setting OPAM switch to: %s" % repo_ctx.attr.switch_name)
 
-    result = repo_ctx.execute(["opam", "switch", "set", repo_ctx.attr.switch_name])
-    if result.return_code != 0:
-        print("ERROR: 'opam switch set {s}' RC: {rc}".format(
-            s=repo_ctx.attr.switch_name, rc=result.return_code
-        ))
-        print("cmd STDOUT: %s" % result.stdout)
-        print("cmd PREFIX STDERR: %s" % result.stderr)
-        fail("OPAM cmd ERROR")
+    # repo_ctx.report_progress("Setting OPAM switch to: %s" % repo_ctx.attr.switch_name)
+    # print("Setting OPAM switch to: %s" % repo_ctx.attr.switch_name)
+
+    # result = repo_ctx.execute(["opam", "switch", "set", repo_ctx.attr.switch_name])
+    # if result.return_code != 0:
+    #     print("ERROR: 'opam switch set {s}' RC: {rc}".format(
+    #         s=repo_ctx.attr.switch_name, rc=result.return_code
+    #     ))
+    #     print("cmd STDOUT: %s" % result.stdout)
+    #     print("cmd PREFIX STDERR: %s" % result.stderr)
+    #     fail("OPAM cmd ERROR")
 
     return _opam_repo_localhost_findlib(repo_ctx)
 
@@ -672,7 +675,7 @@ opam = struct(
             print("USING DEFAULT SWITCH: %s" % switch)
             force = True
         else:
-            print("REQUESTED SWITCH: %s" % switch_name)
+            print("REQUESTED SWITCH: %s" % switch)
             force = False
         switch_name = switch
 
