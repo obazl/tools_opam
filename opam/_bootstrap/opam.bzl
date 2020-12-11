@@ -1,15 +1,20 @@
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository") # buildifier: disable=load
-load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")  # buildifier: disable=load
-
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@bazel_skylib//lib:collections.bzl", "collections")
 load("@bazel_skylib//lib:types.bzl", "types")
 
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository") # buildifier: disable=load
+load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")  # buildifier: disable=load
 load("@obazl_tools_bazel//tools/functions:strings.bzl", "tokenize")
+
+load("//opam/_functions:opam_queries.bzl", "opam_predicate", "opam_property")
+load("//opam/_functions:opam_pinning.bzl",
+     "opam_pin_pkg_path",
+     "opam_repin_pkg_path",
+     "opam_repin_version_path")
 
 load(":hermetic.bzl", "opam_repo_hermetic")
 
-load(":ppx.bzl", "is_ppx_driver")
+load("//opam/_functions:ppx.bzl", "is_ppx_driver")
 
 # 4.07.1 broken on XCode 12:
 # https://discuss.ocaml.org/t/ocaml-4-07-1-fails-to-build-with-apple-xcode-12/6441/15
@@ -96,11 +101,17 @@ def _config_opam_pkgs(repo_ctx):
 
     for pkg_desc in opam_pkg_list:
         if not pkg_desc.startswith("#"):
-            [pkg, sep, rest] = pkg_desc.partition(" ")
-            pkg = pkg.strip(" ")
-            rest = rest.strip(" ")
-            [version, sep, rest] = rest.partition(" ")
-            version = version.strip(" ")
+            tokens = tokenize(pkg_desc)
+            # print("PKG DESC TOKENS: %s" % tokens)
+            pkg = tokens[0].strip()
+            version = tokens[1].strip()
+
+            # [pkg, sep, rest] = pkg_desc.partition(" ")
+            # pkg = pkg.strip(" ")
+            # rest = rest.strip(" ")
+            # [version, sep, rest] = rest.partition(" ")
+            # version = version.strip(" ")
+
             opam_pkgs[pkg] = version
 
     opam_pkg_rules = []
@@ -134,6 +145,7 @@ def _config_opam_pkgs(repo_ctx):
             for [pkg, version] in missing.items():
                 repo_ctx.report_progress("Installing {p} {v}".format(p=pkg, v=version))
                 print("installing {p} {v}".format(p=pkg, v=version))
+                # result = opam_pin_version(pkg, version)
                 result = repo_ctx.execute(["opam", "install", "-y",
                                            pkg + "." + version])
                 if result.return_code == 0:
@@ -255,83 +267,153 @@ def _config_findlib_pkgs(repo_ctx):
 #########################
 def _pin_paths(repo_ctx):
     repo_ctx.report_progress("pinning OPAM pkgs to paths...")
-    print("_PIN_PATHS")
+    # print("_PIN_PATHS")
 
     pin = True
-    pins = []
+    pinned_versions = []
     pinned_pkg_rules = []
-    print("PINNED_PKG_RULES: %s" % "\n".join(pinned_pkg_rules))
-    fail("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-
-    pinlist = repo_ctx.execute(["opam", "pin", "list"]).stdout.splitlines()
 
     # if len(repo_ctx.attr.pin_paths) > 0:
     rootpath = str(repo_ctx.path(Label("@//:WORKSPACE.bazel")))[:-16]
-    print("ROOT DIR: %s" % rootpath)
+    # print("ROOT DIR: %s" % rootpath)
 
-    # x = tokenize("   foo bar     baz	buz   ")
-    # print("X: %s" % x)
-    # fail("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+    ## we need to run this in order to get the pinned paths for verification
+    ## "opam config" does not show pinned paths
+    pinlist = repo_ctx.execute(["opam", "pin", "list"]).stdout.splitlines()
 
     pinned_paths = {}
     for pin in pinlist:
         tokens = tokenize(pin)
-        print("TOKENS: %s" % tokens)
-        [name, kind, spec] = tokens
-        if kind == "version":
-            pins.append(name)
+        # print("TOKENS: %s" % tokens)
+        if len(tokens) == 3:
+            [name, kind, spec] = tokens
+        elif len(tokens) == 4:
+            [name, status, kind, spec] = tokens
         else:
-            pinned_paths[name] = spec
-    for [name, spec] in pinned_paths.items():
-        print("PINNED PATH: {n} {s}".format(
-            n=name.strip(),
-            # k=kind.strip(),
-            s=spec.strip()
+            fail("Unexpected result from tokenize: %s" % pin)
+
+        # if kind == "version":
+        #     pinned_versions.append(name)   # NB: name = name + "." + version
+        # else:
+        if kind != "version": # git, rsync, etc
+            pinned_paths[name] = [kind.strip(), spec.strip()]
+    # for [name, spec] in pinned_paths.items():
+    #     print("PINNED PATH: {n} {s}".format(
+    #         n=name.strip(),
+    #         s=spec
+    #     ))
+
+    # is it installed?  opam config var pkg:installed
+    # is it pinned?  opam config var pkg:pinned
+    # is it the right version?  opam config var pkg:version
+    # is pin kind version? opam config var pkg:dev == false
+    #    hypothesis: "dev" var is true if pinned to path/git/etc, false if pinned to version
+
+    # for [pkg, [kind, version]] in repo_ctx.attr.pin_specs.items():
+    for [pkg, spec] in repo_ctx.attr.pin_specs.items():
+        repo_ctx.report_progress("Verifying: '{pkg}.{version}' pinned to {path}".format(
+            pkg=pkg, version = spec[0], path=spec[1]
         ))
-
-     # kinds: git, git+file, rsync
-
-    # TODO
-    #  check the path. for now, i  to the user to make sure
-    # t
-    # e pinning is correct, using the opam command line.
-
-    # TODO: install before pinning?
-
-    for [pkg, path] in repo_ctx.attr.pin_paths.items():
-    # for pkg in repo_ctx.attr.pin_paths:
-        if pkg in pins:
-            ppx = is_ppx_driver(repo_ctx, pkg)
-            pinned_pkg_rules.append(
-                "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = "False" )
-            )
-        else:
-            pkg_path = rootpath + "/" + path
-            repo_ctx.report_progress("Pinning {path} (may take a while)...".format(path = path))
-
-            ## FIXME: add --switch
-            pinout = repo_ctx.execute(["opam", "pin", "-v", "-y", "add", pkg_path])
-
-            if pinout.return_code == 0:
-                repo_ctx.report_progress("Pinned {path}.".format(path = path))
-                ppx = is_ppx_driver(repo_ctx, pkg)
-                pinned_pkg_rules.append(
-                    "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = "False" )
-                )
+        # is_registered     = opam_is_registered(repo_ctx, pkg)
+        is_registered     = opam_property(repo_ctx, pkg, "name", pkg)
+        if is_registered:
+            # is_installed = opam_is_installed(repo_ctx, pkg)
+            is_installed = opam_predicate(repo_ctx, pkg, "installed")
+            if is_installed:
+                # is_pinned = opam_is_pinned(repo_ctx, pkg)
+                is_pinned = opam_predicate(repo_ctx, pkg, "pinned")
+                if is_pinned:
+                    # version_matches = opam_version_match(repo_ctx, pkg, spec[0])
+                    version_matches = opam_property(repo_ctx, pkg, "version", spec[0])
+                    if version_matches:
+                        is_dev_pkg = opam_predicate(repo_ctx, pkg, "dev")
+                        # is_dev_pkg = opam_is_dev_pkg(repo_ctx, pkg)
+                        if is_dev_pkg:
+                            [kind, pinned_path] = pinned_paths.get(str(pkg + "." + spec[0]), [None, None])
+                            if pinned_path == None:
+                                print("UNEXPECTED: pinned dev pkg {p} has no matching entry in `opam pin list`")
+                                fail("UNEXPECTED: pinned dev pkg {p} has no matching entry in `opam pin list`")
+                            else:
+                                repo_ctx.report_progress("Verified: '{pkg}.{version}' pinned to {path}".format(
+                                    pkg=pkg, version = spec[0], path=spec[1]
+                                ))
+                            # if paths_match:
+                                # print("ALREADY PINNED: %s" % pkg + "." + spec[0] + " " + spec[1])
+                                # already_pinned = True
+                                ppx = is_ppx_driver(repo_ctx, pkg)
+                                pinned_pkg_rules.append(
+                                    "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format(pkg=pkg, ppx=ppx)
+                                )
+                            # else:
+                            #     print("path mismatch")
+                        else:
+                            # SHOULD NOT HAPPEN! this routine only handles pinned paths, not pinned versions
+                            fail("Unexpected: {pkg}.{version} is pinned but is not a dev pkg".format(
+                                pkg = pkg, version = spec[0]
+                            ))
+                    else:
+                        print("WARNING: pinned pkg '{pkg}' version does not match required version '{v}'.".format(
+                            pkg=pkg, v=spec[0]
+                        ))
+                        if repo_ctx.attr.force:
+                            print("Repinning '{pkg}' to version {v} at path {path}.".format(
+                                pkg=pkg, v=spec[0], path=spec[1]
+                            ))
+                            opam_rule = opam_repin_version_path(repo_ctx, rootpath, pkg, spec[0], spec[1])
+                            pinned_pkg_rules.append(opam_rule)
+                else:
+                    print("WARNING: installed pkg '{pkg}' version does not match required version '{v}'.".format(
+                        pkg=pkg, v=spec[0]
+                    ))
+                    print("Repinning '{pkg}' to version {v} at path {path}.".format(
+                        pkg=pkg, v=spec[0], path=spec[1]
+                    ))
+                    opam_rule = opam_repin_pkg_path(repo_ctx, rootpath, pkg, spec[0], spec[1])
+                    print("PINNED %s" % opam_rule)
+                    pinned_pkg_rules.append(opam_rule)
             else:
-                print("ERROR opam pin rc: %s" % pinout.return_code)
-                print("ERROR stdout: %s" % pinout.stdout)
-                print("ERROR stderr: %s" % pinout.stderr)
-                fail("OPAM pin add cmd failed")
+                print("Not installed: pkg {pkg}, version {v}, path {path}".format(
+                    pkg=pkg, v=spec[0], path = spec[1]
+                ))
+                opam_rule = opam_pin_pkg_path(repo_ctx, rootpath, pkg, spec[0], spec[1])
+                print("PINNED %s" % opam_rule)
+                pinned_pkg_rules.append(opam_rule)
+        else:
+            print("not registered (opam config var foo:name => not found")
+
+        # if already_pinned:
+        #     ppx = is_ppx_driver(repo_ctx, pkg)
+        #     pinned_pkg_rules.append(
+        #         "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = "False" )
+        #     )
+        # else:
+            # name = pkg + "." + spec[0]
+            # if name in pinned_versions:
+            #     # print("MATCHED NAME+VERSION")
+            #     ppx = is_ppx_driver(repo_ctx, pkg)
+            #     pinned_pkg_rules.append(
+            #         "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = "False" )
+            #     )
+            # elif name in pinned_paths:
+            #     opam_pkg = _opam_pkg_for_pin_path(repo_ctx, rootpath, pinned_paths, name, pkg, spec)
+            #     print("VERIFIED %s" % opam_pkg)
+            #     pinned_pkg_rules.append(opam_pkg)
+            # else:
+            #     # case: pkg is pinned but to different version so name (=name+"."+version) mismatch
+            #     # case: same pkg name pinned simultaneously to different versions
+            #     #  this is possible because pins are keyed by name + version
+            #     opam_pkg = opam_pin_new_path(repo_ctx, rootpath, name, pkg, spec)
+            #     print("NEW %s" % opam_pkg)
+            #     pinned_pkg_rules.append(opam_pkg)
 
     return "\n".join(pinned_pkg_rules)
 
     # if len(repo_ctx.attr.pin_versions) > 0:
     #     repo_ctx.report_progress("pinning OPAM pkgs to versions...")
-    #     if len(pins) == 0:
-    #         pins = repo_ctx.execute(["opam", "pin", "list", "-s"]).stdout.splitlines()
+    #     if len(pinned_versions) == 0:
+    #         pinned_versions = repo_ctx.execute(["opam", "pin", "list", "-s"]).stdout.splitlines()
     #     for [pkg, version] in repo_ctx.attr.pin_versions.items():
-    #         if not pkg in pins:
+    #         if not pkg in pinned_versions:
     #             repo_ctx.report_progress("Pinning {pkg} to {v} (may take a while)...".format(
     #                 pkg = pkg, v = version))
     #             pinout = repo_ctx.execute(["opam", "pin", "-v", "-y", "add", pkg, version])
@@ -354,7 +436,7 @@ def _opam_repo_localhost_findlib(repo_ctx):
     findlib_pkgs = ""
     pinned_paths = ""
 
-    if len(repo_ctx.attr.pin_paths) > 0:
+    if len(repo_ctx.attr.pin_specs) > 0:
         pinned_paths = _pin_paths(repo_ctx)
     # print("PINNED PATHS: %s" % pinned_paths)
 
@@ -413,14 +495,18 @@ def _opam_repo_localhost_findlib(repo_ctx):
 ##############################
 def _opam_repo_impl(repo_ctx):
 
-    # x = repo_ctx.read("bzl/opam.bzl")
-    # print("READ x: %s" % x)
-    # if repo_ctx.attr.hermetic:
-    #     opam_repo_hermetic(repo_ctx)
-    # else:
-        # bootstrap @opam with opam_findlib rules
-    hermetics = _opam_repo_localhost_findlib(repo_ctx)
+    result = repo_ctx.execute(["opam", "config", "var", "switch"])
+    if result.return_code == 0:
+        current_switch = result.stdout.strip()
+    else:
+        print("OPAM cmd 'opam config var switch' ERROR RC: %s" % result.return_code)
+        print("cmd STDOUT: %s" % result.stdout)
+        print("cmd PREFIX STDERR: %s" % result.stderr)
+        fail("OPAM cmd ERROR")
 
+    print("CURRENT OPAM SWITCH: %s" % current_switch)
+
+    hermetics = _opam_repo_localhost_findlib(repo_ctx)
 
     # return { "foo": "bar" }
 
@@ -437,6 +523,7 @@ _opam_repo = repository_rule(
         hermetic        = attr.bool( default = True ),
         verify          = attr.bool( default = True ),
         install         = attr.bool( default = True ),
+        force           = attr.bool( default = False),
         pin             = attr.bool( default = True ),
 
         switch_name     = attr.string(),
@@ -450,8 +537,8 @@ _opam_repo = repository_rule(
             # default = []
         ),
         # pins_install = attr.bool(default = True),
-        pin_paths = attr.string_dict(
-            doc = "Dictionariy of pkgs to pin (name: path)"
+        pin_specs = attr.string_list_dict(
+            doc = "Dictionariy of pkgs to pin. Key: pkg, Val: [version, path]"
         ),
         # pin_versions = attr.string_dict(
         #     doc = "Dictionariy of pkgs to pin (name: path)"
@@ -496,6 +583,7 @@ _opam_repo_hidden = repository_rule(
 def configure(
         opam = None,
         switch   = None,
+        default  = False,
         hermetic = False,
         verify   = True,
         install  = True,
@@ -503,7 +591,7 @@ def configure(
         # pkgs = None
 ):
     """
-OPAM Structure: 
+OPAM Structure:
     opam_version := string
     switches    := dict(name string, switch struct
 Switch struct:
@@ -545,23 +633,38 @@ opam = struct(
         print("ERROR: opam arg required")
         return
 
-    if switch == None:
-        print("ERROR in workspace code: opam_configure fn missing required arg 'switch'.")
-        return
-
     if hermetic:
         if not opam:
             fail("Hermetic builds require a list of OPAM deps.")
 
-    if hasattr(opam, "switches"):
+    if not hasattr(opam, "switches"):
+        fail("Missing field 'switches'")
+    else:
         if (not types.is_dict(opam.switches)):
                 fail("opam.switches must be a dict")
 
-        switch_struct = opam.switches[switch]
-        if switch_struct == None:
-            print("ERROR: switch {s} not defined in config file".format(s=switch))
-            return
+        if switch == None:
+            for [k,v] in opam.switches.items():
+                if hasattr(v, "default"):
+                    if v.default:
+                        if switch == None:
+                            switch = k
+                        else:
+                            fail("Only one switch may be marked with 'default = True'")
+            if switch == None:
+                fail("One switch must be marked with 'default = True'")
+            print("USING DEFAULT SWITCH: %s" % switch)
+            force = True
+        else:
+            print("REQUESTED SWITCH: %s" % switch_name)
+            force = False
         switch_name = switch
+
+        switch_struct = opam.switches[switch_name]
+        if switch_struct == None:
+            fail("ERROR: config for switch {s} not defined in config file".format(s=switch_name))
+            return
+
         # if hasattr(switch, "name"):
         #     switch_name = switch.name
         # else:
@@ -575,7 +678,7 @@ opam = struct(
         if hasattr(switch_struct, "compiler"):
             switch_compiler = switch_struct.compiler
         else:
-            print("ERROR: opam switch must have compiler version field")
+            fail("ERROR: opam switch must have compiler version field")
             return
 
     ## if local opam/obazl preconfigured, just use local_repository to point to it
@@ -587,7 +690,7 @@ opam = struct(
 
     opam_pkgs    = {}
     findlib_pkgs = []
-    pin_paths = {}
+    pin_specs = {}
 
     if switch_struct.packages:
         if (not types.is_dict(switch_struct.packages)):
@@ -595,23 +698,25 @@ opam = struct(
         for [pkg, spec] in switch_struct.packages.items():
             # print("PKG: {p} SPEC: {s}".format(p=pkg, s=spec))
             if types.is_list(spec):
-                if len(spec) == 0:
+                if len(spec) == 0: # comes with compiler, or a findlib subpkg?
                     findlib_pkgs.append(pkg)
-                elif len(spec) == 1:  # contains version string
+                elif len(spec) == 1: # version string
                     opam_pkgs[pkg] =  spec[0]
-                elif len(spec) == 2:  # contains tuple of sublibs
+                elif len(spec) == 2: # tuple of sublibs
                     if types.is_list(spec[1]):
                         opam_pkgs[pkg] =  spec[0]
                         ## FIXME: verify second element is list of strings
                         findlib_pkgs.extend(spec[1])
+                    elif types.is_string(spec[1]): # pin path
+                        pin_specs[pkg] = [spec[0], spec[1]]
+                        # print("PIN SPEC: {p} : {s}".format(p=pkg, s=pin_specs[pkg]))
                     else:
                         fail("switch.packages value entries 2nd element must be list of sublibs")
                 else:
                     fail("switch.packages value must be a list of length zero, one or two")
-            elif types.is_string(spec): # path/to/pin
-                pin_paths[pkg] = spec
-                print("PIN PATH: {p} {s}".format(p=pkg, s=pin_paths[pkg]))
-
+            # elif types.is_string(spec): # path/to/pin
+            #     pin_paths[pkg] = spec
+            #     # print("PIN PATH: {p} {s}".format(p=pkg, s=pin_paths[pkg]))
             else:
                 fail("switch.packages value entries must be list or string")
 
@@ -635,17 +740,19 @@ opam = struct(
         remote = "https://github.com/obazl/tools_bazel",
         branch = "main",
     )
+    # print("PIN_SPECS: %s" % pin_specs)
 
     _opam_repo(name="opam",
                hermetic = hermetic,
                verify   = verify,
                install  = install,
+               force    = force,
                pin      = pin,
                switch_name = switch_name,
                switch_compiler = switch_compiler,
                opam_pkgs = opam_pkgs,
                findlib_pkgs = findlib_pkgs,
-               pin_paths = pin_paths)
+               pin_specs = pin_specs)
 
                # pins_install = pins_install,
                # pin_versions = pin_versions)
