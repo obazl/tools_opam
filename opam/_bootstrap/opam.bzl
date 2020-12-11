@@ -48,7 +48,7 @@ def _config_opam_pkgs(repo_ctx):
         g_switch_name = repo_ctx.attr.switch_name  # + "-" + repo_ctx.attr.switch_version
         env_switch = False
 
-    result = repo_ctx.execute(["opam", "switch", g_switch_name])
+    result = repo_ctx.execute(["opam", "switch", "set", g_switch_name])
     if result.return_code == 5: # Not found
         if env_switch:
             repo_ctx.report_progress("SWITCH {s} from env var OBAZL_SWITCH not found.".format(s = g_switch_name))
@@ -494,6 +494,8 @@ def _opam_repo_localhost_findlib(repo_ctx):
 
 ##############################
 def _opam_repo_impl(repo_ctx):
+    repo_ctx.report_progress("Bootstrapping opam repo")
+    print("Bootstrapping opam repo")
 
     result = repo_ctx.execute(["opam", "config", "var", "switch"])
     if result.return_code == 0:
@@ -504,9 +506,21 @@ def _opam_repo_impl(repo_ctx):
         print("cmd PREFIX STDERR: %s" % result.stderr)
         fail("OPAM cmd ERROR")
 
-    print("CURRENT OPAM SWITCH: %s" % current_switch)
+    repo_ctx.report_progress("Current OPAM switch: %s" % current_switch)
+    print("Current OPAM switch: %s" % current_switch)
+    repo_ctx.report_progress("Setting OPAM switch to: %s" % repo_ctx.attr.switch_name)
+    print("Setting OPAM switch to: %s" % repo_ctx.attr.switch_name)
 
-    hermetics = _opam_repo_localhost_findlib(repo_ctx)
+    result = repo_ctx.execute(["opam", "switch", "set", repo_ctx.attr.switch_name])
+    if result.return_code != 0:
+        print("ERROR: 'opam switch set {s}' RC: {rc}".format(
+            s=repo_ctx.attr.switch_name, rc=result.return_code
+        ))
+        print("cmd STDOUT: %s" % result.stdout)
+        print("cmd PREFIX STDERR: %s" % result.stderr)
+        fail("OPAM cmd ERROR")
+
+    return _opam_repo_localhost_findlib(repo_ctx)
 
     # return { "foo": "bar" }
 
@@ -518,7 +532,7 @@ def _opam_repo_impl(repo_ctx):
 _opam_repo = repository_rule(
     implementation = _opam_repo_impl,
     configure = True,
-    local = True,
+    # local = True,
     attrs = dict(
         hermetic        = attr.bool( default = True ),
         verify          = attr.bool( default = True ),
@@ -652,7 +666,9 @@ opam = struct(
                         else:
                             fail("Only one switch may be marked with 'default = True'")
             if switch == None:
+                print("One switch must be marked with 'default = True'")
                 fail("One switch must be marked with 'default = True'")
+                return
             print("USING DEFAULT SWITCH: %s" % switch)
             force = True
         else:
@@ -754,6 +770,4 @@ opam = struct(
                findlib_pkgs = findlib_pkgs,
                pin_specs = pin_specs)
 
-               # pins_install = pins_install,
-               # pin_versions = pin_versions)
-    # native.local_repository(name = "zopam", path = "/Users/gar/.obazl/opam")
+    return switch_name
