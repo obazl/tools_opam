@@ -6,6 +6,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository") # buildifi
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")  # buildifier: disable=load
 load("@obazl_tools_bazel//tools/functions:strings.bzl", "tokenize")
 
+load(":switch.bzl", "opam_set_switch")
 load("//opam/_functions:opam_queries.bzl", "opam_predicate", "opam_property")
 load("//opam/_functions:opam_pinning.bzl",
      "opam_pin_pkg_path",
@@ -26,8 +27,6 @@ load("//opam/_functions:ppx.bzl", "is_ppx_driver")
 # # Set to false to see debug messages
 # DEBUG_QUIET = False
 
-g_switch_name = ""
-
 ################################################################
 def _config_opam_pkgs(repo_ctx):
     repo_ctx.report_progress("configuring OPAM pkgs...")
@@ -38,50 +37,6 @@ def _config_opam_pkgs(repo_ctx):
 
     # print("Switch name: %s" % repo_ctx.attr.switch_name)
     # print("Switch compiler: %s" % repo_ctx.attr.switch_compiler)
-
-    if "OBAZL_SWITCH" in repo_ctx.os.environ:
-        print("OBAZL_SWITCH = %s" % repo_ctx.os.environ["OBAZL_SWITCH"])
-        g_switch_name = repo_ctx.os.environ["OBAZL_SWITCH"]
-        print("Using '{s}' from OBAZL_SWITCH env var.".format(s = g_switch_name))
-        env_switch = True
-    else:
-        g_switch_name = repo_ctx.attr.switch_name  # + "-" + repo_ctx.attr.switch_version
-        env_switch = False
-
-    result = repo_ctx.execute(["opam", "switch", "set", g_switch_name])
-    if result.return_code == 5: # Not found
-        if env_switch:
-            repo_ctx.report_progress("SWITCH {s} from env var OBAZL_SWITCH not found.".format(s = g_switch_name))
-            fail("\n\nERROR: OBAZL_SWITCH name '{s}' not found. To create a new switch, either do so from the command line or configure the switch in the opam config file (by convention, \"bzl/opam.bzl\").\n\n".format(s = g_switch_name))
-        else:
-            repo_ctx.report_progress("SWITCH {s} not found; creating".format(s = g_switch_name))
-            print("SWITCH {s} not found; creating".format(s = g_switch_name))
-            result = repo_ctx.execute(["opam", "switch", "create", g_switch_name, "--empty"])
-            if result.return_code == 0:
-                repo_ctx.report_progress("SWITCH {s} created. Installing {c} (may take a while)".format(
-                    s = g_switch_name, c = "ocaml-base-compiler." + repo_ctx.attr.switch_compiler
-                ))
-            else:
-                print("SWITCH CREATE ERROR: %s" % result.return_code)
-                print("SWITCH CREATE STDERR: %s" % result.stderr)
-                print("SWITCH CREATE STDOUT: %s" % result.stdout)
-                return
-            result = repo_ctx.execute(["opam", "install", "-y", "--switch=" + g_switch_name,
-                                       "ocaml-base-compiler." + repo_ctx.attr.switch_compiler])
-            if result.return_code == 0:
-                repo_ctx.report_progress("SWITCH {s}: {c} installed.".format(
-                    s = g_switch_name, c = "ocaml-base-compiler." + repo_ctx.attr.switch_compiler
-                ))
-            else:
-                print("SWITCH CREATE ERROR: %s" % result.return_code)
-                print("SWITCH CREATE STDERR: %s" % result.stderr)
-                print("SWITCH CREATE STDOUT: %s" % result.stdout)
-                return
-    elif result.return_code != 0:
-        print("SWITCH RC: %s" % result.return_code)
-        print("SWITCH STDERR: %s" % result.stderr)
-        print("SWITCH STDOUT: %s" % result.stdout)
-        return
 
     # fetch and parse list of installed opam pkgs
     opam_pkg_list = repo_ctx.execute(["opam", "list"]).stdout
@@ -495,21 +450,8 @@ def _opam_repo_localhost_findlib(repo_ctx):
 ##############################
 def _opam_repo_impl(repo_ctx):
     repo_ctx.report_progress("Bootstrapping opam repo")
-    print("Bootstrapping opam repo")
 
-    result = repo_ctx.execute(["opam", "config", "var", "switch"])
-    if result.return_code == 0:
-        current_switch = result.stdout.strip()
-    elif result.return_code == 5: # not found
-        current_switch = "None"
-    else:
-        print("OPAM cmd 'opam config var switch' ERROR RC: %s" % result.return_code)
-        print("cmd STDOUT: %s" % result.stdout)
-        print("cmd PREFIX STDERR: %s" % result.stderr)
-        fail("OPAM cmd ERROR")
-
-    repo_ctx.report_progress("Current OPAM switch: %s" % current_switch)
-    print("Current OPAM switch: %s" % current_switch)
+    opam_set_switch(repo_ctx)
 
     # repo_ctx.report_progress("Setting OPAM switch to: %s" % repo_ctx.attr.switch_name)
     # print("Setting OPAM switch to: %s" % repo_ctx.attr.switch_name)
@@ -672,7 +614,7 @@ opam = struct(
                 print("One switch must be marked with 'default = True'")
                 fail("One switch must be marked with 'default = True'")
                 return
-            print("USING DEFAULT SWITCH: %s" % switch)
+            # print("USING DEFAULT SWITCH: %s" % switch)
             force = True
         else:
             print("REQUESTED SWITCH: %s" % switch)
