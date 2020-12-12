@@ -617,7 +617,6 @@ opam = struct(
             # print("USING DEFAULT SWITCH: %s" % switch)
             force = True
         else:
-            print("REQUESTED SWITCH: %s" % switch)
             force = False
         switch_name = switch
 
