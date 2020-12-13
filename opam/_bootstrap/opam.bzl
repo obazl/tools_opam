@@ -16,6 +16,7 @@ load("//opam/_functions:opam_pinning.bzl",
 load(":hermetic.bzl", "opam_repo_hermetic")
 
 load("//opam/_functions:ppx.bzl", "is_ppx_driver")
+load("//opam/_debug:utils.bzl", "debug_report_progress")
 
 # 4.07.1 broken on XCode 12:
 # https://discuss.ocaml.org/t/ocaml-4-07-1-fails-to-build-with-apple-xcode-12/6441/15
@@ -30,6 +31,7 @@ load("//opam/_functions:ppx.bzl", "is_ppx_driver")
 ################################################################
 def _config_opam_pkgs(repo_ctx):
     repo_ctx.report_progress("configuring OPAM pkgs...")
+    print("configuring OPAM pkgs...")
 
     ## FIXME: packages distibuted with the compiler can be hardcoded?
     ## e.g. compiler-libs.common
@@ -76,7 +78,7 @@ def _config_opam_pkgs(repo_ctx):
 
         opam_version = opam_pkgs.get(pkg)
         if opam_version == None:
-            print("Pkg {p} not found".format(p=pkg))
+            # print("Pkg {p} not found".format(p=pkg))
             missing[pkg] = version
         else:
             # print("opam_version: %s" % opam_version)
@@ -95,22 +97,22 @@ def _config_opam_pkgs(repo_ctx):
 
     if len(missing) > 0:
         repo_ctx.report_progress("Missing packages: %s" % missing)
-        print("Missing packages: %s" % missing)
+        # print("Missing packages: %s" % missing)
         if repo_ctx.attr.install:
             for [pkg, version] in missing.items():
                 repo_ctx.report_progress("Installing {p} {v}".format(p=pkg, v=version))
-                print("installing {p} {v}".format(p=pkg, v=version))
+                # print("installing {p} {v}".format(p=pkg, v=version))
                 # result = opam_pin_version(pkg, version)
                 result = repo_ctx.execute(["opam", "install", "-y",
                                            pkg + "." + version])
                 if result.return_code == 0:
                     repo_ctx.report_progress("Installed {p} {v}".format(p=pkg, v=version))
-                    print("installed {p} {v}".format(p=pkg, v=version))
+                    # print("installed {p} {v}".format(p=pkg, v=version))
                     if repo_ctx.attr.pin:
                         result = repo_ctx.execute(["opam", "pin", pkg, version])
                         if result.return_code == 0:
                             repo_ctx.report_progress("Pinned {p} {v}".format(p=pkg, v=version))
-                            print("pinned {p} {v}".format(p=pkg, v=version))
+                            # print("pinned {p} {v}".format(p=pkg, v=version))
                             ppx = is_ppx_driver(repo_ctx, pkg)
                             opam_pkg_rules.append(
                                 "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
@@ -174,6 +176,7 @@ def _config_opam_pkgs(repo_ctx):
 ###################################
 def _config_findlib_pkgs(repo_ctx):
     repo_ctx.report_progress("configuring FINDLIB pkgs...")
+    # print("configuring FINDLIB pkgs...")
 
     ## FIXME: packages distibuted with the compiler can be hardcoded?
     ## e.g. compiler-libs.common
@@ -384,16 +387,10 @@ def _opam_repo_localhost_findlib(repo_ctx):
     repo_ctx.report_progress("bootstrapping localhost_findlib OPAM repo...")
 
     opamroot = repo_ctx.execute(["opam", "var", "prefix"]).stdout.strip()
-    # if verbose:
-    #     print("opamroot: " + opamroot)
 
     opam_pkgs    = ""
     findlib_pkgs = ""
     pinned_paths = ""
-
-    if len(repo_ctx.attr.pin_specs) > 0:
-        pinned_paths = _pin_paths(repo_ctx)
-    # print("PINNED PATHS: %s" % pinned_paths)
 
     if len(repo_ctx.attr.opam_pkgs) > 0:
         opam_pkgs = _config_opam_pkgs(repo_ctx)
@@ -404,6 +401,10 @@ def _opam_repo_localhost_findlib(repo_ctx):
         findlib_pkgs = _config_findlib_pkgs(repo_ctx)
 
     # print("FINDLIB PKGS: %s" % findlib_pkgs)
+
+    if len(repo_ctx.attr.pin_specs) > 0:
+        pinned_paths = _pin_paths(repo_ctx)
+    # print("PINNED PATHS: %s" % pinned_paths)
 
     opam_pkgs = opam_pkgs + "\n" + findlib_pkgs + "\n" + pinned_paths
     # print("PKGS:\n%s" % opam_pkgs)
@@ -449,7 +450,7 @@ def _opam_repo_localhost_findlib(repo_ctx):
 
 ##############################
 def _opam_repo_impl(repo_ctx):
-    repo_ctx.report_progress("Bootstrapping opam repo")
+    debug_report_progress(repo_ctx, "Bootstrapping opam repo")
 
     opam_set_switch(repo_ctx)
 
@@ -503,6 +504,7 @@ _opam_repo = repository_rule(
         #     doc = "Dictionariy of pkgs to pin (name: path)"
         # ),
         # _switch = attr.string(default = "default")
+        debug = attr.bool(default = False)
     )
 )
 
@@ -547,7 +549,7 @@ def configure(
         verify   = True,
         install  = True,
         pin      = True,
-        # pkgs = None
+        debug    = False
 ):
     """
 OPAM Structure:
@@ -588,6 +590,7 @@ opam = struct(
     }
 )
 """
+    print("opam.configure")
     if opam == None:
         print("ERROR: opam arg required")
         return
@@ -712,6 +715,7 @@ opam = struct(
                switch_compiler = switch_compiler,
                opam_pkgs = opam_pkgs,
                findlib_pkgs = findlib_pkgs,
-               pin_specs = pin_specs)
+               pin_specs = pin_specs,
+               debug = debug)
 
     return switch_name

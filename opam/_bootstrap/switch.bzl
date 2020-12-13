@@ -1,3 +1,5 @@
+load("//opam/_debug:utils.bzl", "debug_report_progress")
+
     # result = repo_ctx.execute(["opam", "config", "var", "switch"])
     # if result.return_code == 0:
     #     current_switch = result.stdout.strip()
@@ -14,7 +16,10 @@
 
 switch_name = ""
 
+##############################
 def opam_set_switch(repo_ctx):
+
+    debug_report_progress(repo_ctx, "opam_set_switch")
 
     if "OBAZL_SWITCH" in repo_ctx.os.environ:
         print("OBAZL_SWITCH = %s" % repo_ctx.os.environ["OBAZL_SWITCH"])
@@ -49,10 +54,10 @@ def opam_set_switch(repo_ctx):
 
             compiler = "ocaml-base-compiler." + repo_ctx.attr.switch_compiler
 
-            repo_ctx.report_progress("SWITCH {s} not found; creating with compiler {c}".format(
+            repo_ctx.report_progress("Switch {s} not found; creating with compiler {c}".format(
                 s = switch_name, c = compiler
             ))
-            print("SWITCH {s} not found; creating".format(s = switch_name))
+            # print("SWITCH {s} not found; creating".format(s = switch_name))
 
             result = repo_ctx.execute(["opam", "switch", "-y",
                                        "create", switch_name,
