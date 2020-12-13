@@ -402,8 +402,12 @@ def _opam_repo_localhost_findlib(repo_ctx):
 
     # print("FINDLIB PKGS: %s" % findlib_pkgs)
 
+    ## WARNING: path pinning must come after version pinning.
+    ## Otherwise, e.g. rpc_parallel path pin will fail on missing
+    ## ctypes lib.
     if len(repo_ctx.attr.pin_specs) > 0:
         pinned_paths = _pin_paths(repo_ctx)
+
     # print("PINNED PATHS: %s" % pinned_paths)
 
     opam_pkgs = opam_pkgs + "\n" + findlib_pkgs + "\n" + pinned_paths
