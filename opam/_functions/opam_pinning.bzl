@@ -69,7 +69,7 @@ def opam_pin_pkg_path(repo_ctx, rootpath, pkg, version, path):
 
 #######################################
 def opam_repin_pkg_path(repo_ctx, rootpath, pkg, version, path):
-    repo_ctx.report_progress("Repinning {pkg} to version '{v}', path '{path}'".format(
+    repo_ctx.report_progress("Repinning {pkg} to version '{version}', path '{path}'".format(
         pkg = pkg, version=version, path=path
     ))
     if path.startswith("https://"):
