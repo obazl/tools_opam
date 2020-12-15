@@ -118,7 +118,7 @@ def _config_opam_pkgs(repo_ctx):
                             )
                         else:
                             fail("OPAM ERROR cmd: 'opam pin {p} {v} RC: {rc}, STDOUT: {stdout}, STDERR: {stderr}".format(
-                                p=pkg, v=verion, rc = result.return_code,
+                                p=pkg, v=version, rc = result.return_code,
                                 stdout = result.stdout, stderr = result.stderr
                             ))
                             # print("PIN ERROR RC: %s" % result.return_code)
@@ -127,7 +127,7 @@ def _config_opam_pkgs(repo_ctx):
                             return
                 else:
                     fail("OPAM ERROR cmd: 'opam install -y {p}.{v}' RC: {rc}, STDOUT: {stdout}, STDERR: {stderr}".format(
-                        p=pkg, v=verion, rc = result.return_code,
+                        p=pkg, v=version, rc = result.return_code,
                         stdout = result.stdout, stderr = result.stderr
                     ))
                     # print("ERROR: OPAM INSTALL {p} RC: {rc}".format(p=pkg, rc=result.return_code))
