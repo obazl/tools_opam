@@ -8,10 +8,9 @@ load("@obazl_tools_bazel//tools/functions:strings.bzl", "tokenize")
 
 load(":switch.bzl", "opam_set_switch")
 load("//opam/_functions:opam_queries.bzl", "opam_predicate", "opam_property")
-load("//opam/_functions:opam_pinning.bzl",
+load(":opam_pinning.bzl",
      "opam_pin_pkg_path",
-     "opam_repin_pkg_path",
-     "opam_repin_version_path")
+     "opam_repin_pkg_path")
 
 load(":hermetic.bzl", "opam_repo_hermetic")
 
@@ -272,6 +271,9 @@ def _pin_paths(repo_ctx):
         repo_ctx.report_progress("Verifying: '{pkg}.{version}' pinned to {path}".format(
             pkg=pkg, version = spec[0], path=spec[1]
         ))
+        print("Verifying: '{pkg}.{version}' pinned to {path}".format(
+            pkg=pkg, version = spec[0], path=spec[1]
+        ))
         # is_registered     = opam_is_registered(repo_ctx, pkg)
         is_registered     = opam_property(repo_ctx, pkg, "name", pkg)
         if is_registered:
@@ -317,7 +319,7 @@ def _pin_paths(repo_ctx):
                             print("Repinning '{pkg}' to version {v} at path {path}.".format(
                                 pkg=pkg, v=spec[0], path=spec[1]
                             ))
-                            opam_rule = opam_repin_version_path(repo_ctx, rootpath, pkg, spec[0], spec[1])
+                            opam_rule = opam_repin_pkg_path(repo_ctx, rootpath, pkg, spec[0], spec[1])
                             pinned_pkg_rules.append(opam_rule)
                 else:
                     print("WARNING: installed pkg '{pkg}' version does not match required version '{v}'.".format(

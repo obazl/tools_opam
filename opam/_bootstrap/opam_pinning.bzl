@@ -32,9 +32,9 @@ def _opam_remove(repo_ctx, pkg):
 
 #######################################
 def opam_pin_pkg_path(repo_ctx, rootpath, pkg, version, path):
-    # print("PIN_NEW_PATH: {pkg}.{version} : {path}".format(
-    #     pkg = pkg, version=version, path=path
-    # ))
+    print("PIN_NEW_PATH: {pkg}.{version} : {path}".format(
+        pkg = pkg, version=version, path=path
+    ))
 
     if path.startswith("https://"):
         path = path
@@ -63,7 +63,10 @@ def opam_pin_pkg_path(repo_ctx, rootpath, pkg, version, path):
         print("ERROR RC: %s" % pinout.return_code)
         print("ERROR STDOUT: %s" % pinout.stdout)
         print("ERROR STDERR: %s" % pinout.stderr)
-        fail("OPAM pin add cmd failed")
+        fail("ERROR cmd 'opam pin -v -y add {name} {path}' RC: {rc}. STDOUT: {stdout} STDERR: {stderr}".format(
+            name = install_name, path = path, rc = pinout.return_code,
+            stdout = pinout.stdout, stderr = pinout.stderr
+        ))
 
     return result
 
@@ -72,23 +75,24 @@ def opam_repin_pkg_path(repo_ctx, rootpath, pkg, version, path):
     repo_ctx.report_progress("Repinning {pkg} to version '{version}', path '{path}'".format(
         pkg = pkg, version=version, path=path
     ))
-    if path.startswith("https://"):
-        path = path
-    elif path.startswith("http://"):
-        path = path
-    else:
-        path = rootpath + "/" + path
+    # if path.startswith("https://"):
+    #     path = path
+    # elif path.startswith("http://"):
+    #     path = path
+    # else:
+    #     path = rootpath + "/" + path
 
-    install_name = pkg + "." + version
+    # install_name = pkg + "." + version
     _opam_unpin(repo_ctx, pkg)
     _opam_remove(repo_ctx, pkg) ## FIXME: is this necessary?
 
     return opam_pin_pkg_path(repo_ctx, rootpath, pkg, version, path)
 
 #####################################################
-def opam_repin_version_path(repo_ctx, rootpath, pkg, version, path):
-    repo_ctx.report_progress("Repinning {pkg} to version '{v}', path '{path}'".format(
-        pkg=pkg, v=version, path=path))
-    opam_unpin = _opam_unpin(repo_ctx, pkg)
-    return opam_pin_pkg_path(repo_ctx, rootpath, pkg, version, path)
+# def opam_repin_version_path(repo_ctx, rootpath, pkg, version, path):
+#     repo_ctx.report_progress("Repinning {pkg} to version '{v}', path '{path}'".format(
+#         pkg=pkg, v=version, path=path))
+#     _opam_unpin(repo_ctx, pkg)
+#     _opam_remove(repo_ctx, pkg) ## FIXME: is this necessary?
+#     return opam_pin_pkg_path(repo_ctx, rootpath, pkg, version, path)
 
