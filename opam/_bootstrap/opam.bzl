@@ -137,12 +137,12 @@ def _config_opam_pkgs(repo_ctx):
         # print("Missing packages: %s" % missing)
         if repo_ctx.attr.install:
             for [pkg, version] in missing.items():
-                repo_ctx.report_progress("Installing {p} {v}".format(p=pkg, v=version))
+                repo_ctx.report_progress("Installing missing pkg {p} {v}".format(p=pkg, v=version))
                 # print("installing {p} {v}".format(p=pkg, v=version))
                 # result = opam_pin_version(pkg, version)
                 result = repo_ctx.execute(["opam", "install", "-y", pkg + "." + version])
                 if result.return_code == 0:
-                    repo_ctx.report_progress("Installed {p} {v}".format(p=pkg, v=version))
+                    repo_ctx.report_progress("Installed {p} {v}; pinning...".format(p=pkg, v=version))
                     # print("installed {p} {v}".format(p=pkg, v=version))
                     if repo_ctx.attr.pin:
                         result = repo_ctx.execute(["opam", "pin", "-y", "add", pkg, version])
@@ -184,35 +184,37 @@ def _config_opam_pkgs(repo_ctx):
                     repo_ctx.report_progress("Removed {p}".format(p=pkg))
                     print("removed {p}".format(p=pkg))
                 else:
-                    print("Error in removal of {p}".format(p=pkg))
-                    print("REMOVAL RC: %s" % result.return_code)
-                    print("REMOVAL STDOUT: %s" % result.stdout)
-                    print("REMOVAL STDERR: %s" % result.stderr)
-                    fail("REMOVAL ERROR")
+                    fail("ERROR: cmd 'opam remove -y {p} RC: {rc}, STDOUT: {stdout}, STDERR: {stderr}".format(
+                        p=pkg,
+                        rc = result.return_code,
+                        stdout = result.stdout,
+                        stderr =result.stderr
+                    ))
 
-                repo_ctx.report_progress("Installing {p} {v}".format(p=pkg, v=version))
-                print("installing {p} {v}".format(p=pkg, v=version))
-                result = repo_ctx.execute(["opam", "install", "-y",
-                                           pkg + "." + version])
+                repo_ctx.report_progress("Installing correct version: {p} {v}".format(p=pkg, v=version))
+                # print("installing {p} {v}".format(p=pkg, v=version))
+                result = repo_ctx.execute(["opam", "install", "-y", pkg + "." + version])
                 if result.return_code == 0:
-                    repo_ctx.report_progress("Installed {p} {v}".format(p=pkg, v=version))
-                    print("installed {p} {v}".format(p=pkg, v=version))
-                    result = repo_ctx.execute(["opam", "pin", pkg, version])
+                    repo_ctx.report_progress("Installed {p} {v}; pinning...".format(p=pkg, v=version))
+                    # print("installed {p} {v}".format(p=pkg, v=version))
+                    result = repo_ctx.execute(["opam", "pin", "-y", "add", pkg, version])
                     if result.return_code == 0:
                         repo_ctx.report_progress("Pinned {p} {v}".format(p=pkg, v=version))
-                        print("pinned {p} {v}".format(p=pkg, v=version))
+                        # print("pinned {p} {v}".format(p=pkg, v=version))
                         ppx = is_ppx_driver(repo_ctx, pkg)
                         opam_pkg_rules.append(
                             "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
                         )
                     else:
-                        print("PIN RC: %s" % result.return_code)
-                        print("PIN STDERR: %s" % result.stderr)
-                        print("PIN STDOUT: %s" % result.stdout)
+                        fail("'opam pin -y add {p} {v}' RC: {rc}, STDOUT: {stdout}, STDERR: {stderr}".format(
+                            p=pkg, v=version, rc = result.return_code,
+                            stdout = result.stdout, stderr = result.stderr
+                        ))
                 else:
-                    print("RC: %s" % result.return_code)
-                    print("STDERR: %s" % result.stderr)
-                    print("STDOUT: %s" % result.stdout)
+                    fail("'opam install -y {p}.{v}' RC: {rc}, STDOUT: {stdout}, STDERR: {stderr}".format(
+                        p=pkg, v=version, rc = result.return_code,
+                        stdout = result.stdout, stderr = result.stderr
+                    ))
 
     opam_pkgs = "\n".join(opam_pkg_rules)
     return opam_pkgs
