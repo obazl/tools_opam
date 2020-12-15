@@ -117,14 +117,22 @@ def _config_opam_pkgs(repo_ctx):
                                 "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
                             )
                         else:
-                            print("PIN ERROR RC: %s" % result.return_code)
-                            print("PIN STDERR: %s" % result.stderr)
-                            print("PIN STDOUT: %s" % result.stdout)
+                            fail("OPAM ERROR cmd: 'opam pin {p} {v} RC: {rc}, STDOUT: {stdout}, STDERR: {stderr}".format(
+                                p=pkg, v=verion, rc = result.return_code,
+                                stdout = result.stdout, stderr = result.stderr
+                            ))
+                            # print("PIN ERROR RC: %s" % result.return_code)
+                            # print("PIN STDERR: %s" % result.stderr)
+                            # print("PIN STDOUT: %s" % result.stdout)
                             return
                 else:
-                    print("ERROR: OPAM INSTALL {p} RC: {rc}".format(p=pkg, rc=result.return_code))
-                    print("STDERR: %s" % result.stderr)
-                    print("STDOUT: %s" % result.stdout)
+                    fail("OPAM ERROR cmd: 'opam install -y {p}.{v}' RC: {rc}, STDOUT: {stdout}, STDERR: {stderr}".format(
+                        p=pkg, v=verion, rc = result.return_code,
+                        stdout = result.stdout, stderr = result.stderr
+                    ))
+                    # print("ERROR: OPAM INSTALL {p} RC: {rc}".format(p=pkg, rc=result.return_code))
+                    # print("STDERR: %s" % result.stderr)
+                    # print("STDOUT: %s" % result.stdout)
                     return
 
     if len(bad_version) > 0:
@@ -397,12 +405,12 @@ def _opam_repo_localhost_findlib(repo_ctx):
     if len(repo_ctx.attr.opam_pkgs) > 0:
         opam_pkgs = _config_opam_pkgs(repo_ctx)
 
-    # print("OPAMPKGS: %s" % opam_pkgs)
+    print("OPAMPKGS: %s" % opam_pkgs)
 
     if len(repo_ctx.attr.findlib_pkgs) > 0:
         findlib_pkgs = _config_findlib_pkgs(repo_ctx)
 
-    # print("FINDLIB PKGS: %s" % findlib_pkgs)
+    print("FINDLIB PKGS: %s" % findlib_pkgs)
 
     ## WARNING: path pinning must come after version pinning.
     ## Otherwise, e.g. rpc_parallel path pin will fail on missing
@@ -410,7 +418,7 @@ def _opam_repo_localhost_findlib(repo_ctx):
     if len(repo_ctx.attr.pin_specs) > 0:
         pinned_paths = _pin_paths(repo_ctx)
 
-    # print("PINNED PATHS: %s" % pinned_paths)
+    print("PINNED PATHS: %s" % pinned_paths)
 
     opam_pkgs = opam_pkgs + "\n" + findlib_pkgs + "\n" + pinned_paths
     # print("PKGS:\n%s" % opam_pkgs)
