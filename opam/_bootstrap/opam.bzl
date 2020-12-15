@@ -108,7 +108,7 @@ def _config_opam_pkgs(repo_ctx):
                     repo_ctx.report_progress("Installed {p} {v}".format(p=pkg, v=version))
                     # print("installed {p} {v}".format(p=pkg, v=version))
                     if repo_ctx.attr.pin:
-                        result = repo_ctx.execute(["opam", "pin", pkg, version])
+                        result = repo_ctx.execute(["opam", "pin", "-y", "add", pkg, version])
                         if result.return_code == 0:
                             repo_ctx.report_progress("Pinned {p} {v}".format(p=pkg, v=version))
                             # print("pinned {p} {v}".format(p=pkg, v=version))
@@ -117,7 +117,7 @@ def _config_opam_pkgs(repo_ctx):
                                 "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
                             )
                         else:
-                            fail("OPAM ERROR cmd: 'opam pin {p} {v} RC: {rc}, STDOUT: {stdout}, STDERR: {stderr}".format(
+                            fail("OPAM ERROR cmd: 'opam pin -y add {p} {v}' RC: {rc}, STDOUT: {stdout}, STDERR: {stderr}".format(
                                 p=pkg, v=version, rc = result.return_code,
                                 stdout = result.stdout, stderr = result.stderr
                             ))
