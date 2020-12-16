@@ -49,7 +49,7 @@ def opam_set_switch(repo_ctx):
 
         if env_switch:
             repo_ctx.report_progress("SWITCH {s} from env var OPAMSWITCH not found.".format(s = switch_name))
-            fail("\n\nERROR: Switch '{s}' (from env var OPAMSWITCH) not found. To create a new switch, either do so from the command line ('switch create <name> <version>') or configure the switch in the opam config file (by convention, \"bzl/opam.bzl\").\n\n".format(s = switch_name))
+            fail("\n\nERROR: Switch '{s}' (from env var OPAMSWITCH) not found. To create a new switch, either do so from the command line ('opam switch create <name> <version>') or configure the switch in the opam config file (by convention, \"bzl/opam.bzl\").\n\n".format(s = switch_name))
 
         else:
             # create new switch
