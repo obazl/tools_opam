@@ -1,3 +1,5 @@
+DEBUG = False
+
 def debug_report_progress(repo_ctx, msg):
     if repo_ctx.attr.debug:
         print(msg)

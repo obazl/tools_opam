@@ -15,7 +15,7 @@ load(":opam_pinning.bzl",
 load(":hermetic.bzl", "opam_repo_hermetic")
 
 load("//opam/_functions:ppx.bzl", "is_ppx_driver")
-load("//opam/_debug:utils.bzl", "debug_report_progress")
+load("//opam/_debug:utils.bzl", "DEBUG", "debug_report_progress")
 
 # 4.07.1 broken on XCode 12:
 # https://discuss.ocaml.org/t/ocaml-4-07-1-fails-to-build-with-apple-xcode-12/6441/15
@@ -431,11 +431,9 @@ def _pin_paths(repo_ctx):
     #                 print("ERROR stderr: %s" % pinout.stderr)
     #                 fail("OPAM pin add cmd failed")
 
-#########################
-def _opam_init(repo_ctx):
-    repo_ctx.report_progress("OPAM pkg verification disabled.")
-
-    print("OPAM_INIT")
+###################################
+def _opam_init_no_verify(repo_ctx):
+    repo_ctx.report_progress("OPAM init without pkg verification.")
 
     opam_pkg_rules = []
     repo_ctx.report_progress("Constructing OPAM pkg rules without verification")
@@ -464,9 +462,10 @@ def _opam_init(repo_ctx):
     opam_pkgs = "\n".join(opam_pkg_rules + findlib_pkg_rules + pinned_pkg_rules)
     return opam_pkgs
 
-#########################
+################################
 def _opam_init_verify(repo_ctx):
-    print("OPAM_INIT_VERIFY")
+    repo_ctx.report_progress("OPAM init with pkg verification.")
+
     opam_pkgs    = ""
     findlib_pkgs = ""
     pinned_paths = ""
@@ -500,14 +499,14 @@ def _opam_repo_workspaces(repo_ctx,  opam_pkgs):
     repo_ctx.report_progress("Bootstrapping OPAM workspaces.")
 
     opam_switch_prefix = repo_ctx.execute(["opam", "var", "prefix"]).stdout.strip()
-    print("OPAM SWITCH PREFIX: %s" % opam_switch_prefix)
+    # print("OPAM SWITCH PREFIX: %s" % opam_switch_prefix)
 
     # opambin = repo_ctx.which("opam") # "/usr/local/Cellar/opam/2.0.7/bin"
     # if "OPAM_SWITCH_PREFIX" in repo_ctx.os.environ:
     #     opampath = repo_ctx.os.environ["OPAM_SWITCH_PREFIX"] + "/bin"
     # else:
     #     fail("Env. var OPAM_SWITCH_PREFIX is unset; try running 'opam env'")
-    repo_ctx.report_progress("OPAM: intalling BUILD.bazel files...")
+    repo_ctx.report_progress("OPAM: intalling symlinks and workspaces")
 
     # repo_ctx.symlink(opambin, "opam") # the opam executable
 
@@ -545,25 +544,24 @@ def _opam_repo_workspaces(repo_ctx,  opam_pkgs):
 def _opam_repo_impl(repo_ctx):
     debug_report_progress(repo_ctx, "Bootstrapping opam repo")
 
-    if "OPAMSWITCH" in repo_ctx.os.environ:
-        print("OPAMSWITCH: %s" % repo_ctx.os.environ["OPAMSWITCH"])
+    if DEBUG:
+        if "OPAMSWITCH" in repo_ctx.os.environ:
+            print("OPAMSWITCH: %s" % repo_ctx.os.environ["OPAMSWITCH"])
 
     opam_set_switch(repo_ctx)
 
     if "OBAZL_OPAM_NOVERIFY" in repo_ctx.os.environ:
-        verify = repo_ctx.os.environ["OBAZL_OPAM_NOVERIFY"]
-        print("OBAZL_OPAM_NOVERIFY = %s" % verify)
-        opam_pkgs = _opam_init(repo_ctx)
-        # if verify == "0":
-        # else:
-        #     opam_pkgs = _opam_init_verify(repo_ctx)
+        # verify = repo_ctx.os.environ["OBAZL_OPAM_NOVERIFY"]
+        # print("OBAZL_OPAM_NOVERIFY = %s" % verify)
+        opam_pkgs = _opam_init_no_verify(repo_ctx)
     else:
         if repo_ctx.attr.verify:
             opam_pkgs = _opam_init_verify(repo_ctx)
         else:
-            opam_pkgs = _opam_init(repo_ctx)
+            opam_pkgs = _opam_init_no_verify(repo_ctx)
 
-    print("OPAM_PKGS:\n%s" % opam_pkgs)
+    if DEBUG:
+        print("OPAM_PKGS:\n%s" % opam_pkgs)
 
     return _opam_repo_workspaces(repo_ctx, opam_pkgs)
     # return _opam_repo_localhost_findlib(repo_ctx)
@@ -696,17 +694,16 @@ opam = struct(
     }
 )
 """
-    print("opam.configure")
+
     if opam == None:
-        print("ERROR: opam arg required")
-        return
+        fail("ERROR: config arg 'opam' is required")
 
     if hermetic:
         if not opam:
             fail("Hermetic builds require a list of OPAM deps.")
 
     if not hasattr(opam, "switches"):
-        fail("Missing field 'switches'")
+        fail("Config arg 'opam' is missing field 'switches'")
     else:
         if (not types.is_dict(opam.switches)):
                 fail("opam.switches must be a dict")
