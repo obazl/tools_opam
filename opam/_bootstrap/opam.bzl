@@ -241,7 +241,8 @@ def _config_findlib_pkgs(repo_ctx):
     ## FIXME: uniqify?
     # for [pkg, version] in repo_ctx.attr.findlib_pkgs.items():
     for pkg in repo_ctx.attr.findlib_pkgs:
-        findlib_version = findlib_pkgs.get(pkg)
+        # version is controlled by opam pkgs
+        # findlib_version = findlib_pkgs.get(pkg)
         # if findlib_version == version:
         #     ppx = is_ppx_driver(repo_ctx, pkg)
         findlib_pkg_rules.append(
@@ -430,13 +431,42 @@ def _pin_paths(repo_ctx):
     #                 print("ERROR stderr: %s" % pinout.stderr)
     #                 fail("OPAM pin add cmd failed")
 
-###########################################
-def _opam_repo_localhost_findlib(repo_ctx):
-    # print("opam/_bootstrap:opam.bzl _opam_repo_localhost_findlib(repo_ctx)")
-    repo_ctx.report_progress("bootstrapping localhost_findlib OPAM repo...")
+#########################
+def _opam_init(repo_ctx):
+    repo_ctx.report_progress("OPAM pkg verification disabled.")
 
-    opamroot = repo_ctx.execute(["opam", "var", "prefix"]).stdout.strip()
+    print("OPAM_INIT")
 
+    opam_pkg_rules = []
+    repo_ctx.report_progress("Constructing OPAM pkg rules without verification")
+    for [pkg, version] in repo_ctx.attr.opam_pkgs.items():
+        ppx = is_ppx_driver(repo_ctx, pkg)
+        opam_pkg_rules.append(
+            "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
+        )
+
+    findlib_pkg_rules = []
+    repo_ctx.report_progress("Constructing findlib pkg rules without verification")
+    for pkg in repo_ctx.attr.findlib_pkgs:
+        ppx = is_ppx_driver(repo_ctx, pkg)
+        findlib_pkg_rules.append(
+            "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
+        )
+
+    pinned_pkg_rules = []
+    repo_ctx.report_progress("Constructing OPAM pinned path pkg rules without verification")
+    for [pkg, spec] in repo_ctx.attr.pin_specs.items():
+        ppx = is_ppx_driver(repo_ctx, pkg)
+        pinned_pkg_rules.append(
+            "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format(pkg=pkg, ppx=ppx)
+        )
+
+    opam_pkgs = "\n".join(opam_pkg_rules + findlib_pkg_rules + pinned_pkg_rules)
+    return opam_pkgs
+
+#########################
+def _opam_init_verify(repo_ctx):
+    print("OPAM_INIT_VERIFY")
     opam_pkgs    = ""
     findlib_pkgs = ""
     pinned_paths = ""
@@ -462,6 +492,16 @@ def _opam_repo_localhost_findlib(repo_ctx):
     opam_pkgs = opam_pkgs + "\n" + findlib_pkgs + "\n" + pinned_paths
     # print("PKGS:\n%s" % opam_pkgs)
 
+    return opam_pkgs
+
+###########################################
+def _opam_repo_workspaces(repo_ctx,  opam_pkgs):
+    # print("opam/_bootstrap:opam.bzl _opam_repo_localhost_findlib(repo_ctx)")
+    repo_ctx.report_progress("Bootstrapping OPAM workspaces.")
+
+    opam_switch_prefix = repo_ctx.execute(["opam", "var", "prefix"]).stdout.strip()
+    print("OPAM SWITCH PREFIX: %s" % opam_switch_prefix)
+
     # opambin = repo_ctx.which("opam") # "/usr/local/Cellar/opam/2.0.7/bin"
     # if "OPAM_SWITCH_PREFIX" in repo_ctx.os.environ:
     #     opampath = repo_ctx.os.environ["OPAM_SWITCH_PREFIX"] + "/bin"
@@ -471,12 +511,12 @@ def _opam_repo_localhost_findlib(repo_ctx):
 
     # repo_ctx.symlink(opambin, "opam") # the opam executable
 
-    local_opam_root = "/Users/gar/.obazl/opam"
-    # repo_ctx.symlink(local_opam_root, "opam")
-    repo_ctx.symlink(local_opam_root + "/lib", "lib")
+    # local_opam_switch_prefix = "/Users/gar/.obazl/opam"
+    # repo_ctx.symlink(local_opam_switch_prefix, "opam")
+    repo_ctx.symlink(opam_switch_prefix + "/lib", "lib")
 
-    repo_ctx.symlink(opamroot, "sdk")
-    repo_ctx.symlink(opamroot + "/bin", "bin")
+    repo_ctx.symlink(opam_switch_prefix, "sdk")
+    repo_ctx.symlink(opam_switch_prefix + "/bin", "bin")
 
     repo_ctx.file("WORKSPACE", "", False)
     repo_ctx.template(
@@ -505,21 +545,28 @@ def _opam_repo_localhost_findlib(repo_ctx):
 def _opam_repo_impl(repo_ctx):
     debug_report_progress(repo_ctx, "Bootstrapping opam repo")
 
+    if "OPAMSWITCH" in repo_ctx.os.environ:
+        print("OPAMSWITCH: %s" % repo_ctx.os.environ["OPAMSWITCH"])
+
     opam_set_switch(repo_ctx)
 
-    # repo_ctx.report_progress("Setting OPAM switch to: %s" % repo_ctx.attr.switch_name)
-    # print("Setting OPAM switch to: %s" % repo_ctx.attr.switch_name)
+    if "OBAZL_OPAM_NOVERIFY" in repo_ctx.os.environ:
+        verify = repo_ctx.os.environ["OBAZL_OPAM_NOVERIFY"]
+        print("OBAZL_OPAM_NOVERIFY = %s" % verify)
+        opam_pkgs = _opam_init(repo_ctx)
+        # if verify == "0":
+        # else:
+        #     opam_pkgs = _opam_init_verify(repo_ctx)
+    else:
+        if repo_ctx.attr.verify:
+            opam_pkgs = _opam_init_verify(repo_ctx)
+        else:
+            opam_pkgs = _opam_init(repo_ctx)
 
-    # result = repo_ctx.execute(["opam", "switch", "set", repo_ctx.attr.switch_name])
-    # if result.return_code != 0:
-    #     print("ERROR: 'opam switch set {s}' RC: {rc}".format(
-    #         s=repo_ctx.attr.switch_name, rc=result.return_code
-    #     ))
-    #     print("cmd STDOUT: %s" % result.stdout)
-    #     print("cmd PREFIX STDERR: %s" % result.stderr)
-    #     fail("OPAM cmd ERROR")
+    print("OPAM_PKGS:\n%s" % opam_pkgs)
 
-    return _opam_repo_localhost_findlib(repo_ctx)
+    return _opam_repo_workspaces(repo_ctx, opam_pkgs)
+    # return _opam_repo_localhost_findlib(repo_ctx)
 
     # return { "foo": "bar" }
 
@@ -532,12 +579,18 @@ _opam_repo = repository_rule(
     implementation = _opam_repo_impl,
     configure = True,
     # local = True,
+    environ = [
+        "OBAZL_OPAM_NOVERIFY",
+        "OPAMSWITCH",
+        "CAML_LD_LIBRARY_PATH"
+    ],
     attrs = dict(
         hermetic        = attr.bool( default = True ),
         verify          = attr.bool( default = True ),
         install         = attr.bool( default = True ),
         force           = attr.bool( default = False),
         pin             = attr.bool( default = True ),
+        switch          = attr.label(default = "@opam_switch//:switch"),
 
         switch_name     = attr.string(),
         switch_compiler = attr.string(),
@@ -757,6 +810,8 @@ opam = struct(
         branch = "main",
     )
     # print("PIN_SPECS: %s" % pin_specs)
+
+    # _opam_switch_repo(name = "opam_switch")
 
     _opam_repo(name="opam",
                hermetic = hermetic,

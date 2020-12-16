@@ -21,10 +21,10 @@ def opam_set_switch(repo_ctx):
 
     debug_report_progress(repo_ctx, "opam_set_switch")
 
-    if "OBAZL_SWITCH" in repo_ctx.os.environ:
-        print("OBAZL_SWITCH = %s" % repo_ctx.os.environ["OBAZL_SWITCH"])
-        switch_name = repo_ctx.os.environ["OBAZL_SWITCH"]
-        print("Using '{s}' from OBAZL_SWITCH env var.".format(s = switch_name))
+    if "OPAMSWITCH" in repo_ctx.os.environ:
+        print("OPAMSWITCH = %s" % repo_ctx.os.environ["OPAMSWITCH"])
+        switch_name = repo_ctx.os.environ["OPAMSWITCH"]
+        print("Using '{s}' from OPAMSWITCH env var.".format(s = switch_name))
         env_switch = True
     else:
         switch_name = repo_ctx.attr.switch_name
@@ -46,8 +46,8 @@ def opam_set_switch(repo_ctx):
     elif result.return_code == 5: # Not found
 
         if env_switch:
-            repo_ctx.report_progress("SWITCH {s} from env var OBAZL_SWITCH not found.".format(s = switch_name))
-            fail("\n\nERROR: OBAZL_SWITCH name '{s}' not found. To create a new switch, either do so from the command line or configure the switch in the opam config file (by convention, \"bzl/opam.bzl\").\n\n".format(s = switch_name))
+            repo_ctx.report_progress("SWITCH {s} from env var OPAMSWITCH not found.".format(s = switch_name))
+            fail("\n\nERROR: OPAMSWITCH name '{s}' not found. To create a new switch, either do so from the command line or configure the switch in the opam config file (by convention, \"bzl/opam.bzl\").\n\n".format(s = switch_name))
 
         else:
             # create new switch
@@ -107,10 +107,10 @@ def opam_set_switch(repo_ctx):
 
 def opam_set_switch_sh(repo_ctx):
 
-    if "OBAZL_SWITCH" in repo_ctx.os.environ:
-        print("OBAZL_SWITCH = %s" % repo_ctx.os.environ["OBAZL_SWITCH"])
-        switch_name = repo_ctx.os.environ["OBAZL_SWITCH"]
-        print("Using '{s}' from OBAZL_SWITCH env var.".format(s = switch_name))
+    if "OPAMSWITCH" in repo_ctx.os.environ:
+        print("OPAMSWITCH = %s" % repo_ctx.os.environ["OPAMSWITCH"])
+        switch_name = repo_ctx.os.environ["OPAMSWITCH"]
+        print("Using '{s}' from OPAMSWITCH env var.".format(s = switch_name))
         env_switch = True
     else:
         switch_name = repo_ctx.attr.switch_name
@@ -132,8 +132,8 @@ def opam_set_switch_sh(repo_ctx):
     elif result.return_code == 5: # Not found
 
         if env_switch:
-            repo_ctx.report_progress("SWITCH {s} from env var OBAZL_SWITCH not found.".format(s = switch_name))
-            fail("\n\nERROR: OBAZL_SWITCH name '{s}' not found. To create a new switch, either do so from the command line or configure the switch in the opam config file (by convention, \"bzl/opam.bzl\").\n\n".format(s = switch_name))
+            repo_ctx.report_progress("SWITCH {s} from env var OPAMSWITCH not found.".format(s = switch_name))
+            fail("\n\nERROR: OPAMSWITCH name '{s}' not found. To create a new switch, either do so from the command line or configure the switch in the opam config file (by convention, \"bzl/opam.bzl\").\n\n".format(s = switch_name))
 
         else:
             # create new switch
