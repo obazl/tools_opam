@@ -1,0 +1,22 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+
+## re2c lemon tutorial: https://github.com/tokuhirom/re2c-lemon-tutorial
+
+# re2c -o records.c records.re
+
+##########
+cc_binary(
+    name  = "recparser",
+    srcs  = [":parse_records.cc"],
+)
+
+genrule(
+    name = "gen-lexer",
+    srcs = ["parse_records.re"],
+    tools = ["//tools/parser:re2c"],
+    outs  = ["parse_records.cc"],
+    cmd   = "\n".join([
+        "bazel-out/host/bin/parser/re2c/bin/re2c -o $@ $<"
+    ])
+)
+
