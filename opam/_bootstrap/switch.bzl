@@ -22,13 +22,15 @@ def opam_set_switch(repo_ctx):
     debug_report_progress(repo_ctx, "opam_set_switch")
 
     if "OPAMSWITCH" in repo_ctx.os.environ:
-        print("OPAMSWITCH = %s" % repo_ctx.os.environ["OPAMSWITCH"])
+        # print("OPAMSWITCH = %s" % repo_ctx.os.environ["OPAMSWITCH"])
         switch_name = repo_ctx.os.environ["OPAMSWITCH"]
-        print("Using '{s}' from OPAMSWITCH env var.".format(s = switch_name))
+        # print("Using '{s}' from OPAMSWITCH env var.".format(s = switch_name))
         env_switch = True
     else:
         switch_name = repo_ctx.attr.switch_name
         env_switch = False
+
+    print("@opam using switch '{s}'".format(s = switch_name))
 
     result = repo_ctx.execute(["opam", "switch", "set", switch_name])
     if result.return_code == 0:
