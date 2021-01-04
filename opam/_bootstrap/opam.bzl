@@ -1,9 +1,9 @@
-load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
-load("@bazel_skylib//lib:collections.bzl", "collections")
+# load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
+# load("@bazel_skylib//lib:collections.bzl", "collections")
 load("@bazel_skylib//lib:types.bzl", "types")
 
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository") # buildifier: disable=load
-load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")  # buildifier: disable=load
+# load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository") # buildifier: disable=load
+# load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")  # buildifier: disable=load
 load("@obazl_tools_bazel//tools/functions:strings.bzl", "tokenize")
 
 load(":switch.bzl", "opam_set_switch")
@@ -550,15 +550,17 @@ def _opam_repo_impl(repo_ctx):
 
     opam_set_switch(repo_ctx)
 
-    if "OBAZL_OPAM_NOVERIFY" in repo_ctx.os.environ:
-        # verify = repo_ctx.os.environ["OBAZL_OPAM_NOVERIFY"]
-        # print("OBAZL_OPAM_NOVERIFY = %s" % verify)
-        opam_pkgs = _opam_init_no_verify(repo_ctx)
+    if "OBAZL_OPAM_VERIFY" in repo_ctx.os.environ:
+        opam_pkgs = _opam_init_verify(repo_ctx)
     else:
         if repo_ctx.attr.verify:
             opam_pkgs = _opam_init_verify(repo_ctx)
         else:
             opam_pkgs = _opam_init_no_verify(repo_ctx)
+
+        # # verify = repo_ctx.os.environ["OBAZL_OPAM_NOVERIFY"]
+        # # print("OBAZL_OPAM_NOVERIFY = %s" % verify)
+        # opam_pkgs = _opam_init_no_verify(repo_ctx)
 
     if DEBUG:
         print("OPAM_PKGS:\n%s" % opam_pkgs)
@@ -578,7 +580,7 @@ _opam_repo = repository_rule(
     configure = True,
     # local = True,
     environ = [
-        "OBAZL_OPAM_NOVERIFY",
+        "OBAZL_OPAM_VERIFY",
         "OPAMSWITCH",
         "CAML_LD_LIBRARY_PATH"
     ],
@@ -645,55 +647,76 @@ _opam_repo_hidden = repository_rule(
 )
 
 ################################################################
+#     OPAM config structure:
+#     opam_version := string
+#     switches    := dict(name string, switch struct
+# Switch struct:
+#     compiler := version string
+#     packages := dict(name string, pkg spec)
+# Pkg spec:
+#     pkg name: ["version_string"]
+#               | ["version_string", ["sublib_a", "sublib_b"]]
+#               | "path/to/pin"
+#  First form pins version, second pins version plus findlib subpackages, third pins path
+#     Example:
+
+# PACKAGES = {
+#     "base": ["v0.12.0"],
+#     "ocaml-compiler-libs": ["v0.11.0", ["compiler-libs.common"]],
+#     "ppx_expect": ["v0.12.0", ["ppx_expect.collector"]],
+#     "ppx_inline_test": ["v0.12.0", ["ppx_inline_test.runtime-lib"]],
+#     "ppxlib": ["0.8.1"],
+#     "stdio": ["v0.12.0"],
+# }
+
+# opam = struct(
+#     version = "2.0",
+#     switches = {
+#         "mina-0.1.0": struct(    # first entry is default
+#             compiler = "4.07.1",  # compiler version
+#             packages = PACKAGES
+#         ),
+#         "4.07.1": struct(
+#             name     = "4.07.1",
+#             compiler = "4.07.1",  # compiler version
+#             packages = PACKAGES
+#         )
+#     }
+# )
+
+
 def configure(
         opam = None,
         switch   = None,
-        default  = False,
+        # default  = False,
         hermetic = False,
-        verify   = True,
-        install  = True,
-        pin      = True,
+        verify   = False,
+        install  = False,
+        pin      = False,
+        force    = False,
         debug    = False
 ):
+    """Bootstraps and configures OPAM switch and workspaces needed for OPAM support. Returns: configured switch name (string).
+
+    **WARNING** Support for verify/pin/install is not yet fully implemented. Currently verification implies `install=True` and `pin=True`.  Verification with `install=False` and/or `pin=False`, when implemented, will instead emit warnings for missing or misconfigured packages.
+
+    Env vars:
+
+      - OPAMSWITCH: if defined, overrides `switch` attribute and configured default switch
+      - OBAZL_OPAM_VERIFY: if defined, overrides `verify=False`
+      - OBAZL_OPAM_PIN: if defined, overrides `pin=False`
+
+    Args:
+      opam: an [OpamConfig](#provider-opamconfig) provider
+      switch: name of OPAM switch to use for builds. Must match a switch defined in [OpamConfig](#provider-opamconfig) specified in `opam` attribute. If omitted, switch configured as `default` in `opam` struct is used.
+      hermetic: Currently only `hermetic=False` is supported: the rules use the local opam installation.
+      verify: Verify that 1) switch contains required OPAM packages, and 2) they are pinned to required versions
+      install: Install missing OPAM packages
+      pin:  Pin OPAM packages to required versions
+      force:  Force pinning: if installed version does not match required version, remove and install/pin required version
+      debug: enable debugging
+
     """
-OPAM Structure:
-    opam_version := string
-    switches    := dict(name string, switch struct
-Switch struct:
-    compiler := version string
-    packages := dict(name string, pkg spec)
-Pkg spec:
-    "pkg name": ["version_string"]
-              | ["version_string", ["sublib_a", "sublib_b"]]
-              | "path/to/pin"
-# First form pins version, second pins version plus findlib subpackages, third pins path
-
-# Example:
-
-PACKAGES = {
-    "base": ["v0.12.0"],
-    "ocaml-compiler-libs": ["v0.11.0", ["compiler-libs.common"]],
-    "ppx_expect": ["v0.12.0", ["ppx_expect.collector"]],
-    "ppx_inline_test": ["v0.12.0", ["ppx_inline_test.runtime-lib"]],
-    "ppxlib": ["0.8.1"],
-    "stdio": ["v0.12.0"],
-}
-
-opam = struct(
-    version = "2.0",
-    switches = {
-        "mina-0.1.0": struct(    # first entry is default
-            compiler = "4.07.1",  # compiler version
-            packages = PACKAGES
-        ),
-        "4.07.1": struct(
-            name     = "4.07.1",
-            compiler = "4.07.1",  # compiler version
-            packages = PACKAGES
-        )
-    }
-)
-"""
 
     if opam == None:
         fail("ERROR: config arg 'opam' is required")
@@ -702,34 +725,55 @@ opam = struct(
         if not opam:
             fail("Hermetic builds require a list of OPAM deps.")
 
-    if not hasattr(opam, "switches"):
-        fail("Config arg 'opam' is missing field 'switches'")
-    else:
+    default_switch = None
+    if hasattr(opam, "switches"):
         if (not types.is_dict(opam.switches)):
                 fail("opam.switches must be a dict")
+        for [k,v] in opam.switches.items():
+            if hasattr(v, "default"):
+                if v.default:
+                    if default_switch == None:
+                        default_switch = k
+                    else:
+                        fail("Only one switch may be marked with 'default = True'")
+        if default_switch == None:
+            print("One switch must be marked with 'default = True'")
+            fail("One switch must be marked with 'default = True'")
+            return
+    else:
+        fail("Config arg 'opam' is missing field 'switches'")
 
-        if switch == None:
-            for [k,v] in opam.switches.items():
-                if hasattr(v, "default"):
-                    if v.default:
-                        if switch == None:
-                            switch = k
-                        else:
-                            fail("Only one switch may be marked with 'default = True'")
-            if switch == None:
-                print("One switch must be marked with 'default = True'")
-                fail("One switch must be marked with 'default = True'")
-                return
-            # print("USING DEFAULT SWITCH: %s" % switch)
-            force = True
-        else:
-            force = False
+    # if not hasattr(opam, "switches"):
+    #     fail("Config arg 'opam' is missing field 'switches'")
+    # else:
+    #     if (not types.is_dict(opam.switches)):
+    #             fail("opam.switches must be a dict")
+
+    if switch == None:
+        #     for [k,v] in opam.switches.items():
+        #         if hasattr(v, "default"):
+        #             if v.default:
+        #                 if switch == None:
+        #                     switch = k
+        #                 else:
+        #                     fail("Only one switch may be marked with 'default = True'")
+        #     if switch == None:
+        #         print("One switch must be marked with 'default = True'")
+        #         fail("One switch must be marked with 'default = True'")
+        #         return
+        #     # print("USING DEFAULT SWITCH: %s" % switch)
+        #     force = True
+        # else:
+        #     force = False
+        switch_name = default_switch
+    else:
         switch_name = switch
 
-        switch_struct = opam.switches[switch_name]
-        if switch_struct == None:
-            fail("ERROR: config for switch {s} not defined in config file".format(s=switch_name))
-            return
+    switch_struct = opam.switches[switch_name]
+
+    if switch_struct == None:
+        fail("ERROR: config for switch {s} not defined in config file".format(s=switch_name))
+        return
 
         # if hasattr(switch, "name"):
         #     switch_name = switch.name
@@ -741,11 +785,11 @@ opam = struct(
         # else:
         #     print("ERROR: opam switch must have version field")
         #     return
-        if hasattr(switch_struct, "compiler"):
-            switch_compiler = switch_struct.compiler
-        else:
-            fail("ERROR: opam switch must have compiler version field")
-            return
+    if hasattr(switch_struct, "compiler"):
+        switch_compiler = switch_struct.compiler
+    else:
+        fail("ERROR: opam switch must have compiler version field")
+        return
 
     ## if local opam/obazl preconfigured, just use local_repository to point to it
     ## no need to bootstrap a repo in that case
@@ -800,12 +844,12 @@ opam = struct(
     #         if hasattr(opam.pins, "install"):
     #             pins_install = opam.pins.install
 
-    maybe(
-        git_repository,
-        name = "obazl_tools_bazel",
-        remote = "https://github.com/obazl/tools_bazel",
-        branch = "main",
-    )
+    # maybe(
+    #     git_repository,
+    #     name = "obazl_tools_bazel",
+    #     remote = "https://github.com/obazl/tools_bazel",
+    #     branch = "main",
+    # )
     # print("PIN_SPECS: %s" % pin_specs)
 
     # _opam_switch_repo(name = "opam_switch")

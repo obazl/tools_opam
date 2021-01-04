@@ -1,7 +1,28 @@
-"""Public Providers for obaz_rules_ocaml LSP.
+"""Public Providers for obazl_rules_opam."""
 
-All public OCaml providers imported and re-exported in this file.
+OpamConfig = provider(
+    doc = "OPAM configuration structure.",
+    fields = {
+        "version"  : "OPAM version",
+        "switches" : "List of [OpamSwitch](#opamswitch) structures"
+    }
+)
 
-Definitions outside this file should not be loaded by client code
-unless otherwise noted, and may change without notice. """
+OpamSwitch = provider(
+    doc = """OPAM switch configuration.
 
+    Package specification format (by example):
+
+    - `"alcotest": ["1.1.0"]`
+    - `"ppx_deriving_yojson": ["3.5.2", ["ppx_deriving_yojson.runtime"]]`
+    - `"ppx_deriving": ["4.4.1", ["ppx_deriving.api", "ppx_deriving.enum"]]`
+    - `"async_kernel": ["v0.12.0", "src/external/async_kernel"]` # pin pkg to path
+
+    """,
+
+    fields = {
+        "default"  : "Must be True for exactly one switch configuration. Default: False",
+        "compiler" : "OCaml compiler version",
+        "packages" : "Dict of required OPAM packages. Keys: package name strings. Values: package spec."
+    }
+)
