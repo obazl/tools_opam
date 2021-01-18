@@ -83,7 +83,7 @@ def _config_opam_pkgs(repo_ctx):
         else:
             ## FIXME: verify pinning: opam config var pkg:pinned, opam config var pkg:version
             # print("opam_version: %s" % opam_version)
-            if opam_version == version:
+            if ((opam_version == version) or (version == "")):
                 result = repo_ctx.execute(["opam", "config", "var", pkg + ":pinned"])
                 if result.return_code == 0:
                     # debug_report_progress(repo_ctx, "DBUG cmd: 'opam config var {p}:pinned' RC: {rc}, STDOUT: {stdout}, STDERR: {stderr}".format(
@@ -101,7 +101,7 @@ def _config_opam_pkgs(repo_ctx):
                         opam_pkg_rules.append(
                             "opam_pkg(name = \"{pkg}\", ppx_driver={ppx})".format( pkg = pkg, ppx = ppx )
                         )
-                    else:
+                    elif version != "":
                         repo_ctx.report_progress("Pinning {p} to {v}".format(p=pkg, v=version))
                         result = repo_ctx.execute(["opam", "pin", "-y", "add", pkg, version])
                         if result.return_code == 0:
@@ -135,12 +135,16 @@ def _config_opam_pkgs(repo_ctx):
     if len(missing) > 0:
         repo_ctx.report_progress("Missing packages: %s" % missing)
         # print("Missing packages: %s" % missing)
-        if repo_ctx.attr.install:
+        if (repo_ctx.attr.install or ("OBAZL_OPAM_PIN" in repo_ctx.os.environ)):
             for [pkg, version] in missing.items():
-                repo_ctx.report_progress("Installing missing pkg {p} {v}".format(p=pkg, v=version))
+                if version == "":
+                    print("WARNING: missing version string for %s; installing latest." % pkg)
+                else:
+                    repo_ctx.report_progress("Installing missing pkg {p} {v}".format(p=pkg, v=version))
                 # print("installing {p} {v}".format(p=pkg, v=version))
                 # result = opam_pin_version(pkg, version)
-                result = repo_ctx.execute(["opam", "install", "-y", pkg + "." + version])
+                v = "." + version if version != "" else ""
+                result = repo_ctx.execute(["opam", "install", "-y", pkg + v ]) ## "." + version])
                 if result.return_code == 0:
                     repo_ctx.report_progress("Installed {p} {v}; pinning...".format(p=pkg, v=version))
                     # print("installed {p} {v}".format(p=pkg, v=version))
@@ -175,7 +179,7 @@ def _config_opam_pkgs(repo_ctx):
     if len(bad_version) > 0:
         repo_ctx.report_progress("Bad version packages: %s" % bad_version)
         print("Bad_Version packages: %s" % bad_version)
-        if repo_ctx.attr.install:
+        if (repo_ctx.attr.install or ("OBAZL_OPAM_PIN" in repo_ctx.os.environ)):
             for [pkg, version] in bad_version.items():
                 repo_ctx.report_progress("Removing {p}".format(p=pkg))
                 print("removing {p}".format(p=pkg))
@@ -193,11 +197,13 @@ def _config_opam_pkgs(repo_ctx):
 
                 repo_ctx.report_progress("Installing correct version: {p} {v}".format(p=pkg, v=version))
                 # print("installing {p} {v}".format(p=pkg, v=version))
-                result = repo_ctx.execute(["opam", "install", "-y", pkg + "." + version])
+                v = "." + version if version != "" else ""
+                result = repo_ctx.execute(["opam", "install", "-y", pkg + v]) # "." + version])
                 if result.return_code == 0:
                     repo_ctx.report_progress("Installed {p} {v}; pinning...".format(p=pkg, v=version))
                     # print("installed {p} {v}".format(p=pkg, v=version))
-                    result = repo_ctx.execute(["opam", "pin", "-y", "add", pkg, version])
+                    v = "." + version if version != "" else ""
+                    result = repo_ctx.execute(["opam", "pin", "-y", "add", pkg, v])
                     if result.return_code == 0:
                         repo_ctx.report_progress("Pinned {p} {v}".format(p=pkg, v=version))
                         # print("pinned {p} {v}".format(p=pkg, v=version))
@@ -473,12 +479,12 @@ def _opam_init_verify(repo_ctx):
     if len(repo_ctx.attr.opam_pkgs) > 0:
         opam_pkgs = _config_opam_pkgs(repo_ctx)
 
-    # print("OPAMPKGS: %s" % opam_pkgs)
+    print("OPAMPKGS: %s" % opam_pkgs)
 
     if len(repo_ctx.attr.findlib_pkgs) > 0:
         findlib_pkgs = _config_findlib_pkgs(repo_ctx)
 
-    # print("FINDLIB PKGS: %s" % findlib_pkgs)
+    print("FINDLIB PKGS: %s" % findlib_pkgs)
 
     ## WARNING: path pinning must come after version pinning.
     ## Otherwise, e.g. rpc_parallel path pin will fail on missing
@@ -486,10 +492,10 @@ def _opam_init_verify(repo_ctx):
     if len(repo_ctx.attr.pin_specs) > 0:
         pinned_paths = _pin_paths(repo_ctx)
 
-    # print("PINNED PATHS: %s" % pinned_paths)
+    print("PINNED PATHS: %s" % pinned_paths)
 
     opam_pkgs = opam_pkgs + "\n" + findlib_pkgs + "\n" + pinned_paths
-    # print("PKGS:\n%s" % opam_pkgs)
+    print("PKGS:\n%s" % opam_pkgs)
 
     return opam_pkgs
 
