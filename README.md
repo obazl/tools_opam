@@ -11,3 +11,8 @@ See also:
 
 * [obazl_tools_bazel](https://github.com/obazl/tools_bazel)
 
+----
+## Acknowledgements
+
+Support for the development of OBazl was provided by a Mina Genesis
+Token Grant and the generous assistance of the [Mina](https://minaprotocol.com/) team.
