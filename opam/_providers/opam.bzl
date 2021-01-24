@@ -92,7 +92,7 @@ OpamSwitch(
     fields = {
         "default"  : "Must be True for exactly one switch configuration. Default: False",
         "compiler" : "OCaml compiler version",
-        "packages" : """List of `<pkg name string>: [<version string>] \| [<version string> [<subpkg names>]]`, where:
+        "packages" : """List of `<pkg name string>: [<version string>] | [<version string> [<subpkg names>]]`, where:
 
 ```
 <pkg name string> := name string used for `opam` or `ocamlfind` commands
