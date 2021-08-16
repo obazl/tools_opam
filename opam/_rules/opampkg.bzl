@@ -1,4 +1,5 @@
-load("//opam/_providers:opam.bzl", "OpamPkgInfo")
+load("@obazl_rules_ocaml//ocaml:providers.bzl", "OpamPkgInfo")
+# load("//opam:providers.bzl", "OpamPkgInfo")
 
 ################################################################
 def _opam_pkg_impl(ctx):

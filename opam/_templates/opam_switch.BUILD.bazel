@@ -1,0 +1,8 @@
+load("@bazel_skylib//rules:common_settings.bzl",
+     "string_flag")
+
+package(default_visibility = ["//visibility:public"])
+
+label_flag( name = "switch", build_setting_default = ":_switch" )
+
+string_flag( name = "_switch", build_setting_default = "" )

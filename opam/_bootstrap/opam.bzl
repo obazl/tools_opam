@@ -571,7 +571,7 @@ def _opam_repo_impl(repo_ctx):
     if DEBUG:
         print("OPAM_PKGS:\n%s" % opam_pkgs)
 
-    return _opam_repo_workspaces(repo_ctx, opam_pkgs)
+    # return _opam_repo_workspaces(repo_ctx, opam_pkgs)
     # return _opam_repo_localhost_findlib(repo_ctx)
 
     # return { "foo": "bar" }
