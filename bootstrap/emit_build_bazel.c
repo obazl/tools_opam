@@ -956,7 +956,10 @@ void emit_bazel_flags_mt(char *pfx)
     utstring_printf(fname, "%s",  "/cfg/mt");
     mkdir_r(utstring_body(fname), "");
     utstring_printf(fname, "%s",  "/BUILD.bazel");
+
     log_debug("writing cfg file: %s", utstring_body(fname));
+    fprintf(stdout, "writing cfg file: %s\n", utstring_body(fname));
+
     FILE *ostream = fopen(utstring_body(fname), "w");
     if (ostream == NULL) {
         perror(utstring_body(fname));
@@ -1211,7 +1214,9 @@ EXPORT void emit_build_bazel(char *_tgtroot,
     utstring_printf(build_bazel_file, "/%s", pkg_name);
     mkdir_r(utstring_body(build_bazel_file), "");
     utstring_printf(build_bazel_file, "/%s", "BUILD.bazel");
-    log_debug("writing: %s", utstring_body(build_bazel_file));
+
+    log_debug("emitting: %s", utstring_body(build_bazel_file));
+    fprintf(stdout, "Writing: %s\n", utstring_body(build_bazel_file));
 
     FILE *ostream;
     ostream = fopen(utstring_body(build_bazel_file), "w");

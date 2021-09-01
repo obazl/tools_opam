@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
- #include <libgen.h>
+#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -84,11 +84,11 @@ bool is_empty(const char *s)
 
 EXPORT struct obzl_meta_package *obzl_meta_parse_file(char *fname)
 {
-#ifdef DEBUG
-    log_set_quiet(false);
-#else
-    log_set_quiet(true);
-#endif
+/* #ifdef DEBUG */
+/*     log_set_quiet(false); */
+/* #else */
+/*     log_set_quiet(true); */
+/* #endif */
     /* log_info("obzl_meta_parse_file: %s", fname); */
     FILE *f;
 

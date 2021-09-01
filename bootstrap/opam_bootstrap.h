@@ -1,5 +1,7 @@
 /* This file was automatically generated.  Do not edit! */
 #undef INTERFACE
+#include "uthash.h"
+void log_fn(log_Event *evt);
 #include <stdio.h>
 typedef struct obzl_meta_package obzl_meta_package;
 void emit_build_bazel(char *_tgtroot,char *_repo,char *_pkg_prefix,char *_pkg_path,struct obzl_meta_package *_pkg);
@@ -23,7 +25,6 @@ struct obzl_meta_package {
     char *metafile;
     obzl_meta_entries *entries;          /* list of struct obzl_meta_entry */
 };
-#include "uthash.h"
 #include "utstring.h"
 typedef struct obzl_meta_flag obzl_meta_flag;
 typedef struct obzl_meta_flags obzl_meta_flags;

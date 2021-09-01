@@ -52,11 +52,11 @@ def build_opam_bootstrapper_local(repo_ctx):
     xr = repo_ctx.execute(cmd) ## , environment=cmd_env)
     if xr.return_code == 0:
         print("2 opam_bootstrap succeeded")
-        print("2 opam_bootstrap stdout: %s" % xr.stdout)
-        print("2 opam_bootstrap stderr: %s" % xr.stderr)
+        # print("2 opam_bootstrap stdout: %s\n" % xr.stdout)
+        # print("2 opam_bootstrap stderr: %s\n" % xr.stderr)
     else:
-        print("2 opam_bootstrap result: %s" % xr.stdout)
-        print("2 opam_bootstrap rc: {rc} stderr: {stderr}".format(rc=xr.return_code, stderr=xr.stderr));
+        print("3 opam_bootstrap result: %s" % xr.stdout)
+        print("3 opam_bootstrap rc: {rc} stderr: {stderr}".format(rc=xr.return_code, stderr=xr.stderr));
         fail("xxxxxxxxxxxxxxxx")
 
 ################################################################
@@ -459,12 +459,12 @@ opam_configuration = repository_rule(
             default = False,
         ),
 
-        bootstrapper = attr.label(
-            executable = True,
-            cfg = "host",
-            default = "@tools_obazl//bootstrap:opam_bootstrap",
-            allow_single_file = True
-        ),
+        # bootstrapper = attr.label(
+        #     executable = True,
+        #     cfg = "host",
+        #     default = "@tools_obazl//bootstrap:opam_bootstrap",
+        #     allow_single_file = True
+        # ),
 
         _rule = attr.string( default = "opam_configuration" ),
     ),

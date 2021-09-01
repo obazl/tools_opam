@@ -452,12 +452,42 @@ int handle_lib_meta(char *rootdir,
     return 0;
 }
 
+void log_fn(log_Event *evt)
+{
+    /* typedef struct { */
+    /*   va_list ap; */
+    /*   const char *fmt; */
+    /*   const char *file; */
+    /*   struct tm *time; */
+    /*   void *udata; */
+    /*   int line; */
+    /*   int level; */
+    /* } log_Event; */
+
+    char *v;
+    vasprintf(&v, evt->fmt, evt->ap);
+
+    char *fname = basename((char*)evt->file);
+
+    UT_string *fmt;
+    utstring_new(fmt);
+    utstring_printf(fmt, "bootstrapper/%s:%4d ", fname, evt->line);
+    utstring_printf(fmt, "%s", v);
+    utstring_printf(fmt, "\n");
+    /* fprintf(stderr, utstring_body(fmt), fname, evt->line, evt->ap); */
+    fprintf(stderr, "%s", utstring_body(fmt));
+    /* vfprintf(stderr, "X %s:%d %s\n", fname, evt->line, (char*)evt->udata); */
+    utstring_free(fmt);
+}
+
 int main(int argc, char *argv[]) // , char **envp)
 {
-#ifdef DEBUG
-    log_set_quiet(false);
+    log_add_callback(log_fn, NULL, LOG_TRACE);
+
+/* #ifdef DEBUG */
+    log_set_quiet(true);
     log_set_level(LOG_TRACE);
-#endif
+/* #endif */
 
     /* for (char **env = envp; *env != 0; env++) { */
     /*     char *thisEnv = *env; */
