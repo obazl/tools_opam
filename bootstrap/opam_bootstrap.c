@@ -193,6 +193,7 @@ char *run_cmd(char *cmd)
 
 void opam_config(char *_opam_switch, char *outdir)
 {
+    log_info("opam_config outdir: %s", outdir);
     /*
       1. discover switch
          a. check env var OPAMSWITCH
@@ -399,8 +400,8 @@ int handle_lib_meta(char *rootdir,
                     char *pkgdir,
                     char *metafile)
 {
-    /* log_info("handle_lib_meta: %s ; %s ; %s", rootdir, pkgdir, metafile); */
-    /* log_info("outdir: %s", tgtroot_lib); */
+    log_info("handle_lib_meta: %s ; %s ; %s", rootdir, pkgdir, metafile);
+    log_info("outdir: %s", tgtroot_lib);
 
     char buf[PATH_MAX];
     buf[0] = '\0';
@@ -464,30 +465,37 @@ void log_fn(log_Event *evt)
     /*   int level; */
     /* } log_Event; */
 
-    char *v;
-    vasprintf(&v, evt->fmt, evt->ap);
+    /* don't use yet - somehow it ends up overwriting the output filename */
 
-    char *fname = basename((char*)evt->file);
+    /* char *v; */
+    /* vasprintf(&v, evt->fmt, evt->ap); */
 
-    UT_string *fmt;
-    utstring_new(fmt);
-    utstring_printf(fmt, "bootstrapper/%s:%4d ", fname, evt->line);
-    utstring_printf(fmt, "%s", v);
-    utstring_printf(fmt, "\n");
-    /* fprintf(stderr, utstring_body(fmt), fname, evt->line, evt->ap); */
-    fprintf(stderr, "%s", utstring_body(fmt));
-    /* vfprintf(stderr, "X %s:%d %s\n", fname, evt->line, (char*)evt->udata); */
-    utstring_free(fmt);
+    /* char *_fname = basename((char*)evt->file); */
+
+    UT_string *_fmt;
+    utstring_new(_fmt);
+    utstring_printf(_fmt, "bootstrapper/%s:%4d ", "foo", evt->line);
+    /* utstring_printf(fmt, "%s", v); */
+    /* utstring_printf(fmt, "\n"); */
+    /* /\* fprintf(stderr, utstring_body(fmt), fname, evt->line, evt->ap); *\/ */
+    /* fprintf(stderr, "%s", utstring_body(fmt)); */
+    /* /\* vfprintf(stderr, "X %s:%d %s\n", fname, evt->line, (char*)evt->udata); *\/ */
+    utstring_free(_fmt);
+    fprintf(stdout, "XXXXXXXXXXXXXXXX");
 }
 
 int main(int argc, char *argv[]) // , char **envp)
 {
-    log_add_callback(log_fn, NULL, LOG_TRACE);
+    /* fprintf(stdout, "\nopam_bootstrap main\n"); */
+    /* log_add_callback(log_fn, NULL, LOG_TRACE); */
 
-/* #ifdef DEBUG */
-    log_set_quiet(true);
+#ifdef DEBUG
+    log_set_quiet(false);
     log_set_level(LOG_TRACE);
-/* #endif */
+#else
+    log_set_quiet(true);
+    log_set_level(LOG_INFO);
+#endif
 
     /* for (char **env = envp; *env != 0; env++) { */
     /*     char *thisEnv = *env; */
@@ -596,6 +604,7 @@ int main(int argc, char *argv[]) // , char **envp)
     mystrcat(outdir, "./");
 #endif
 
+    log_info("OUTDIR: %s", outdir);
     opam_config(opam_switch, outdir);
 
     /* log_debug("predefined flags:"); */
@@ -614,8 +623,8 @@ int main(int argc, char *argv[]) // , char **envp)
         free(s);
     }
 
-#ifdef DEBUG
+/* #ifdef DEBUG */
     log_info("outdir: %s", outdir);
     log_info("FINISHED");
-#endif
+/* #endif */
 }

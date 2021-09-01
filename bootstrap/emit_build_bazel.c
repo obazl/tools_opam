@@ -1216,7 +1216,7 @@ EXPORT void emit_build_bazel(char *_tgtroot,
     utstring_printf(build_bazel_file, "/%s", "BUILD.bazel");
 
     log_debug("emitting: %s", utstring_body(build_bazel_file));
-    fprintf(stdout, "Writing: %s\n", utstring_body(build_bazel_file));
+    /* fprintf(stdout, "Writing: %s\n", utstring_body(build_bazel_file)); */
 
     FILE *ostream;
     ostream = fopen(utstring_body(build_bazel_file), "w");
