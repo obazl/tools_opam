@@ -139,7 +139,7 @@ property(PROPERTY) ::= REQUIRES(R) opcode(OPCODE) VALTOK(V). {... construct obzl
 
 /* **************************************************************** */
 package(PKG) ::= entries(ENTRIES) . {
-#if DEBUG_TRACE
+#if YYDEBUG
     log_trace("\n");
     log_trace(">>package ::= entries");
     log_trace("  package (PKG)");
@@ -152,7 +152,7 @@ package(PKG) ::= entries(ENTRIES) . {
     the_root_pkg->entries = ENTRIES;
     /* *the_root_pkg = PKG; */
     PKG = the_root_pkg;
-#if DEBUG_TRACE
+#if YYDEBUG
     log_debug("DUMPING PKG");
     dump_package(0, PKG);
     log_debug("DUMPED PKG");
@@ -160,7 +160,7 @@ package(PKG) ::= entries(ENTRIES) . {
 }
 
 entries(ENTRIES) ::= entry(ENTRY) . {
-#if DEBUG_TRACE
+#if YYDEBUG
     log_trace("\n");
     log_trace(">>entries ::= entry");
     log_trace("%*sentries lhs (ENTRIES)", indent, sp);
@@ -171,14 +171,14 @@ entries(ENTRIES) ::= entry(ENTRY) . {
     ENTRIES = (obzl_meta_entries*)calloc(sizeof(struct obzl_meta_entries), 1);
     utarray_new(ENTRIES->list, &entry_icd);
     utarray_push_back(ENTRIES->list, ENTRY);
-#if DEBUG_TRACE
+#if YYDEBUG
     dump_entries(indent, ENTRIES);
 #endif
 }
 
 /* **************************************************************** */
 entries(ENTRIES) ::= entries(PREVENTRIES) entry(ENTRY) . {
-#if DEBUG_TRACE
+#if YYDEBUG
     log_trace("\n");
     log_trace(">>entries ::= entries entry");
     log_trace("%*sentries lhs(ENTRIES)", indent, sp); //, obzl_meta_entries_count(ENTRIES));
@@ -191,7 +191,7 @@ entries(ENTRIES) ::= entries(PREVENTRIES) entry(ENTRY) . {
     normalize_entries(PREVENTRIES, ENTRY);
     ENTRIES = PREVENTRIES;
     /* log_trace("after normalization"); */
-#if DEBUG_TRACE
+#if YYDEBUG
     /* log_trace("//entries ::= entries entry DONE"); */
     /* dump_entries(delta+indent, ENTRIES); */
 #endif
@@ -200,7 +200,7 @@ entries(ENTRIES) ::= entries(PREVENTRIES) entry(ENTRY) . {
 /* **************************************************************** */
 /*     SIMPLE PROPS     */
 entry(ENTRY) ::= VNAME(VAR) opcode(OPCODE) WORD(W) . {
-#if DEBUG_TRACE
+#if YYDEBUG
     log_trace("\n");
     log_trace(">>entry ::= VNAME opcode WORD");
     log_trace("  entry (ENTRY)");
@@ -216,7 +216,7 @@ entry(ENTRY) ::= VNAME(VAR) opcode(OPCODE) WORD(W) . {
 }
 
 entry(ENTRY) ::= VNAME(P) opcode(OPCODE) WORDS(WS) . {
-#if DEBUG_TRACE
+#if YYDEBUG
     log_trace("\n");
     log_trace(">>entry ::= VNAME opcode WORDS");
     log_trace("\tentry (ENTRY)");
@@ -233,46 +233,46 @@ entry(ENTRY) ::= VNAME(P) opcode(OPCODE) WORDS(WS) . {
 PRIMITIVE PROPS
 **************** */
 /* entry(ENTRY) ::= COMMENT(C) . { */
-/* #if DEBUG_TRACE */
+/* #if YYDEBUG */
 /*     log_trace("\n"); */
 /*     log_trace(">>entry ::= COMMENT"); */
 /*     log_trace("  entry (ENTRY)"); */
 /*     log_trace("  COMMENT (C): %s", C->s); */
 /* #endif */
 /*     ENTRY = handle_primitive_prop(DESCRIPTION, D); */
-/* #if DEBUG_TRACE */
+/* #if YYDEBUG */
 /*     log_trace("dumping new description :"); */
 /*     dump_entry(delta, ENTRY); */
 /* #endif */
 /* } */
 
 /* entry(ENTRY) ::= DESCRIPTION(D) . { */
-/* #if DEBUG_TRACE */
+/* #if YYDEBUG */
 /*     log_trace("\n"); */
 /*     log_trace(">>entry ::= DESCRIPTION"); */
 /*     log_trace("  entry (ENTRY)"); */
 /*     log_trace("  DESCRIPTION (D): %s", D->s); */
 /* #endif */
 /*     ENTRY = handle_primitive_prop(DESCRIPTION, D); */
-/* #if DEBUG_TRACE */
+/* #if YYDEBUG */
 /*     log_trace("dumping new description :"); */
 /*     dump_entry(delta, ENTRY); */
 /* #endif */
 /* } */
 
 entry(ENTRY) ::= DIRECTORY(D) . {
-#if DEBUG_TRACE
+#if YYDEBUG
     log_trace("\n");
     log_trace(">>entry ::= DIRECTORY");
 #endif
     ENTRY = handle_primitive_prop(DIRECTORY, D);
-#if DEBUG_TRACE
+#if YYDEBUG
     /* dump_entry(0, ENTRY); */
 #endif
 }
 
 /* entry(ENTRY) ::= ERROR(V) . { */
-/* #if DEBUG_TRACE */
+/* #if YYDEBUG */
 /*     log_trace("\n"); */
 /*     log_trace(">>entry ::= ERROR"); */
 /* #endif */
@@ -281,14 +281,14 @@ entry(ENTRY) ::= DIRECTORY(D) . {
 /* } */
 
 /* entry(ENTRY) ::= VERSION(V) . { */
-/* #if DEBUG_TRACE */
+/* #if YYDEBUG */
 /*     log_trace("\n"); */
 /*     log_trace(">>entry ::= VERSION"); */
 /*     log_trace("  entry (ENTRY)"); */
 /*     log_trace("  VERSION (V): %s", V->s); */
 /* #endif */
 /*     ENTRY= handle_primitive_prop(VERSION, V); */
-/* #if DEBUG_TRACE */
+/* #if YYDEBUG */
 /*     log_trace("dumping new version:"); */
 /*     dump_entry(indent, ENTRY); */
 /* #endif */
@@ -303,7 +303,7 @@ entry(ENTRY) ::= DIRECTORY(D) . {
 
 /* **************************************************************** */
 entry(ENTRY) ::= PACKAGE(PKG) LPAREN entries(ENTRIES) RPAREN. {
-#if DEBUG_TRACE
+#if YYDEBUG
     log_trace("\n");
     log_trace(">>entry ::= PACKAGE LPAREN entries RPAREN");
     log_trace("  entry lhs(ENTRY): %p", ENTRY);
@@ -332,7 +332,7 @@ entry(ENTRY) ::= PACKAGE(PKG) LPAREN entries(ENTRIES) RPAREN. {
 /* ************************************************************ */
 /*     COMPOUND PROPS     */
 entry(ENTRY) ::= VNAME(VAR) FLAGS(Flags) opcode(OPCODE) words(WS) . {
-#if DEBUG_TRACE
+#if YYDEBUG
     log_trace("\n");
     log_trace(">>entry ::= VNAME FLAGS opcode words");
     log_trace("\tentry (ENTRY)");
@@ -372,7 +372,7 @@ entry(ENTRY) ::= VNAME(VAR) FLAGS(Flags) opcode(OPCODE) words(WS) . {
 /* special case: REQUIRES */
 /*  words in value string for requires must be validated. we do this here instead of in the lexer. */
 entry(ENTRY) ::= REQUIRES(P) opcode(OPCODE) words(WS) . {
-#if DEBUG_TRACE
+#if YYDEBUG
     log_trace("\n");
     log_trace(">>entry ::= REQUIRES opcode words");
     log_trace("%*sentry (ENTRY)", indent, sp);
@@ -408,7 +408,7 @@ entry(ENTRY) ::= REQUIRES(P) opcode(OPCODE) words(WS) . {
 }
 
 entry(ENTRY) ::= REQUIRES FLAGS(FLAGS) opcode(OPCODE) words(WS) . {
-#if DEBUG_TRACE
+#if YYDEBUG
     log_trace("\n");
     log_trace(">>entry ::= REQUIRES LPAREN flag RPAREN opcode words");
     log_trace("%*sentry (ENTRY)", indent, sp);
@@ -452,7 +452,7 @@ entry(ENTRY) ::= REQUIRES FLAGS(FLAGS) opcode(OPCODE) words(WS) . {
 /* special case: PPX_RUNTIME_DEPS */
 /*  words in value string for requires must be validated. we do this here instead of in the lexer. */
 entry(ENTRY) ::= PPX_RUNTIME_DEPS opcode(OPCODE) words(WS) . {
-#if DEBUG_TRACE
+#if YYDEBUG
     log_trace("\n");
     log_trace(">>entry ::= PPX_RUNTIME_DEPS opcode words");
     log_trace("%*sentry (ENTRY)", indent, sp);
@@ -474,7 +474,7 @@ entry(ENTRY) ::= PPX_RUNTIME_DEPS opcode(OPCODE) words(WS) . {
 }
 
 entry(ENTRY) ::= PPX_RUNTIME_DEPS FLAGS(FLAGS) opcode(OPCODE) words(WS) . {
-#if DEBUG_TRACE
+#if YYDEBUG
     log_trace("\n");
     log_trace(">>entry ::= PPX_RUNTIME_DEPS LPAREN flag RPAREN opcode words");
     log_trace("%*sentry (ENTRY)", indent, sp);
@@ -506,7 +506,7 @@ SPECIAL CASE: ARCHIVE
 
 /* ****************** */
 words(WORDS) ::= WORD(W) . {
-#if DEBUG_TRACE
+#if YYDEBUG
     log_trace("\n");
     log_trace(">>words ::= WORD");
     log_trace("\twords lhs(WORDS)");
@@ -522,7 +522,7 @@ words(WORDS) ::= WORD(W) . {
 }
 
 words(A) ::= WORDS(WS) . {
-#if DEBUG_TRACE
+#if YYDEBUG
     log_trace("\n");
     log_trace(">>words ::= WORDS");
     log_trace("\twords lhs(A)");
@@ -544,7 +544,7 @@ words(A) ::= WORDS(WS) . {
 /* } */
 
 opcode(A) ::= EQ(B) . {
-#if DEBUG_TRACE
+#if YYDEBUG
     log_trace("\n");
     log_trace(">>opcode ::= EQ");
     log_trace("\topcode lhs(A)");
@@ -554,7 +554,7 @@ opcode(A) ::= EQ(B) . {
 }
 
 opcode(A) ::= PLUSEQ(B) . {
-#if DEBUG_TRACE
+#if YYDEBUG
     log_trace("\n");
     log_trace(">>opcode(A) ::= PLUSEQ(B)");
 #endif
