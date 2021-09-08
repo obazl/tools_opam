@@ -58,13 +58,16 @@ EXPORT obzl_meta_entry *obzl_meta_entries_nth(obzl_meta_entries *_entries, int _
 EXPORT obzl_meta_property *obzl_meta_entries_property(obzl_meta_entries *_entries, char *_name)
 {
 #if DEBUG_TRACE
-    /* log_trace("obzl_meta_entries_property('%s')", _name); */
+    log_trace("obzl_meta_entries_property('%s')", _name);
 #endif
     /* utarray_find requires a sort; not worth the cost */
     obzl_meta_entry *e = NULL;
     for (int i = 0; i < obzl_meta_entries_count(_entries); i++) {
         e = obzl_meta_entries_nth(_entries, i);
         if (e->type == OMP_PROPERTY) {
+            /* log_debug("property: %s := %s", */
+            /*           e->property->name, */
+            /*           obzl_meta_property_value(e->property)); */
             if (strncmp(e->property->name, _name, 256) == 0) {
                 return e->property;
             }

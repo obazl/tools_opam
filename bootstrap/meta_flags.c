@@ -218,9 +218,9 @@ char *obzl_meta_flags_to_comment(obzl_meta_flags *flags)
  */
 bool obzl_meta_flags_to_condition_name(obzl_meta_flags *flags, UT_string *_cname)
 {
-#ifdef DEBUG_TRACE
-    log_trace("%*obzl_meta_flags_to_condition_name", indent, sp);
-#endif
+/* #ifdef DEBUG_TRACE */
+/*     log_trace("%*sobzl_meta_flags_to_condition_name", indent, sp); */
+/* #endif */
     /* char *buf = (char*)calloc(512, 1); */
     /* UT_string *buf; */
     /* utstring_new(buf); */

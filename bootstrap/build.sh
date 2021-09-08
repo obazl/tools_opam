@@ -4,7 +4,10 @@
 
 # required env vars: SRCDIR, RE2C
 
-CFLAGS=-O3
+## debug macros: -DYYDEBUG
+## CFLAGS="-O3 -DDEBUG_TRACE -DDEBUG"
+
+CFLAGS="-O3"
 
 SRCS="${SRCDIR}/driver.c ${SRCDIR}/meta_entries.c ${SRCDIR}/meta_flags.c ${SRCDIR}/meta_fs.c ${SRCDIR}/meta_packages.c ${SRCDIR}/meta_properties.c ${SRCDIR}/meta_settings.c ${SRCDIR}/meta_values.c ${SRCDIR}/opam_bootstrap.c ${SRCDIR}/emit_build_bazel.c"
 

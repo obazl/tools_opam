@@ -50,7 +50,7 @@ struct config_flag {
     UT_hash_handle hh;
 };
 #endif
-struct config_flag *the_flag_table;
+struct config_flag *the_flag_table; /* FIXME: obsolete? */
 
 UT_array *pos_flags;            /* string */
 UT_array *neg_flags;            /* string */
@@ -396,6 +396,9 @@ void register_flags(obzl_meta_flags *_flags)
     }
 }
 
+/*
+  special case: digestif
+ */
 int handle_lib_meta(char *rootdir,
                     char *pkgdir,
                     char *metafile)
@@ -597,8 +600,9 @@ int main(int argc, char *argv[]) // , char **envp)
     }
 #ifdef DEBUG
     if (strlen(outdir) == 0) {
-        mystrcat(outdir, cwd);
-        mystrcat(outdir, "/tmp");
+        /* mystrcat(outdir, cwd); */
+        /* mystrcat(outdir, "/tmp"); */
+    mystrcat(outdir, "./");
     }
 #else
     mystrcat(outdir, "./");
