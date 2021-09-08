@@ -3,6 +3,7 @@ bazel-*
 user.bazelrc
 obsolete
 *.h
+*.log
 
 *.annot
 *.cmo
