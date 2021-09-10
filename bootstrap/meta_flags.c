@@ -213,7 +213,11 @@ char *obzl_meta_flags_to_comment(obzl_meta_flags *flags)
 }
 
 /*
-  rc: true: has flags; false: has no flags
+  has flags:
+      rc: true:
+      _cname arg is set to condition name
+  not has fl gs:
+      rc: false
   flag ppx_driver is ignored
  */
 bool obzl_meta_flags_to_condition_name(obzl_meta_flags *flags, UT_string *_cname)
@@ -247,11 +251,22 @@ bool obzl_meta_flags_to_condition_name(obzl_meta_flags *flags, UT_string *_cname
                         return true; // _cname;
                     }
                     if (strncmp(a_flag->s, "ppx_driver", 10) == 0) {
-                        /* we do not treat 'ppx_driver' as a flag */
+                        /* we do not treat 'ppx_driver' as a flag?? */
+                        /* for no_ppx_driver target -ppx_driver is default */
+                        if ( !a_flag->polarity ) /* '-' prefix */
+                            utstring_printf(_cname, "//conditions:default");
+                     /* utstring_printf(_cname, ":ppx_driver_disabled"); */
+                        else
+                            utstring_printf(_cname, ":ppx_driver_enabled");
                         /* utstring_printf(_cname, "//conditions:default"); */
-                        utstring_printf(_cname, ":custom_ppx_enabled"); /* FIXME */
+                        /* utstring_printf(_cname, ":custom_ppx_enabled"); */
                         return true;
                     }
+
+                    /* ignore thread-related flags */
+                    /* this handles mt, mt_posix, mt_vm; we assume no
+                       other flags start with "mt" */
+                    if (strncmp(a_flag->s, "mt", 2) == 0) return false;
 
                     utstring_printf(_cname, "%s", "@opam//cfg:");
                     if ( !a_flag->polarity ) /* '-' prefix */
@@ -287,14 +302,20 @@ bool obzl_meta_flags_to_condition_name(obzl_meta_flags *flags, UT_string *_cname
                         }
                         if (strncmp(a_flag->s, "custom_ppx", 10) == 0) {
                             if ( !a_flag->polarity ) {
-                                /* mystrcat(config_name, "//conditions:default"); /\* FIXME *\/ */
-                                utstring_printf(_cname, "//conditions:default");
+                                utstring_printf(_cname, "custom_ppx_disabled");
+                                /* utstring_printf(_cname, "//conditions:default"); */
                                 return true;
                             } else {
                                 /* empirically, only '-custom_ppx' ever occurs */
                                 log_error("Unexpected positive flag 'custom_ppx'");
                             }
                         }
+
+                        /* ignore thread-related flags */
+                        /* this handles mt, mt_posix, mt_vm; we assume no
+                           other flags start with "mt" */
+                        if (strncmp(a_flag->s, "mt", 2) == 0) return false;
+
                         if (i-saw_ppx_driver > 0) mystrcat(config_name, "_");
                         log_debug("%*s%s (polarity: %d)", delta+indent, sp, a_flag->s, a_flag->polarity);
                         if ( !a_flag->polarity ) /* '-' prefix */

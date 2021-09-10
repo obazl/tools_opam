@@ -342,7 +342,7 @@ void opam_config(char *_opam_switch, char *outdir)
         log_debug("neg_flag: %s", *p);
     }
 #endif
-    emit_bazel_config_setting_rules(outdir);
+    /* emit_bazel_config_setting_rules(outdir); */
 
     utarray_free(pos_flags);
     utarray_free(neg_flags);
@@ -427,6 +427,7 @@ int handle_lib_meta(char *rootdir,
     /* fclose(f); */
 
     errno = 0;
+    log_debug("PARSING: %s", buf);
     struct obzl_meta_package *pkg = obzl_meta_parse_file(buf);
     if (pkg == NULL) {
         if (errno == -1)
@@ -450,6 +451,13 @@ int handle_lib_meta(char *rootdir,
         } else {
             log_debug("handling normal package: %s", obzl_meta_package_name(pkg));
             g_ppx_pkg = true;
+        }
+
+        /* skip threads pkg, obsolete */
+        int len = strlen(buf);
+        if (strncmp(buf + len - 12, "threads/META", 12) == 0) {
+            log_warn("SKIPPING threads/META");
+            return 0;
         }
         emit_build_bazel(outdir, "opam", "lib", "", pkg);
     }

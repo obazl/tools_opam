@@ -161,16 +161,20 @@ void emit_bazel_attribute(FILE* ostream, int level,
         return;
     }
 
+    /* ppx_sexp_value
+       requires(ppx_driver), requires(-ppx_driver), and
+       ppx(-ppx_driver,-custom_ppx)
+     */
+
     /* dealing with OP_UDATE.
        e.g. ppx_sexp_conv has three settings:
        requires(ppx_driver) = "ppx_sexp_conv.expander ppxlib"
        requires(-ppx_driver) = "ppx_sexp_conv.runtime-lib"
-       requires(-ppx_driver,-custom_ppx) += "ppx_deriving"
+       ppx(-ppx_driver,-custom_ppx) += "ppx_deriving"
 
        the 3rd must combine the 2nd because the op on the last is '+='
        condition: no_ppx_driver: ppx_sexp_conv.runtime-lib
        condition: no_ppx_driver_no_custom_ppx: ppx_sexp_conv.runtime-lib, ppx_deriving
-
        if op == UPDATE then for each flag, search flaglist for match and add vals if found
      */
 
@@ -217,9 +221,11 @@ void emit_bazel_attribute(FILE* ostream, int level,
         /* FIXME: multiple settings means multiple flags; decide how to handle for deps */
         // construct a select expression on the flags
         if (settings_ct > 1) {
-            fprintf(ostream, "        \"%s\"%-4s",
-                    utstring_body(condition_name), ": [\n");
-                    /* condition_comment, /\* FIXME: name the condition *\/ */
+            if (has_conditions) { /* skip mt, mt_vm, mt_posix */
+                fprintf(ostream, "        \"%s\"%-4s",
+                        utstring_body(condition_name), ": [\n");
+                /* condition_comment, /\* FIXME: name the condition *\/ */
+            }
         }
 
         /* now we handle UPDATE settings */
@@ -273,19 +279,23 @@ void emit_bazel_attribute(FILE* ostream, int level,
             /* log_debug("label 2: %s", utstring_body(label)); */
 
             if (settings_ct > 1) {
-                fprintf(ostream, "            \"%s\",\n", utstring_body(label));
+                if (has_conditions) /* skip mt, mt_vm, mt_posix */
+                    fprintf(ostream, "            \"%s\",\n", utstring_body(label));
             } else {
-                fprintf(ostream, "\"%s\",\n", utstring_body(label));
+                if (has_conditions) /* skip mt, mt_vm, mt_posix */
+                    fprintf(ostream, "\"%s\",\n", utstring_body(label));
             }
-            /* if v is .cmxa, then add .a too */
+            /* if v is .cmxa, then add .a too? */
             int cmxapos = utstring_findR(label, -1, "cmxa", 4);
-            if (cmxapos > 0) {
-                char *cmxa_a = utstring_body(label);
-                cmxa_a[utstring_len(label) - 4] = 'a';
-                cmxa_a[utstring_len(label) - 3] = '\0';
-                fprintf(ostream, "            \"%s\",\n", cmxa_a);
-            }
-            fprintf(ostream, "%s", "        ],\n");
+            /* if (cmxapos > 0) { */
+            /*     char *cmxa_a = utstring_body(label); */
+            /*     cmxa_a[utstring_len(label) - 4] = 'a'; */
+            /*     cmxa_a[utstring_len(label) - 3] = '\0'; */
+            /*     if (has_conditions) /\* skip mt, mt_vm, mt_posix *\/ */
+            /*         fprintf(ostream, "            \"%s\",\n", cmxa_a); */
+            /* } */
+            if (has_conditions) /* skip mt, mt_vm, mt_posix */
+                fprintf(ostream, "%s", "        ],\n");
         }
         utstring_free(label);
         if (settings_ct > 1) {
@@ -521,7 +531,7 @@ void emit_bazel_deps(FILE* ostream, int level, char *repo, char *pkg,
             fprintf(ostream, "%*s\"%s%s\": [ ## predicates: %s\n",
                     (1+level)*spfactor, sp,
                     utstring_body(condition_name),
-                    (has_conditions)? "_enabled" : "",
+                    (has_conditions)? "" : "",
                     condition_comment);
         }
 
@@ -542,6 +552,12 @@ void emit_bazel_deps(FILE* ostream, int level, char *repo, char *pkg,
                 /* log_debug("OMITTING UCHAR dep"); */
                 continue;
             }
+            /* special case: threads */
+            /* if ((strncmp(s, "threads", 7) == 0) */
+            /*     && (strlen(s) == 7)){ */
+            /*     /\* log_debug("OMITTING THREADS dep"); *\/ */
+            /*     continue; */
+            /* } */
             while (*s) {
                 /* printf("s: %s\n", s); */
                 if(s[0] == '.') {
@@ -942,7 +958,7 @@ void emit_bazel_ppx_dummy_deps(FILE* ostream, int level, char *repo, char *pkg,
         free(condition_comment);
     }
     utstring_free(condition_name);
-    if (settings_ct > 1)
+    if (settings_no_ppx_driver_ct > 1)
         fprintf(ostream, "%*s}),\n", level*spfactor, sp);
     else
         fprintf(ostream, "%*s],\n", level*spfactor, sp);
@@ -1346,7 +1362,7 @@ EXPORT void emit_build_bazel(char *_tgtroot,
                 continue;
             }
 
-            log_debug("processing other property: %s", e->property->name);
+            log_warn("processing other property: %s", e->property->name);
             // push all flags to global pos_flags
         }
     }
