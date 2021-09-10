@@ -1,0 +1,39 @@
+load("@bazel_skylib//rules:common_settings.bzl", "string_setting")
+
+exports_files(glob([".bin/**"]))
+exports_files(glob(["_lib/**"]))
+
+filegroup(
+    name = "compiler-libs.common",
+    srcs = glob([
+        "_lib/ocaml/compiler-libs/*.mli",
+        "_lib/ocaml/compiler-libs/*.cmi",
+    ]),
+    visibility = ["//visibility:public"]
+)
+
+filegroup(
+    name = "compiler-libs.bytecode",
+    srcs = glob([
+        "_lib/ocaml/compiler-libs/*.cmo",
+    ]),
+    visibility = ["//visibility:public"]
+)
+
+filegroup(
+    name = "compiler-libs.native",
+    srcs = glob([
+        "_lib/ocaml/compiler-libs/*.cmx",
+        "_lib/ocaml/compiler-libs/*.o",
+   ]),
+    visibility = ["//visibility:public"]
+)
+
+## realpath
+string_setting(
+    name = "opam_lib",
+    build_setting_default = "/Users/gar/.opam/4.10/lib",
+    visibility = ["//visibility:public"]
+)
+
+        

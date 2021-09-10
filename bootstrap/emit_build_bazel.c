@@ -356,28 +356,38 @@ void emit_bazel_ppx_dummy_rule(FILE* ostream, int level,
                                 obzl_meta_entries *_entries)
                                 /* obzl_meta_package *_pkg) */
 {
-    fprintf(ostream, "\nocaml_import(\n");
-    fprintf(ostream, "    name = \"no_ppx_driver\",\n"); // , _pkg_name);
-    emit_bazel_metadatum(ostream, 1, "@opam", _opam_rootdir, _entries, "version", "version");
-    emit_bazel_metadatum(ostream, 1, "@opam", _opam_rootdir, _entries, "description", "doc");
-    /* we won't have 'archive' or 'plugin' entries for -ppx_driver */
+    /* fprintf(ostream, "\nocaml_import(\n"); */
+    /* fprintf(ostream, "    name = \"no_ppx_driver\",\n"); // , _pkg_name); */
+    /* emit_bazel_metadatum(ostream, 1, "@opam", _opam_rootdir, _entries, "version", "version"); */
+    /* emit_bazel_metadatum(ostream, 1, "@opam", _opam_rootdir, _entries, "description", "doc"); */
+    /* we won't have 'archive' or 'plugin' entries for -ppx_driver? */
     /* emit_bazel_attribute(ostream, 1, "@opam", _opam_rootdir, _pkg_path, _pkg_name, _entries, "archive"); */
     /* for deps we process 'requires(-ppx_driver...)' entries */
-    emit_bazel_ppx_dummy_deps(ostream, 1, "@opam", "lib", _entries);
-    fprintf(ostream, "    visibility = [\"//visibility:public\"]\n");
-    fprintf(ostream, ")\n");
+    /* emit_bazel_ppx_dummy_deps(ostream, 1, "@opam", "lib", _entries); */
+    /* fprintf(ostream, "    visibility = [\"//visibility:public\"]\n"); */
+    /* fprintf(ostream, ")\n"); */
 
     fprintf(ostream, "%s",
             "load(\"@bazel_skylib//rules:common_settings.bzl\", \"bool_flag\")\n"
             "\n"
-            "bool_flag( name = \"custom_ppx\", build_setting_default = False )\n"
+            "bool_flag( name = \"ppx_driver\", build_setting_default = True )\n"
+            "bool_flag( name = \"custom_ppx\", build_setting_default = True )\n"
             "\n");
 
     fprintf(ostream, "%s",
             "config_setting(\n"
-            "    name = \"custom_ppx_enabled\",\n"
-            "    flag_values = { \":custom_ppx\": \"True\" }\n"
-            ")");
+            "    name = \"ppx_driver_only\",\n"
+            "    flag_values = { \":ppx_driver\": \"True\", \":custom_ppx\": \"True\" }\n"
+            ")\n\n"
+            "config_setting(\n"
+            "    name = \"no_ppx_driver_only\",\n"
+            "    flag_values = { \":ppx_driver\": \"False\", \":custom_ppx\": \"True\" }\n"
+            ")\n\n"
+            "config_setting(\n"
+            "    name = \"both_disabled\",\n"
+            "    flag_values = { \":ppx_driver\": \"False\", \":custom_ppx\": \"False\" }\n"
+            ")\n\n"
+            );
 }
 
 void emit_bazel_archive_rule(FILE* ostream, int level,
@@ -1042,135 +1052,135 @@ void emit_bazel_flags_mt(char *pfx)
     fclose(ostream);
 }
 
-void emit_bazel_config_setting_rules(char *pfx)
-{
-    log_debug("emit_bazel_flags");
-    const char **flag = NULL;
-    struct config_flag *config_flag;
+/* void emit_bazel_config_setting_rules(char *pfx) */
+/* { */
+/*     log_debug("emit_bazel_flags"); */
+/*     const char **flag = NULL; */
+/*     struct config_flag *config_flag; */
 
-    emit_bazel_flags_mt(pfx);
+/*     emit_bazel_flags_mt(pfx); */
 
-    char fname[PATH_MAX];
-    FILE *ostream;
+/*     char fname[PATH_MAX]; */
+/*     FILE *ostream; */
 
-    char config_setting[PATH_MAX];
+/*     char config_setting[PATH_MAX]; */
 
-    fname[0] = '\0';
-    mkdir_r(outdir, "cfg");
-    mystrcat(fname, outdir);
-    mystrcat(fname, "/");
-    mystrcat(fname, "cfg/BUILD.bazel");
-    log_debug("writing cfg file: %s", fname);
-    ostream = fopen(fname, "w");
-    if (ostream == NULL) {
-        perror(fname);
-        exit(EXIT_FAILURE);
-    }
+/*     fname[0] = '\0'; */
+/*     mkdir_r(outdir, "cfg"); */
+/*     mystrcat(fname, outdir); */
+/*     mystrcat(fname, "/"); */
+/*     mystrcat(fname, "cfg/BUILD.bazel"); */
+/*     log_debug("writing cfg file: %s", fname); */
+/*     ostream = fopen(fname, "w"); */
+/*     if (ostream == NULL) { */
+/*         perror(fname); */
+/*         exit(EXIT_FAILURE); */
+/*     } */
 
-    fprintf(ostream, "load(\"@bazel_skylib//rules:common_settings.bzl\", \"bool_flag\")\n\n");
+/*     fprintf(ostream, "load(\"@bazel_skylib//rules:common_settings.bzl\", \"bool_flag\")\n\n"); */
 
-    fprintf(ostream, "package(default_visibility = [\"//visibility:public\"])\n\n");
+/*     fprintf(ostream, "package(default_visibility = [\"//visibility:public\"])\n\n"); */
 
-    while ( (flag = (const char**)utarray_next(pos_flags, flag)) != NULL ) {
+/*     while ( (flag = (const char**)utarray_next(pos_flags, flag)) != NULL ) { */
 
-        /* mt flags are handled above by emit_bazel_flags_mt() */
-        if (strncmp(*flag, "mt", 2) == 0 ) continue;
-        if (strncmp(*flag, "mt_posix", 8) == 0 ) continue;
-        if (strncmp(*flag, "mt_vm", 5) == 0 ) continue;
+/*         /\* mt flags are handled above by emit_bazel_flags_mt() *\/ */
+/*         if (strncmp(*flag, "mt", 2) == 0 ) continue; */
+/*         if (strncmp(*flag, "mt_posix", 8) == 0 ) continue; */
+/*         if (strncmp(*flag, "mt_vm", 5) == 0 ) continue; */
 
-        /* ppx_driver not a flag for obazl */
-        if (strncmp(*flag, "ppx_driver", 10) == 0 ) continue;
+/*         /\* ppx_driver not a flag for obazl *\/ */
+/*         if (strncmp(*flag, "ppx_driver", 10) == 0 ) continue; */
 
-        /* HASH_FIND_STR(the_flag_table, *flag, config_flag); */
-        /* if (config_flag == NULL) { */
-        /*     log_debug("flag %s not found in flags table.", flag); */
-        /* } else { */
-        fprintf(ostream,
-                "bool_flag( name = \"%s\", build_setting_default = False )\n",
-                *flag);
-        fprintf(ostream,
-                "config_setting( name = \"%s_enabled\", flag_values = {\":%s\": \"True\"} )\n",
-                *flag, *flag);
-        fprintf(ostream,
-                "config_setting( name = \"%s_disabled\", flag_values = {\":%s\": \"False\"} )\n\n",
-                *flag, *flag);
-        /* } */
-    }
+/*         /\* HASH_FIND_STR(the_flag_table, *flag, config_flag); *\/ */
+/*         /\* if (config_flag == NULL) { *\/ */
+/*         /\*     log_debug("flag %s not found in flags table.", flag); *\/ */
+/*         /\* } else { *\/ */
+/*         fprintf(ostream, */
+/*                 "bool_flag( name = \"%s\", build_setting_default = False )\n", */
+/*                 *flag); */
+/*         fprintf(ostream, */
+/*                 "config_setting( name = \"%s_enabled\", flag_values = {\":%s\": \"True\"} )\n", */
+/*                 *flag, *flag); */
+/*         fprintf(ostream, */
+/*                 "config_setting( name = \"%s_disabled\", flag_values = {\":%s\": \"False\"} )\n\n", */
+/*                 *flag, *flag); */
+/*         /\* } *\/ */
+/*     } */
 
-    while ( (flag = (const char**)utarray_next(neg_flags, flag)) != NULL ) {
+/*     while ( (flag = (const char**)utarray_next(neg_flags, flag)) != NULL ) { */
 
-        /* FIXME: write no_* rules for mt? */
-        if (strncmp(*flag, "mt", 2) == 0 ) continue;
-        if (strncmp(*flag, "mt_posix", 8) == 0 ) continue;
-        if (strncmp(*flag, "mt_vm", 5) == 0 ) continue;
+/*         /\* FIXME: write no_* rules for mt? *\/ */
+/*         if (strncmp(*flag, "mt", 2) == 0 ) continue; */
+/*         if (strncmp(*flag, "mt_posix", 8) == 0 ) continue; */
+/*         if (strncmp(*flag, "mt_vm", 5) == 0 ) continue; */
 
-        fprintf(ostream,
-                "bool_flag( name = \"no_%s\", build_setting_default = False )\n",
-                *flag);
-        fprintf(ostream,
-                "config_setting( name = \"no_%s_enabled\", flag_values = {\":%s\": \"True\"} )\n",
-                *flag, *flag);
-        fprintf(ostream,
-                "config_setting( name = \"no_%s_disabled\", flag_values = {\":%s\": \"False\"} )\n\n",
-                *flag, *flag);
-        /* } */
-    }
+/*         fprintf(ostream, */
+/*                 "bool_flag( name = \"no_%s\", build_setting_default = False )\n", */
+/*                 *flag); */
+/*         fprintf(ostream, */
+/*                 "config_setting( name = \"no_%s_enabled\", flag_values = {\":%s\": \"True\"} )\n", */
+/*                 *flag, *flag); */
+/*         fprintf(ostream, */
+/*                 "config_setting( name = \"no_%s_disabled\", flag_values = {\":%s\": \"False\"} )\n\n", */
+/*                 *flag, *flag); */
+/*         /\* } *\/ */
+/*     } */
 
-    /* now config_setting rules for the compound conditions */
+/*     /\* now config_setting rules for the compound conditions *\/ */
 
-    struct config_setting *cs, *cstmp;
-    HASH_ITER(hh, the_config_settings, cs, cstmp) {
-#ifdef DEBUG_TRACE
-        log_debug("emitting config setting: %s", cs->label);
-#endif
-        fprintf(ostream,
-                "config_setting(\n"
-                "    name = \"%s\",\n"
-                "    flag_values = {\n",
-                cs->name);
-        int ct = obzl_meta_flags_count(cs->flags);
-#ifdef DEBUG_TRACE
-        log_trace("%*sflags ct: %d", indent, sp, ct);
-#endif
-        char config_name[128];
-        config_name[0] = '\0';
-        struct obzl_meta_flag *a_flag = NULL;
-        for (int i=0; i < ct; i++) {
-            a_flag = obzl_meta_flags_nth(cs->flags, i);
-#ifdef DEBUG_TRACE
-            log_debug("%*s%s (polarity: %d)", delta+indent, sp, a_flag->s, a_flag->polarity);
-#endif
-            if (strncmp(a_flag->s, "byte", 4) == 0) {
-                fprintf(ostream, "%s", "        \"@ocaml//mode\": \"bytecode\",\n");
-                continue;
-            }
-            if (strncmp(a_flag->s, "native", 6) == 0) {
-                fprintf(ostream, "%s", "        \"@ocaml//mode\": \"native\",\n");
-                continue;
-            }
-            if (strncmp(a_flag->s, "mt_posix", 8) == 0) {
-                fprintf(ostream, "%s", "        \"//cfg/mt:posix\": \"True\",\n");
-                continue;
-            }
-            if (strncmp(a_flag->s, "mt_vm", 5) == 0) {
-                fprintf(ostream, "%s", "        \"//cfg/mt:vm\": \"True\",\n");
-                continue;
-            }
-            if (strncmp(a_flag->s, "mt", 2) == 0) {
-                fprintf(ostream, "%s", "        \"//cfg/mt:mt\": \"True\",\n");
-                continue;
-            }
-            fprintf(ostream, "        \":%s%s\": \"True\",\n",
-                    a_flag->polarity? "" : "no_",
-                    a_flag->s);
-        }
-        fprintf(ostream, "%s", "    },\n");
-        fprintf(ostream, "%s", "    visibility = [\"//visibility:public\"]\n");
-        fprintf(ostream, "%s", ")\n\n");
-    }
+/*     struct config_setting *cs, *cstmp; */
+/*     HASH_ITER(hh, the_config_settings, cs, cstmp) { */
+/* #ifdef DEBUG_TRACE */
+/*         log_debug("emitting config setting: %s", cs->label); */
+/* #endif */
+/*         fprintf(ostream, */
+/*                 "config_setting(\n" */
+/*                 "    name = \"%s\",\n" */
+/*                 "    flag_values = {\n", */
+/*                 cs->name); */
+/*         int ct = obzl_meta_flags_count(cs->flags); */
+/* #ifdef DEBUG_TRACE */
+/*         log_trace("%*sflags ct: %d", indent, sp, ct); */
+/* #endif */
+/*         char config_name[128]; */
+/*         config_name[0] = '\0'; */
+/*         struct obzl_meta_flag *a_flag = NULL; */
+/*         for (int i=0; i < ct; i++) { */
+/*             a_flag = obzl_meta_flags_nth(cs->flags, i); */
+/* #ifdef DEBUG_TRACE */
+/*             log_debug("%*s%s (polarity: %d)", delta+indent, sp, a_flag->s, a_flag->polarity); */
+/* #endif */
+/*             if (strncmp(a_flag->s, "byte", 4) == 0) { */
+/*                 fprintf(ostream, "%s", "        \"@ocaml//mode\": \"bytecode\",\n"); */
+/*                 continue; */
+/*             } */
+/*             if (strncmp(a_flag->s, "native", 6) == 0) { */
+/*                 fprintf(ostream, "%s", "        \"@ocaml//mode\": \"native\",\n"); */
+/*                 continue; */
+/*             } */
+/*             if (strncmp(a_flag->s, "mt_posix", 8) == 0) { */
+/*                 fprintf(ostream, "%s", "        \"//cfg/mt:posix\": \"True\",\n"); */
+/*                 continue; */
+/*             } */
+/*             if (strncmp(a_flag->s, "mt_vm", 5) == 0) { */
+/*                 fprintf(ostream, "%s", "        \"//cfg/mt:vm\": \"True\",\n"); */
+/*                 continue; */
+/*             } */
+/*             if (strncmp(a_flag->s, "mt", 2) == 0) { */
+/*                 fprintf(ostream, "%s", "        \"//cfg/mt:mt\": \"True\",\n"); */
+/*                 continue; */
+/*             } */
+/*             fprintf(ostream, "        \":%s%s\": \"True\",\n", */
+/*                     a_flag->polarity? "" : "no_", */
+/*                     a_flag->s); */
+/*         } */
+/*         fprintf(ostream, "%s", "    },\n"); */
+/*         fprintf(ostream, "%s", "    visibility = [\"//visibility:public\"]\n"); */
+/*         fprintf(ostream, "%s", ")\n\n"); */
+/*     } */
 
-    fclose(ostream);
-}
+/*     fclose(ostream); */
+/* } */
 
 void handle_directory_property(FILE* ostream, int level,
                                char *_repo,
@@ -1301,10 +1311,12 @@ EXPORT void emit_build_bazel(char *_tgtroot,
         /* log_debug("emitting entry %d, type %d", i, e->type); */
         /* if ((e->type == OMP_PROPERTY) || (e->type == OMP_PACKAGE)) { */
             /* log_debug("\tOMP_PROPERTY"); */
-            if (strncmp(e->property->name, "library_kind", 12) == 0) {
-                emit_bazel_ppx_dummy_rule(ostream, 1, "@opam", "_lib", _pkg_path, pkg_name, entries);
-                continue;
-            }
+
+            /* 'library_kind` :=  'ppx_deriver' or 'ppx_rewriter' */
+            /* if (strncmp(e->property->name, "library_kind", 12) == 0) { */
+            /*     emit_bazel_ppx_dummy_rule(ostream, 1, "@opam", "_lib", _pkg_path, pkg_name, entries); */
+            /*     continue; */
+            /* } */
             if (strncmp(e->property->name, "archive", 7) == 0) {
                 emit_bazel_archive_rule(ostream, 1, "@opam", "_lib", _pkg_path, pkg_name, entries);
                 continue;
@@ -1313,6 +1325,10 @@ EXPORT void emit_build_bazel(char *_tgtroot,
                 emit_bazel_plugin_rule(ostream, 1, "@opam", "_lib", _pkg_path, pkg_name, entries);
                 continue;
             }
+            /* if (strncmp(e->property->name, "ppx", 3) == 0) { */
+            /*     log_warn("IGNORING PPX PROPERTY for %s", pkg_name); */
+            /*     continue; */
+            /* } */
             if (strncmp(e->property->name, "requires", 6) == 0) {
                 /* some pkgs have 'requires' but no 'archive' nor 'plugin' */
                 /* compiler-libs has 'requires = ""' and 'director = "+compiler-libs"' */

@@ -15,18 +15,18 @@ def build_opam_bootstrapper_local(repo_ctx):
     # print("BUILD_DIR: %s" % build_dir)
 
     bootstrapper = build_dir.get_child("opam_bootstrap")
-    print("checking for opam bootstrapper: %s" % bootstrapper)
+    # print("checking for opam bootstrapper: %s" % bootstrapper)
     repo_ctx.report_progress("checking for opam bootstrapper:  %s" % bootstrapper)
 
     if bootstrapper.exists:
         repo_ctx.report_progress("found opam bootstrapper")
-        print("found opam bootstrapper")
+        # print("found opam bootstrapper")
     else:
         cmd_env = {}
         cmd_env["SRCDIR"] = "%s" % build_dir
         cmd = [build_sh]
 
-        print("building opam bootstrapper")
+        # print("building opam bootstrapper")
         repo_ctx.report_progress("building opam bootstrapper")
         cmd_env["RE2C"] = "{}/.local/bin/re2c".format(home)
         xr = repo_ctx.execute(cmd, environment=cmd_env)
@@ -38,7 +38,7 @@ def build_opam_bootstrapper_local(repo_ctx):
             fail("Comand failed: make -C bootstrap_opam")
 
     repo_ctx.report_progress("running opam bootstrapper")
-    print("running opam_bootstrap")
+    # print("running opam_bootstrap")
     # bootstrapper = repo_ctx.path(Label("@obazl_tools_opam//bootstrap:opam_bootstrap"))
     # print("BOOTSTRAP CMD: %s" % bootstrapper)
 
@@ -50,14 +50,15 @@ def build_opam_bootstrapper_local(repo_ctx):
     cmd = [bootstrapper]
 
     xr = repo_ctx.execute(cmd) ## , environment=cmd_env)
-    if xr.return_code == 0:
-        print("2 opam_bootstrap succeeded")
+    # if xr.return_code == 0:
+        # print("2 opam_bootstrap succeeded")
         # print("2 opam_bootstrap stdout: %s\n" % xr.stdout)
         # print("2 opam_bootstrap stderr: %s\n" % xr.stderr)
-    else:
+    # else:
+    if xr.return_code != 0:
         print("3 opam_bootstrap result: %s" % xr.stdout)
         print("3 opam_bootstrap rc: {rc} stderr: {stderr}".format(rc=xr.return_code, stderr=xr.stderr));
-        fail("xxxxxxxxxxxxxxxx")
+        fail("opam_bootstrap failure")
 
 ################################################################
 def build_opam_bootstrapper(repo_ctx):
@@ -145,18 +146,18 @@ def build_re2c(repo_ctx):
     cmd = ["./re2c.sh"]
     xr = repo_ctx.execute(cmd)
     if xr.return_code == 0:
-        print("re2c already built")
+        # print("re2c already built")
         repo_ctx.report_progress("re2c already built...")
         return
     elif xr.return_code == 254:
         print("Found $HOME/.local/bin/re2c, vernum {VERNUM} - expected 02003".format(VERNUM = xr.stdout))
-    else:
-        print("ls re2c rc: {rc}".format(rc=xr.return_code))
-        print("ls re2c stderr: {stderr}".format(stderr=xr.stderr))
-        print("ls re2c stdout: %s" % xr.stdout)
-        print("re2c not found; building")
+    # else:
+    #     print("ls re2c rc: {rc}".format(rc=xr.return_code))
+    #     print("ls re2c stderr: {stderr}".format(stderr=xr.stderr))
+    #     print("ls re2c stdout: %s" % xr.stdout)
+    #     print("re2c not found; building")
 
-    repo_ctx.report_progress("... not found.")
+    repo_ctx.report_progress("... not found: building re2c.")
 
     # fail("test")
 
@@ -234,10 +235,49 @@ def get_xdg(repo_ctx):
 
     return home, repo_ctx.path(xdg_cache_home), repo_ctx.path(xdg_config_home), repo_ctx.path(xdg_data_home)
 
+###################################
+def _install_build_files(repo_ctx):
+
+    repo_ctx.template(
+        "BUILD.bazel",
+        Label("//opam/_templates:BUILD.opam"),
+        executable = False,
+    )
+
+    repo_ctx.template(
+        "cfg/BUILD.bazel",
+        Label("//opam/_templates:BUILD.opam.cfg"),
+        executable = False,
+    )
+
+    # repo_ctx.template(
+    #     "cfg/mt/BUILD.bazel",
+    #     Label("//opam/_templates:BUILD.opam.cfg.mt"),
+    #     executable = False,
+    # )
+
+    # repo_ctx.template(
+    #     "cfg/mt/posix/BUILD.bazel",
+    #     Label("//opam/_templates:BUILD.opam.cfg.mt.posix"),
+    #     executable = False,
+    # )
+
+    repo_ctx.template(
+        "ppx/BUILD.bazel",
+        Label("//opam/_templates:BUILD.opam.ppx"),
+        executable = False,
+    )
+
+    repo_ctx.template(
+        "lib/threads/BUILD.bazel",
+        Label("//opam/_templates:BUILD.opam.lib.threads"),
+        executable = False,
+    )
+
 ######################################
 def impl_opam_configuration(repo_ctx):
 
-    debug = True ## False
+    debug = False
     # if (ctx.label.name == "zexe_backend_common"):
     #     debug = True
 
@@ -269,50 +309,8 @@ def impl_opam_configuration(repo_ctx):
         fail("OPAM cmd failure.")
 
     opam_lib = repo_ctx.path(opam_lib)
-    repo_ctx.file(
-        "BUILD.bazel",
-        content = """
-load("@bazel_skylib//rules:common_settings.bzl", "string_setting")
 
-exports_files(glob([\".bin/**\"]))
-exports_files(glob([\"_lib/**\"]))
-
-filegroup(
-    name = "compiler-libs.common",
-    srcs = glob([
-        "_lib/ocaml/compiler-libs/*.mli",
-        "_lib/ocaml/compiler-libs/*.cmi",
-    ]),
-    visibility = ["//visibility:public"]
-)
-
-filegroup(
-    name = "compiler-libs.bytecode",
-    srcs = glob([
-        "_lib/ocaml/compiler-libs/*.cmo",
-    ]),
-    visibility = ["//visibility:public"]
-)
-
-filegroup(
-    name = "compiler-libs.native",
-    srcs = glob([
-        "_lib/ocaml/compiler-libs/*.cmx",
-        "_lib/ocaml/compiler-libs/*.o",
-   ]),
-    visibility = ["//visibility:public"]
-)
-
-## realpath
-string_setting(
-    name = "opam_lib",
-    build_setting_default = "{opam_lib}",
-    visibility = ["//visibility:public"]
-)
-
-        """.format(opam_lib = opam_lib),
-        executable=False
-    )
+    _install_build_files(repo_ctx)
 
     cmd_args = []
     for p in repo_ctx.attr.packages:
@@ -352,10 +350,11 @@ string_setting(
 
     # XDG: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
     home, xdg_cache_home, xdg_config_home, xdg_data_home = get_xdg(repo_ctx)
-    print("HOME: %s" % home)
-    print("XDG_CONFIG_HOME: %s" % xdg_config_home)
-    print("XDG_CACHE_HOME: %s" % xdg_cache_home)
-    print("XDG_DATA_HOME: %s" % xdg_data_home)
+    if debug:
+        print("HOME: %s" % home)
+        print("XDG_CONFIG_HOME: %s" % xdg_config_home)
+        print("XDG_CACHE_HOME: %s" % xdg_cache_home)
+        print("XDG_DATA_HOME: %s" % xdg_data_home)
 
     # systemd file-hierarchy: https://www.freedesktop.org/software/systemd/man/file-hierarchy.html
 
@@ -375,7 +374,7 @@ string_setting(
     cmd_env = {}
     path = home + "/.local/bin:" + path
     cmd_env["PATH"] = path
-    print("PATH: %s" % cmd_env)
+    # print("PATH: %s" % cmd_env)
 
     build_tools(repo_ctx)
 

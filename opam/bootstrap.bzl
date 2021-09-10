@@ -13,7 +13,8 @@
 # limitations under the License.
 
 load("//opam/_bootstrap:opam.bzl", _install = "install")
-load("//opam/_bootstrap:opam_ocamlfind.bzl", _configure = "configure")
-
-configure = _configure
 install   = _install
+
+# load("//opam/_bootstrap:opam_ocamlfind.bzl", _configure = "configure")
+
+# configure = _configure
