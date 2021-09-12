@@ -47,7 +47,7 @@ def build_opam_bootstrapper_local(repo_ctx):
 
     # cmd_env = {}
     # cmd_env["SRCDIR"] = "%s" % build_dir
-    cmd = [bootstrapper]
+    cmd = [bootstrapper, "CFLAGS=-03"]
 
     xr = repo_ctx.execute(cmd) ## , environment=cmd_env)
     if xr.return_code == 0:
