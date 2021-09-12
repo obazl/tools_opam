@@ -14,6 +14,24 @@ static int indent = 2;
 static int delta = 2;
 static char *sp = " ";
 
+/* flag == findlib "predicate" */
+
+#if INTERFACE
+struct config_flag {
+    char name[32];              /* key */
+    char repo[16];
+    char package[64];
+    char target[32];
+    char label[64];
+    UT_hash_handle hh;
+};
+#endif
+
+struct config_flag *the_flag_table; /* FIXME: obsolete? */
+
+UT_array *pos_flags;            /* string */
+UT_array *neg_flags;            /* string */
+
 #if INTERFACE
 struct config_setting {
     char name[128];              /* key */
@@ -159,6 +177,21 @@ void flags_dtor(obzl_meta_flags *old_flags) {
     free(old_flags);
 }
 
+/* is one of the flags deprecated? */
+bool obzl_meta_flags_deprecated(obzl_meta_flags *_flags)                     {
+    if (_flags) {
+        int ct = obzl_meta_flags_count(_flags);
+        struct obzl_meta_flag *a_flag = NULL;
+        for (int i=0; i < ct; i++) {
+            a_flag = obzl_meta_flags_nth(_flags, i);
+            if (strncmp(a_flag->s, "mt", 2) == 0) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 bool obzl_meta_flags_has_flag(obzl_meta_flags *_flags, char *_flag, bool polarity)
 {
     if (_flags) {
@@ -220,7 +253,8 @@ char *obzl_meta_flags_to_comment(obzl_meta_flags *flags)
       rc: false
   flag ppx_driver is ignored
  */
-bool obzl_meta_flags_to_condition_name(obzl_meta_flags *flags, UT_string *_cname)
+bool obzl_meta_flags_to_select_condition(obzl_meta_flags *flags,
+                                         UT_string *_cname)
 {
 #ifdef DEBUG_FLAGS
     log_trace("%*sobzl_meta_flags_to_condition_name", indent, sp);
@@ -347,7 +381,154 @@ bool obzl_meta_flags_to_condition_name(obzl_meta_flags *flags, UT_string *_cname
 }
 
 /* **************************************************************** */
-#if DEBUG_TRACE
+void initialize_config_flags()
+{
+    utarray_new(pos_flags, &ut_str_icd);
+    utarray_new(neg_flags, &ut_str_icd);
+
+    /* char name[32];              /\* key *\/ */
+    /* char repo[16]; */
+    /* char package[64]; */
+    /* char target[32]; */
+    /* char label[64]; */
+
+    struct config_flag *a_flag;
+
+    a_flag = calloc(sizeof(struct config_flag), 1);
+    strncpy(a_flag->name, "byte", 4);
+    strncpy(a_flag->repo, "@ocaml", 6);
+    strncpy(a_flag->package, "mode", 4);
+    strncpy(a_flag->target, "bytecode", 8);
+    strncpy(a_flag->label, "@ocaml//mode:bytecode", 21);
+    HASH_ADD_STR(the_flag_table, name, a_flag);
+
+    a_flag = calloc(sizeof(struct config_flag), 1);
+    strncpy(a_flag->name, "native", 6);
+    strncpy(a_flag->repo, "@ocaml", 6);
+    strncpy(a_flag->package, "mode", 4);
+    strncpy(a_flag->target, "native", 6);
+    strncpy(a_flag->label, "@ocaml//mode:native", 19);
+    HASH_ADD_STR(the_flag_table, name, a_flag);
+
+    a_flag = calloc(sizeof(struct config_flag), 1);
+    strncpy(a_flag->name, "mt", 2);
+    strncpy(a_flag->repo, "@opam", 5);
+    strncpy(a_flag->package, "cfg/mt", 6);
+    strncpy(a_flag->target, "default", 7);
+    strncpy(a_flag->label, "@opam//cfg/mt:default", 21);
+    HASH_ADD_STR(the_flag_table, name, a_flag);
+
+    a_flag = calloc(sizeof(struct config_flag), 1);
+    strncpy(a_flag->name, "mt_posix", 8);
+    strncpy(a_flag->repo, "@opam", 5);
+    strncpy(a_flag->package, "cfg/mt", 6);
+    strncpy(a_flag->target, "posix", 5);
+    strncpy(a_flag->label, "@opam//cfg/mt:posix", 19);
+    HASH_ADD_STR(the_flag_table, name, a_flag);
+
+    a_flag = calloc(sizeof(struct config_flag), 1);
+    strncpy(a_flag->name, "mt_vm", 5);
+    strncpy(a_flag->repo, "@opam", 5);
+    strncpy(a_flag->package, "cfg/mt", 6);
+    strncpy(a_flag->target, "vm", 2);
+    strncpy(a_flag->label, "@opam//cfg/mt:vm", 16);
+    HASH_ADD_STR(the_flag_table, name, a_flag);
+
+    a_flag = calloc(sizeof(struct config_flag), 1);
+    strncpy(a_flag->name, "gprof", 5);
+    strncpy(a_flag->repo, "@opam", 5);
+    strncpy(a_flag->package, "cfg", 3);
+    strncpy(a_flag->target, "gprof", 5);
+    strncpy(a_flag->label, "@opam//cfg:gprof", 16);
+    HASH_ADD_STR(the_flag_table, name, a_flag);
+
+    a_flag = calloc(sizeof(struct config_flag), 1);
+    strncpy(a_flag->name, "ppx_driver", 10);
+    strncpy(a_flag->repo, "@opam", 5);
+    strncpy(a_flag->package, "cfg", 3);
+    strncpy(a_flag->target, "driver", 6);
+    strncpy(a_flag->label, "@opam//cfg:ppx_driver", 21);
+    HASH_ADD_STR(the_flag_table, name, a_flag);
+
+    a_flag = calloc(sizeof(struct config_flag), 1);
+    strncpy(a_flag->name, "custom_ppx", 10);
+    strncpy(a_flag->repo, "@opam", 5);
+    strncpy(a_flag->package, "cfg", 3);
+    strncpy(a_flag->target, "custom", 6);
+    strncpy(a_flag->label, "@opam//cfg:ppx_custom", 21);
+    HASH_ADD_STR(the_flag_table, name, a_flag);
+
+    /* these seem to be associated with camlp4; ignore for now: */
+    /* toploop, create_toploop, preprocessor, syntax */
+}
+
+void register_flags(obzl_meta_flags *_flags)
+{
+    char **p;
+    for (int i=0; i < obzl_meta_flags_count(_flags); i++) {
+        obzl_meta_flag *flag = obzl_meta_flags_nth(_flags, i);
+        char *flag_s = flag->s;
+        if ( !strncmp(flag_s, "byte", 4) ) continue;
+        if ( !strncmp(flag_s, "native", 6) ) continue;
+
+        log_debug("registering flag: %s (%d)", flag_s, flag->polarity);
+
+        utarray_sort(pos_flags,strsort);
+        p = NULL;
+        if (flag->polarity) { /* pos */
+            log_debug("registering pos flag %s", flag->s);
+            p = utarray_find(pos_flags, &flag_s, strsort);
+            if ( p == NULL ) {
+                log_debug("%s not found in pos_flags table; pushing.", flag_s);
+                utarray_push_back(pos_flags, &flag_s);
+            } else {
+                log_debug("found %s in pos_flags table", flag_s);
+            }
+            continue;
+        }
+        /* else neg: */
+        utarray_sort(neg_flags,strsort);
+        log_debug("registering neg flag %s", flag->s);
+        p = utarray_find(neg_flags, &flag_s, strsort);
+        if ( p == NULL ) {
+            log_debug("%s not found in neg_flags table; pushing.", flag_s);
+            utarray_push_back(neg_flags, &flag_s);
+        } else {
+            log_debug("found %s in neg_flags table", flag_s);
+        }
+    }
+}
+
+void dispose_flag_table(void)
+{
+    /* log_debug("predefined flags:"); */
+    struct config_flag *s, *tmp;
+    HASH_ITER(hh, the_flag_table, s, tmp) {
+        /* log_debug("\t%s", s->label); */
+        HASH_DEL(the_flag_table, s);
+        free(s);
+    }
+
+    /* log_debug("accumulated config settings:"); */
+    struct config_setting *cd, *ctmp;
+    HASH_ITER(hh, the_config_settings, cd, ctmp) {
+        /* log_debug("\t%s: %s", cd->name, cd->label); */
+        HASH_DEL(the_config_settings, cd);
+        free(cd);
+    }
+}
+
+/* void register_condition_name(char *_name, obzl_meta_flags *_flags) */
+/* { */
+/*     struct config_setting *a_condition; */
+/*     a_condition = calloc(sizeof(struct config_setting), 1); */
+/*     strncpy(a_condition->name, _name, 128); */
+/*     a_condition->flags = _flags; */
+/*     HASH_ADD_STR(the_config_settings, name, a_condition); */
+/* } */
+
+/* **************************************************************** */
+#if DEBUG_DUMP
 void dump_flags(int indent, obzl_meta_flags *flags)
 {
     indent++;            /* account for width of log label */

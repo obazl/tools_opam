@@ -10,6 +10,25 @@ static int indent = 2;
 static int delta = 2;
 static char *sp = " ";
 
+/*
+  findlib META variable assignment
+  same var can be RHS of multiple assign stmts, distinguished by "predicates"
+  e.g. ctypes:
+
+  archive(byte) = "ctypes.cma"
+  archive(byte, plugin) = "ctypes.cma"
+  archive(byte, toploop) = "ctypes.cma ctypes-top.cma"
+  archive(native) = "ctypes.cmxa"
+  archive(native, plugin) = "ctypes.cmxs"
+
+  in addition the assignment has an op: set ("=") or update ("+=")
+
+  we represent this with struct obzl_meta_property, which binds a name
+  (LHS) to a list of obzl_meta_setting. each setting is a list of
+  flags (predicate), an operator, and the RHS (string or list of
+  strings)
+
+*/
 
 #if INTERFACE
 enum obzl_meta_opcode_e { OP_SET, OP_UPDATE };

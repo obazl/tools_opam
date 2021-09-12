@@ -78,6 +78,29 @@ EXPORT obzl_meta_property *obzl_meta_entries_property(obzl_meta_entries *_entrie
 }
 
 /* **************** */
+EXPORT char *obzl_meta_directory_property(obzl_meta_entries *_entries)
+{
+/* #if DEBUG_ENTRIES */
+/*     log_trace("obzl_meta_directory_property"); */
+/* #endif */
+    /* utarray_find requires a sort; not worth the cost */
+    obzl_meta_entry *e = NULL;
+    for (int i = 0; i < obzl_meta_entries_count(_entries); i++) {
+        e = obzl_meta_entries_nth(_entries, i);
+        if (e->type == OMP_PROPERTY) {
+            /* log_debug("property: %s := %s", */
+            /*           e->property->name, */
+            /*           obzl_meta_property_value(e->property)); */
+            if (strncmp(e->property->name, "directory", 9) == 0) {
+                return obzl_meta_property_value(e->property);
+            }
+        }
+        /* log_debug("iteration %d", i); */
+    }
+    return NULL;
+}
+
+/* **************** */
 void entry_copy(void *_dst, const void *_src) {
     struct obzl_meta_entry *dst = (struct obzl_meta_entry*)_dst;
     struct obzl_meta_entry *src = (struct obzl_meta_entry*)_src;

@@ -37,7 +37,11 @@ int errnum;
 int rc;
 
 #if INTERFACE
-typedef int (*file_handler)(char *rootdir, char *pkg, char *metafile);
+typedef int (*file_handler)(char *rootdir,
+                            char *bzlroot,
+                            /* char *imports_path, */
+                            char *pkgdir,
+                            char *metafile);
 #endif
 
 // FIXME: replace with utstrings
@@ -141,6 +145,7 @@ EXPORT char *mkdir_r(char *base, char *path)
 }
 
 EXPORT int meta_walk(char *srcroot,
+                     char *bzlroot,
                      bool linkfiles,
                      /* char *file_to_handle, /\* 'META' or NULL *\/ */
                      file_handler handle_meta)
@@ -149,7 +154,7 @@ EXPORT int meta_walk(char *srcroot,
         log_error("walk called with NULL callback fn ptr.");
         return -1;
     }
-    return meta_walk_impl(srcroot,
+    return meta_walk_impl(srcroot, bzlroot,
                      "",        /* bazel_pkg */
                      "",        /* directory */
                      linkfiles,
@@ -163,6 +168,7 @@ EXPORT int meta_walk(char *srcroot,
       for each directory in basedir, recur
  */
 LOCAL int meta_walk_impl(char *basedir,
+                     char *bzlroot,
                     char *bazel_pkg,
                     char *directory,
                     /* char *out_directory, */
@@ -225,7 +231,8 @@ LOCAL int meta_walk_impl(char *basedir,
                        ))
                  ) {
                 /* log_debug("recurring on subdir %s for outdir: %s\n", dir_entry->d_name, outdir); */
-                meta_walk_impl(currdir, currpkg, dir_entry->d_name,
+                meta_walk_impl(currdir, bzlroot,
+                               currpkg, dir_entry->d_name,
                                linkfiles,
                                /* file_to_handle, */
                                handle_meta);
@@ -234,7 +241,8 @@ LOCAL int meta_walk_impl(char *basedir,
                 if (dir_entry->d_type == DT_REG) {
                     if ( (strlen(dir_entry->d_name) == 4)
                          && (strncmp(dir_entry->d_name, "META", 4) == 0) ) {
-                        int rc = handle_meta(basedir, currpkg, dir_entry->d_name);
+                        int rc = handle_meta(basedir, bzlroot,
+                                             currpkg, dir_entry->d_name);
                         if (rc) {
                             log_error("handle_meta fail for %s/%s", currpkg, dir_entry->d_name);
                             return rc;

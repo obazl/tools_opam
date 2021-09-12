@@ -25,6 +25,8 @@ static int delta = 2;
 
 bool stdlib_root = false;
 
+UT_string *build_bazel_file = NULL;
+
 void emit_bazel_hdr(FILE* ostream, int level, char *repo, char *pkg_prefix, obzl_meta_package *_pkg)
 {
     fprintf(ostream, "load(\n");
@@ -98,18 +100,21 @@ obzl_meta_values *resolve_setting_values(obzl_meta_setting *_setting,
     return new_values;
 }
 
-void emit_bazel_attribute(FILE* ostream, int level,
-                        char *_repo,
-                        char *_opam_rootdir, /* opam symlinked dir, e.g. '_lib' */
-                        char *_pkg_path,
-                        char *_pkg_name,
-                        /* obzl_meta_package *_pkg, */
-                        obzl_meta_entries *_entries,
-                        char *property) /* = 'archive' or 'plugin' */
+void emit_bazel_attribute(FILE* ostream,
+                          int level, /* indentation control */
+                          char *_repo,
+                          char *_pkg_path,
+                          char *_pkg_prefix,
+                          char *_pkg_name,
+                          /* for constructing import label: */
+                          char *_imports_path, /* _lib */
+                          /* char *_subpkg_dir, */
+                          obzl_meta_entries *_entries,
+                          char *property) /* = 'archive' or 'plugin' */
 {
-    /* log_debug("EMIT_BAZEL_ATTRIBUTE _pkg_name: %s, prop: %s", */
-    /*           _pkg_name, property); */
-    /* log_debug("    _pkg_path: %s", _pkg_path); */
+    log_debug("EMIT_BAZEL_ATTRIBUTE _pkg_name: '%s'; prop: '%s'; imports path: '%s'",
+              _pkg_name, property, _imports_path);
+    log_debug("    _pkg_path: %s", _pkg_path);
     /*
       NOTE: archive/plugin location is relative to the 'directory' property!
       which may be empty, even for subpackages (e.g. opam-lib subpackages)
@@ -201,9 +206,16 @@ void emit_bazel_attribute(FILE* ostream, int level,
 
     for (int i = 0; i < settings_ct; i++) {
         setting = obzl_meta_settings_nth(settings, i);
-        /* log_debug("setting %d", i+1); */
+        log_debug("setting %d", i+1);
 
         obzl_meta_flags *flags = obzl_meta_setting_flags(setting);
+
+        /* skip any setting with deprecated flag, e.g. 'vm' */
+        if (obzl_meta_flags_deprecated(flags)) {
+            /* log_debug("TTTTTTTTTTTTTTTT DEPRECATED FLAG"); */
+            continue;
+        }
+
         if (flags != NULL) register_flags(flags);
 
         /* if (g_ppx_pkg) {        /\* set by opam_bootstrap.handle_lib_meta *\/ */
@@ -213,7 +225,7 @@ void emit_bazel_attribute(FILE* ostream, int level,
         if (flags == NULL)
             utstring_printf(condition_name, "//conditions:default");
         else
-            has_conditions = obzl_meta_flags_to_condition_name(flags, condition_name);
+            has_conditions = obzl_meta_flags_to_select_condition(flags, condition_name);
 
         /* char *condition_comment = obzl_meta_flags_to_comment(flags); */
         /* log_debug("condition_comment: %s", condition_comment); */
@@ -221,11 +233,9 @@ void emit_bazel_attribute(FILE* ostream, int level,
         /* FIXME: multiple settings means multiple flags; decide how to handle for deps */
         // construct a select expression on the flags
         if (settings_ct > 1) {
-            if (has_conditions) { /* skip mt, mt_vm, mt_posix */
-                fprintf(ostream, "        \"%s\"%-4s",
-                        utstring_body(condition_name), ": [\n");
-                /* condition_comment, /\* FIXME: name the condition *\/ */
-            }
+            fprintf(ostream, "        \"%s\"%-4s",
+                    utstring_body(condition_name), ": [\n");
+            /* condition_comment, /\* FIXME: name the condition *\/ */
         }
 
         /* now we handle UPDATE settings */
@@ -249,40 +259,52 @@ void emit_bazel_attribute(FILE* ostream, int level,
             /*     s++; */
             /* } */
             utstring_clear(label);
-            utstring_printf(label, "//:%s", _opam_rootdir); /* e.g. _lib */
-            /* log_debug("label 1: %s", utstring_body(label)); */
+            /* utstring_printf(label, "//:%s", _imports_path); /\* e.g. _lib *\/ */
+            log_debug("21 _pkg_path: %s", _pkg_path);
+            log_debug("21 _pkg_prefix: %s", _pkg_prefix);
+            log_debug("21 _imports_path: %s", _imports_path);
             /* SPECIAL CASE: compiler-libs FIXME: handle this better */
             if (strncmp(_pkg_path, "compiler-libs", 13) == 0) {
                 utstring_printf(label, "/%s", "ocaml/compiler-libs");
             } else {
                 if (stdlib) {
-                    utstring_printf(label, "/%s", "ocaml");
-                    if (stdlib_root) {
-                        if (strlen(_pkg_path)>0)
-                            utstring_printf(label, "/%s", _pkg_path);
-                    } else {
-                        utstring_printf(label, "/%s", directory);
-                    }
+                    utstring_printf(label,
+                                    "//:_lib/ocaml");
+                                    /* _imports_path); */
+                    /* if (stdlib_root) { */
+                    /*     if (strlen(_pkg_path)>0) */
+                    /*         utstring_printf(label, "/%s", _pkg_path); */
+                    /* } else { */
+                    /*     utstring_printf(label, "/%s", directory); */
+                    /* } */
                 } else {
-                    if (strlen(_pkg_path)>0)
-                        utstring_printf(label, "/%s", _pkg_path);
+                    if (directory_prop == NULL) {
+                        if (strlen(_pkg_path)>0) {
+                            utstring_printf(label,
+                                            "//:%s",
+                                            _imports_path); //, _pkg_name);
+                        }
+                    } else {
+                        log_debug("new import path seg: %s", _pkg_name);
+                        utstring_printf(label, "//:%s/%s",
+                                        _imports_path, _pkg_name);
+                    }
+
                     /* log_debug("has dir: %p", directory_prop); */
-                    if (directory_prop)
-                        utstring_printf(label, "/%s", _pkg_name);
-                    else
-                        /* no _pkg_path means top-level pkg, so add pkg subdir */
-                        if (strlen(_pkg_path) == 0)
-                            utstring_printf(label, "/%s", _pkg_name);
+                    /* if (directory_prop) */
+                    /*     utstring_printf(label, "/%s", _pkg_name); */
+                    /* else */
+                    /*     /\* no _pkg_path means top-level pkg, so add pkg subdir *\/ */
+                    /*     if (strlen(_pkg_path) == 0) */
+                    /*         utstring_printf(label, "/%s", _pkg_name); */
                 }
             }
             utstring_printf(label, "/%s", *v);
-            /* log_debug("label 2: %s", utstring_body(label)); */
+            log_debug("label 2: %s", utstring_body(label));
 
             if (settings_ct > 1) {
-                if (has_conditions) /* skip mt, mt_vm, mt_posix */
                     fprintf(ostream, "            \"%s\",\n", utstring_body(label));
             } else {
-                if (has_conditions) /* skip mt, mt_vm, mt_posix */
                     fprintf(ostream, "\"%s\",\n", utstring_body(label));
             }
             /* if v is .cmxa, then add .a too? */
@@ -294,13 +316,13 @@ void emit_bazel_attribute(FILE* ostream, int level,
             /*     if (has_conditions) /\* skip mt, mt_vm, mt_posix *\/ */
             /*         fprintf(ostream, "            \"%s\",\n", cmxa_a); */
             /* } */
-            if (has_conditions) /* skip mt, mt_vm, mt_posix */
-                fprintf(ostream, "%s", "        ],\n");
+            /* if (flags != NULL) /\* skip mt, mt_vm, mt_posix *\/ */
+            /*     fprintf(ostream, "%s", "        ],\n"); */
         }
         utstring_free(label);
         if (settings_ct > 1) {
             fprintf(ostream, "\n"); // , (1+level)*spfactor, sp);
-            /* fprintf(ostream, "%*s],\n", (1+level)*spfactor, sp); */
+            fprintf(ostream, "%*s],\n", (1+level)*spfactor, sp);
         }
         /* free(condition_comment); */
     }
@@ -358,56 +380,60 @@ void emit_bazel_metadatum(FILE* ostream, int level,
         fprintf(ostream, "    %s = \"\"\"%s\"\"\",\n", _attrib, *v);
 }
 
-void emit_bazel_ppx_dummy_rule(FILE* ostream, int level,
-                                char *_repo,
-                                char *_opam_rootdir, /* opam symlinked input dir, e.g. '_lib' */
-                                char *_pkg_path,
-                                char *_pkg_name,
-                                obzl_meta_entries *_entries)
+/* void emit_bazel_ppx_dummy_rule(FILE* ostream, int level, */
+/*                                 char *_repo, */
+/*                                 char *_imports_path, /\* opam symlinked input dir, e.g. '_lib' *\/ */
+/*                                 char *_pkg_path, */
+/*                                 char *_pkg_name, */
+/*                                 obzl_meta_entries *_entries) */
+/*                                 /\* obzl_meta_package *_pkg) *\/ */
+/* { */
+/*     /\* fprintf(ostream, "\nocaml_import(\n"); *\/ */
+/*     /\* fprintf(ostream, "    name = \"no_ppx_driver\",\n"); // , _pkg_name); *\/ */
+/*     /\* emit_bazel_metadatum(ostream, 1, "@opam", _imports_path, _entries, "version", "version"); *\/ */
+/*     /\* emit_bazel_metadatum(ostream, 1, "@opam", _imports_path, _entries, "description", "doc"); *\/ */
+/*     /\* we won't have 'archive' or 'plugin' entries for -ppx_driver? *\/ */
+/*     /\* emit_bazel_attribute(ostream, 1, "@opam", _imports_path, _pkg_path, _pkg_name, _entries, "archive"); *\/ */
+/*     /\* for deps we process 'requires(-ppx_driver...)' entries *\/ */
+/*     /\* emit_bazel_ppx_dummy_deps(ostream, 1, "@opam", "lib", _entries); *\/ */
+/*     /\* fprintf(ostream, "    visibility = [\"//visibility:public\"]\n"); *\/ */
+/*     /\* fprintf(ostream, ")\n"); *\/ */
+
+/*     fprintf(ostream, "%s", */
+/*             "load(\"@bazel_skylib//rules:common_settings.bzl\", \"bool_flag\")\n" */
+/*             "\n" */
+/*             "bool_flag( name = \"ppx_driver\", build_setting_default = True )\n" */
+/*             "bool_flag( name = \"custom_ppx\", build_setting_default = True )\n" */
+/*             "\n"); */
+
+/*     fprintf(ostream, "%s", */
+/*             "config_setting(\n" */
+/*             "    name = \"ppx_driver_only\",\n" */
+/*             "    flag_values = { \":ppx_driver\": \"True\", \":custom_ppx\": \"True\" }\n" */
+/*             ")\n\n" */
+/*             "config_setting(\n" */
+/*             "    name = \"no_ppx_driver_only\",\n" */
+/*             "    flag_values = { \":ppx_driver\": \"False\", \":custom_ppx\": \"True\" }\n" */
+/*             ")\n\n" */
+/*             "config_setting(\n" */
+/*             "    name = \"both_disabled\",\n" */
+/*             "    flag_values = { \":ppx_driver\": \"False\", \":custom_ppx\": \"False\" }\n" */
+/*             ")\n\n" */
+/*             ); */
+/* } */
+
+void emit_bazel_archive_rule(FILE* ostream,
+                             int level,
+                             char *_repo,
+                             char *_imports_path, /* _lib/... */
+                             char *_pkg_path,
+                             char *_pkg_prefix,
+                             char *_pkg_name,
+                             obzl_meta_entries *_entries)
+                             /* char *_subpkg_dir) */
                                 /* obzl_meta_package *_pkg) */
 {
-    /* fprintf(ostream, "\nocaml_import(\n"); */
-    /* fprintf(ostream, "    name = \"no_ppx_driver\",\n"); // , _pkg_name); */
-    /* emit_bazel_metadatum(ostream, 1, "@opam", _opam_rootdir, _entries, "version", "version"); */
-    /* emit_bazel_metadatum(ostream, 1, "@opam", _opam_rootdir, _entries, "description", "doc"); */
-    /* we won't have 'archive' or 'plugin' entries for -ppx_driver? */
-    /* emit_bazel_attribute(ostream, 1, "@opam", _opam_rootdir, _pkg_path, _pkg_name, _entries, "archive"); */
-    /* for deps we process 'requires(-ppx_driver...)' entries */
-    /* emit_bazel_ppx_dummy_deps(ostream, 1, "@opam", "lib", _entries); */
-    /* fprintf(ostream, "    visibility = [\"//visibility:public\"]\n"); */
-    /* fprintf(ostream, ")\n"); */
-
-    fprintf(ostream, "%s",
-            "load(\"@bazel_skylib//rules:common_settings.bzl\", \"bool_flag\")\n"
-            "\n"
-            "bool_flag( name = \"ppx_driver\", build_setting_default = True )\n"
-            "bool_flag( name = \"custom_ppx\", build_setting_default = True )\n"
-            "\n");
-
-    fprintf(ostream, "%s",
-            "config_setting(\n"
-            "    name = \"ppx_driver_only\",\n"
-            "    flag_values = { \":ppx_driver\": \"True\", \":custom_ppx\": \"True\" }\n"
-            ")\n\n"
-            "config_setting(\n"
-            "    name = \"no_ppx_driver_only\",\n"
-            "    flag_values = { \":ppx_driver\": \"False\", \":custom_ppx\": \"True\" }\n"
-            ")\n\n"
-            "config_setting(\n"
-            "    name = \"both_disabled\",\n"
-            "    flag_values = { \":ppx_driver\": \"False\", \":custom_ppx\": \"False\" }\n"
-            ")\n\n"
-            );
-}
-
-void emit_bazel_archive_rule(FILE* ostream, int level,
-                                char *_repo,
-                                char *_opam_rootdir, /* opam symlinked input dir, e.g. '_lib' */
-                                char *_pkg_path,
-                                char *_pkg_name,
-                                obzl_meta_entries *_entries)
-                                /* obzl_meta_package *_pkg) */
-{
+    log_debug("EMIT_BAZEL_ARCHIVE_RULE: _imports_path: %s", _imports_path);
     /* http://projects.camlcity.org/projects/dl/findlib-1.9.1/doc/ref-html/r759.html
 
 The variable "archive" specifies the list of archive files. These files should be given either as (1) plain names without any directory information; they are only searched in the package directory. (2) Or they have the form "+path" in which case the files are looked up relative to the standard library. (3) Or they have the form "@name/file" in which case the files are looked up in the package directory of another package. (4) Or they are given as absolute paths.
@@ -423,9 +449,22 @@ Note that "archive" should only be used for archive files that are intended to b
 
     fprintf(ostream, "\nocaml_import(\n");
     fprintf(ostream, "    name = \"%s\",\n", _pkg_name); /* default target provides archive */
-    emit_bazel_metadatum(ostream, 1, "@opam", _opam_rootdir, _entries, "version", "version");
-    emit_bazel_metadatum(ostream, 1, "@opam", _opam_rootdir, _entries, "description", "doc");
-    emit_bazel_attribute(ostream, 1, "@opam", _opam_rootdir, _pkg_path, _pkg_name, _entries, "archive");
+    emit_bazel_metadatum(ostream, 1,
+                         _repo,              /* @opam */
+                         _imports_path, _entries, "version", "version");
+    emit_bazel_metadatum(ostream, 1,
+                         _repo, // "@opam",
+                         _imports_path, _entries, "description", "doc");
+    emit_bazel_attribute(ostream, 1,
+                         _repo, // "@opam",
+                         _pkg_path,
+                         _pkg_prefix,
+                         _pkg_name,
+                         /* for constructing import label: */
+                         _imports_path,
+                         /* _subpkg_dir, */
+                         _entries,
+                         "archive");
     emit_bazel_deps(ostream, 1, "@opam", "lib", _entries);
     emit_bazel_deps_adjunct(ostream, 1, "@opam", "lib", _entries);
     fprintf(ostream, "    visibility = [\"//visibility:public\"]\n");
@@ -433,15 +472,26 @@ Note that "archive" should only be used for archive files that are intended to b
 }
 
 void emit_bazel_plugin_rule(FILE* ostream, int level,
-                               char *_repo,
-                               char *_opam_rootdir,
-                               char *_pkg_path,
-                               char *_pkg_name,
-                               obzl_meta_entries *_entries)
+                            char *_repo,
+                            char *_imports_path,
+                            char *_pkg_path,
+                            char *_pkg_prefix,
+                            char *_pkg_name,
+                            obzl_meta_entries *_entries,
+                            char *_subpkg_dir)
 {
+    log_debug("EMIT_BAZEL_PLUGIN_RULE: _imports_path: %s", _imports_path);
     fprintf(ostream, "\nocaml_import(\n");
     fprintf(ostream, "    name = \"plugin\",\n");
-    emit_bazel_attribute(ostream, 1, "@opam", _opam_rootdir, _pkg_path, _pkg_name, _entries, "plugin");
+    emit_bazel_attribute(ostream, 1,
+                         _repo,
+                         _pkg_path,
+                         _pkg_prefix,
+                         _pkg_name,
+                         _imports_path,
+                         /* _subpkg_dir, */
+                         _entries,
+                         "plugin");
     emit_bazel_deps(ostream, 1, "@opam", "lib", _entries);
     fprintf(ostream, "    visibility = [\"//visibility:public\"]\n");
     fprintf(ostream, ")\n");
@@ -510,7 +560,7 @@ void emit_bazel_deps(FILE* ostream, int level, char *repo, char *pkg,
         if (flags == NULL)
             utstring_printf(condition_name, "//conditions:default");
         else
-            has_conditions = obzl_meta_flags_to_condition_name(flags, condition_name);
+            has_conditions = obzl_meta_flags_to_select_condition(flags, condition_name);
 
         char *condition_comment = obzl_meta_flags_to_comment(flags);
         /* log_debug("condition_comment: %s", condition_comment); */
@@ -647,7 +697,7 @@ void emit_bazel_deps_adjunct(FILE* ostream, int level, char *repo,
         if (flags == NULL)
             utstring_printf(condition_name, "//conditions:default");
         else
-            has_conditions = obzl_meta_flags_to_condition_name(flags, condition_name);
+            has_conditions = obzl_meta_flags_to_select_condition(flags, condition_name);
 
         char *condition_comment = obzl_meta_flags_to_comment(flags);
         /* log_debug("condition_comment: %s", condition_comment); */
@@ -897,7 +947,7 @@ void emit_bazel_ppx_dummy_deps(FILE* ostream, int level, char *repo, char *pkg,
         if (flags == NULL)
             utstring_printf(condition_name, "//conditions:default");
         else
-            has_conditions = obzl_meta_flags_to_condition_name(flags, condition_name);
+            has_conditions = obzl_meta_flags_to_select_condition(flags, condition_name);
 
         char *condition_comment = obzl_meta_flags_to_comment(flags);
         /* log_debug("condition_comment: %s", condition_comment); */
@@ -964,29 +1014,39 @@ void emit_bazel_ppx_dummy_deps(FILE* ostream, int level, char *repo, char *pkg,
         fprintf(ostream, "%*s],\n", level*spfactor, sp);
 }
 
-void emit_bazel_subpackages(char *_tgtroot,
-                            char *_repo,
+void emit_bazel_subpackages(char *_repo,
+                            char *_repo_root,
                             char *_pkg_prefix,
-                            char *_pkg_path,
+                            char *_imports_path,
+                            /* char *_pkg_path, */
                             struct obzl_meta_package *_pkg)
-
+                            /* char *_subpkg_dir) */
 {
     log_debug("emit_bazel_subpackages, pfx: %s", _pkg_prefix);
-    log_debug("emit_bazel_subpackages, pkgpath: %s", _pkg_path);
+    log_debug("\t_repo: %s; _repo_root: %s", _repo, _repo_root);
+    log_debug("\t_pkg_prefix: %s", _pkg_prefix); //, _pkg_path);
+    log_debug("\t_imports_path: %s", _imports_path);
 
     obzl_meta_entries *entries = _pkg->entries;
-    obzl_meta_entry *e = NULL;
+    obzl_meta_entry *entry = NULL;
 
-    char pfx[256];
+    char *pkg_name = obzl_meta_package_name(_pkg);
+    UT_string *_new_pkg_prefix;
+    utstring_new(_new_pkg_prefix);
+    utstring_printf(_new_pkg_prefix, "%s/%s", _pkg_prefix, pkg_name);
 
     for (int i = 0; i < obzl_meta_entries_count(entries); i++) {
-        e = obzl_meta_entries_nth(_pkg->entries, i);
-        if (e->type == OMP_PACKAGE) {
-            /* log_debug("SUBPACKAGE ENTRY: %s, dir: %s", */
-            /*           e->package->name, e->package->directory); */
+        entry = obzl_meta_entries_nth(entries, i);
+        if (entry->type == OMP_PACKAGE) {
+            obzl_meta_package *subpkg = entry->package;
+            obzl_meta_entries *sub_entries = subpkg->entries;
+            char *subdir = obzl_meta_directory_property(sub_entries);
 
-            /* always emit, even if subpackage 'directory' prop is null */
-            emit_build_bazel(_tgtroot, _repo, _pkg_prefix, _pkg_path, e->package);
+            emit_build_bazel(_repo, _repo_root,
+                             utstring_body(_new_pkg_prefix),
+                             _imports_path,
+                             //_pkg_path,
+                             subpkg);
             /* select only subpackages with non-empty 'directory' prop */
             /* obzl_meta_property *dprop */
             /*     = obzl_meta_entries_property(e->package->entries, */
@@ -995,78 +1055,79 @@ void emit_bazel_subpackages(char *_tgtroot,
             /*     log_debug("DPROP %s := %s", */
             /*               obzl_meta_property_name(dprop), */
             /*               obzl_meta_property_value(dprop)); */
-            /*     emit_build_bazel(_tgtroot, _repo, _pkg_prefix, _pkg_path, e->package); */
+            /*     emit_build_bazel(_repo, _repo_root, _pkg_prefix, _pkg_path, e->package); */
             /* } else { */
             /*     log_debug("skipping subpackage with empty 'directory' prop"); */
             /* } */
         }
     }
+    utstring_free(_new_pkg_prefix);
 }
 
-void emit_bazel_flags_mt(char *pfx)
-{
-    UT_string *fname;
-    utstring_new(fname);
+/* void emit_bazel_flags_mt(char *pfx) */
+/* { */
+/*     UT_string *fname; */
+/*     utstring_new(fname); */
 
-    utstring_printf(fname, "%s", outdir);
-    utstring_printf(fname, "%s",  "/cfg/mt");
-    mkdir_r(utstring_body(fname), "");
-    utstring_printf(fname, "%s",  "/BUILD.bazel");
+/*     utstring_printf(fname, "%s", bzlroot); */
+/*     utstring_printf(fname, "%s",  "/cfg/mt"); */
+/*     mkdir_r(utstring_body(fname), ""); */
+/*     utstring_printf(fname, "%s",  "/BUILD.bazel"); */
 
-    log_debug("writing cfg file: %s", utstring_body(fname));
-    fprintf(stdout, "writing cfg file: %s\n", utstring_body(fname));
+/*     log_debug("writing cfg file: %s", utstring_body(fname)); */
+/*     fprintf(stdout, "writing cfg file: %s\n", utstring_body(fname)); */
 
-    FILE *ostream = fopen(utstring_body(fname), "w");
-    if (ostream == NULL) {
-        perror(utstring_body(fname));
-        log_error("fopen fail on %s", utstring_body(fname));
-        fflush(stderr); fflush(stdout);
-        exit(EXIT_FAILURE);
-    }
+/*     FILE *ostream = fopen(utstring_body(fname), "w"); */
+/*     if (ostream == NULL) { */
+/*         perror(utstring_body(fname)); */
+/*         log_error("fopen fail on %s", utstring_body(fname)); */
+/*         fflush(stderr); fflush(stdout); */
+/*         exit(EXIT_FAILURE); */
+/*     } */
 
-    fprintf(ostream, "%s",
-            "load(\"@bazel_skylib//rules:common_settings.bzl\", \"bool_flag\", \"string_flag\")\n"
-            "\n"
-            "package(default_visibility = [\"//visibility:public\"])\n"
-            "\n"
-            "bool_flag     ( name = \"mt\", build_setting_default = False)\n" /* --@opam//cfg/mt:mt */
-            "config_setting("   /* @opam//cfg/mt:enabled */
-            " name = \"enabled\","
-            " flag_values = { \":mt\": \"True\"}"
-            ")\n"
-            "\n"
-            "bool_flag( name = \"posix\", build_setting_default = False)\n" /* --@opam//cfg/mt:posix */
-            "bool_flag( name = \"vm\", build_setting_default = False)\n" /* --@opam//cfg/mt:vm */
-            "\n");
-    fclose(ostream);
+/*     fprintf(ostream, "%s", */
+/*             "load(\"@bazel_skylib//rules:common_settings.bzl\", \"bool_flag\", \"string_flag\")\n" */
+/*             "\n" */
+/*             "package(default_visibility = [\"//visibility:public\"])\n" */
+/*             "\n" */
+/*             "bool_flag     ( name = \"mt\", build_setting_default = False)\n" /\* --@opam//cfg/mt:mt *\/ */
+/*             "config_setting("   /\* @opam//cfg/mt:enabled *\/ */
+/*             " name = \"enabled\"," */
+/*             " flag_values = { \":mt\": \"True\"}" */
+/*             ")\n" */
+/*             "\n" */
+/*             "bool_flag( name = \"posix\", build_setting_default = False)\n" /\* --@opam//cfg/mt:posix *\/ */
+/*             "bool_flag( name = \"vm\", build_setting_default = False)\n" /\* --@opam//cfg/mt:vm *\/ */
+/*             "\n"); */
+/*     fclose(ostream); */
 
-    /* **************** */
-    utstring_clear(fname);
-    utstring_printf(fname, "%s", outdir);
-    utstring_printf(fname, "%s", "/cfg/mt/posix");
-    mkdir_r(utstring_body(fname), "");
-    utstring_printf(fname, "%s", "/BUILD.bazel");
+/*     /\* **************** *\/ */
+/*     utstring_clear(fname); */
+/*     utstring_printf(fname, "%s", bzlroot); */
+/*     utstring_printf(fname, "%s", "/cfg/mt/posix"); */
+/*     mkdir_r(utstring_body(fname), ""); */
+/*     utstring_printf(fname, "%s", "/BUILD.bazel"); */
 
-    log_debug("writing cfg file: %s", utstring_body(fname));
-    ostream = fopen(utstring_body(fname), "w");
-    if (ostream == NULL) {
-        perror(utstring_body(fname));
-        log_error("fopen fail on %s", utstring_body(fname));
-        fflush(stderr); fflush(stdout);
-        exit(EXIT_FAILURE);
-    }
-    fprintf(ostream, "%s",
-            "load(\"@bazel_skylib//rules:common_settings.bzl\", \"bool_flag\")\n"
-            "\n"
-            "package(default_visibility = [\"//visibility:public\"])\n"
-            "\n"
-            "config_setting("   /* @opam//cfg/vm:enabled */
-            " name = \"enabled\","
-            " flag_values = { \"//cfg/mt:vm\": \"True\"} "
-            ")\n"
-            "\n");
-    fclose(ostream);
-}
+/*     log_debug("writing cfg file: %s", utstring_body(fname)); */
+/*     ostream = fopen(utstring_body(fname), "w"); */
+/*     if (ostream == NULL) { */
+/*         perror(utstring_body(fname)); */
+/*         log_error("fopen fail on %s", utstring_body(fname)); */
+/*         fflush(stderr); fflush(stdout); */
+/*         exit(EXIT_FAILURE); */
+/*     } */
+/*     fprintf(ostream, "%s", */
+/*             "load(\"@bazel_skylib//rules:common_settings.bzl\", \"bool_flag\")\n" */
+/*             "\n" */
+/*             "package(default_visibility = [\"//visibility:public\"])\n" */
+/*             "\n" */
+/*             "config_setting("   /\* @opam//cfg/vm:enabled *\/ */
+/*             " name = \"enabled\"," */
+/*             " flag_values = { \"//cfg/mt:vm\": \"True\"} " */
+/*             ")\n" */
+/*             "\n"); */
+/*     fclose(ostream); */
+/* } */
 
 /* void emit_bazel_config_setting_rules(char *pfx) */
 /* { */
@@ -1082,8 +1143,8 @@ void emit_bazel_flags_mt(char *pfx)
 /*     char config_setting[PATH_MAX]; */
 
 /*     fname[0] = '\0'; */
-/*     mkdir_r(outdir, "cfg"); */
-/*     mystrcat(fname, outdir); */
+/*     mkdir_r(bzlroot, "cfg"); */
+/*     mystrcat(fname, bzlroot); */
 /*     mystrcat(fname, "/"); */
 /*     mystrcat(fname, "cfg/BUILD.bazel"); */
 /*     log_debug("writing cfg file: %s", fname); */
@@ -1242,31 +1303,49 @@ The variable "directory" redefines the location of the package directory. Normal
     /* } */
 }
 
-EXPORT void emit_build_bazel(char *_tgtroot,
-                             char *_repo,
-                             char *_pkg_prefix, /* output, e.g. "lib" */
-                             char *_pkg_path,
+/*
+  params:
+  _tgtroot: output dir
+  _repo: @opam
+
+  _pkg_prefix - result of concatenating ancestors up to parent; starts
+                with bzl_lib (default: "lib")
+
+  pkg path will be made by concatenating _pkg_prefix to pkg name
+ */
+EXPORT void emit_build_bazel(char *_repo,
+                             char *_repo_root,
+                             char *_pkg_prefix,
+                             char *_imports_path,
+                             /* char *_pkg_path, /\* FIXME: remove *\/ */
                              struct obzl_meta_package *_pkg)
+                             /* char *_subpkg_dir) */
 {
+    log_info("EMIT_BUILD_BAZEL");
     char *pkg_name = obzl_meta_package_name(_pkg);
-    /* log_info("emit_build_bazel"); */
 #ifdef DEBUG
-    log_info("\t_pkg_prefix: %s", _pkg_prefix);
-    log_info("\t_pkg_path: %s", _pkg_path);
+    log_info("\n\t_repo: @%s; _pkg_prefix: '%s'; pkg name: '%s'",
+             _repo, _pkg_prefix, pkg_name);
+    /* log_info("\n\t_subpkg_dir: %s", _subpkg_dir); */
     log_info("\tlabel: @%s//%s/%s", _repo, _pkg_prefix, pkg_name);
+    log_info("\t_imports_path: '%s'", _imports_path);
+    log_info("\t_repo_root: '%s'", _repo_root);
     /* log_set_quiet(false); */
-    log_debug("%*sparsed name: %s", indent, sp, pkg_name);
-    log_debug("%*sparsed dir:  %s", indent, sp, obzl_meta_package_dir(_pkg));
+    /* log_debug("%*sparsed name: %s", indent, sp, pkg_name); */
+    log_debug("%*spkg dir:  %s", indent, sp, obzl_meta_package_dir(_pkg));
     log_debug("%*sparsed src:  %s", indent, sp, obzl_meta_package_src(_pkg));
 #endif
 
-    UT_string *build_bazel_file;
-    utstring_new(build_bazel_file);
+    utstring_renew(build_bazel_file);
+    /* utstring_clear(build_bazel_file); */
+    utstring_printf(build_bazel_file, "%s/%s", _repo_root, _pkg_prefix);
 
-    utstring_clear(build_bazel_file);
-    utstring_printf(build_bazel_file, "%s/%s", _tgtroot, _pkg_prefix);
-    if (strlen(_pkg_path) > 0)
-        utstring_printf(build_bazel_file, "/%s", _pkg_path);
+    obzl_meta_entries *entries = _pkg->entries;
+    char *subpkg_dir = obzl_meta_directory_property(entries);
+    if (subpkg_dir != NULL) {
+        log_debug("directory property: %s", subpkg_dir);
+        /* utstring_printf(build_bazel_file, "/%s", subpkg_dir); */
+    }
 
     /* if (obzl_meta_package_dir(_pkg) != NULL) */
     utstring_printf(build_bazel_file, "/%s", pkg_name);
@@ -1290,8 +1369,6 @@ EXPORT void emit_build_bazel(char *_tgtroot,
     fprintf(ostream, "## original: %s\n\n", obzl_meta_package_src(_pkg));
 
     emit_bazel_hdr(ostream, 1, "@opam", "lib", _pkg);
-
-    obzl_meta_entries *entries = _pkg->entries;
 
     struct obzl_meta_property *directory_prop = obzl_meta_entries_property(entries, "directory");
     char *directory;
@@ -1334,11 +1411,23 @@ EXPORT void emit_build_bazel(char *_tgtroot,
             /*     continue; */
             /* } */
             if (strncmp(e->property->name, "archive", 7) == 0) {
-                emit_bazel_archive_rule(ostream, 1, "@opam", "_lib", _pkg_path, pkg_name, entries);
+                log_debug("calling emit_bazel_archive_rule with %s",
+                          _imports_path);
+                emit_bazel_archive_rule(ostream, 1,
+                                        _repo, // "@opam",
+                                        _imports_path,
+                                        _pkg_prefix,
+                                        _pkg_prefix,
+                                        pkg_name,
+                                        entries);
+                                        /* subpkg_dir); */
                 continue;
             }
             if (strncmp(e->property->name, "plugin", 6) == 0) {
-                emit_bazel_plugin_rule(ostream, 1, "@opam", "_lib", _pkg_path, pkg_name, entries);
+                emit_bazel_plugin_rule(ostream, 1, "@opam", "_lib",
+                                       _pkg_prefix,
+                                       _pkg_prefix,
+                                       pkg_name, entries, subpkg_dir);
                 continue;
             }
             /* if (strncmp(e->property->name, "ppx", 3) == 0) { */
@@ -1353,7 +1442,9 @@ EXPORT void emit_build_bazel(char *_tgtroot,
                     continue;
                 if (obzl_meta_entries_property(entries, "plugin"))
                     continue;
-                emit_bazel_dummy_target(ostream, 1, "@opam", "_lib", _pkg_path, pkg_name, entries);
+                emit_bazel_dummy_target(ostream, 1, "@opam", "_lib",
+                                        _pkg_prefix,
+                                        pkg_name, entries);
                 continue;
             }
             /* some (dummy) packages have 'requires' but no 'archive' or 'plugin' entries */
@@ -1367,27 +1458,37 @@ EXPORT void emit_build_bazel(char *_tgtroot,
         }
     }
 
-    /* emit_bazel_flags(ostream, _tgtroot, _repo, _pkg_prefix, _pkg); */
+    /* emit_bazel_flags(ostream, _repo_root, _repo, _pkg_prefix, _pkg); */
 
     fclose(ostream);
 
-    char new_pkg_path[PATH_MAX];
-    new_pkg_path[0] = '\0';
-    mystrcat(new_pkg_path, _pkg_path);
-    if (strlen(_pkg_path) > 0)
-        mystrcat(new_pkg_path, "/");
-    mystrcat(new_pkg_path, obzl_meta_package_name(_pkg));
-    log_debug("NEW_PKG_PATH: %s; PFX: %s", new_pkg_path, _pkg_prefix);
-    log_debug("_PKG_PREFIX: %s, _PKG_PATH: %s, _PKG: %s",
-              _pkg_prefix, _pkg_path, _pkg->name);
+    /* char new_pkg_path[PATH_MAX]; */
+    /* new_pkg_path[0] = '\0'; */
+    /* mystrcat(new_pkg_path, _pkg_path); */
+    /* if (strlen(_pkg_path) > 0) */
+    /*     mystrcat(new_pkg_path, "/"); */
+
+    /* subpackage may not have a 'directory' property. example: ptime */
+    char  *subpkg_name = obzl_meta_package_name(_pkg);
+    /* char *subpkg_dir = obzl_meta_directory_property(entries); */
+    /* log_debug("SUBPKG NAME: %s; DIR: %s", subpkg_name, subpkg_dir); */
+
+    /* mystrcat(new_pkg_path, subpkg_name); */
+    /* log_debug("NEW_PKG_PATH: %s; PFX: %s", new_pkg_path, _pkg_prefix); */
+    /* log_debug("_PKG_PREFIX: %s, _PKG_PATH: %s, _PKG: %s", */
+    /*           _pkg_prefix, _pkg_path, _pkg->name); */
 
     /* SPECIAL CASE: compiler-libs */
-    if (strncmp(_pkg_path, "compiler-libs", 13) == 0) {
-        /* emit_bazel_compiler_lib_subpackages(_tgtroot, _repo, _pkg_prefix, new_pkg_path, _pkg); */
-        emit_bazel_subpackages(_tgtroot, _repo, _pkg_prefix, _pkg_path, _pkg);
-    } else {
-        emit_bazel_subpackages(_tgtroot, _repo, _pkg_prefix, new_pkg_path, _pkg);
-    }
-
-    utstring_free(build_bazel_file);
+    /* if (strncmp(_pkg_path, "compiler-libs", 13) == 0) { */
+    /*     /\* emit_bazel_compiler_lib_subpackages(_repo_root, _repo, _pkg_prefix, new_pkg_path, _pkg); *\/ */
+    /*     emit_bazel_subpackages(_repo, _repo_root, */
+    /*                            _pkg_prefix, _imports_path, */
+    /*                            // _pkg_path, */
+    /*                            _pkg); //, _subpkg_dir); */
+    /* } else { */
+        emit_bazel_subpackages(_repo, _repo_root,
+                               _pkg_prefix, _imports_path,
+                               // new_pkg_path,
+                               _pkg); //, _subpkg_dir);
+    /* } */
 }
