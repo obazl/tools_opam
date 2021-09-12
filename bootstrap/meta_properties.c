@@ -55,20 +55,20 @@ EXPORT obzl_meta_settings *obzl_meta_property_settings(obzl_meta_property *prop)
 
 struct obzl_meta_property *obzl_meta_property_new(char *name)
 {
-#if DEBUG_TRACE
+#if DEBUG_PROPERTIES
     /* log_trace("obzl_meta_property_new(%s)", name); */
 #endif
     struct obzl_meta_property *new_prop= (struct obzl_meta_property*)malloc(sizeof(struct obzl_meta_property));
     new_prop->name = name;
     new_prop->settings = obzl_meta_settings_new();
-#if DEBUG_TRACE
+#if DEBUG_PROPERTIES
     /* log_trace("obzl_meta_property_new(%s) done", name); */
 #endif
     return new_prop;
 }
 
 void property_copy(void *_dst, const void *_src) {
-#if DEBUG_TRACE
+#if DEBUG_PROPERTIES
     /* log_debug("property_copy"); */
 #endif
     struct obzl_meta_property *src = (struct obzl_meta_property*)_src;
@@ -118,7 +118,7 @@ void property_dtor(void *_elt) {
 /* **************************************************************** */
 EXPORT struct obzl_meta_entry *handle_primitive_prop(int token_type, union meta_token *token)
 {
-#if DEBUG_TRACE
+#if DEBUG_PROPERTIES
     log_trace("%*shandle_primitive_prop", indent, sp);
     log_trace("%*stoken type: %d: %s", indent, sp, token_type, token_names[token_type]);
     log_trace("%*stoken str:  %s", indent, sp, token->s);
@@ -137,7 +137,7 @@ EXPORT struct obzl_meta_entry *handle_primitive_prop(int token_type, union meta_
 
     struct obzl_meta_setting *new_setting = obzl_meta_setting_new(NULL, OP_SET, values);
 
-#if DEBUG_TRACE
+#if DEBUG_PROPERTIES
     log_trace("PRIM DUMPING NEW SETTING");
     dump_setting(0, new_setting);
     log_trace("                PRIM PUSHING NEW SETTING");
@@ -145,7 +145,7 @@ EXPORT struct obzl_meta_entry *handle_primitive_prop(int token_type, union meta_
 
     utarray_push_back(new_prop->settings->list, new_setting);
 
-#if DEBUG_TRACE
+#if DEBUG_PROPERTIES
     log_trace("PRIM DUMPING NEW SETTING AGAIN");
     dump_setting(0, new_setting);
     log_trace("                PRIM DUMPING NEW PROPERTY");
@@ -163,7 +163,7 @@ EXPORT struct obzl_meta_entry *handle_simple_prop(union meta_token *token,
                                               enum obzl_meta_opcode_e opcode,
                                               union meta_token *word)
 {
-#if DEBUG_TRACE
+#if DEBUG_PROPERTIES
     log_trace(">>handle_simple_prop");
     log_trace("\tproperty ::= PWORD opcode WORD");
     log_trace("\ttoken: %s", token->s);
@@ -206,7 +206,7 @@ EXPORT struct obzl_meta_entry *handle_simple_prop(union meta_token *token,
 
 /* **************************************************************** */
 
-#if DEBUG_TRACE
+#if DEBUG_DUMP
 void dump_property(int indent, struct obzl_meta_property *prop)
 {
     /* log_trace("dump_property %p", prop); */

@@ -92,7 +92,7 @@ EXPORT bool obzl_meta_package_has_subpackages(obzl_meta_package *_pkg)
 
 EXPORT obzl_meta_property *obzl_meta_package_property(obzl_meta_package *_pkg, char *_name)
 {
-#if DEBUG_TRACE
+#if DEBUG_PACKAGES
     log_trace("obzl_meta_package_property('%s')", _name);
 #endif
     /* utarray_find requires a sort; not worth the cost */
@@ -110,7 +110,7 @@ EXPORT obzl_meta_property *obzl_meta_package_property(obzl_meta_package *_pkg, c
 }
 
 /* **************************************************************** */
-#if DEBUG_TRACE
+#if DEBUG_DUMP
 void dump_package(int indent, struct obzl_meta_package *pkg)
 {
     log_debug("%*sdump_package:", indent, sp);

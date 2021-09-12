@@ -70,7 +70,7 @@ EXPORT bool obzl_meta_flag_polarity(obzl_meta_flag *flag)
 }
 
 void flag_copy(void *_dst, const void *_src) {
-#if DEBUG_TRACE
+#if DEBUG_FLAGS
     log_trace("flag_copy");
 #endif
     struct obzl_meta_flag *dst = (struct obzl_meta_flag*)_dst;
@@ -89,7 +89,7 @@ void flag_dtor(void *_elt) {
    **************** */
 obzl_meta_flags *obzl_meta_flags_new(void)
 {
-#if DEBUG_TRACE
+#if DEBUG_FLAGS
     log_trace("obzl_meta_flags_new");
 #endif
     obzl_meta_flags *new_flags = (obzl_meta_flags*)calloc(sizeof(obzl_meta_flags),1);
@@ -99,7 +99,7 @@ obzl_meta_flags *obzl_meta_flags_new(void)
 
 obzl_meta_flags *obzl_meta_flags_new_copy(obzl_meta_flags *old_flags)
 {
-#if DEBUG_TRACE
+#if DEBUG_FLAGS
     /* log_trace("obzl_meta_flags_new_copy %p", old_flags); */
 #endif
     if (old_flags == NULL) {
@@ -124,7 +124,7 @@ obzl_meta_flags *obzl_meta_flags_new_copy(obzl_meta_flags *old_flags)
 /* EXPORT UT_array *obzl_meta_flags_new_tokenized(char *flags) */
 EXPORT obzl_meta_flags *obzl_meta_flags_new_tokenized(char *flags)
 {
-#if DEBUG_TRACE
+#if DEBUG_FLAGS
     log_trace("obzl_meta_flags_new_tokenized(%s)", flags);
 #endif
     if (flags == NULL) {
@@ -178,7 +178,7 @@ bool obzl_meta_flags_has_flag(obzl_meta_flags *_flags, char *_flag, bool polarit
 
 char *obzl_meta_flags_to_comment(obzl_meta_flags *flags)
 {
-#ifdef DEBUG_TRACE
+#ifdef DEBUG_FLAGS
     log_trace("%*obzl_meta_flags_to_string", indent, sp);
 #endif
     char *buf = (char*)calloc(512, 1);
@@ -222,9 +222,9 @@ char *obzl_meta_flags_to_comment(obzl_meta_flags *flags)
  */
 bool obzl_meta_flags_to_condition_name(obzl_meta_flags *flags, UT_string *_cname)
 {
-/* #ifdef DEBUG_TRACE */
-/*     log_trace("%*sobzl_meta_flags_to_condition_name", indent, sp); */
-/* #endif */
+#ifdef DEBUG_FLAGS
+    log_trace("%*sobzl_meta_flags_to_condition_name", indent, sp);
+#endif
     /* char *buf = (char*)calloc(512, 1); */
     /* UT_string *buf; */
     /* utstring_new(buf); */

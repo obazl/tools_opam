@@ -149,6 +149,7 @@ EXPORT struct obzl_meta_package *obzl_meta_parse_file(char *fname)
 
     while ( (tok = get_next_token(lexer, mtok)) != 0 ) {
         /* log_set_quiet(true); */
+#if defined(DEBUG_LEX)
         switch(tok) {
         case DIRECTORY:
             log_trace("lex DIRECTORY: %s", mtok->s); break;
@@ -187,7 +188,7 @@ EXPORT struct obzl_meta_package *obzl_meta_parse_file(char *fname)
         default:
             log_trace("other: %d", tok); break;
         }
-
+#endif
         Parse(pParser, tok, mtok, MAIN_PKG); // , &sState);
 
         mtok = malloc(sizeof(union meta_token));

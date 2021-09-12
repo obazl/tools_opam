@@ -85,7 +85,7 @@ struct obzl_meta_setting *obzl_meta_setting_new(char *flags,
                                                 enum obzl_meta_opcode_e opcode,
                                                 obzl_meta_values *values)
 {
-#if DEBUG_TRACE
+#if DEBUG_SETTINGS
     /* log_trace("obzl_meta_setting_new()"); //, flags: %s", flags); */
 #endif
     struct obzl_meta_setting *new_setting = (struct obzl_meta_setting*)malloc(sizeof(struct obzl_meta_setting));
@@ -95,7 +95,7 @@ struct obzl_meta_setting *obzl_meta_setting_new(char *flags,
         new_setting->flags  = obzl_meta_flags_new_tokenized(flags);
     new_setting->opcode = opcode;
     new_setting->values = values;
-#if DEBUG_TRACE
+#if DEBUG_SETTINGS
     log_trace("obzl_meta_setting_new done; dumping:");
     dump_setting(0, new_setting);
 #endif
@@ -104,12 +104,12 @@ struct obzl_meta_setting *obzl_meta_setting_new(char *flags,
 
 struct obzl_meta_settings *obzl_meta_settings_new()
 {
-#if DEBUG_TRACE
+#if DEBUG_SETTINGS
     /* log_trace("obzl_meta_settings_new()"); */
 #endif
     struct obzl_meta_settings *new_settings = (struct obzl_meta_settings*)malloc(sizeof(struct obzl_meta_settings));
     utarray_new(new_settings->list, &obzl_meta_setting_icd);
-#if DEBUG_TRACE
+#if DEBUG_SETTINGS
     /* dump_settings(0, new_settings); */
     /* log_trace("obzl_meta_settings_new() done"); */
 #endif
@@ -118,7 +118,7 @@ struct obzl_meta_settings *obzl_meta_settings_new()
 
 /* void obzl_meta_setting_copy(obzl_meta_setting *dst, const obzl_meta_setting *src) { */
 void obzl_meta_setting_copy(void *_dst, const void *_src) {
-#if DEBUG_TRACE
+#if DEBUG_SETTINGS
     log_trace("obzl_meta_setting_copy(dst=%p,  src=%p)", _dst, _src);
 #endif
     struct obzl_meta_setting *dst = (struct obzl_meta_setting*)_dst;
@@ -164,7 +164,7 @@ void obzl_meta_settings_dtor(void *_elt) {
     free(elt);
 }
 
-#if DEBUG_TRACE
+#if DEBUG_DUMP
 void dump_setting(int indent, struct obzl_meta_setting *setting)
 {
     log_trace("%*ssetting:", indent, sp);
@@ -175,7 +175,7 @@ void dump_setting(int indent, struct obzl_meta_setting *setting)
 }
 #endif
 
-#if DEBUG_TRACE
+#if DEBUG_DUMP
 void dump_settings(int indent, obzl_meta_settings *settings)
 {
     log_trace("%*ssettings:", indent, sp);

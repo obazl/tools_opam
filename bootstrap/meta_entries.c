@@ -57,7 +57,7 @@ EXPORT obzl_meta_entry *obzl_meta_entries_nth(obzl_meta_entries *_entries, int _
 /* **************** */
 EXPORT obzl_meta_property *obzl_meta_entries_property(obzl_meta_entries *_entries, char *_name)
 {
-#if DEBUG_TRACE
+#if DEBUG_ENTRIES
     log_trace("obzl_meta_entries_property('%s')", _name);
 #endif
     /* utarray_find requires a sort; not worth the cost */
@@ -94,7 +94,7 @@ void entry_dtor(void *_elt) {
 /* **************************************************************** */
 void normalize_entries(obzl_meta_entries *entries, obzl_meta_entry *_entry)
 {
-#if DEBUG_TRACE
+#if DEBUG_ENTRIES
     /* log_trace("normalize_entries()"); */
     /* if (_entry->type == OMP_PROPERTY) { */
     /*     log_trace("new entry type: property"); */
@@ -156,10 +156,10 @@ EXPORT obzl_meta_package *obzl_meta_entry_package(obzl_meta_entry *e)
 }
 
 /* **************************************************************** */
-#if DEBUG_TRACE
+#if DEBUG_DUMP
 void dump_entry(int indent, struct obzl_meta_entry *entry)
 {
-    /* log_trace("%*sdump_entry:", indent, sp); */
+    log_trace("%*sdump_entry:", indent, sp);
     log_debug("%*sentry type: %d", delta+indent, sp, entry->type);
     if (entry->type == OMP_PROPERTY) {
         dump_property(delta+indent, entry->property);
@@ -170,7 +170,7 @@ void dump_entry(int indent, struct obzl_meta_entry *entry)
 
 void dump_entries(int indent, struct obzl_meta_entries *entries)
 {
-    /* log_trace("%*sdump_entries() %p", indent, sp, entries); */
+    log_trace("%*sdump_entries() %p", indent, sp, entries);
     if (entries == NULL) {
         log_trace("%*sentries: none", indent, sp);
     } else {
