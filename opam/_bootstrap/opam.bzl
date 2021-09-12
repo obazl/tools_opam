@@ -50,14 +50,15 @@ def build_opam_bootstrapper_local(repo_ctx):
     cmd = [bootstrapper]
 
     xr = repo_ctx.execute(cmd) ## , environment=cmd_env)
-    # if xr.return_code == 0:
-        # print("2 opam_bootstrap succeeded")
-        # print("2 opam_bootstrap stdout: %s\n" % xr.stdout)
-        # print("2 opam_bootstrap stderr: %s\n" % xr.stderr)
-    # else:
-    if xr.return_code != 0:
-        print("3 opam_bootstrap result: %s" % xr.stdout)
-        print("3 opam_bootstrap rc: {rc} stderr: {stderr}".format(rc=xr.return_code, stderr=xr.stderr));
+    if xr.return_code == 0:
+        if repo_ctx.attr.bootstrap_debug:
+            # print("2 opam_bootstrap succeeded")
+            print("opam_bootstrap stdout: %s\n" % xr.stdout)
+            print("opam_bootstrap stderr: %s\n" % xr.stderr)
+    elif xr.return_code != 0:
+        print("ERROR: opam_bootstrap rc: %s" % xr.return_code)
+        print("opam_bootstrap stdout: %s\n" % xr.stdout)
+        print("opam_bootstrap stderr: %s\n" % xr.stderr)
         fail("opam_bootstrap failure")
 
 ################################################################
@@ -374,11 +375,11 @@ def impl_opam_configuration(repo_ctx):
 
     # XDG: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
     home, xdg_cache_home, xdg_config_home, xdg_data_home = get_xdg(repo_ctx)
-    if debug:
-        print("HOME: %s" % home)
-        print("XDG_CONFIG_HOME: %s" % xdg_config_home)
-        print("XDG_CACHE_HOME: %s" % xdg_cache_home)
-        print("XDG_DATA_HOME: %s" % xdg_data_home)
+    # if repo_ctx.attr.bootstrap_debug:
+    #     print("HOME: %s" % home)
+    #     print("XDG_CONFIG_HOME: %s" % xdg_config_home)
+    #     print("XDG_CACHE_HOME: %s" % xdg_cache_home)
+    #     print("XDG_DATA_HOME: %s" % xdg_data_home)
 
     # systemd file-hierarchy: https://www.freedesktop.org/software/systemd/man/file-hierarchy.html
 
@@ -489,13 +490,17 @@ opam_configuration = repository_rule(
         #     allow_single_file = True
         # ),
 
+        bootstrap_debug = attr.bool(
+            default = False,
+        ),
+
         _rule = attr.string( default = "opam_configuration" ),
     ),
 )
 
 ################################################################
 ## convert ocamlfind META files to BUILD.bazel files, etc.
-def install():  # for lack of a better name atm
+def install(bootstrap_debug=False):  # for lack of a better name atm
 
     opam_configuration(
         name = "opam",
@@ -509,5 +514,6 @@ def install():  # for lack of a better name atm
         #     "@//bzl/opam/biniou:BUILD.bazel": "biniou"
         # },
         download = False,
+        bootstrap_debug = bootstrap_debug,
         hermetic = False
     )
