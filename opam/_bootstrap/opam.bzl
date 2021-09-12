@@ -37,6 +37,11 @@ def build_opam_bootstrapper_local(repo_ctx):
             print("make bootstrap_opam rc: {rc} stderr: {stderr}".format(rc=xr.return_code, stderr=xr.stderr));
             fail("Comand failed: make -C bootstrap_opam")
 
+    if bootstrapper.exists:
+        repo_ctx.report_progress("found opam bootstrapper")
+    else:
+        fail("Could not find opam_bootstrap executable")
+
     repo_ctx.report_progress("running opam bootstrapper")
     # print("running opam_bootstrap")
     # bootstrapper = repo_ctx.path(Label("@obazl_tools_opam//bootstrap:opam_bootstrap"))
