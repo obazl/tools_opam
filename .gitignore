@@ -4,6 +4,7 @@ user.bazelrc
 obsolete
 *.h
 *.log
+*.dSYM
 
 *.annot
 *.cmo
