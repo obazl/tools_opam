@@ -269,6 +269,30 @@ def _install_build_files(repo_ctx):
     )
 
     repo_ctx.template(
+        "lib/digestif/BUILD.bazel",
+        Label("//opam/_templates:BUILD.opam.lib.digestif"),
+        executable = False,
+    )
+
+    repo_ctx.template(
+        "lib/digestif/c/BUILD.bazel",
+        Label("//opam/_templates:BUILD.opam.lib.digestif_c"),
+        executable = False,
+    )
+
+    repo_ctx.template(
+        "lib/digestif/rakia/BUILD.bazel",
+        Label("//opam/_templates:BUILD.opam.lib.digestif_rakia"),
+        executable = False,
+    )
+
+    repo_ctx.template( ## TEMPORARY
+        "lib/ptime/clock/os/BUILD.bazel",
+        Label("//opam/_templates:BUILD.opam.lib.ptime.clock.os"),
+        executable = False,
+    )
+
+    repo_ctx.template(
         "lib/threads/BUILD.bazel",
         Label("//opam/_templates:BUILD.opam.lib.threads"),
         executable = False,
