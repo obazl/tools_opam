@@ -304,6 +304,12 @@ def _install_build_files(repo_ctx):
         executable = False,
     )
 
+    repo_ctx.template(
+        "lib/threads/posix/BUILD.bazel",
+        Label("//opam/_templates:BUILD.opam.lib.threads.posix"),
+        executable = False,
+    )
+
 ######################################
 def impl_opam_configuration(repo_ctx):
 

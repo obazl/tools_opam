@@ -25,6 +25,8 @@
 /* #include "obazl.h" */
 #include "opam_bootstrap.h"
 
+char *host_repo = "ocaml";
+
 FILE *log_fp;
 const char *logfile = "bootstrapper.log";
 char *CWD;
@@ -145,7 +147,7 @@ void opam_config(char *_opam_switch, char *bzlroot)
     mkdir_r(bzlroot, "");       /* make sure bzlroot exists */
     UT_string *bzl_bin_link;
     utstring_new(bzl_bin_link);
-    utstring_printf(bzl_bin_link, "%s/_bin", bzlroot);
+    utstring_printf(bzl_bin_link, "%s/bin", bzlroot);
 
     UT_string *bzl_lib_link;
     utstring_new(bzl_lib_link);
@@ -177,7 +179,7 @@ void opam_config(char *_opam_switch, char *bzlroot)
         }
     }
 
-    /*  now set output paths (in @opam) */
+    /*  now set output paths (in @ocaml) */
     mkdir_r(bzlroot, "");       /* make sure bzlroot exists */
     UT_string *bzl_bin;
     utstring_new(bzl_bin);
@@ -303,7 +305,7 @@ int handle_lib_meta(char *switch_lib,
             /* special handling for ppx packages */
             log_debug("handling ppx package: %s", obzl_meta_package_name(pkg));
             g_ppx_pkg = true;
-            /* emit_build_bazel_ppx(bzlroot, "opam", "lib", "", pkg); */
+            /* emit_build_bazel_ppx(bzlroot, host_repo, "lib", "", pkg); */
         } else {
             log_debug("handling normal package: %s", obzl_meta_package_name(pkg));
             g_ppx_pkg = true;
@@ -315,6 +317,19 @@ int handle_lib_meta(char *switch_lib,
             log_warn("SKIPPING threads/META");
             return 0;
         }
+        /* HACK: skip pkgs distributed with ocaml
+           version="[distributed with OCaml 4.07 or above]". For
+           these, META contains no 'require', but other packages may
+           depend on them. So we generate null targets from the repo
+           rule. */
+        /* if (strncmp(buf + len - 8, "seq/META", 8) == 0) { */
+        /*     log_warn("SKIPPING seq/META"); */
+        /*     return 0; */
+        /* } */
+        /* if (strncmp(buf + len - 10, "bytes/META", 10) == 0) { */
+        /*     log_warn("SKIPPING bytes/META"); */
+        /*     return 0; */
+        /* } */
         if (strncmp(buf + len - 13, "digestif/META", 13) == 0) {
             log_warn("SKIPPING digestif/META");
             return 0;
@@ -328,7 +343,7 @@ int handle_lib_meta(char *switch_lib,
         utstring_new(imports_path);
         utstring_printf(imports_path, "_lib/%s",
                         obzl_meta_package_name(pkg));
-        emit_build_bazel("opam",
+        emit_build_bazel(host_repo,
                          bzlroot,      /* _repo_root: "." or "./tmp/opam" */
                          "lib",        /* _pkg_prefix */
                          utstring_body(imports_path),

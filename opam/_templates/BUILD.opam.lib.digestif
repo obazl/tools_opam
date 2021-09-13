@@ -27,12 +27,8 @@ ocaml_import(
         "@opam//lib/bigarray-compat",
         "@opam//lib/eqaf",
     ],
-    visibility = [
-        "@opam//lib/digestif/c:__pkg__",
-        "@opam//lib/digestif/ocaml:__pkg__",
-    ]
+    visibility = ["//visibility:public"],
 )
-
 
 ## ocaml_import(
 ##     name = "digestif_signature",
