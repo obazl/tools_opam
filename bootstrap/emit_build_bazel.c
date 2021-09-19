@@ -816,6 +816,12 @@ void emit_bazel_dummy_target(FILE* ostream, int level,
 {
     fprintf(ostream, "\nocaml_import(\n");
     fprintf(ostream, "    name = \"%s\",\n", _pkg_name);
+    emit_bazel_metadatum(ostream, 1,
+                         _repo,
+                         _pkg_path, _entries, "version", "version");
+    emit_bazel_metadatum(ostream, 1,
+                         _repo, // "@ocaml",
+                         _pkg_path, _entries, "description", "doc");
     emit_bazel_deps(ostream, 1, host_repo, "lib", _entries);
     emit_bazel_path_attrib(ostream, 1, host_repo, _pkg_src, "lib", _entries);
     fprintf(ostream, "    visibility = [\"//visibility:public\"]\n");
