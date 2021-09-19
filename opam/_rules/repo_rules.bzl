@@ -1,14 +1,15 @@
-load("//opam/_functions:opam_cmds.bzl", "opam_get_current_switch_prefix")
+load("//opam/_functions:opam_cmds.bzl", "opam_get_current_switch_libdir")
 load("//opam/_functions:xdg.bzl", "get_xdg_paths")
 
 ###############################
 def impl_new_local_opam_repository(repo_ctx):
 
+    print("running new_local_opam_repository for pkg: %s" % repo_ctx.attr.package)
     debug = True ## False
     # if (ctx.label.name == "zexe_backend_common"):
     #     debug = True
 
-    pkg_path = opam_get_current_switch_prefix(repo_ctx) + "/_lib/" + repo_ctx.attr.package
+    pkg_path = opam_get_current_switch_libdir(repo_ctx) + "/" + repo_ctx.attr.package
     print("NEW LOCAL pkg_path: %s" % pkg_path)
 
     ## TODO: verify pkg path exists
@@ -16,7 +17,8 @@ def impl_new_local_opam_repository(repo_ctx):
     ## link each file, so the BUILD file is in same dir, and
     ## user-provided content can refer to files in current dir.
     ## can't read dir contents in starlark, so:
-    repo_ctx.execute(["ln", "-s", pkg_path + "/*", "."])
+    link_tgt = pkg_path + "/*"
+    repo_ctx.execute(["sh", "-c", "ln -s {} .".format(link_tgt)])
 
     if repo_ctx.attr.workspace_file:
         ## todo: copy file

@@ -20,8 +20,13 @@ def run_opam_cmd(repo_ctx, cmd):
 
     return result
 
-#############################
+#############################################
 def opam_get_current_switch_prefix(repo_ctx):
     cmd = ["opam", "var", "prefix"]
+    return run_opam_cmd(repo_ctx, cmd)
+
+#############################################
+def opam_get_current_switch_libdir(repo_ctx):
+    cmd = ["opam", "var", "lib"]
     return run_opam_cmd(repo_ctx, cmd)
 
