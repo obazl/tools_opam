@@ -469,17 +469,15 @@ void emit_bazel_deps(FILE* ostream, int level, char *repo, char *pkg,
                      /* obzl_meta_package *_pkg) */
 {
 
-    //FIXME: skip if no 'requires'
+    //FIXME: skip if no 'requires' or requires == ''
     /* obzl_meta_entries *entries = obzl_meta_package_entries(_pkg); */
 
     char *pname = "requires";
     /* struct obzl_meta_property *deps_prop = obzl_meta_package_property(_pkg, pname); */
     struct obzl_meta_property *deps_prop = obzl_meta_entries_property(_entries, pname);
-    if ( deps_prop == NULL ) {
-        /* char *pkg_name = obzl_meta_package_name(_pkg); */
-        /* log_warn("Prop '%s' not found: %s.", pname, pkg_name); */
-        return;
-    }
+    if ( deps_prop == NULL ) return;
+    obzl_meta_value ds = obzl_meta_property_value(deps_prop);
+    if (ds == NULL) return;
 
     obzl_meta_settings *settings = obzl_meta_property_settings(deps_prop);
     obzl_meta_setting *setting = NULL;
