@@ -317,13 +317,14 @@ void emit_bazel_attribute(FILE* ostream,
             }
             /* if v is .cmxa, then add .a too? */
             int cmxapos = utstring_findR(label, -1, "cmxa", 4);
-            /* if (cmxapos > 0) { */
-            /*     char *cmxa_a = utstring_body(label); */
-            /*     cmxa_a[utstring_len(label) - 4] = 'a'; */
-            /*     cmxa_a[utstring_len(label) - 3] = '\0'; */
-            /*     if (has_conditions) /\* skip mt, mt_vm, mt_posix *\/ */
-            /*         fprintf(ostream, "            \"%s\",\n", cmxa_a); */
-            /* } */
+            if (cmxapos > 0) {
+                char *cmxa_a = utstring_body(label);
+                cmxa_a[utstring_len(label) - 4] = 'a';
+                cmxa_a[utstring_len(label) - 3] = '\0';
+                //FIXME: verify existence: access(cmxa_a)
+                /* if (has_conditions) /\* skip mt, mt_vm, mt_posix *\/ */
+                fprintf(ostream, "            \"%s\",\n", cmxa_a);
+            }
             /* if (flags != NULL) /\* skip mt, mt_vm, mt_posix *\/ */
             /*     fprintf(ostream, "%s", "        ],\n"); */
         }
