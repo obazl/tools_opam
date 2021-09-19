@@ -317,24 +317,15 @@ int handle_lib_meta(char *switch_lib,
             log_warn("SKIPPING threads/META");
             return 0;
         }
-        /* HACK: skip pkgs distributed with ocaml
-           version="[distributed with OCaml 4.07 or above]". For
-           these, META contains no 'require', but other packages may
-           depend on them. So we generate null targets from the repo
-           rule. */
-        /* if (strncmp(buf + len - 8, "seq/META", 8) == 0) { */
-        /*     log_warn("SKIPPING seq/META"); */
-        /*     return 0; */
-        /* } */
-        /* if (strncmp(buf + len - 10, "bytes/META", 10) == 0) { */
-        /*     log_warn("SKIPPING bytes/META"); */
-        /*     return 0; */
-        /* } */
+        /* TMP HACK: skip some pkgs for which we use template BUILD files */
         if (strncmp(buf + len - 13, "digestif/META", 13) == 0) {
             log_warn("SKIPPING digestif/META");
             return 0;
         }
-        /* temporary: */
+        if (strncmp(buf + len - 13, "ctypes/META", 11) == 0) {
+            log_warn("SKIPPING ctypes/META");
+            return 0;
+        }
         if (strncmp(buf + len - 13, "ptime/META", 10) == 0) {
             log_warn("SKIPPING ptime/META");
             return 0;
