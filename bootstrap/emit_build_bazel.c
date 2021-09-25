@@ -433,7 +433,7 @@ Note that "archive" should only be used for archive files that are intended to b
                          _entries,
                          "archive");
     emit_bazel_deps(ostream, 1, host_repo, "lib", _entries);
-    emit_bazel_deps_adjunct(ostream, 1, host_repo, "lib", _entries);
+    emit_bazel_ppx_codeps(ostream, 1, host_repo, "lib", _entries);
     fprintf(ostream, "    visibility = [\"//visibility:public\"]\n");
     fprintf(ostream, ")\n");
 }
@@ -601,7 +601,7 @@ void emit_bazel_deps(FILE* ostream, int level, char *repo, char *pkg,
         fprintf(ostream, "%*s],\n", level*spfactor, sp);
 }
 
-void emit_bazel_deps_adjunct(FILE* ostream, int level, char *repo,
+void emit_bazel_ppx_codeps(FILE* ostream, int level, char *repo,
                              char *_pkg_prefix, /* e.g. 'lib' */
                              obzl_meta_entries *_entries)
 {
@@ -635,9 +635,9 @@ void emit_bazel_deps_adjunct(FILE* ostream, int level, char *repo,
     obzl_meta_value *v = NULL;
 
     if (settings_ct > 1) {
-        fprintf(ostream, "%*sdeps_adjunct = select({\n", level*spfactor, sp);
+        fprintf(ostream, "%*sppx_codeps = select({\n", level*spfactor, sp);
     } else {
-        fprintf(ostream, "%*sdeps_adjunct = [\n", level*spfactor, sp);
+        fprintf(ostream, "%*sppx_codeps = [\n", level*spfactor, sp);
     }
 
     UT_string *condition_name;
