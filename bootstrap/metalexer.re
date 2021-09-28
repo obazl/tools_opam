@@ -23,7 +23,7 @@
 #endif
 #endif
 
-const char *deps[MAX_DEPS] = {};
+const char *deps[MAX_DEPS];
 int curr_tag = 0;
 
 #if EXPORT_INTERFACE
