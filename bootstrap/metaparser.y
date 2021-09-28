@@ -1,4 +1,5 @@
 %include {
+#include <assert.h>
 #include <setjmp.h>
 #include <stdbool.h>
 #include <stdio.h>
