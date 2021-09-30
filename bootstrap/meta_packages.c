@@ -24,6 +24,13 @@ EXPORT char *obzl_meta_package_dir(obzl_meta_package *_pkg)
     return _pkg->directory;
 }
 
+EXPORT char *obzl_meta_package_directory_prop(obzl_meta_package *_pkg)
+{
+    char *d = obzl_meta_directory_property(_pkg->entries);
+
+    return _pkg->directory;
+}
+
 EXPORT char *obzl_meta_package_src(obzl_meta_package *_pkg)
 {
     return _pkg->metafile;
@@ -34,6 +41,27 @@ EXPORT obzl_meta_entries *obzl_meta_package_entries(obzl_meta_package *_pkg)
     return _pkg->entries;
 }
 
+/* **************************************************************** */
+EXPORT int obzl_meta_package_subpkg_count(obzl_meta_package *_pkg)
+{
+    obzl_meta_entries *entries = _pkg->entries;
+    obzl_meta_entry *e = NULL;
+    obzl_meta_package *subpkg = NULL;
+
+    int pkg_ct = 0;
+
+    for (int i = 0; i < obzl_meta_entries_count(_pkg->entries); i++) {
+        e = obzl_meta_entries_nth(_pkg->entries, i);
+        if (e->type == OMP_PACKAGE) {
+            pkg_ct++;
+            subpkg = e->package;
+            pkg_ct += obzl_meta_package_subpkg_count(e->package);
+        }
+    }
+    return pkg_ct;
+}
+
+/* **************************************************************** */
 EXPORT bool obzl_meta_package_has_archives(obzl_meta_package *_pkg)
 {
     //FIXME: use a has_archives flag

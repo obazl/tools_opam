@@ -4,13 +4,13 @@ load("//opam/_functions:xdg.bzl", "get_xdg_paths")
 ###############################
 def impl_new_local_opam_repository(repo_ctx):
 
-    print("running new_local_opam_repository for pkg: %s" % repo_ctx.attr.package)
-    debug = True ## False
+    # print("running new_local_opam_repository for pkg: %s" % repo_ctx.attr.package)
+    debug = False
     # if (ctx.label.name == "zexe_backend_common"):
     #     debug = True
 
     pkg_path = opam_get_current_switch_libdir(repo_ctx) + "/" + repo_ctx.attr.package
-    print("NEW LOCAL pkg_path: %s" % pkg_path)
+    # print("NEW LOCAL pkg_path: %s" % pkg_path)
 
     ## TODO: verify pkg path exists
 

@@ -58,6 +58,14 @@ struct obzl_meta_flags {
 
 UT_icd flag_icd = {sizeof(struct obzl_meta_flag), NULL, flag_copy, flag_dtor};
 
+int strsort(const void *_a, const void *_b)
+{
+    const char *a = *(const char* const *)_a;
+    const char *b = *(const char* const *)_b;
+    /* printf("strsort: %s =? %s\n", a, b); */
+    return strcmp(a,b);
+}
+
 /* **************************************************************** */
 EXPORT int obzl_meta_flags_count(obzl_meta_flags *_flags)
 {

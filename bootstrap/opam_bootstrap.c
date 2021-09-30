@@ -65,286 +65,278 @@ struct fileset_s *filesets = NULL;
 
 /* struct package_s *packages = NULL; */
 
-int strsort(const void *_a, const void *_b)
-{
-    const char *a = *(const char* const *)_a;
-    const char *b = *(const char* const *)_b;
-    /* printf("strsort: %s =? %s\n", a, b); */
-    return strcmp(a,b);
-}
+/* char *run_cmd(char *cmd) */
+/* { */
+/*     static char buf[PATH_MAX]; */
+/*     FILE *fp; */
 
-char *run_cmd(char *cmd)
-{
-    static char buf[PATH_MAX];
-    FILE *fp;
+/*     if ((fp = popen(cmd, "r")) == NULL) { */
+/*         printf("Error opening pipe!\n"); */
+/*         return NULL; */
+/*     } */
 
-    if ((fp = popen(cmd, "r")) == NULL) {
-        printf("Error opening pipe!\n");
-        return NULL;
-    }
+/*     while (fgets(buf, sizeof buf, fp) != NULL) { */
+/*         /\* printf("SWITCH: %s\n", buf); *\/ */
+/*         buf[strcspn(buf, "\n")] = 0; */
+/*     } */
 
-    while (fgets(buf, sizeof buf, fp) != NULL) {
-        /* printf("SWITCH: %s\n", buf); */
-        buf[strcspn(buf, "\n")] = 0;
-    }
+/*     if(pclose(fp))  { */
+/*         printf("Command not found or exited with error status\n"); */
+/*         return NULL; */
+/*     } */
+/*     return buf; */
+/* } */
 
-    if(pclose(fp))  {
-        printf("Command not found or exited with error status\n");
-        return NULL;
-    }
-    return buf;
-}
+/* void opam_config(char *_opam_switch, char *bzlroot) */
+/* { */
+/*     log_info("opam_config bzlroot: %s", bzlroot); */
 
-void opam_config(char *_opam_switch, char *bzlroot)
-{
-    log_info("opam_config bzlroot: %s", bzlroot);
+/*     /\* first discover current switch info *\/ */
+/*     char *opam_switch; */
 
-    /* first discover current switch info */
-    char *opam_switch;
+/*     UT_string *switch_bin; */
+/*     utstring_new(switch_bin); */
 
-    UT_string *switch_bin;
-    utstring_new(switch_bin);
+/*     UT_string *switch_lib; */
+/*     utstring_new(switch_lib); */
 
-    UT_string *switch_lib;
-    utstring_new(switch_lib);
+/*     char *cmd, *result; */
+/*     if (_opam_switch == NULL) { */
+/*         /\* log_info("using current switch"); *\/ */
+/*         cmd = "opam var switch"; */
 
-    char *cmd, *result;
-    if (_opam_switch == NULL) {
-        /* log_info("using current switch"); */
-        cmd = "opam var switch";
+/*         result = run_cmd(cmd); */
+/*         if (result == NULL) { */
+/*             fprintf(stderr, "FAIL: run_cmd(%s)\n", cmd); */
+/*         } else */
+/*             opam_switch = strndup(result, PATH_MAX); */
+/*     } else { */
+/*         /\* FIXME: handle non-NULL _opam_switch arg *\/ */
+/*     } */
 
-        result = run_cmd(cmd);
-        if (result == NULL) {
-            fprintf(stderr, "FAIL: run_cmd(%s)\n", cmd);
-        } else
-            opam_switch = strndup(result, PATH_MAX);
-    } else {
-        /* FIXME: handle non-NULL _opam_switch arg */
-    }
+/*     cmd = "opam var bin"; */
+/*     result = NULL; */
+/*     result = run_cmd(cmd); */
+/*     if (result == NULL) { */
+/*         log_fatal("FAIL: run_cmd(%s)\n", cmd); */
+/*         exit(EXIT_FAILURE); */
+/*     } else */
+/*         utstring_printf(switch_bin, "%s", result); */
 
-    cmd = "opam var bin";
-    result = NULL;
-    result = run_cmd(cmd);
-    if (result == NULL) {
-        log_fatal("FAIL: run_cmd(%s)\n", cmd);
-        exit(EXIT_FAILURE);
-    } else
-        utstring_printf(switch_bin, "%s", result);
+/*     cmd = "opam var lib"; */
+/*     result = NULL; */
+/*     result = run_cmd(cmd); */
+/*     if (result == NULL) { */
+/*         log_fatal("FAIL: run_cmd(%s)\n", cmd); */
+/*         exit(EXIT_FAILURE); */
+/*     } else */
+/*         utstring_printf(switch_lib, "%s", result); */
 
-    cmd = "opam var lib";
-    result = NULL;
-    result = run_cmd(cmd);
-    if (result == NULL) {
-        log_fatal("FAIL: run_cmd(%s)\n", cmd);
-        exit(EXIT_FAILURE);
-    } else
-        utstring_printf(switch_lib, "%s", result);
+/*     log_debug("switch_bin: %s", utstring_body(switch_bin)); */
+/*     log_debug("switch_lib: %s", utstring_body(switch_lib)); */
 
-    log_debug("switch_bin: %s", utstring_body(switch_bin));
-    log_debug("switch_lib: %s", utstring_body(switch_lib));
+/*     /\* now link srcs *\/ */
+/*     mkdir_r(bzlroot, "");       /\* make sure bzlroot exists *\/ */
+/*     UT_string *bzl_bin_link; */
+/*     utstring_new(bzl_bin_link); */
+/*     utstring_printf(bzl_bin_link, "%s/bin", bzlroot); */
 
-    /* now link srcs */
-    mkdir_r(bzlroot, "");       /* make sure bzlroot exists */
-    UT_string *bzl_bin_link;
-    utstring_new(bzl_bin_link);
-    utstring_printf(bzl_bin_link, "%s/bin", bzlroot);
+/*     UT_string *bzl_lib_link; */
+/*     utstring_new(bzl_lib_link); */
+/*     utstring_printf(bzl_lib_link, "%s/_lib", bzlroot); */
 
-    UT_string *bzl_lib_link;
-    utstring_new(bzl_lib_link);
-    utstring_printf(bzl_lib_link, "%s/_lib", bzlroot);
-
-    log_debug("bzl_bin_link: %s", utstring_body(bzl_bin_link));
-    log_debug("bzl_lib_link: %s", utstring_body(bzl_lib_link));
+/*     log_debug("bzl_bin_link: %s", utstring_body(bzl_bin_link)); */
+/*     log_debug("bzl_lib_link: %s", utstring_body(bzl_lib_link)); */
 
 
-    /* link to opam bin, lib dirs. we could do this in starlark, but
-       then we would not be able to test independently. */
-    rc = symlink(utstring_body(switch_bin), utstring_body(bzl_bin_link));
-    if (rc != 0) {
-        errnum = errno;
-        if (errnum != EEXIST) {
-            perror(utstring_body(bzl_bin_link));
-            log_error("symlink failure for %s -> %s\n", utstring_body(switch_bin), utstring_body(bzl_bin_link));
-            exit(EXIT_FAILURE);
-        }
-    }
+/*     /\* link to opam bin, lib dirs. we could do this in starlark, but */
+/*        then we would not be able to test independently. *\/ */
+/*     rc = symlink(utstring_body(switch_bin), utstring_body(bzl_bin_link)); */
+/*     if (rc != 0) { */
+/*         errnum = errno; */
+/*         if (errnum != EEXIST) { */
+/*             perror(utstring_body(bzl_bin_link)); */
+/*             log_error("symlink failure for %s -> %s\n", utstring_body(switch_bin), utstring_body(bzl_bin_link)); */
+/*             exit(EXIT_FAILURE); */
+/*         } */
+/*     } */
 
-    rc = symlink(utstring_body(switch_lib), utstring_body(bzl_lib_link));
-    if (rc != 0) {
-        errnum = errno;
-        if (errnum != EEXIST) {
-            perror(utstring_body(bzl_lib_link));
-            log_error("symlink failure for %s -> %s\n", utstring_body(switch_lib), utstring_body(bzl_lib_link));
-            exit(EXIT_FAILURE);
-        }
-    }
+/*     rc = symlink(utstring_body(switch_lib), utstring_body(bzl_lib_link)); */
+/*     if (rc != 0) { */
+/*         errnum = errno; */
+/*         if (errnum != EEXIST) { */
+/*             perror(utstring_body(bzl_lib_link)); */
+/*             log_error("symlink failure for %s -> %s\n", utstring_body(switch_lib), utstring_body(bzl_lib_link)); */
+/*             exit(EXIT_FAILURE); */
+/*         } */
+/*     } */
 
-    /*  now set output paths (in @ocaml) */
-    mkdir_r(bzlroot, "");       /* make sure bzlroot exists */
-    UT_string *bzl_bin;
-    utstring_new(bzl_bin);
-    utstring_printf(bzl_bin, "%s/bin", bzlroot);
+/*     /\*  now set output paths (in @ocaml) *\/ */
+/*     mkdir_r(bzlroot, "");       /\* make sure bzlroot exists *\/ */
+/*     UT_string *bzl_bin; */
+/*     utstring_new(bzl_bin); */
+/*     utstring_printf(bzl_bin, "%s/bin", bzlroot); */
 
-    UT_string *bzl_lib;
-    utstring_new(bzl_lib);
-    utstring_printf(bzl_lib, "%s/lib", bzlroot);
+/*     UT_string *bzl_lib; */
+/*     utstring_new(bzl_lib); */
+/*     utstring_printf(bzl_lib, "%s/lib", bzlroot); */
 
-    log_debug("bzl_bin: %s", utstring_body(bzl_bin));
-    log_debug("bzl_lib: %s", utstring_body(bzl_lib));
+/*     log_debug("bzl_bin: %s", utstring_body(bzl_bin)); */
+/*     log_debug("bzl_lib: %s", utstring_body(bzl_lib)); */
 
-    // FIXME: always convert everything. otherwise we have to follow
-    // the deps to make sure they are all converted.
-    // (for dev/test, retain ability to do just one dir)
-    if (utarray_len(opam_packages) == 0) {
-        meta_walk(utstring_body(switch_lib),
-                  bzlroot,
-                  false,      /* link files? */
-                  // "META",     /* file_to_handle */
-                  handle_lib_meta); /* callback */
-    } else {
-        /* WARNING: only works for top-level pkgs */
-        log_debug("converting listed opam pkgs in %s",
-                  utstring_body(switch_lib));
-        UT_string *s;
-        utstring_new(s);
-        char **a_pkg = NULL;
-        /* log_trace("%*spkgs:", indent, sp); */
-        while ( (a_pkg=(char **)utarray_next(opam_packages, a_pkg))) {
-            utstring_clear(s);
-            utstring_concat(s, switch_lib);
-            utstring_printf(s, "/%s/%s", *a_pkg, "META");
-            /* log_debug("src root: %s", utstring_body(s)); */
-            /* log_trace("%*s'%s'", delta+indent, sp, *a_pkg); */
-            if ( ! access(utstring_body(s), R_OK) ) {
-                /* log_debug("FOUND: %s", utstring_body(s)); */
-                handle_lib_meta(utstring_body(switch_lib),
-                                bzlroot,
-                                /* obzl_meta_package_name(pkg), */
-                                *a_pkg,
-                                "META");
-            } else {
-                log_fatal("NOT found: %s", utstring_body(s));
-                exit(EXIT_FAILURE);
-            }
-        }
-        utstring_free(s);
-    }
+/*     // FIXME: always convert everything. otherwise we have to follow */
+/*     // the deps to make sure they are all converted. */
+/*     // (for dev/test, retain ability to do just one dir) */
+/*     if (utarray_len(opam_packages) == 0) { */
+/*         meta_walk(utstring_body(switch_lib), */
+/*                   bzlroot, */
+/*                   false,      /\* link files? *\/ */
+/*                   // "META",     /\* file_to_handle *\/ */
+/*                   handle_lib_meta); /\* callback *\/ */
+/*     } else { */
+/*         /\* WARNING: only works for top-level pkgs *\/ */
+/*         log_debug("converting listed opam pkgs in %s", */
+/*                   utstring_body(switch_lib)); */
+/*         UT_string *s; */
+/*         utstring_new(s); */
+/*         char **a_pkg = NULL; */
+/*         /\* log_trace("%*spkgs:", indent, sp); *\/ */
+/*         while ( (a_pkg=(char **)utarray_next(opam_packages, a_pkg))) { */
+/*             utstring_clear(s); */
+/*             utstring_concat(s, switch_lib); */
+/*             utstring_printf(s, "/%s/%s", *a_pkg, "META"); */
+/*             /\* log_debug("src root: %s", utstring_body(s)); *\/ */
+/*             /\* log_trace("%*s'%s'", delta+indent, sp, *a_pkg); *\/ */
+/*             if ( ! access(utstring_body(s), R_OK) ) { */
+/*                 /\* log_debug("FOUND: %s", utstring_body(s)); *\/ */
+/*                 handle_lib_meta(utstring_body(switch_lib), */
+/*                                 bzlroot, */
+/*                                 /\* obzl_meta_package_name(pkg), *\/ */
+/*                                 *a_pkg, */
+/*                                 "META"); */
+/*             } else { */
+/*                 log_fatal("NOT found: %s", utstring_body(s)); */
+/*                 exit(EXIT_FAILURE); */
+/*             } */
+/*         } */
+/*         utstring_free(s); */
+/*     } */
 
-#ifdef DEBUG_TRACE
-    char **p;
-    p = NULL;
-    while ( (p=(char**)utarray_next(pos_flags, p))) {
-        log_debug("pos_flag: %s", *p);
-    }
-    p = NULL;
-    while ( (p=(char**)utarray_next(neg_flags, p))) {
-        log_debug("neg_flag: %s", *p);
-    }
-#endif
-    /* emit_bazel_config_setting_rules(bzlroot); */
+/* #ifdef DEBUG_TRACE */
+/*     char **p; */
+/*     p = NULL; */
+/*     while ( (p=(char**)utarray_next(pos_flags, p))) { */
+/*         log_debug("pos_flag: %s", *p); */
+/*     } */
+/*     p = NULL; */
+/*     while ( (p=(char**)utarray_next(neg_flags, p))) { */
+/*         log_debug("neg_flag: %s", *p); */
+/*     } */
+/* #endif */
+/*     /\* emit_bazel_config_setting_rules(bzlroot); *\/ */
 
-    utarray_free(pos_flags);
-    utarray_free(neg_flags);
-    utstring_free(switch_bin);
-    utstring_free(switch_lib);
-    utstring_free(bzl_bin);
-    utstring_free(bzl_lib);
-}
+/*     utarray_free(pos_flags); */
+/*     utarray_free(neg_flags); */
+/*     utstring_free(switch_bin); */
+/*     utstring_free(switch_lib); */
+/*     utstring_free(bzl_bin); */
+/*     utstring_free(bzl_lib); */
+/* } */
 
-/*
-  special cases: digestif, threads
- */
-int handle_lib_meta(char *switch_lib,
-                    char *bzlroot,
-                    /* char *_imports_path, */
-                    char *pkgdir,
-                    char *metafile)
-{
-    log_debug("================ HANDLE_LIB_META ================");
-    log_debug("  switch_lib: %s; bzlroot: %s; pkgdir: %s; metafile: %s",
-              switch_lib, bzlroot, pkgdir, metafile);
+/* /\* */
+/*   special cases: digestif, threads */
+/*  *\/ */
+/* int handle_lib_meta(char *switch_lib, */
+/*                     char *bzlroot, */
+/*                     /\* char *_imports_path, *\/ */
+/*                     char *pkgdir, */
+/*                     char *metafile) */
+/* { */
+/*     log_debug("================ HANDLE_LIB_META ================"); */
+/*     log_debug("  switch_lib: %s; bzlroot: %s; pkgdir: %s; metafile: %s", */
+/*               switch_lib, bzlroot, pkgdir, metafile); */
 
-    char buf[PATH_MAX];
-    buf[0] = '\0';
-    mystrcat(buf, switch_lib);
-    mystrcat(buf, "/");
-    mystrcat(buf, pkgdir);
-    mystrcat(buf, "/");
-    mystrcat(buf, metafile);
+/*     char buf[PATH_MAX]; */
+/*     buf[0] = '\0'; */
+/*     mystrcat(buf, switch_lib); */
+/*     mystrcat(buf, "/"); */
+/*     mystrcat(buf, pkgdir); */
+/*     mystrcat(buf, "/"); */
+/*     mystrcat(buf, metafile); */
 
-    /* mkdir_r(buf, "/"); */
-    /* mystrcat(buf, "/BUILD.bazel"); */
+/*     /\* mkdir_r(buf, "/"); *\/ */
+/*     /\* mystrcat(buf, "/BUILD.bazel"); *\/ */
 
-    /* /\* log_debug("out buf: %s", buf); *\/ */
-    /* FILE *f; */
-    /* if ((f = fopen(buf, "w")) == NULL){ */
-    /*     log_fatal("Error! opening file %s", buf); */
-    /*     exit(EXIT_FAILURE); */
-    /* } */
-    /* fprintf(f, "## test\n"); //  "src: %s/%s\n", pkgdir, metafile); */
-    /* fclose(f); */
+/*     /\* /\\* log_debug("out buf: %s", buf); *\\/ *\/ */
+/*     /\* FILE *f; *\/ */
+/*     /\* if ((f = fopen(buf, "w")) == NULL){ *\/ */
+/*     /\*     log_fatal("Error! opening file %s", buf); *\/ */
+/*     /\*     exit(EXIT_FAILURE); *\/ */
+/*     /\* } *\/ */
+/*     /\* fprintf(f, "## test\n"); //  "src: %s/%s\n", pkgdir, metafile); *\/ */
+/*     /\* fclose(f); *\/ */
 
-    errno = 0;
-    log_debug("PARSING: %s", buf);
-    struct obzl_meta_package *pkg = obzl_meta_parse_file(buf);
-    if (pkg == NULL) {
-        if (errno == -1)
-            log_warn("Empty META file: %s", buf);
-        else
-            if (errno == -2)
-                log_warn("META file contains only whitespace: %s", buf);
-            else
-                log_error("Error parsing %s", buf);
-    } else {
-        log_warn("PARSED %s", buf);
-        /* dump_package(0, pkg); */
+/*     errno = 0; */
+/*     log_debug("PARSING: %s", buf); */
+/*     struct obzl_meta_package *pkg = obzl_meta_parse_file(buf); */
+/*     if (pkg == NULL) { */
+/*         if (errno == -1) */
+/*             log_warn("Empty META file: %s", buf); */
+/*         else */
+/*             if (errno == -2) */
+/*                 log_warn("META file contains only whitespace: %s", buf); */
+/*             else */
+/*                 log_error("Error parsing %s", buf); */
+/*     } else { */
+/*         log_warn("PARSED %s", buf); */
+/*         /\* dump_package(0, pkg); *\/ */
 
-        stdlib_root = false;
+/*         stdlib_root = false; */
 
-        if (obzl_meta_entries_property(pkg->entries, "library_kind")) {
-            /* special handling for ppx packages */
-            log_debug("handling ppx package: %s", obzl_meta_package_name(pkg));
-            g_ppx_pkg = true;
-            /* emit_build_bazel_ppx(bzlroot, host_repo, "lib", "", pkg); */
-        } else {
-            log_debug("handling normal package: %s", obzl_meta_package_name(pkg));
-            g_ppx_pkg = true;
-        }
+/*         if (obzl_meta_entries_property(pkg->entries, "library_kind")) { */
+/*             /\* special handling for ppx packages *\/ */
+/*             log_debug("handling ppx package: %s", obzl_meta_package_name(pkg)); */
+/*             g_ppx_pkg = true; */
+/*             /\* emit_build_bazel_ppx(bzlroot, host_repo, "lib", "", pkg); *\/ */
+/*         } else { */
+/*             log_debug("handling normal package: %s", obzl_meta_package_name(pkg)); */
+/*             g_ppx_pkg = true; */
+/*         } */
 
-        /* skip threads pkg, obsolete */
-        int len = strlen(buf);
-        if (strncmp(buf + len - 12, "threads/META", 12) == 0) {
-            log_warn("SKIPPING threads/META");
-            return 0;
-        }
-        /* TMP HACK: skip some pkgs for which we use template BUILD files */
-        if (strncmp(buf + len - 13, "digestif/META", 13) == 0) {
-            log_warn("SKIPPING digestif/META");
-            return 0;
-        }
-        if (strncmp(buf + len - 13, "ctypes/META", 11) == 0) {
-            log_warn("SKIPPING ctypes/META");
-            return 0;
-        }
-        if (strncmp(buf + len - 13, "ptime/META", 10) == 0) {
-            log_warn("SKIPPING ptime/META");
-            return 0;
-        }
-        UT_string *imports_path;
-        utstring_new(imports_path);
-        utstring_printf(imports_path, "_lib/%s",
-                        obzl_meta_package_name(pkg));
-        emit_build_bazel(host_repo,
-                         bzlroot,      /* _repo_root: "." or "./tmp/opam" */
-                         "lib",        /* _pkg_prefix */
-                         utstring_body(imports_path),
-                        /* "",      /\* pkg-path *\/ */
-                         pkg);
-        //, NULL);
-/* obzl_meta_package_name(pkg)); */
-    }
-    return 0;
-}
+/*         /\* skip threads pkg, obsolete *\/ */
+/*         int len = strlen(buf); */
+/*         if (strncmp(buf + len - 12, "threads/META", 12) == 0) { */
+/*             log_warn("SKIPPING threads/META"); */
+/*             return 0; */
+/*         } */
+/*         /\* TMP HACK: skip some pkgs for which we use template BUILD files *\/ */
+/*         if (strncmp(buf + len - 13, "digestif/META", 13) == 0) { */
+/*             log_warn("SKIPPING digestif/META"); */
+/*             return 0; */
+/*         } */
+/*         if (strncmp(buf + len - 13, "ctypes/META", 11) == 0) { */
+/*             log_warn("SKIPPING ctypes/META"); */
+/*             return 0; */
+/*         } */
+/*         if (strncmp(buf + len - 13, "ptime/META", 10) == 0) { */
+/*             log_warn("SKIPPING ptime/META"); */
+/*             return 0; */
+/*         } */
+/*         UT_string *imports_path; */
+/*         utstring_new(imports_path); */
+/*         utstring_printf(imports_path, "_lib/%s", */
+/*                         obzl_meta_package_name(pkg)); */
+/*         emit_build_bazel(host_repo, */
+/*                          bzlroot,      /\* _repo_root: "." or "./tmp/opam" *\/ */
+/*                          "lib",        /\* _pkg_prefix *\/ */
+/*                          utstring_body(imports_path), */
+/*                         /\* "",      /\\* pkg-path *\\/ *\/ */
+/*                          pkg); */
+/*         //, NULL); */
+/* /\* obzl_meta_package_name(pkg)); *\/ */
+/*     } */
+/*     return 0; */
+/* } */
 
 void log_fn(log_Event *evt)
 {
@@ -398,6 +390,7 @@ void _config_logging(void)
 
 int main(int argc, char *argv[]) // , char **envp)
 {
+    fprintf(stdout, "\nMAIN: OPAM_BOOTSTRAP\n");
 #if defined(DEBUG)
     char *wd = getenv("BUILD_WORKING_DIRECTORY");
     fprintf(stdout, "\nBUILD_WORKING_DIRECTORY: %s\n", wd);
@@ -485,8 +478,6 @@ int main(int argc, char *argv[]) // , char **envp)
 #else
     mystrcat(bzlroot, ".");
 #endif
-
-    fprintf(stdout, "BZLROOT: %s\n", bzlroot);
 
     opam_config(opam_switch, bzlroot);
 

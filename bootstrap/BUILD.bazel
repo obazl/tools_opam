@@ -1,1 +1,206 @@
-# do not remove
+# Repo rules build this by running make. This build file makes it
+# accessible as an ordinary build target.
+
+load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
+load(":BUILD.bzl", "gensyntax")
+
+exports_files([
+    "log.c", "log.h", "utarray.h", "uthash.h", "utstring.h"
+])
+
+## to enable parser/lexer debugging pass --//sealark:debug=bindings,vectors,...
+string_list_flag(name = "yydebug", build_setting_default = [])
+config_setting(name = "yydebug-dicts", flag_values = {":yydebug": "dicts"})
+config_setting(name = "yydebug-targets", flag_values = {":yydebug": "targets"})
+config_setting(name = "yydebug-loads", flag_values = {":yydebug": "loads"})
+config_setting(name = "yydebug-vectors", flag_values = {":yydebug": "vectors"})
+
+##########
+cc_library(
+    name  = "bootstrap",
+    alwayslink = True,
+    # linkstatic = 1,
+    srcs  = [
+        "config.c",
+        "config.h",
+        "driver.c",
+        "driver.h",
+        "emit_build_bazel.c",
+        "emit_build_bazel.h",
+        "meta_entries.c",
+        "meta_entries.h",
+        "meta_flags.c",
+        "meta_flags.h",
+        "meta_fs.c",
+        "meta_fs.h",
+        "meta_packages.c",
+        "meta_packages.h",
+        "meta_properties.c",
+        "meta_properties.h",
+        "meta_settings.c",
+        "meta_settings.h",
+        "meta_values.c",
+        "meta_values.h",
+        "metalexer.c",
+        "metalexer.h",
+        "metaparser.c",
+        "metaparser.h",
+        # "opam_bootstrap.c",
+        # "opam_bootstrap.h",
+
+        "log.c",
+        "log.h",
+        "utarray.h",
+        "uthash.h",
+        "utstring.h",
+    ],
+    hdrs = [
+        "meta_flags.h",
+        "meta_fs.h"
+    ],
+    defines = select({
+        "//bzl/host:debug": ["DEBUG_TRACE"],
+        "//conditions:default":   ["DEBUG_DUMP"]
+    }),
+    copts = [
+        "-std=c11",
+        "-pedantic-errors",
+
+        "-I.",
+
+        "-Ibootstrap",
+        "-Iexternal/opam/bootstrap",
+
+        "-I$(GENDIR)/bootstrap",
+        "-I$(GENDIR)/external/opam/bootstrap",
+
+        "-Iexternal/libinih",
+    ],
+    deps = [
+        "//external/libinih:inih",
+    ],
+    visibility = ["//visibility:public"]
+)
+
+########
+gensyntax(
+    name = "gensyntaxis",
+    yy   = "metaparser.y",
+    outs = ["metaparser.c","metaparser.out"],
+    defines = select({
+        ":yydebug-vectors": ["YYDEBUG_VECTORS"],
+        "//conditions:default":   []
+    }) + select({
+        ":yydebug-dicts": ["YYDEBUG_DICTS"],
+        "//conditions:default":   []
+    }) + select({
+        ":yydebug-targets": ["YYDEBUG_TARGETS"],
+        "//conditions:default":   []
+    }) + select({
+        ":yydebug-loads": ["YYDEBUG_LOADSTMTS"],
+        "//conditions:default":   []
+    })
+)
+
+########
+# genrule(
+#     name = "gen_lexis",
+#     srcs = [
+#         "metalexer.re",
+#     ],
+#     tools = ["@opam_re2c//:re2c"],
+#     outs  = [
+#         "metalexer.c"
+#     ],
+#     cmd   = "\n".join([
+#         "for f in $(locations @opam_re2c//:re2c)",
+#         "do",
+#         "    if [ -f $$f ]",
+#         "    then",
+#         "        if [ re2c = `basename $$f` -a -x $$f ]",
+#         "        then",
+#         "            break",
+#         "        fi",
+#         "    fi",
+#         "done",
+#         "$$f --conditions --tags -o $(@D)/metalexer.c $(location metalexer.re)",
+#     ]),
+#     visibility = ["//visibility:public"]
+# )
+
+########
+genrule(
+    name = "mkhdrs",
+    srcs = [
+        "config.c",
+        "driver.c",
+        "emit_build_bazel.c",
+        "meta_entries.c",
+        "meta_flags.c",
+        "meta_fs.c",
+        "meta_packages.c",
+        "meta_properties.c",
+        "meta_settings.c",
+        "meta_values.c",
+        "metalexer.c",
+        "metaparser.c",
+        "opam_bootstrap.c",
+        # "log.c",
+        # "log.h",
+        # "utarray.h",
+        # "uthash.h",
+        # "utstring.h",
+    ],
+    outs = [
+        "config.h",
+        "driver.h",
+        "emit_build_bazel.h",
+        "meta_entries.h",
+        "meta_flags.h",
+        "meta_fs.h",
+        "meta_packages.h",
+        "meta_properties.h",
+        "meta_settings.h",
+        "meta_values.h",
+        "metalexer.h",
+        "metaparser.h",
+        "opam_bootstrap.h",
+    ],
+    cmd = "\n".join([
+        "SRC1=$(location opam_bootstrap.c)",
+        "SRCDIR1=`dirname $$SRC1`",
+        "$(location :makeheaders) \\",
+        "    $(location config.c) \\",
+        "    $(location driver.c) \\",
+        "    $(location emit_build_bazel.c) \\",
+        "    $(location meta_entries.c) \\",
+        "    $(location meta_flags.c) \\",
+        "    $(location meta_fs.c) \\",
+        "    $(location meta_packages.c) \\",
+        "    $(location meta_properties.c) \\",
+        "    $(location meta_settings.c) \\",
+        "    $(location meta_values.c) \\",
+        "    $(location metalexer.c) \\",
+        "    $(location metaparser.c) \\",
+        "    $(location opam_bootstrap.c)",
+        "cp $${SRCDIR1}/*.h $(@D)",
+    ]),
+    tools = [":makeheaders"],
+    visibility = ["//visibility:public"]
+)
+
+################################################################
+#### TOOLS
+
+cc_binary(
+    name  = "lemon",
+    srcs  = ["lemon.c"],
+)
+
+cc_binary(
+    name  = "makeheaders",
+    srcs  = ["makeheaders.c"],
+    copts = ["-O3"],
+    linkstatic=1,
+    visibility = ["//update:__pkg__"]
+)

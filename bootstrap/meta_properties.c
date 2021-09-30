@@ -38,6 +38,8 @@ EXPORT char *obzl_meta_property_name(obzl_meta_property *prop)
     return prop->name;
 }
 
+/* WARNING: props may have multiple values (for multiple flags); this
+   returns the first */
 EXPORT obzl_meta_value obzl_meta_property_value(obzl_meta_property *prop)
 {
     obzl_meta_setting *setting = utarray_eltptr(prop->settings->list, 0);

@@ -43,7 +43,7 @@ def build_opam_bootstrapper_local(repo_ctx):
         fail("Could not find opam_bootstrap executable")
 
     repo_ctx.report_progress("running opam bootstrapper")
-    # print("running opam_bootstrap")
+    print("running opam_bootstrap")
     # bootstrapper = repo_ctx.path(Label("@obazl_tools_opam//bootstrap:opam_bootstrap"))
     # print("BOOTSTRAP CMD: %s" % bootstrapper)
 
@@ -311,14 +311,14 @@ def _install_build_files(repo_ctx):
     )
 
 ######################################
-def impl_opam_configuration(repo_ctx):
+def impl_opam_bootstrap(repo_ctx):
 
     debug = False
     # if (ctx.label.name == "zexe_backend_common"):
     #     debug = True
 
     if debug:
-        print("OPAM_CONFIGURATION TARGET: %s" % repo_ctx.name)
+        print("OPAM_BOOTSTRAP TARGET: %s" % repo_ctx.name)
         print("opam deps: %s" % repo_ctx.attr.packages)
         print("custom build_files: %s" % repo_ctx.attr.build_files)
 
@@ -460,8 +460,8 @@ def impl_opam_configuration(repo_ctx):
     #     # print("opam_bootstrap stderr: %s" % xr.stderr)
 
 #####################################
-opam_configuration = repository_rule(
-    implementation = impl_opam_configuration,
+opam_bootstrap = repository_rule(
+    implementation = impl_opam_bootstrap,
     environ = [
         # "OBAZL_BOOTSTRAP",
         "XDG_CACHE_HOME",
@@ -505,15 +505,16 @@ opam_configuration = repository_rule(
             default = False,
         ),
 
-        _rule = attr.string( default = "opam_configuration" ),
+        _rule = attr.string( default = "opam_bootstrap" ),
     ),
 )
 
 ################################################################
 ## convert ocamlfind META files to BUILD.bazel files, etc.
 def install(bootstrap_debug=False):  # for lack of a better name atm
+    print("opam install")
 
-    opam_configuration(
+    opam_bootstrap(
         name = "opam",
         switch = "4.09.0",
         # packages = [

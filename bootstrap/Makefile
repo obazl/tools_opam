@@ -20,11 +20,11 @@ all:
 clean:
 	@-rm -rf *.dSYM
 	@-rm -f *.o
-	@-rm -f metaparser.c metalexer.c
+	@-rm -f metaparser.c metaparser.h
 	@-rm -f lemon makeheaders
 	@-rm -f driver.h
 	@-rm -f emit_build_bazel.h
-	@-rm -f meta*.h
+	@-rm -f meta_*.h
 	@-rm -f opam_bootstrap.h
 	@-rm -f opam_bootstrap
 	@-rm -rf tmp/
