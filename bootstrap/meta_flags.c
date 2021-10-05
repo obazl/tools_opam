@@ -310,10 +310,13 @@ bool obzl_meta_flags_to_select_condition(obzl_meta_flags *flags,
                        other flags start with "mt" */
                     if (strncmp(a_flag->s, "mt", 2) == 0) return false;
 
-                    utstring_printf(_cname, "%s", "@ocaml//cfg:");
-                    if ( !a_flag->polarity ) /* '-' prefix */
-                        utstring_printf(_cname, "no_");
-                    utstring_printf(_cname, "%s", a_flag->s);
+                    /* FIXME: rename? @ocaml//cfg is cli build settings */
+                    /* for selecting plugin, mode */
+                    /* utstring_printf(_cname, "%s", "@ocaml//cfg:"); */
+                    /* if ( !a_flag->polarity ) /\* '-' prefix *\/ */
+                    /*     utstring_printf(_cname, "no_"); */
+                    /* utstring_printf(_cname, "%s", a_flag->s); */
+
                     return true; // _cname;
                 } else {
                     /* compound condition */
@@ -358,24 +361,32 @@ bool obzl_meta_flags_to_select_condition(obzl_meta_flags *flags,
                            other flags start with "mt" */
                         if (strncmp(a_flag->s, "mt", 2) == 0) return false;
 
-                        if (i-saw_ppx_driver > 0) mystrcat(config_name, "_");
+                        if (i - saw_ppx_driver > 0) mystrcat(config_name, "_");
                         log_debug("%*s%s (polarity: %d)", delta+indent, sp, a_flag->s, a_flag->polarity);
                         if ( !a_flag->polarity ) /* '-' prefix */
                             if (saw_ppx_driver == 0)
                                 mystrcat(config_name, "no_");
                         mystrcat(config_name, a_flag->s);
                     }
+
+                    /* some packages use plugin and toploop flags in
+                       the archive property. we treat these as
+                       targets, not selectables */
+                    if (strncmp(a_flag->s, "plugin", 6) == 0) return false;
+                    if (strncmp(a_flag->s, "toploop", 8) == 0) return false;
+
+
                     /* register compound flags, so we can generate config_setting rules */
-                    struct config_setting *a_condition;
-                    utstring_printf(_cname, "@ocaml//cfg:%s", config_name);
-                    HASH_FIND_STR(the_config_settings, config_name, a_condition);  /* already in the hash? */
-                    if (a_condition == NULL) {
-                        a_condition = calloc(sizeof(struct config_setting), 1);
-                        strncpy(a_condition->name, config_name, 128);
-                        strncpy(a_condition->label, utstring_body(_cname), 128);
-                        a_condition->flags = flags;
-                        HASH_ADD_STR(the_config_settings, name, a_condition);
-                    }
+                    /* struct config_setting *a_condition; */
+                    /* utstring_printf(_cname, "@ocaml//cfg:%s", config_name); */
+                    /* HASH_FIND_STR(the_config_settings, config_name, a_condition);  /\* already in the hash? *\/ */
+                    /* if (a_condition == NULL) { */
+                    /*     a_condition = calloc(sizeof(struct config_setting), 1); */
+                    /*     strncpy(a_condition->name, config_name, 128); */
+                    /*     strncpy(a_condition->label, utstring_body(_cname), 128); */
+                    /*     a_condition->flags = flags; */
+                    /*     HASH_ADD_STR(the_config_settings, name, a_condition); */
+                    /* } */
                     /* printf("_cname: %s\n", _cname); */
                     return true; // _cname;
                 }

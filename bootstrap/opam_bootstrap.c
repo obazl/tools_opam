@@ -391,6 +391,15 @@ void _config_logging(void)
 int main(int argc, char *argv[]) // , char **envp)
 {
     fprintf(stdout, "\nMAIN: OPAM_BOOTSTRAP\n");
+
+    /* char *new_argv[] = { */
+    /*     "opam", */
+    /*     "var", */
+    /*     "json:installed", */
+    /*     NULL}; */
+
+    /* run_opam_cmd("opam", new_argv); */
+
 #if defined(DEBUG)
     char *wd = getenv("BUILD_WORKING_DIRECTORY");
     fprintf(stdout, "\nBUILD_WORKING_DIRECTORY: %s\n", wd);
@@ -430,7 +439,6 @@ int main(int argc, char *argv[]) // , char **envp)
             exit(EXIT_FAILURE);
             break;
         case 'b':
-            /* build_files */
             printf("option b: %s\n", optarg);
             printf("build file: %s\n", getenv(optarg));
             struct buildfile_s *the_buildfile = (struct buildfile_s *)calloc(sizeof (struct buildfile_s), 1);

@@ -127,24 +127,27 @@ bool _skip_pkg(char *pkg)
         log_warn("SKIPPING compiler-libs/META");
         return true;
     }
+    /* skip pkgs "distributed with OCaml" - repo rule installs them */
+    if (strncmp(pkg + len - 12, "dynlink/META", 12) == 0) {
+        log_warn("SKIPPING dynlink/META");
+        return true;
+    }
     if (strncmp(pkg + len - 12, "threads/META", 12) == 0) {
         log_warn("SKIPPING threads/META");
         return true;
     }
 
+
     /* TMP HACK: skip some pkgs for which we use template BUILD files */
-    if (strncmp(pkg + len - 13, "digestif/META", 13) == 0) {
-        log_warn("SKIPPING digestif/META");
-        return true;
-    }
-    if (strncmp(pkg + len - 13, "ctypes/META", 11) == 0) {
-        log_warn("SKIPPING ctypes/META");
-        return true;
-    }
-    if (strncmp(pkg + len - 13, "ptime/META", 10) == 0) {
-        log_warn("SKIPPING ptime/META");
-        return true;
-    }
+    /* if (strncmp(pkg + len - 13, "digestif/META", 13) == 0) { */
+    /*     log_warn("SKIPPING digestif/META"); */
+    /*     return true; */
+    /* } */
+
+    /* if (strncmp(pkg + len - 13, "ptime/META", 10) == 0) { */
+    /*     log_warn("SKIPPING ptime/META"); */
+    /*     return true; */
+    /* } */
 
     return false;
 }
@@ -582,9 +585,6 @@ int handle_lib_meta(char *switch_lib,
                          utstring_body(imports_path),
                         /* "",      /\* pkg-path *\/ */
                          pkg);
-                         /* repo_rules_FILE); */
-        //, NULL);
-/* obzl_meta_package_name(pkg)); */
     }
     return 0;
 }

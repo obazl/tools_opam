@@ -73,7 +73,6 @@ struct fileset_s *filesets = NULL;
 
 int main(int argc, char *argv[]) // , char **envp)
 {
-
     char *opts = "dh";
     int opt;
     while ((opt = getopt(argc, argv, opts)) != -1) {
