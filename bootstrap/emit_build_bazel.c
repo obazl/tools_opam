@@ -26,8 +26,6 @@ static int delta = 2;
 
 bool stdlib_root = false;
 
-char *opam_switch_prefix = "/Users/gar/.opam/4.10";
-
 char *buildfile_prefix = "@//.opam/buildfiles";
 
 
@@ -86,21 +84,21 @@ void emit_new_local_subpkg_entries(FILE *repo_rules_FILE,
 
                 /* fprintf(repo_rules_FILE, "## subpkg: %s\n", subpkg->name); */
 
-                fprintf(repo_rules_FILE,
-                        "            \"%s/%s/%s:BUILD.bazel\":\n",
-                        buildfile_prefix,
-                        utstring_body(_new_pkg_prefix),
-                        /* pkg_name, */
-                        subpkg->name);
-
                 if (obzl_meta_entries_property(subpkg->entries, "error")) {
                     // FIXME: emit 'fail()'
-                    fprintf(repo_rules_FILE,
-                            "            \"%s %s/lib\",\n",
-                            subpkg->name,
-                            opam_switch_prefix);
-
+                    /* fprintf(repo_rules_FILE, */
+                    /*         "            \"%s %s/lib\",\n", */
+                    /*         subpkg->name, */
+                    /*         opam_switch_prefix); */
+                    ;           /* skip */
                 } else {
+                    fprintf(repo_rules_FILE,
+                            "            \"%s/%s/%s:BUILD.bazel\":\n",
+                            buildfile_prefix,
+                            utstring_body(_new_pkg_prefix),
+                            /* pkg_name, */
+                            subpkg->name);
+
                     utstring_renew(subdir);
                     if (_subdir == NULL) {
                         utstring_printf(subdir, "%s", subpkg->name);
@@ -110,9 +108,9 @@ void emit_new_local_subpkg_entries(FILE *repo_rules_FILE,
                                         subpkg->name);
                     }
                     fprintf(repo_rules_FILE,
-                            "            \"%s %s/lib/%s\",\n",
+                            "            \"%s %s\",\n",
                             utstring_body(subdir),
-                            opam_switch_prefix,
+                            /* opam_switch_prefix, */
                             /* depfiles_path, */
                             utstring_body(filedeps_dir));
                             /* filedeps_dir); */
@@ -167,6 +165,8 @@ void emit_new_local_pkg_repo(FILE *repo_rules_FILE,
                 _pkg_prefix, pkg_name);
     }
 
+    /* fprintf(repo_rules_FILE, "        environ = [\"OPAM_SWITCH_PREFIX\"],\n"); */
+
     fprintf(repo_rules_FILE, "        build_file = ");
     if (_pkg_prefix == NULL)
         fprintf(repo_rules_FILE,
@@ -183,12 +183,12 @@ void emit_new_local_pkg_repo(FILE *repo_rules_FILE,
 
     fprintf(repo_rules_FILE, "        path       = ");
     if (_pkg_prefix == NULL)
-        fprintf(repo_rules_FILE, "\"%s/lib/%s\",\n",
-                opam_switch_prefix,
+        fprintf(repo_rules_FILE, "\"%s\",\n",
+                /* opam_switch_prefix, */
                 pkg_name);
     else
-        fprintf(repo_rules_FILE, "\"%s/lib/%s/%s\",\n",
-                opam_switch_prefix,
+        fprintf(repo_rules_FILE, "\"%s/%s\",\n",
+                /* opam_switch_prefix, */
                 _pkg_prefix, pkg_name);
 
     /* **************************************************************** */
@@ -628,6 +628,7 @@ Note that "archive" should only be used for archive files that are intended to b
 
     fprintf(ostream, "\nocaml_import(\n");
     fprintf(ostream, "    name = \"%s\",\n", _pkg_name); /* default target provides archive */
+
     emit_bazel_metadatum(ostream, 1,
                          host_repo,              /* @ocaml */
                          /* _filedeps_path, */
@@ -1580,7 +1581,7 @@ EXPORT void emit_build_bazel(char *_repo,
         fprintf(ostream,
                 "load(\"@rules_cc//cc:defs.bzl\", \"cc_library\")\n"
                 "cc_library(\n"
-                "    name = \"c-api\",\n"
+                "    name = \"libctypes\",\n"
                 "    srcs = glob([\"*.a\"]),\n"
                 "    hdrs = glob([\"*.h\"]),\n"
                 "    visibility = [\"//visibility:public\"],\n"
