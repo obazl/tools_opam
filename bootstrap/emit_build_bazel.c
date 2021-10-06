@@ -756,19 +756,21 @@ bool special_case_multiseg_dep(FILE* ostream,
 {
     if (delim1 == NULL) {
         if (strncmp(*dep_name, "compiler-libs", 13) == 0) {
-            fprintf(ostream, "%*s\"@ocaml//compiler-libs\",\n",
+            fprintf(ostream, "%*s    \"@ocaml//compiler-libs\",\n",
                     (1+level)*spfactor, sp);
+            return true;
         } else {
             if (strncmp(*dep_name, "threads", 13) == 0) {
-                fprintf(ostream, "%*s\"@ocaml//threads\",\n",
+                fprintf(ostream, "%*s    \"@ocaml//threads\",\n",
                         (1+level)*spfactor, sp);
+                return true;
             }
         }
     } else {
 
         if (strncmp(*dep_name, "compiler-libs/", 14) == 0) {
             fprintf(ostream,
-                    "%*s\"@ocaml//compiler-libs:%s\",\n",
+                    "%*s    \"@ocaml//compiler-libs:%s\",\n",
                     (1+level)*spfactor, sp, delim1+1);
             return true;
         }
