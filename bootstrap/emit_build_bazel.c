@@ -777,7 +777,7 @@ bool special_case_multiseg_dep(FILE* ostream,
 
         if (strncmp(*dep_name, "threads/", 8) == 0) {
             /* threads.posix, threads.vm => threads */
-            fprintf(ostream, "    \"@ocaml//threads\",\n");
+            fprintf(ostream, "        \"@ocaml//threads\",\n");
                     /* (1+level)*spfactor, sp, delim1+1); */
             return true;
         }
