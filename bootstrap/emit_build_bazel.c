@@ -125,7 +125,6 @@ void emit_new_local_subpkg_entries(FILE *repo_rules_FILE,
                                               utstring_body(subdir),
                                               utstring_body(_new_pkg_prefix),
                                               utstring_body(filedeps_dir));
-
                 utstring_free(filedeps_dir);
                 utstring_free(subdir);
             }
@@ -195,15 +194,20 @@ void emit_new_local_pkg_repo(FILE *repo_rules_FILE,
     /*  now subpackages */
     /* **************************************************************** */
 
-    int subpkg_ct = obzl_meta_package_subpkg_count(_pkg);
-    if (subpkg_ct > 0) {
-        fprintf(repo_rules_FILE, "        subpackages = {\n");
-        emit_new_local_subpkg_entries(repo_rules_FILE,
-                                      _pkg,
-                                      NULL,
-                                      _pkg_prefix,
-                                      _pkg->name); /* filedeps_path */
-        fprintf(repo_rules_FILE, "        }\n");
+    if ((strncmp(_pkg->name, "threads", 7) == 0)
+        && strlen(_pkg->name) == 7) {
+        ; /* special case: skip threads subpkgs */
+    } else {
+        int subpkg_ct = obzl_meta_package_subpkg_count(_pkg);
+        if (subpkg_ct > 0) {
+            fprintf(repo_rules_FILE, "        subpackages = {\n");
+            emit_new_local_subpkg_entries(repo_rules_FILE,
+                                          _pkg,
+                                          NULL,
+                                          _pkg_prefix,
+                                          _pkg->name); /* filedeps_path */
+            fprintf(repo_rules_FILE, "        }\n");
+        }
     }
     /* **************************************************************** */
     fprintf(repo_rules_FILE, "    )\n\n");
@@ -364,7 +368,7 @@ void emit_bazel_attribute(FILE* ostream,
     obzl_meta_setting *setting = NULL;
 
     obzl_meta_values *vals;
-    obzl_meta_value *attr_val = NULL;
+    obzl_meta_value *archive_name = NULL;
 
     for (int i = 0; i < settings_ct; i++) {
         setting = obzl_meta_settings_nth(settings, i);
@@ -416,9 +420,9 @@ void emit_bazel_attribute(FILE* ostream,
         utstring_new(label);
 
         for (int j = 0; j < obzl_meta_values_count(vals); j++) {
-            attr_val = obzl_meta_values_nth(vals, j);
+            archive_name = obzl_meta_values_nth(vals, j);
             log_info("prop[%d] '%s' == '%s'",
-                     j, property, (char*)*attr_val);
+                     j, property, (char*)*archive_name);
 
             /* char *s = (char*)*v; */
             /* while (*s) { */
@@ -441,19 +445,20 @@ void emit_bazel_attribute(FILE* ostream,
 
             /* emit 'archive' attr targets */
             if ( (rc == 0)
+                 /* special cases: unix, dynlink, etc. */
                 && strlen(_filedeps_path) == 5)
-                utstring_printf(label, "@%s//lib:%s", _filedeps_path, *attr_val);
+                utstring_printf(label, "@%s//lib:%s",
+                                _filedeps_path, *archive_name);
             else {
-                /* we're constructing dep labels
-                   _pkg_name is the name of the target, not the dep
-                // refer to filedeps path, not pkg prefix ????
+                /* we're constructing archive attribute labels
+                   _pkg_name is the name of the import target, not the arch
                 */
                 if (_pkg_prefix == NULL) {
                     utstring_printf(label,
                                     "@%s//:%s", // filedeps path: %s",
                                     /* _pkg_name, */
                                     _filedeps_path,
-                                    *attr_val);
+                                    *archive_name);
                 } else {
                     char *start = strchr(_pkg_prefix, '/');
                     int repo_len = start - (char*)_pkg_prefix;
@@ -463,7 +468,7 @@ void emit_bazel_attribute(FILE* ostream,
                                         repo_len,
                                         _pkg_prefix,
                                         _pkg_name,
-                                        *attr_val);
+                                        *archive_name);
                                         /* _pkg_prefix); */
                     } else {
                         start++;
@@ -473,7 +478,7 @@ void emit_bazel_attribute(FILE* ostream,
                                         _pkg_prefix,
                                         (char*)start,
                                         _pkg_name,
-                                        *attr_val);
+                                        *archive_name);
                                         /* _pkg_prefix); */
                     }
 
@@ -497,19 +502,19 @@ void emit_bazel_attribute(FILE* ostream,
                 /* if (start == NULL) */
                 /*     utstring_printf(label, */
                 /*                     "X@%s//:%s", */
-                /*                     _filedeps_path, *attr_val); */
+                /*                     _filedeps_path, *archive_name); */
                 /* else { */
                 /*     *start++ = '\0'; // split on '.' */
                 /*     utstring_printf(label, */
                 /*                     "Y@%s//%s:%s", */
                 /*                     _filedeps_path, */
                 /*                     start, */
-                /*                     *attr_val); */
+                /*                     *archive_name); */
                 /* } */
             }
 
             /* utstring_printf(label, "@ocaml//:%s/%s", */
-            /*                 _filedeps_path, *attr_val); */
+            /*                 _filedeps_path, *archive_name); */
             /* log_debug("label 2: %s", utstring_body(label)); */
 
             if (settings_ct > 1) {
@@ -683,26 +688,99 @@ void emit_bazel_plugin_rule(FILE* ostream, int level,
     fprintf(ostream, ")\n");
 }
 
+bool emit_special_case_rule(FILE* ostream,
+                            obzl_meta_package *_pkg)
+{
+    if ((strncmp(_pkg->name, "bigarray", 8) == 0)
+        && strlen(_pkg->name) == 8) {
+
+        fprintf(ostream, "alias(\n"
+                "    name = \"bigarray\",\n"
+                "    actual = \"@ocaml.bigarray//:bigarray\",\n"
+                "    visibility = [\"//visibility:public\"]\n"
+                ")\n");
+        return true;
+    }
+
+    if ((strncmp(_pkg->name, "dynlink", 7) == 0)
+        && strlen(_pkg->name) == 7) {
+
+        fprintf(ostream, "alias(\n"
+                "    name = \"dynlink\",\n"
+                "    actual = \"@ocaml.dynlink//:dynlink\",\n"
+                "    visibility = [\"//visibility:public\"]\n"
+                ")\n");
+        return true;
+    }
+
+    if ((strncmp(_pkg->name, "str", 3) == 0)
+        && strlen(_pkg->name) == 3) {
+
+        fprintf(ostream, "alias(\n"
+                "    name = \"str\",\n"
+                "    actual = \"@ocaml.str//:str\",\n"
+                "    visibility = [\"//visibility:public\"]\n"
+                ")\n");
+        return true;
+    }
+
+    if ((strncmp(_pkg->name, "threads", 7) == 0)
+        && strlen(_pkg->name) == 7) {
+
+        fprintf(ostream, "alias(\n"
+                "    name = \"threads\",\n"
+                "    actual = \"@ocaml.threads//:threads\",\n"
+                "    visibility = [\"//visibility:public\"]\n"
+                ")\n");
+        return true;
+    }
+
+    if ((strncmp(_pkg->name, "unix", 4) == 0)
+        && strlen(_pkg->name) == 4) {
+
+        fprintf(ostream, "alias(\n"
+                "    name = \"unix\",\n"
+                "    actual = \"@ocaml.unix//:unix\",\n"
+                "    visibility = [\"//visibility:public\"]\n"
+                ")\n");
+        return true;
+    }
+
+    return false;
+}
+
 /* **************************************************************** */
 bool special_case_multiseg_dep(FILE* ostream,
                                obzl_meta_value *dep_name,
                                char *delim1)
 {
-    /* FIXME: cover all distrib pkgs: unix, bigarray, etc */
-    if (strncmp(*dep_name, "compiler-libs/", 14) == 0) {
-        fprintf(ostream,
-                "%*s\"@ocaml//compiler-libs:%s\",\n",
-                (1+level)*spfactor, sp, delim1+1);
-        return true;
-    }
+    if (delim1 == NULL) {
+        if (strncmp(*dep_name, "compiler-libs", 13) == 0) {
+            fprintf(ostream, "%*s\"@ocaml//compiler-libs\",\n",
+                    (1+level)*spfactor, sp);
+        } else {
+            if (strncmp(*dep_name, "threads", 13) == 0) {
+                fprintf(ostream, "%*s\"@ocaml//threads\",\n",
+                        (1+level)*spfactor, sp);
+            }
+        }
+    } else {
 
-    if (strncmp(*dep_name, "threads/", 8) == 0) {
-        fprintf(ostream, "%*s\"@ocaml//threads/%s\",\n",
-                (1+level)*spfactor, sp, delim1+1);
-        return true;
-    }
+        if (strncmp(*dep_name, "compiler-libs/", 14) == 0) {
+            fprintf(ostream,
+                    "%*s\"@ocaml//compiler-libs:%s\",\n",
+                    (1+level)*spfactor, sp, delim1+1);
+            return true;
+        }
 
-    return false;
+        if (strncmp(*dep_name, "threads/", 8) == 0) {
+            fprintf(ostream, "%*s\"@ocaml//threads/%s\",\n",
+                    (1+level)*spfactor, sp, delim1+1);
+            return true;
+        }
+
+        return false;
+    }
 }
 
 void emit_bazel_deps_attribute(FILE* ostream, int level, char *repo, char *pkg,
@@ -844,20 +922,12 @@ void emit_bazel_deps_attribute(FILE* ostream, int level, char *repo, char *pkg,
                 /*         *dep_name, delim1, (delim1 == NULL)); */
 
                 if (delim1 == NULL) {
-                    /* special case: compiler-libs */
-                    if (strncmp(*dep_name, "compiler-libs", 13) == 0) {
-                        fprintf(ostream, "%*s\"@ocaml//compiler-libs\",\n",
-                                (1+level)*spfactor, sp);
-                    } else {
-                        if (strncmp(*dep_name, "threads", 13) == 0) {
-                            fprintf(ostream, "%*s\"@ocaml//threads\",\n",
-                                    (1+level)*spfactor, sp);
-                        } else {
-                            /* single-seg pkg, e.g. ptime  */
-                            fprintf(ostream, "%*s\"@%s//:%s\",\n",
-                                    (1+level)*spfactor, sp, *dep_name, *dep_name);
-                        }
-                    }
+                    if (special_case_multiseg_dep(ostream, dep_name, delim1))
+                        continue;
+                    else
+                        /* single-seg pkg, e.g. ptime  */
+                        fprintf(ostream, "%*s\"@%s//:%s\",\n",
+                                (1+level)*spfactor, sp, *dep_name, *dep_name);
                 } else {
                     /* multi-seg pkg, e.g. lwt.unix, ptime.clock.os */
                     if (special_case_multiseg_dep(ostream, dep_name, delim1))
@@ -1569,6 +1639,8 @@ EXPORT void emit_build_bazel(char *_repo,
         /* log_error("fopen error %s", strerror( errnum )); */
         exit(EXIT_FAILURE);
     }
+
+    if (emit_special_case_rule(ostream, _pkg)) return;
 
     fprintf(ostream, "## original: %s\n\n", obzl_meta_package_src(_pkg));
 

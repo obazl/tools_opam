@@ -128,14 +128,18 @@ bool _skip_pkg(char *pkg)
         return true;
     }
     /* skip pkgs "distributed with OCaml" - repo rule installs them */
-    if (strncmp(pkg + len - 12, "dynlink/META", 12) == 0) {
-        log_warn("SKIPPING dynlink/META");
-        return true;
-    }
-    if (strncmp(pkg + len - 12, "threads/META", 12) == 0) {
-        log_warn("SKIPPING threads/META");
-        return true;
-    }
+    /* if (strncmp(pkg + len - 12, "dynlink/META", 12) == 0) { */
+    /*     log_warn("SKIPPING dynlink/META"); */
+    /*     return true; */
+    /* } */
+    /* if (strncmp(pkg + len - 12, "threads/META", 12) == 0) { */
+    /*     log_warn("SKIPPING threads/META"); */
+    /*     return true; */
+    /* } */
+    /* if (strncmp(pkg + len - 9, "unix/META", 9) == 0) { */
+    /*     log_warn("SKIPPING unixt/META"); */
+    /*     return true; */
+    /* } */
 
 
     /* TMP HACK: skip some pkgs for which we use template BUILD files */
@@ -408,25 +412,25 @@ void opam_config(char *_opam_switch, char *bzlroot)
 
     /* link to opam bin, lib dirs. we could do this in starlark, but
        then we would not be able to test independently. */
-    rc = symlink(utstring_body(switch_bin), utstring_body(bzl_bin_link));
-    if (rc != 0) {
-        errnum = errno;
-        if (errnum != EEXIST) {
-            perror(utstring_body(bzl_bin_link));
-            log_error("symlink failure for %s -> %s\n", utstring_body(switch_bin), utstring_body(bzl_bin_link));
-            exit(EXIT_FAILURE);
-        }
-    }
+    /* rc = symlink(utstring_body(switch_bin), utstring_body(bzl_bin_link)); */
+    /* if (rc != 0) { */
+    /*     errnum = errno; */
+    /*     if (errnum != EEXIST) { */
+    /*         perror(utstring_body(bzl_bin_link)); */
+    /*         log_error("symlink failure for %s -> %s\n", utstring_body(switch_bin), utstring_body(bzl_bin_link)); */
+    /*         exit(EXIT_FAILURE); */
+    /*     } */
+    /* } */
 
-    rc = symlink(utstring_body(switch_lib), utstring_body(bzl_lib_link));
-    if (rc != 0) {
-        errnum = errno;
-        if (errnum != EEXIST) {
-            perror(utstring_body(bzl_lib_link));
-            log_error("symlink failure for %s -> %s\n", utstring_body(switch_lib), utstring_body(bzl_lib_link));
-            exit(EXIT_FAILURE);
-        }
-    }
+    /* rc = symlink(utstring_body(switch_lib), utstring_body(bzl_lib_link)); */
+    /* if (rc != 0) { */
+    /*     errnum = errno; */
+    /*     if (errnum != EEXIST) { */
+    /*         perror(utstring_body(bzl_lib_link)); */
+    /*         log_error("symlink failure for %s -> %s\n", utstring_body(switch_lib), utstring_body(bzl_lib_link)); */
+    /*         exit(EXIT_FAILURE); */
+    /*     } */
+    /* } */
 
     /*  now set output paths (in @ocaml) */
     mkdir_r(bzlroot, "");       /* make sure bzlroot exists */
