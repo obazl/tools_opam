@@ -774,10 +774,17 @@ bool special_case_multiseg_dep(FILE* ostream,
         }
 
         if (strncmp(*dep_name, "threads/", 8) == 0) {
-            fprintf(ostream, "%*s\"@ocaml//threads/%s\",\n",
+            /* threads.posix, threads.vm => threads */
+            fprintf(ostream, "    %*s\"@ocaml//threads\",\n",
                     (1+level)*spfactor, sp, delim1+1);
             return true;
         }
+
+        /* if (strncmp(*dep_name, "posix/", 8) == 0) { */
+        /*     fprintf(ostream, "%*s\"@ocaml//threads/%s\",\n", */
+        /*             (1+level)*spfactor, sp, delim1+1); */
+        /*     return true; */
+        /* } */
 
         return false;
     }
@@ -904,7 +911,7 @@ void emit_bazel_deps_attribute(FILE* ostream, int level, char *repo, char *pkg,
             /* emit 'deps' attr labels */
 
             if (settings_ct > 1) {
-                fprintf(ostream, "%*s\"X@%s//%s\",\n",
+                fprintf(ostream, "%*s\"@FIXME: %s//%s\",\n",
                         (2+level)*spfactor, sp, *dep_name, pkg);
             } else {
                 /* first convert pkg string */
@@ -1640,7 +1647,10 @@ EXPORT void emit_build_bazel(char *_repo,
         exit(EXIT_FAILURE);
     }
 
-    if (emit_special_case_rule(ostream, _pkg)) return;
+    if ((_pkg_prefix == NULL)
+        || ((strncmp(_pkg_prefix, "ocaml", 5) == 0)
+            && (strlen(_pkg_prefix) == 5)))
+        if (emit_special_case_rule(ostream, _pkg)) return;
 
     fprintf(ostream, "## original: %s\n\n", obzl_meta_package_src(_pkg));
 
