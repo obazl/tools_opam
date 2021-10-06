@@ -32,7 +32,7 @@
 
 #include "meta_fs.h"
 
-LOCAL int verbosity = 0;
+/* LOCAL int verbosity = 0; */
 int errnum;
 int rc;
 

@@ -9,9 +9,9 @@
 #include "log.h"
 #include "meta_entries.h"
 
-LOCAL int indent = 2;
-LOCAL int delta = 2;
-LOCAL char *sp = " ";
+/* LOCAL int indent = 2; */
+/* LOCAL int delta = 2; */
+/* LOCAL char *sp = " "; */
 
 
 /* **************************************************************** */

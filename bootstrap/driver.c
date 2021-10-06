@@ -65,7 +65,7 @@ EXPORT struct logging logger;
 /* char THE_METAFILE[PATH_MAX]; */
 struct obzl_meta_package *MAIN_PKG;
 
-LOCAL char *package_name_from_file_name(char *fname)
+char *package_name_from_file_name(char *fname)
 {
     char *bn = basename(fname);
     int x = strlen(bn) - 5;

@@ -6,9 +6,9 @@
 #include "log.h"
 #include "meta_properties.h"
 
-static int indent = 2;
-static int delta = 2;
-static char *sp = " ";
+/* static int indent = 2; */
+/* static int delta = 2; */
+/* static char *sp = " "; */
 
 /*
   ocamlfind special properties:

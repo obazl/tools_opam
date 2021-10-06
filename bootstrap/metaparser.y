@@ -7,9 +7,9 @@
 
 #include "log.h"
 
-static int indent = 2;
-static int delta = 2;
-static char *sp = " ";
+/* static int indent = 2; */
+/* static int delta = 2; */
+/* static char *sp = " "; */
 
 #if INTERFACE
 #ifndef YYMALLOCARGTYPE
@@ -18,8 +18,7 @@ static char *sp = " ";
 #endif
 }
 
-%extra_argument { struct obzl_meta_package *the_root_pkg}
-
+%extra_argument { struct obzl_meta_package *the_root_pkg }
 
 %token PACKAGE VERSION DESCRIPTION DIRECTORY VNAME FLAGS WORD WORDS.
 %token  REQUIRES PPX_RUNTIME_DEPS .

@@ -39,16 +39,16 @@ char *CWD;
 char log_buf[512];
 
 /* **************************************************************** */
-static int level = 0;
-static int spfactor = 4;
-static char *sp = " ";
+/* static int level = 0; */
+/* static int spfactor = 4; */
+/* static char *sp = " "; */
 
-static int indent = 2;
-static int delta = 2;
+/* static int indent = 2; */
+/* static int delta = 2; */
 
 /* **************************************************************** */
 
-static int verbosity = 0;
+/* static int verbosity = 0; */
 int errnum;
 int rc;
 
@@ -137,10 +137,10 @@ int main(int argc, char *argv[]) // , char **envp)
 
     obazl_configure(getcwd(NULL, 0));
 
-    char *wd = getcwd(NULL, 0);
+    /* char *wd = getcwd(NULL, 0); */
     /* fprintf(stdout, "CWD after bzl config: %s\n", wd); */
 
-    char *opam_switch;
+    char *opam_switch = NULL;
 
     CWD = getcwd(NULL, 0);
 

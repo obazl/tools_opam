@@ -1,9 +1,9 @@
 #include "meta_packages.h"
 #include "log.h"
 
-static int indent = 2;
-static int delta = 2;
-static char *sp = " ";
+/* static int indent = 2; */
+/* static int delta = 2; */
+/* static char *sp = " "; */
 
 #if INTERFACE
 struct obzl_meta_package {
@@ -26,7 +26,7 @@ EXPORT char *obzl_meta_package_dir(obzl_meta_package *_pkg)
 
 EXPORT char *obzl_meta_package_directory_prop(obzl_meta_package *_pkg)
 {
-    char *d = obzl_meta_directory_property(_pkg->entries);
+    /* char *d = obzl_meta_directory_property(_pkg->entries); */
 
     return _pkg->directory;
 }
@@ -44,7 +44,7 @@ EXPORT obzl_meta_entries *obzl_meta_package_entries(obzl_meta_package *_pkg)
 /* **************************************************************** */
 EXPORT int obzl_meta_package_subpkg_count(obzl_meta_package *_pkg)
 {
-    obzl_meta_entries *entries = _pkg->entries;
+    /* obzl_meta_entries *entries = _pkg->entries; */
     obzl_meta_entry *e = NULL;
     obzl_meta_package *subpkg = NULL;
 
@@ -66,7 +66,7 @@ EXPORT bool obzl_meta_package_has_archives(obzl_meta_package *_pkg)
 {
     //FIXME: use a has_archives flag
 
-    obzl_meta_entries *entries = _pkg->entries;
+    /* obzl_meta_entries *entries = _pkg->entries; */
     obzl_meta_entry *e = NULL;
     for (int i = 0; i < obzl_meta_entries_count(_pkg->entries); i++) {
         e = obzl_meta_entries_nth(_pkg->entries, i);
@@ -83,7 +83,7 @@ EXPORT bool obzl_meta_package_has_plugins(obzl_meta_package *_pkg)
 {
     //FIXME: use a has_plugins flag
 
-    obzl_meta_entries *entries = _pkg->entries;
+    /* obzl_meta_entries *entries = _pkg->entries; */
     obzl_meta_entry *e = NULL;
     for (int i = 0; i < obzl_meta_entries_count(_pkg->entries); i++) {
         e = obzl_meta_entries_nth(_pkg->entries, i);

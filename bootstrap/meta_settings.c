@@ -6,9 +6,9 @@
 #include "log.h"
 #include "meta_settings.h"
 
-static int indent = 2;
-static int delta = 2;
-static char *sp = " ";
+/* static int indent = 2; */
+/* static int delta = 2; */
+/* static char *sp = " "; */
 
 /*
   findlib META variable assignment
@@ -61,7 +61,7 @@ EXPORT int obzl_meta_settings_flag_count(obzl_meta_settings *_settings, char *_f
 {
     int ct = 0;
     obzl_meta_setting *setting = NULL;
-    obzl_meta_flags *flags;
+    /* obzl_meta_flags *flags; */
     for(setting  = utarray_front(_settings->list);
         setting != NULL;
         setting  = utarray_next(_settings->list, setting)) {
@@ -75,7 +75,7 @@ EXPORT int obzl_meta_settings_flag_count(obzl_meta_settings *_settings, char *_f
 
 EXPORT int obzl_meta_setting_has_flag(obzl_meta_setting *_setting, char *_flag, bool polarity)
 {
-    int ct;
+    /* int ct; */
     obzl_meta_flags *flags = obzl_meta_setting_flags(_setting);
     return obzl_meta_flags_has_flag(flags, _flag, polarity);
 }

@@ -21,8 +21,8 @@ static int level = 0;
 static int spfactor = 4;
 static char *sp = " ";
 
-static int indent = 2;
-static int delta = 2;
+/* static int indent = 2; */
+/* static int delta = 2; */
 
 bool stdlib_root = false;
 
@@ -65,7 +65,7 @@ void emit_new_local_subpkg_entries(FILE *repo_rules_FILE,
             if (entry->type == OMP_PACKAGE) {
                 log_debug("next subpkg: %s", subpkg->name);
 
-                char *directory = NULL;
+                /* char *directory = NULL; */
                 UT_string *filedeps_dir;
                 utstring_new(filedeps_dir);
                 if (_filedeps_path)
@@ -302,7 +302,7 @@ void emit_bazel_attribute(FILE* ostream,
     log_debug("EMIT_BAZEL_ATTRIBUTE _pkg_name: '%s'; prop: '%s'; filedeps path: '%s'",
               _pkg_name, property, _filedeps_path);
     log_debug("  pkg_prefix: %s", _pkg_prefix);
-    obzl_meta_property *_prop = obzl_meta_entries_property(_entries,property);
+    /* obzl_meta_property *_prop = obzl_meta_entries_property(_entries,property); */
     /* if (strncmp(_pkg_name, "ppx_sexp_conv", 13) == 0) { */
     /*     char *_prop_name = obzl_meta_property_name(_prop); */
     /*     char *_prop_val = obzl_meta_property_value(_prop); */
@@ -319,9 +319,9 @@ void emit_bazel_attribute(FILE* ostream,
       which may be empty, even for subpackages (e.g. opam-lib subpackages)
      */
 
-    char *directory = NULL;
-    bool stdlib = false;
-    struct obzl_meta_property *directory_prop = obzl_meta_entries_property(_entries, "directory");
+    /* char *directory = NULL; */
+    /* bool stdlib = false; */
+    /* struct obzl_meta_property *directory_prop = obzl_meta_entries_property(_entries, "directory"); */
     /* log_debug("DIRECTORY: %s", directory); */
     /* log_debug(" PROP: %s", property); */
 
@@ -388,7 +388,7 @@ void emit_bazel_attribute(FILE* ostream,
         /* if (g_ppx_pkg) {        /\* set by opam_bootstrap.handle_lib_meta *\/ */
         /* } */
 
-        bool has_conditions;
+        bool has_conditions = false;
         if (flags == NULL)
             utstring_printf(condition_name, "//conditions:default");
         else
@@ -777,8 +777,8 @@ bool special_case_multiseg_dep(FILE* ostream,
 
         if (strncmp(*dep_name, "threads/", 8) == 0) {
             /* threads.posix, threads.vm => threads */
-            fprintf(ostream, "    %*s\"@ocaml//threads\",\n",
-                    (1+level)*spfactor, sp, delim1+1);
+            fprintf(ostream, "    \"@ocaml//threads\",\n");
+                    /* (1+level)*spfactor, sp, delim1+1); */
             return true;
         }
 
@@ -788,8 +788,8 @@ bool special_case_multiseg_dep(FILE* ostream,
         /*     return true; */
         /* } */
 
-        return false;
     }
+    return false;
 }
 
 void emit_bazel_deps_attribute(FILE* ostream, int level, char *repo, char *pkg,
@@ -917,8 +917,8 @@ void emit_bazel_deps_attribute(FILE* ostream, int level, char *repo, char *pkg,
                         (2+level)*spfactor, sp, *dep_name, pkg);
             } else {
                 /* first convert pkg string */
-                char *s = (char*)*dep_name;
-                char *tmp;
+                /* char *s = (char*)*dep_name; */
+                /* char *tmp; */
                 /* while(s) { */
                 /*     tmp = strchr(s, '/'); */
                 /*     if (tmp == NULL) break; */
@@ -1436,17 +1436,17 @@ void emit_bazel_subpackages(char *_repo,
     else
         utstring_printf(_new_pkg_prefix, "%s/%s", _pkg_prefix, pkg_name);
 
-    UT_string *filedeps_path;
+    /* UT_string *filedeps_path; */
     for (int i = 0; i < obzl_meta_entries_count(entries); i++) {
         entry = obzl_meta_entries_nth(entries, i);
         if (entry->type == OMP_PACKAGE) {
             obzl_meta_package *subpkg = entry->package;
-            obzl_meta_entries *sub_entries = subpkg->entries;
+            /* obzl_meta_entries *sub_entries = subpkg->entries; */
 
             /* filedeps_path will be handled by emit_build_bazel  */
 
             /* utstring_renew(filedeps_path); */
-            char *subdir = obzl_meta_directory_property(sub_entries);
+            /* char *subdir = obzl_meta_directory_property(sub_entries); */
             /* log_debug("subdir: %s", subdir); */
             /* if (subdir == NULL) { */
             /*     utstring_printf(filedeps_path, "%s", _filedeps_path); */
@@ -1805,7 +1805,7 @@ EXPORT void emit_build_bazel(char *_repo,
     /*     mystrcat(new_pkg_path, "/"); */
 
     /* subpackage may not have a 'directory' property. example: ptime */
-    char  *subpkg_name = obzl_meta_package_name(_pkg);
+    /* char  *subpkg_name = obzl_meta_package_name(_pkg); */
     /* char *subpkg_dir = obzl_meta_directory_property(entries); */
     /* log_debug("SUBPKG NAME: %s; DIR: %s", subpkg_name, subpkg_dir); */
 
