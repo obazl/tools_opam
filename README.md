@@ -41,9 +41,14 @@ bootstrapper.
 
 Furthermore we adapt findlib names to make them more idiomatic in
 Bazel. Where findlib has `compiler-libs.X`, we have
-`@ocaml//compiler-libs:X`.  For example:
+`@ocaml//compiler-libs:X`:
 
-* `compiler-libs.bytecomp` => `@ocaml//compiler-libs:bytecomp`
+* `compiler-libs` => `@ocaml//compiler-libs`
+* `compiler-libs.common` => `@ocaml//compiler-libs/common`
+* `compiler-libs.bytecomp` => `@ocaml//compiler-libs/bytecomp`
+* `compiler-libs.optcomp` => `@ocaml//compiler-libs/optcomp`
+* `compiler-libs.toplevel` => `@ocaml//compiler-libs/toplevel`
+* `compiler-libs.native-toplevel` => `@ocaml//compiler-libs/native-toplevel`
 
 The others we also put in the `@ocaml` namespace:
 
@@ -66,14 +71,14 @@ OBazl does not support the `ocamlfind` threading options, eliminates
 the distinction between posix and vm threads.
 
 * `threads.posix` => `@ocaml//threads`
-* `threads.vm` => eliminated
+* `threads.vm`    =>  `@ocaml//threads`
 
 The list:
 
 * lib/bigarray
 * lib/compiler-libs
 * lib/dynlink
-* lib/stdlib
+* [lib/stdlib]?
 * lib/str
 * lib/threads
 * lib/unix
