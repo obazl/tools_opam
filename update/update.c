@@ -138,7 +138,7 @@ int main(int argc, char *argv[]) // , char **envp)
     obazl_configure(getcwd(NULL, 0));
 
     char *wd = getcwd(NULL, 0);
-    fprintf(stdout, "CWD after bzl config: %s\n", wd);
+    /* fprintf(stdout, "CWD after bzl config: %s\n", wd); */
 
     char *opam_switch;
 

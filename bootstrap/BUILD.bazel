@@ -60,7 +60,7 @@ cc_library(
     ],
     defines = select({
         "//bzl/host:debug": ["DEBUG_TRACE"],
-        "//conditions:default":   ["DEBUG_DUMP"]
+        "//conditions:default":   [] # "DEBUG_DUMP"]
     }),
     copts = [
         "-std=c11",

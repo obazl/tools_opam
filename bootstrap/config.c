@@ -234,13 +234,13 @@ void _config_logging(void)
         exit(EXIT_FAILURE);
     }
     logging_to_file = true;
-    fprintf(stdout, "opened logfile %s\n", logfile);
+    /* fprintf(stdout, "opened logfile %s\n", logfile); */
 
     /* one or the other: */
     /* log_add_fp(log_fp, LOG_TRACE); */
     log_add_callback(log_fn, NULL, LOG_TRACE);
 
-#ifdef DEBUG
+#ifdef DEBUG_TRACE
     fprintf(stdout, "XDEBUG\n");
     log_set_quiet(true);
     log_set_level(LOG_TRACE);
@@ -253,7 +253,7 @@ void _config_logging(void)
 
 EXPORT void obazl_configure(char *_exec_root)
 {
-    log_debug("obazl_configure");
+    /* log_debug("obazl_configure"); */
 
     utstring_new(exec_root);
     utstring_printf(exec_root, "%s", _exec_root);
@@ -660,7 +660,8 @@ EXPORT void shutdown(void)
 {
     if (logging_to_file) {
         fclose(log_fp);
-        fprintf(stdout, "logfile: %s/%s\n", CWD, logfile);
+        if (verbose)
+            fprintf(stdout, "logfile: %s/%s\n", CWD, logfile);
     }
 
     /* s7_close_output_port(s7, s7_current_error_port(s7)); */

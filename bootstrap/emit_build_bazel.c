@@ -372,8 +372,8 @@ void emit_bazel_attribute(FILE* ostream,
 
     for (int i = 0; i < settings_ct; i++) {
         setting = obzl_meta_settings_nth(settings, i);
-        log_debug("setting[%d]", i+1);
-        dump_setting(0, setting);
+        /* log_debug("setting[%d]", i+1); */
+        /* dump_setting(0, setting); */
 
         obzl_meta_flags *flags = obzl_meta_setting_flags(setting);
 
@@ -1553,7 +1553,7 @@ EXPORT void emit_build_bazel(char *_repo,
     /* } */
 
     char *pkg_name = obzl_meta_package_name(_pkg);
-#ifdef DEBUG
+#ifdef DEBUG_TRACE
     log_info("\n\t_repo: @%s; _pkg_prefix: '%s'; pkg name: '%s'",
              _repo, _pkg_prefix, pkg_name);
     /* log_info("\n\t_subpkg_dir: %s", _subpkg_dir); */
