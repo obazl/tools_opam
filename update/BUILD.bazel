@@ -15,7 +15,7 @@ cc_binary(
         "//bootstrap:utstring.h",
     ],
     defines = select({
-        "//bzl/host:debug": ["DEBUG_TRACE"],
+        "//bzl/host:debug": [], # "DEBUG_TRACE"],
         "//conditions:default":   []
     }),
     copts = [

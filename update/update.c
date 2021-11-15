@@ -135,6 +135,12 @@ int main(int argc, char *argv[]) // , char **envp)
     if (debug)
         fprintf(stdout, "DEBUGGING\n");
 
+    /* we search all pkg names for '/'; this table means we only build
+       the internal Knuth-Morris-Pratt table once */
+    extern long *KPM_TABLE; /* in emit_build_bazel.c */
+    KPM_TABLE = (long *)malloc( sizeof(long) * 2); /* (strlen("")) + 1)); */
+    _utstring_BuildTable("/", 1, KPM_TABLE);
+
     obazl_configure(getcwd(NULL, 0));
 
     /* char *wd = getcwd(NULL, 0); */
@@ -150,11 +156,17 @@ int main(int argc, char *argv[]) // , char **envp)
 
     char bzlroot[PATH_MAX];
 
-    mystrcat(bzlroot, "./.opam");
+    mystrcat(bzlroot, "./.opam.d");
 
     opam_config(opam_switch, bzlroot);
 
     dispose_flag_table();
+
+    free(KPM_TABLE);
+
+    /* fprintf(opam_resolver, ")\n"); */
+
+    fclose(opam_resolver);
 
 #ifdef DEBUG
     log_info("bzlroot: %s", bzlroot);

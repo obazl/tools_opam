@@ -29,7 +29,7 @@ bool debug;
 bool verbose;
 
 FILE *log_fp;
-const char *logfile = "./.opam/update.log";
+const char *logfile = "./.opam.d/update.log";
 bool logging_to_file = false;
 
 /* s7_scheme *s7;                  /\* GLOBAL s7 *\/ */
@@ -221,7 +221,7 @@ void log_fn(log_Event *evt)
 void _config_logging(void)
 {
     CWD = getcwd(NULL, 0);
-    int rc = access(".opam", R_OK);
+    int rc = access(".opam.d", R_OK);
     if (rc < 0) {
         fprintf(stderr, "xxxxxxxxxxxxxxxx\n");
         exit(EXIT_FAILURE);
@@ -322,56 +322,100 @@ EXPORT void obazl_configure(char *_exec_root)
 
     utarray_new(src_files,&ut_str_icd);
 
+    /* we're going to write out a scheme file that our dune conversion
+       routines can use to resolve opam pkg names to obazl target
+       labels. */
+    //FIXME: config the correct outfile name
+    extern FILE *opam_resolver;  /* in emit_build_bazel.c */
+    opam_resolver = fopen(".opam.d/opam_resolver_raw.scm", "w");
+    if (opam_resolver == NULL) {
+        perror("opam_resolver fopen");
+        exit(EXIT_FAILURE);
+    }
+
+    fprintf(opam_resolver, ";; CAVEAT: may contain duplicate entries\n");
+
+    /* fprintf(opam_resolver, "("); */
+
+    /* write predefined opam pkg mappings */
+    fprintf(opam_resolver, "(%s . %s)\n",
+            "compiler-libs", "@ocaml//compiler-libs");
+    fprintf(opam_resolver, "(%s . %s)\n",
+            "compiler-libs.common", "@ocaml//compiler-libs/common");
+    fprintf(opam_resolver, "(%s . %s)\n",
+            "compiler-libs.bytecomp", "@ocaml//compiler-libs/bytecomp");
+    fprintf(opam_resolver, "(%s . %s)\n",
+            "compiler-libs.optcomp", "@ocaml//compiler-libs/optcomp");
+    fprintf(opam_resolver, "(%s . %s)\n",
+            "compiler-libs.toplevel", "@ocaml//compiler-libs/toplevel");
+    fprintf(opam_resolver, "(%s . %s)\n",
+            "compiler-libs.native-toplevel",
+            "@ocaml//compiler-libs/native-toplevel");
+
+    fprintf(opam_resolver, "(%s . %s)\n",
+            "bigarray", "@ocaml//bigarray");
+    fprintf(opam_resolver, "(%s . %s)\n",
+            "dynlink", "@ocaml//dynlink");
+    fprintf(opam_resolver, "(%s . %s)\n",
+            "str", "@ocaml//str");
+    fprintf(opam_resolver, "(%s . %s)\n",
+            "unix", "@ocaml//unix");
+
+    fprintf(opam_resolver, "(%s . %s)\n",
+            "threads.posix", "@ocaml//threads");
+    fprintf(opam_resolver, "(%s . %s)\n",
+            "threads.vm", "@ocaml//threads");
+
     /* _s7_init(); */
 }
 
-void config_opam(char *_opam_switch)
-{
-    /*
-      1. discover switch
-         a. check env var OPAMSWITCH
-         b. use -s option
-         c. run 'opam var switch'
-      2. discover lib dir: 'opam var lib'
-     */
+/* void config_opam(char *_opam_switch) */
+/* { */
+/*     /\* */
+/*       1. discover switch */
+/*          a. check env var OPAMSWITCH */
+/*          b. use -s option */
+/*          c. run 'opam var switch' */
+/*       2. discover lib dir: 'opam var lib' */
+/*      *\/ */
 
-    utstring_new(opam_switch);
-    utstring_new(opam_bin);
-    utstring_new(opam_lib);
+/*     utstring_new(opam_switch); */
+/*     utstring_new(opam_bin); */
+/*     utstring_new(opam_lib); */
 
-    /* FIXME: handle switch arg */
-    char *cmd, *result;
-    if (_opam_switch == NULL) {
-        /* log_info("opam: using current switch"); */
-        cmd = "opam var switch";
+/*     /\* FIXME: handle switch arg *\/ */
+/*     char *cmd, *result; */
+/*     if (_opam_switch == NULL) { */
+/*         /\* log_info("opam: using current switch"); *\/ */
+/*         cmd = "opam var switch"; */
 
-        result = run_cmd(cmd);
-        if (result == NULL) {
-            fprintf(stderr, "FAIL: run_cmd(%s)\n", cmd);
-        } else {
-            utstring_printf(opam_switch, "%s", result);
-        }
-    }
+/*         result = run_cmd(cmd); */
+/*         if (result == NULL) { */
+/*             fprintf(stderr, "FAIL: run_cmd(%s)\n", cmd); */
+/*         } else { */
+/*             utstring_printf(opam_switch, "%s", result); */
+/*         } */
+/*     } */
 
-    cmd = "opam var bin";
-    result = NULL;
-    result = run_cmd(cmd);
-    if (result == NULL) {
-        log_fatal("FAIL: run_cmd(%s)\n", cmd);
-        exit(EXIT_FAILURE);
-    } else
-        utstring_printf(opam_bin, "%s", result);
+/*     cmd = "opam var bin"; */
+/*     result = NULL; */
+/*     result = run_cmd(cmd); */
+/*     if (result == NULL) { */
+/*         log_fatal("FAIL: run_cmd(%s)\n", cmd); */
+/*         exit(EXIT_FAILURE); */
+/*     } else */
+/*         utstring_printf(opam_bin, "%s", result); */
 
-    cmd = "opam var lib";
-    result = NULL;
-    result = run_cmd(cmd);
-    if (result == NULL) {
-        log_fatal("FAIL: run_cmd(%s)\n", cmd);
-        exit(EXIT_FAILURE);
-    } else
-        utstring_printf(opam_lib, "%s", result);
+/*     cmd = "opam var lib"; */
+/*     result = NULL; */
+/*     result = run_cmd(cmd); */
+/*     if (result == NULL) { */
+/*         log_fatal("FAIL: run_cmd(%s)\n", cmd); */
+/*         exit(EXIT_FAILURE); */
+/*     } else */
+/*         utstring_printf(opam_lib, "%s", result); */
 
-}
+/* } */
 
 /* EXPORT UT_array *inventory_opam(void) */
 /* { */

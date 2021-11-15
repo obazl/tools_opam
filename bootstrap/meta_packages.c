@@ -1,9 +1,11 @@
 #include "meta_packages.h"
 #include "log.h"
 
-/* static int indent = 2; */
-/* static int delta = 2; */
-/* static char *sp = " "; */
+#if defined(DEBUG_PROPERTIES) || defined (DEBUG_DUMP)
+static int indent = 2;
+static int delta = 2;
+static char *sp = " ";
+#endif
 
 #if INTERFACE
 struct obzl_meta_package {

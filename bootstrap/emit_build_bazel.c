@@ -26,12 +26,69 @@ static char *sp = " ";
 
 bool stdlib_root = false;
 
-char *buildfile_prefix = "@//.opam/buildfiles";
+char *buildfile_prefix = "@//.opam.d/buildfiles";
 
+long *KPM_TABLE;
+
+FILE *opam_resolver;
 
 UT_string *repo_name = NULL;
 
 UT_string *build_bazel_file = NULL;
+
+void write_opam_resolver(char *pkg_prefix, char *pkg_name,
+                         obzl_meta_entries *entries)
+{
+    // CAVEAT: output will contain duplicate entries
+    if (pkg_prefix == NULL) {
+        fprintf(opam_resolver, "(%s . @%s//:%s)\n",
+                pkg_name, pkg_name, pkg_name);
+    } else {
+        char *split = strchr(pkg_prefix, '/');
+        if ( split == NULL ) {
+            fprintf(opam_resolver, "(%s.%s . @%s//%s)\n",
+                    pkg_prefix, pkg_name,
+                    pkg_prefix, pkg_name);
+        } else {
+            /* this will work for one '/', e.g. mtime/clock,
+               so we're good for up to three segs (e.g. mtime.clock.os)*/
+            int seg1_len = split - pkg_prefix;
+            int seg2_len = strlen(pkg_prefix) - seg1_len;
+            char *split2 = strchr(pkg_prefix + seg1_len + 1, '/');
+            if (split2 == NULL) {
+                // only one '/'
+                fprintf(opam_resolver, "(%.*s.%.*s.%s . @%.*s//%s/%s) ;; %s %s\n",
+                        seg1_len,
+                        pkg_prefix,
+                        seg2_len,
+                        pkg_prefix + seg1_len + 1,
+                        pkg_name,
+
+                        seg1_len,
+                        pkg_prefix,
+                        pkg_prefix + seg1_len + 1,
+                        pkg_name,
+                        pkg_prefix, pkg_name);
+            } else {
+                seg2_len = split2 - split - 1;
+                int seg3_len = strlen(pkg_prefix) - seg2_len;
+                fprintf(opam_resolver, "(%.*s.%.*s.%s.%s . @%.*s//%s/%s) ;; %s %s\n",
+                        seg1_len,
+                        pkg_prefix,
+                        seg2_len,
+                        pkg_prefix + seg1_len + 1,
+                        pkg_prefix + seg1_len + seg2_len + 2,
+                        pkg_name,
+
+                        seg1_len,
+                        pkg_prefix,
+                        pkg_prefix + seg1_len + 1,
+                        pkg_name,
+                        pkg_prefix, pkg_name);
+            }
+        }
+    }
+}
 
 void emit_new_local_subpkg_entries(FILE *repo_rules_FILE,
                                    struct obzl_meta_package *_pkg,
@@ -558,7 +615,9 @@ void emit_bazel_metadatum(FILE* ostream, int level,
                           char *repo,
                           /* char *pkg, */
                           obzl_meta_entries *_entries,
-                          char *_property, char *_attrib)
+                          char *_property, // META property
+                          char *_attrib    // Bazel attr name
+                          )
 {
     /* emit version, description properties */
 
@@ -590,13 +649,16 @@ void emit_bazel_metadatum(FILE* ostream, int level,
 
     vals = obzl_meta_setting_values(setting);
     /* dump_values(0, vals); */
-    log_debug("metadatum %s setting vals ct: %d", _property, obzl_meta_values_count(vals));
+    /* log_debug("metadatum %s setting vals ct: %d", _property, obzl_meta_values_count(vals)); */
     /* if vals ct > 1 warn, should be only 1 */
     v = obzl_meta_values_nth(vals, 0);
     /* log_debug("vals[0]: %s", *v); */
     if (v != NULL)
         /* fprintf(stderr, "    %s = \"%s\",\n", _attrib, *v); */
-        fprintf(ostream, "    %s = \"\"\"%s\"\"\",\n", _attrib, *v);
+        fprintf(ostream, "    %s = \"\"\"%s\"\"\",\n",
+                _attrib,
+                /* _property, */
+                *v);
 }
 
 void emit_bazel_archive_rule(FILE* ostream,
@@ -630,6 +692,9 @@ Note that "archive" should only be used for archive files that are intended to b
        we do this here because it applies to all props/subpkgs
        BUT: just use pkg_prefix and pkg name?
      */
+
+    /* write scheme opam-resolver table */
+    write_opam_resolver(_pkg_prefix, _pkg_name, _entries);
 
     fprintf(ostream, "\nocaml_import(\n");
     fprintf(ostream, "    name = \"%s\",\n", _pkg_name); /* default target provides archive */
@@ -669,6 +734,9 @@ void emit_bazel_plugin_rule(FILE* ostream, int level,
                             /* char *_subpkg_dir) */
 {
     log_debug("EMIT_BAZEL_PLUGIN_RULE: _filedeps_path: %s", _filedeps_path);
+
+    write_opam_resolver(_pkg_prefix, _pkg_name, _entries);
+
     fprintf(ostream, "\nocaml_import(\n");
     fprintf(ostream, "    name = \"plugin\",\n");
     /* log_debug("PDUMPP %s", _pkg_name); */
@@ -1221,12 +1289,15 @@ void emit_bazel_ppx_codeps(FILE* ostream, int level,
  */
 void emit_bazel_deps_target(FILE* ostream, int level,
                                char *_repo,
-                               char *_pkg_src,
+                               char *_pkg_prefix,
                                /* char *_pkg_path, */
                                char *_pkg_name,
                                obzl_meta_entries *_entries)
 {
-    log_debug("DUMMY %s", _pkg_name);
+    log_debug("DUMMY %s, %s", _pkg_prefix, _pkg_name);
+
+    write_opam_resolver(_pkg_prefix, _pkg_name, _entries);
+
     fprintf(ostream, "\nocaml_import(\n");
     fprintf(ostream, "    name = \"%s\",\n", _pkg_name);
     emit_bazel_metadatum(ostream, 1,
@@ -1238,7 +1309,7 @@ void emit_bazel_deps_target(FILE* ostream, int level,
                          /* _pkg_path, */
                          _entries, "description", "doc");
     emit_bazel_deps_attribute(ostream, 1, host_repo, "lib", _entries);
-    /* emit_bazel_path_attrib(ostream, 1, host_repo, _pkg_src, "lib", _entries); */
+    /* emit_bazel_path_attrib(ostream, 1, host_repo, _pkg_prefix, "lib", _entries); */
     fprintf(ostream, "    visibility = [\"//visibility:public\"]\n");
     fprintf(ostream, ")\n");
 }
@@ -1545,7 +1616,9 @@ EXPORT void emit_build_bazel(char *_repo,
                              /* FILE *repo_rules_FILE) */
                              /* char *_subpkg_dir) */
 {
-    log_info("EMIT_BUILD_BAZEL");
+    log_info("EMIT_BUILD_BAZEL %s: %s",
+             _pkg_prefix,
+             obzl_meta_package_name(_pkg));
 
     /* if (strncmp(_pkg->name, "ppx_fixed_literal", 17) == 0) { */
     /*     log_debug("PPX_FIXED_LITERAL dump:"); */
@@ -1766,8 +1839,7 @@ EXPORT void emit_build_bazel(char *_repo,
                 /* UPDATE: we now generate the standard dummy pkgs
                    like bigarray and threads using a repo rule */
                 emit_bazel_deps_target(ostream, 1, host_repo,
-                                        "FIXME_DUMMY",
-                                        /* _pkg_prefix, */
+                                        _pkg_prefix,
                                         pkg_name, entries);
                 continue;
             }

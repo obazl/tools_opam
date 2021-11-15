@@ -9,10 +9,11 @@
 #include "log.h"
 #include "meta_entries.h"
 
-/* LOCAL int indent = 2; */
-/* LOCAL int delta = 2; */
-/* LOCAL char *sp = " "; */
-
+#if defined(DEBUG_PROPERTIES) || defined (DEBUG_DUMP)
+LOCAL int indent = 2;
+LOCAL int delta = 2;
+LOCAL char *sp = " ";
+#endif
 
 /* **************************************************************** */
 #if INTERFACE

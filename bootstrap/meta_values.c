@@ -6,9 +6,11 @@
 #include "log.h"
 #include "meta_values.h"
 
-/* static int indent = 2; */
-/* static int delta = 2; */
-/* static char *sp = " "; */
+#if defined(DEBUG_PROPERTIES) || defined (DEBUG_DUMP)
+static int indent = 2;
+static int delta = 2;
+static char *sp = " ";
+#endif
 
 #if INTERFACE
 typedef char *obzl_meta_value;
