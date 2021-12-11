@@ -1,0 +1,80 @@
+##########
+cc_binary(
+    name  = "install",
+    srcs  = [
+        "install.c",
+        "install.h",
+
+        "//bootstrap:driver.h",
+        "//bootstrap:meta_flags.h",
+
+        "//bootstrap:config.h",
+        "//bootstrap:opam.h",
+        "//bootstrap:obazl.h",
+        "//bootstrap:log.h",
+        "//bootstrap:utarray.h",
+        "//bootstrap:uthash.h",
+        "//bootstrap:utstring.h",
+    ],
+    defines = select({
+        "//bzl/host:debug": [], # "DEBUG_TRACE"],
+        "//conditions:default":   []
+    }),
+    copts = [
+        "-std=c11",
+        "-pedantic-errors",
+
+        "-I.",
+
+        "-Ibootstrap",
+        "-I$(GENDIR)/bootstrap",
+        "-Iexternal/opam/bootstrap",
+        "-I$(GENDIR)/external/opam/bootstrap",
+
+        "-Iinstall",
+        "-Iexternal/opam/install",
+
+        "-I$(GENDIR)/install",
+        "-I$(GENDIR)/external/opam/install",
+    ],
+    deps = [
+        "//bootstrap"
+    ],
+    visibility = ["//visibility:public"]
+)
+
+########
+genrule(
+    name = "mkhdrs",
+    srcs = [
+        "install.c",
+    ],
+    outs = [
+        "install.h",
+    ],
+    cmd = "\n".join([
+        "SRC1=$(location install.c)",
+        "SRCDIR1=`dirname $$SRC1`",
+        "$(location //bootstrap:makeheaders) \\",
+        "    $(location install.c)",
+        "cp $${SRCDIR1}/*.h $(@D)",
+    ]),
+    tools = ["//bootstrap:makeheaders"],
+    # visibility = ["//visibility:public"]
+)
+
+################################################################
+#### TOOLS
+
+cc_binary(
+    name  = "lemon",
+    srcs  = ["lemon.c"],
+    visibility = ["//visibility:public"]
+)
+
+cc_binary(
+    name  = "makeheaders",
+    srcs  = ["makeheaders.c"],
+    copts = ["-O3"],
+    linkstatic=1
+)

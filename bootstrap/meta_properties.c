@@ -12,6 +12,28 @@ static int delta = 2;
 static char *sp = " ";
 #endif
 
+#if EXPORT_INTERFACE
+#define TOKEN_NAME(x) (char*)#x
+#endif
+
+char *token_names[256] = {
+    [DESCRIPTION] = TOKEN_NAME(description),
+    [DIRECTORY] = TOKEN_NAME(directory),
+    [DQ] = TOKEN_NAME(dq),
+    [EQ] = TOKEN_NAME(eq),
+    [ERROR] = TOKEN_NAME(error),
+    [LPAREN] = TOKEN_NAME(lparen),
+    [PACKAGE] = TOKEN_NAME(package),
+    [PLUSEQ] = TOKEN_NAME(pluseq),
+    [REQUIRES] = TOKEN_NAME(requires),
+    [RPAREN] = TOKEN_NAME(rparen),
+    [VERSION] = TOKEN_NAME(version),
+    [VNAME] = TOKEN_NAME(vname),
+    [WARNING] = TOKEN_NAME(warning),
+    [WORD]    = TOKEN_NAME(word),
+    [WORDS]    = TOKEN_NAME(words),
+};
+
 /*
   ocamlfind special properties:
 

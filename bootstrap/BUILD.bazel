@@ -45,6 +45,11 @@ cc_library(
         "metalexer.h",
         "metaparser.c",
         "metaparser.h",
+        "obazl.c",
+        "obazl.h",
+        "opam.c",
+        "opam.h",
+
         # "opam_bootstrap.c",
         # "opam_bootstrap.h",
 
@@ -55,8 +60,11 @@ cc_library(
         "utstring.h",
     ],
     hdrs = [
-        "meta_flags.h",
-        "meta_fs.h"
+        "bootstrap.h"
+        # "meta_flags.h",
+        # "meta_fs.h",
+        # "obazl.h",
+        # "opam.h"
     ],
     defines = select({
         "//bzl/host:debug": ["DEBUG_TRACE"],
@@ -144,7 +152,9 @@ genrule(
         "meta_values.c",
         "metalexer.c",
         "metaparser.c",
-        "opam_bootstrap.c",
+        "obazl.c",
+        "opam.c",
+        # "opam_bootstrap.c",
         # "log.c",
         # "log.h",
         # "utarray.h",
@@ -164,10 +174,11 @@ genrule(
         "meta_values.h",
         "metalexer.h",
         "metaparser.h",
-        "opam_bootstrap.h",
+        "obazl.h",
+        "opam.h",
     ],
     cmd = "\n".join([
-        "SRC1=$(location opam_bootstrap.c)",
+        "SRC1=$(location opam.c)",
         "SRCDIR1=`dirname $$SRC1`",
         "$(location :makeheaders) \\",
         "    $(location config.c) \\",
@@ -182,8 +193,62 @@ genrule(
         "    $(location meta_values.c) \\",
         "    $(location metalexer.c) \\",
         "    $(location metaparser.c) \\",
-        "    $(location opam_bootstrap.c)",
+        "    $(location obazl.c) \\",
+        "    $(location opam.c)",
         "cp $${SRCDIR1}/*.h $(@D)",
+    ]),
+    tools = [":makeheaders"],
+    visibility = ["//visibility:public"]
+)
+
+########
+genrule(
+    name = "mkhdrs-export",
+    srcs = [
+        "config.c",
+        "driver.c",
+        "emit_build_bazel.c",
+        "meta_entries.c",
+        "meta_flags.c",
+        "meta_fs.c",
+        "meta_packages.c",
+        "meta_properties.c",
+        "meta_settings.c",
+        "meta_values.c",
+        "metalexer.c",
+        "metaparser.c",
+        "obazl.c",
+        "opam.c",
+        # "opam_bootstrap.c",
+        # "log.c",
+        # "log.h",
+        # "utarray.h",
+        # "uthash.h",
+        # "utstring.h",
+    ],
+    outs = [
+        "bootstrap.h"
+    ],
+    cmd = "\n".join([
+        "SRC1=$(location opam.c)",
+        "SRCDIR1=`dirname $$SRC1`",
+        "$(location :makeheaders) -H \\",
+        "    $(location config.c) \\",
+        "    $(location driver.c) \\",
+        "    $(location emit_build_bazel.c) \\",
+        "    $(location meta_entries.c) \\",
+        "    $(location meta_flags.c) \\",
+        "    $(location meta_fs.c) \\",
+        "    $(location meta_packages.c) \\",
+        "    $(location meta_properties.c) \\",
+        "    $(location meta_settings.c) \\",
+        "    $(location meta_values.c) \\",
+        "    $(location metalexer.c) \\",
+        "    $(location metaparser.c) \\",
+        "    $(location obazl.c) \\",
+        "    $(location opam.c) \\",
+        "> $@"
+        # "cp $${SRCDIR1}/*.h $(@D)",
     ]),
     tools = [":makeheaders"],
     visibility = ["//visibility:public"]
@@ -202,5 +267,8 @@ cc_binary(
     srcs  = ["makeheaders.c"],
     copts = ["-O3"],
     linkstatic=1,
-    visibility = ["//update:__pkg__"]
+    visibility = [
+        "//install:__pkg__",
+        "//update:__pkg__"
+    ]
 )

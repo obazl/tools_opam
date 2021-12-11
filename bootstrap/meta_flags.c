@@ -400,7 +400,7 @@ bool obzl_meta_flags_to_select_condition(obzl_meta_flags *flags,
 }
 
 /* **************************************************************** */
-void initialize_config_flags()
+EXPORT void initialize_config_flags()
 {
     utarray_new(pos_flags, &ut_str_icd);
     utarray_new(neg_flags, &ut_str_icd);
@@ -518,7 +518,7 @@ void register_flags(obzl_meta_flags *_flags)
     }
 }
 
-void dispose_flag_table(void)
+EXPORT void dispose_flag_table(void)
 {
     /* log_debug("predefined flags:"); */
     struct config_flag *s, *tmp;

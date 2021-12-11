@@ -44,13 +44,13 @@ typedef int (*file_handler)(char *rootdir,
                             char *metafile);
 #endif
 
-// FIXME: replace with utstrings
-char* mystrcat( char* dest, char* src )
-{
-     while (*dest) dest++;
-     while ( (*dest++ = *src++) );
-     return --dest;
-}
+/* // FIXME: replace with utstrings */
+/* char* mystrcat( char* dest, char* src ) */
+/* { */
+/*      while (*dest) dest++; */
+/*      while ( (*dest++ = *src++) ); */
+/*      return --dest; */
+/* } */
 
 EXPORT char *mkdir_r(char *base, char *path)
 {

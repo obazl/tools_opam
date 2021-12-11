@@ -1,6 +1,13 @@
 # rules_opam
 Bazel rules for OPAM support
 
+summary:
+
+* `bazel run @opam//update` - reads current opam switch and generates
+  BUILD.bazel files in `.opam.d/buildfiles`, and
+  `.opam.d/opam_repos.bzl` containing repo rules.
+
+
 ## opam commands
 
 Useful commands:
@@ -17,6 +24,8 @@ Useful commands:
 * `opam info PKG` - prints a bunch of metadata, like versions, maintainer, etc.
 * `opam show PKG` - same as `opam info PKG`?
 
+* `opam install --download-only` (opam v. 2.1.?)
+
 These commands have lots of options, use `--help` to see them.
 
 ## "core" libraries/archives/packages
@@ -26,7 +35,6 @@ refer to `lib/ocaml`. Not to be confused with the module
 [Stdlib](https://ocaml.org/api/Stdlib.html), "The OCaml Standard
 Library", which is a namespaced archive (`stdlib.cmxa`) installed in
 `lib/ocaml`.
-
 
 The standard compiler distribution contains a set of resources
 (archives, plugins) that the `findlib` system describes in "special"

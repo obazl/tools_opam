@@ -199,6 +199,7 @@ void emit_new_local_pkg_repo(FILE *repo_rules_FILE,
 
     char *pkg_name = _pkg->name; // obzl_meta_package_name(_pkg);
 
+    //FIXME rename:  new_local_opam_pkg_repository(\n");
     fprintf(repo_rules_FILE, "    new_local_pkg_repository(\n");
     /* fprintf(repo_rules_FILE, "    native.new_local_repository(\n"); */
 
@@ -274,8 +275,8 @@ void emit_new_local_pkg_repo(FILE *repo_rules_FILE,
 void emit_bazel_hdr(FILE* ostream, int level, char *repo, char *pkg_prefix, obzl_meta_package *_pkg)
 {
     fprintf(ostream, "load(\n");
-    fprintf(ostream, "%*s\"@obazl_rules_ocaml//ocaml:rules.bzl\",\n", 4, sp);
-    fprintf(ostream, "%*s\"ocaml_import\"\n", 4, sp);
+    fprintf(ostream, "%*s\"@obazl_rules_ocaml//ocaml:rules.bzl\",\n", 5, sp);
+    fprintf(ostream, "%*s\"ocaml_import\"\n", 5, sp);
     fprintf(ostream, ")\n");
 }
 

@@ -145,7 +145,6 @@ package(PKG) ::= entries(ENTRIES) . {
     log_trace("  package (PKG)");
     log_trace("  entries (ENTRIES)");
     dump_entries(0, ENTRIES);
-    log_trace("xxxxxxxxxxxxxxxx");
 #endif
     /* PKG = (struct obzl_meta_package*)calloc(sizeof(struct obzl_meta_package), 1); */
     /* PKG->entries = ENTRIES; */
