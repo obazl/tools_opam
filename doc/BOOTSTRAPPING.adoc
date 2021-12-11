@@ -1,4 +1,7 @@
-# opam bootstrapping
+= opam bootstrapping
+
+WARNING: outdated
+
 
 This app, to be run by a Bazel repo rule, constructs an `@opam` repo
 by crawling the current OPAM switch and generating `BUILD.bazel` files
@@ -9,7 +12,7 @@ refer to resources via the soft links. So for example
 `@opam//lib/yojson` will provide built files from
 `~/.opam/<current_switch>/lib/yojson`.
 
-## building and running
+== building and running
 
 The bootstrapper is designed to be built and run by the
 `opam_configuration` repository rule defined in
