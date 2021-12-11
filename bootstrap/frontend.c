@@ -30,11 +30,13 @@
 /* #include "obazl.h" */
 /* #include "opam.h" */
 
-#include "update.h"
+#include "frontend.h"
 
 extern bool debug;
 extern bool local_opam;
 extern bool verbose;
+
+/* char *host_repo = "ocaml"; */
 
 /* char *CWD; */
 /* char log_buf[512]; */
@@ -57,6 +59,8 @@ bool g_ppx_pkg;
 
 char work_buf[PATH_MAX];
 
+UT_array *opam_packages;
+
 char coqlib[PATH_MAX];
 
 struct buildfile_s {
@@ -70,7 +74,7 @@ struct fileset_s *filesets = NULL;
 
 /* struct package_s *packages = NULL; */
 
-int main(int argc, char *argv[]) // , char **envp)
+EXPORT int opam_main(int argc, char *argv[]) // , char **envp)
 {
     char *opts = "dhls";
     char *opam_switch = NULL;
@@ -103,7 +107,7 @@ int main(int argc, char *argv[]) // , char **envp)
             verbose = true;
             break;
         case 'h':
-            log_info("Usage: update[options]");
+            log_info("Usage: install [options]");
 #ifdef DEBUG
             log_info("\toptions: -d (debug), -l (local opam)");
 #else
@@ -134,13 +138,32 @@ int main(int argc, char *argv[]) // , char **envp)
 
     /* CWD = getcwd(NULL, 0); */
 
+    utarray_new(opam_packages, &ut_str_icd);
+
     initialize_config_flags();
 
     char bzlroot[PATH_MAX];
 
     mystrcat(bzlroot, "./.opam.d");
 
-    opam_update(opam_switch, bzlroot);
+    printf("PROG: %s\n", basename(argv[0]));
+    if (strcmp(basename(argv[0]), "init") == 0) {
+        install_project_opam(opam_switch, bzlroot);
+    } else {
+        if (strcmp(basename(argv[0]), "ingest") == 0) {
+            opam_ingest(opam_switch, bzlroot);
+        } else {
+            if (strcmp(basename(argv[0]), "install") == 0) {
+                printf("install\n");
+                /* opam_install(opam_switch, bzlroot); */
+            } else {
+                if (strcmp(basename(argv[0]), "status") == 0) {
+                    printf("status\n");
+                    /* opam_status(opam_switch, bzlroot); */
+                }
+            }
+        }
+    }
 
     dispose_flag_table();
 
@@ -148,6 +171,10 @@ int main(int argc, char *argv[]) // , char **envp)
         free(opam_switch);
 
     free(KPM_TABLE);
+
+    /* fprintf(opam_resolver, ")\n"); */
+
+    /* fclose(opam_resolver); */
 
 #ifdef DEBUG
     log_info("bzlroot: %s", bzlroot);

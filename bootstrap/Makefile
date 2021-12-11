@@ -22,9 +22,11 @@ clean:
 	@-rm -f *.o
 	@-rm -f metaparser.c metaparser.h
 	@-rm -f lemon makeheaders
+	@-rm -f config.h
 	@-rm -f driver.h
 	@-rm -f emit_build_bazel.h
-	@-rm -f meta_*.h
-	@-rm -f opam_bootstrap.h
-	@-rm -f opam_bootstrap
+	@-rm -f lexer.h
+	@-rm -f meta*.h
+	@-rm -f obazl.h
+	@-rm -f opam.h
 	@-rm -rf tmp/

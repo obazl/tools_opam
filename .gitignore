@@ -1,4 +1,5 @@
 .bazel
+.private
 bazel-*
 user.bazelrc
 obsolete

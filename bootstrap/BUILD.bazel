@@ -25,6 +25,8 @@ cc_library(
         "config.h",
         "driver.c",
         "driver.h",
+        "frontend.c",
+        "frontend.h",
         "emit_build_bazel.c",
         "emit_build_bazel.h",
         "meta_entries.c",
@@ -142,6 +144,7 @@ genrule(
     srcs = [
         "config.c",
         "driver.c",
+        "frontend.c",
         "emit_build_bazel.c",
         "meta_entries.c",
         "meta_flags.c",
@@ -164,6 +167,7 @@ genrule(
     outs = [
         "config.h",
         "driver.h",
+        "frontend.h",
         "emit_build_bazel.h",
         "meta_entries.h",
         "meta_flags.h",
@@ -183,6 +187,7 @@ genrule(
         "$(location :makeheaders) \\",
         "    $(location config.c) \\",
         "    $(location driver.c) \\",
+        "    $(location frontend.c) \\",
         "    $(location emit_build_bazel.c) \\",
         "    $(location meta_entries.c) \\",
         "    $(location meta_flags.c) \\",
@@ -207,6 +212,7 @@ genrule(
     srcs = [
         "config.c",
         "driver.c",
+        "frontend.c",
         "emit_build_bazel.c",
         "meta_entries.c",
         "meta_flags.c",
@@ -235,6 +241,7 @@ genrule(
         "$(location :makeheaders) -H \\",
         "    $(location config.c) \\",
         "    $(location driver.c) \\",
+        "    $(location frontend.c) \\",
         "    $(location emit_build_bazel.c) \\",
         "    $(location meta_entries.c) \\",
         "    $(location meta_flags.c) \\",
@@ -268,7 +275,10 @@ cc_binary(
     copts = ["-O3"],
     linkstatic=1,
     visibility = [
+        "//ingest:__pkg__",
+        "//init:__pkg__",
         "//install:__pkg__",
+        "//status:__pkg__",
         "//update:__pkg__"
     ]
 )

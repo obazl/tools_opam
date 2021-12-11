@@ -1,6 +1,6 @@
 cc_binary(
-    name  = "install",
-    srcs  = ["install.c"],
+    name  = "status",
+    srcs  = ["status.c"],
     defines = select({
         "//bzl/host:debug": [], # "DEBUG_TRACE"],
         "//conditions:default":   []

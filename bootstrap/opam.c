@@ -97,9 +97,75 @@ void init_opam_resolver_raw()
             "threads.vm", "@ocaml//threads");
 }
 
-EXPORT void opam_update(char *_opam_switch, char *bzlroot)
+/* install_project_opam
+   init a new opam installation rooted at ./opam, switch 'obazl',
+   and install pkgs
+ */
+EXPORT void install_project_opam(char *_opam_switch, char *bzlroot)
 {
-    log_info("opam_update bzlroot: %s", bzlroot);
+    log_info("opam_install bzlroot: %s", bzlroot);
+
+    utarray_new(opam_packages, &ut_str_icd);
+
+    char *opam_switch;
+
+    UT_string *switch_bin;
+    utstring_new(switch_bin);
+
+    UT_string *switch_lib;
+    utstring_new(switch_lib);
+
+    char *cmd, *result;
+    log_info("using local opam");
+    opam_switch = "obazl"; // strndup(_opam_switch, PATH_MAX);
+    utstring_printf(switch_bin, "./.opam/%s/bin", opam_switch);
+    utstring_printf(switch_lib, "./.opam/%s/lib", opam_switch);
+
+    log_debug("switch: %s", opam_switch);
+    log_debug("switch_bin: %s", utstring_body(switch_bin));
+    log_debug("switch_lib: %s", utstring_body(switch_lib));
+
+    /* now link srcs */
+    /* mkdir_r(bzlroot, "");       /\* make sure bzlroot exists *\/ */
+    /* UT_string *bzl_bin_link; */
+    /* utstring_new(bzl_bin_link); */
+    /* utstring_printf(bzl_bin_link, "%s/bin", bzlroot); */
+
+    /* UT_string *bzl_lib_link; */
+    /* utstring_new(bzl_lib_link); */
+    /* utstring_printf(bzl_lib_link, "%s/_lib", bzlroot); */
+    /* log_debug("bzl_bin_link: %s", utstring_body(bzl_bin_link)); */
+    /* log_debug("bzl_lib_link: %s", utstring_body(bzl_lib_link)); */
+
+    /*  now set output paths (in @ocaml) */
+    /* mkdir_r(bzlroot, "");       /\* make sure bzlroot exists *\/ */
+    /* UT_string *bzl_bin; */
+    /* utstring_new(bzl_bin); */
+    /* utstring_printf(bzl_bin, "%s/bin", bzlroot); */
+
+    /* UT_string *bzl_lib; */
+    /* utstring_new(bzl_lib); */
+    /* utstring_printf(bzl_lib, "%s/buildfiles", bzlroot); */
+
+    /* log_debug("bzl_bin: %s", utstring_body(bzl_bin)); */
+    /* log_debug("bzl_lib: %s", utstring_body(bzl_lib)); */
+
+
+    /* utarray_free(pos_flags); */
+    /* utarray_free(neg_flags); */
+    utstring_free(switch_bin);
+    utstring_free(switch_lib);
+    /* utstring_free(bzl_bin); */
+    /* utstring_free(bzl_lib); */
+
+    /* fclose(repo_rules_FILE); */
+
+    /* _free_skipped_pkg_list(); */
+}
+
+EXPORT void opam_ingest(char *_opam_switch, char *bzlroot)
+{
+    log_info("opam_ingest bzlroot: %s", bzlroot);
 
     utarray_new(opam_packages, &ut_str_icd);
 

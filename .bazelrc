@@ -8,7 +8,7 @@ build --incompatible_enable_cc_toolchain_resolution
 ## for private control over bazel, use ./user.bazelrc
 ## (which should be listed in .gitignore)
 
-try-import user.bazelrc
+try-import .private/bazelrc
 
 ## copy the following to user.bazelrc to get started:
 

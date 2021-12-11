@@ -3,9 +3,23 @@ Bazel rules for OPAM support
 
 summary:
 
-* `bazel run @opam//update` - reads current opam switch and generates
-  BUILD.bazel files in `.opam.d/buildfiles`, and
-  `.opam.d/opam_repos.bzl` containing repo rules.
+* `bazel run @opam//init` - creates project-local OPAM installation
+  with `--root .opam` and `--switch obazl`
+
+* `bazel run @opam//init -- --import <file>` - same as `@opam//init`
+  but then imports packages using <file>, which must 1) be located in
+  `.opam.d` and 2) have the form of the files produced by `opam switch
+  export`
+
+* `bazel run @opam//install -- <pkg>` - installs one OPAM package in
+  the project-local switch (root .opam, switch 'obazl')
+
+* `bazel run @opam//status` - prints info about the effective OPAM switch.
+
+* `bazel run @opam//ingest` - generates BUILD.bazel files from
+  effective OPAM installation (either sys install or project-local),
+  writes them to `.opam.d/buildfiles`, and `.opam.d/opam_repos.bzl`
+  containing repo rules.
 
 
 ## opam commands

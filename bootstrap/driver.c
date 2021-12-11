@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <libgen.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,6 +32,7 @@ FILE *repo_rules_FILE;
 char *rootdir = "buildfiles";
 
 #if EXPORT_INTERFACE
+#include <stdbool.h>
 struct logging {
     int verbosity;
     int log_level;
