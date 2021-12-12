@@ -315,14 +315,14 @@ EXPORT char *obzl_meta_version()
   special cases: digestif, threads
  */
 int handle_lib_meta(char *switch_lib,
-                    char *bzlroot,
+                    char *obazl_opam_root,
                     /* char *_imports_path, */
                     char *pkgdir,
                     char *metafile)
 {
     log_debug("================ HANDLE_LIB_META ================");
-    log_debug("  switch_lib: %s; bzlroot: %s; pkgdir: %s; metafile: %s",
-              switch_lib, bzlroot, pkgdir, metafile);
+    log_debug("  switch_lib: %s; obazl_opam_root: %s; pkgdir: %s; metafile: %s",
+              switch_lib, obazl_opam_root, pkgdir, metafile);
 
     char buf[PATH_MAX];
     buf[0] = '\0';
@@ -365,7 +365,7 @@ int handle_lib_meta(char *switch_lib,
             /* special handling for ppx packages */
             log_debug("handling ppx package: %s", obzl_meta_package_name(pkg));
             g_ppx_pkg = true;
-            /* emit_build_bazel_ppx(bzlroot, host_repo, "lib", "", pkg); */
+            /* emit_build_bazel_ppx(obazl_opam_root, host_repo, "lib", "", pkg); */
         } else {
             log_debug("handling normal package: %s", obzl_meta_package_name(pkg));
             g_ppx_pkg = true;
@@ -387,7 +387,7 @@ int handle_lib_meta(char *switch_lib,
         utstring_printf(imports_path, "%s",
                         obzl_meta_package_name(pkg));
         emit_build_bazel(host_repo,
-                         bzlroot,      /* _repo_root: "." or "./tmp/opam" */
+                         obazl_opam_root,      /* _repo_root: "." or "./tmp/opam" */
                          NULL, // "buildfiles",        /* _pkg_prefix */
                          utstring_body(imports_path),
                         /* "",      /\* pkg-path *\/ */

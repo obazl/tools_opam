@@ -1693,7 +1693,7 @@ EXPORT void emit_build_bazel(char *_repo,
     /* if (obzl_meta_package_dir(_pkg) != NULL) */
     utstring_printf(build_bazel_file, "/%s", pkg_name);
 
-    mkdir_r(utstring_body(build_bazel_file), "");
+    mkdir_r(utstring_body(build_bazel_file));
     utstring_printf(build_bazel_file, "/%s", "BUILD.bazel");
     log_debug("build_bazel_file: %s", utstring_body(build_bazel_file));
 

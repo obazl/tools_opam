@@ -1,6 +1,3 @@
-# Repo rules build this by running make. This build file makes it
-# accessible as an ordinary build target.
-
 load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
 load(":BUILD.bzl", "gensyntax")
 
@@ -18,7 +15,7 @@ config_setting(name = "yydebug-vectors", flag_values = {":yydebug": "vectors"})
 ##########
 cc_library(
     name  = "bootstrap",
-    alwayslink = True,
+    # alwayslink = True,
     # linkstatic = 1,
     srcs  = [
         "config.c",
@@ -63,25 +60,28 @@ cc_library(
     ],
     hdrs = [
         "bootstrap.h"
-        # "meta_flags.h",
-        # "meta_fs.h",
-        # "obazl.h",
-        # "opam.h"
     ],
     defines = select({
-        "//bzl/host:debug": ["DEBUG_TRACE"],
+        "//bzl/host:debug": [], # "DEBUG_TRACE"],
         "//conditions:default":   [], ##"DEBUG_DUMP"]
     }),
     copts = [
         "-std=c11",
         "-pedantic-errors",
 
+        "-UDEBUG", # FIXME: macos fastbuild only
+
         "-I.",
+        "-I$(GENDIR)",
 
         "-Ibootstrap",
+        "-Iopam/bootstrap",
         "-Iexternal/opam/bootstrap",
 
         "-I$(GENDIR)/bootstrap",
+        "-I$(GENDIR)/external/bootstrap",
+
+        "-I$(GENDIR)/opam/bootstrap",
         "-I$(GENDIR)/external/opam/bootstrap",
 
         "-Iexternal/libinih",
@@ -182,7 +182,7 @@ genrule(
         "opam.h",
     ],
     cmd = "\n".join([
-        "SRC1=$(location opam.c)",
+        "SRC1=$(location config.c)",
         "SRCDIR1=`dirname $$SRC1`",
         "$(location :makeheaders) \\",
         "    $(location config.c) \\",
@@ -228,9 +228,9 @@ genrule(
         # "opam_bootstrap.c",
         # "log.c",
         # "log.h",
-        # "utarray.h",
-        # "uthash.h",
-        # "utstring.h",
+        "utarray.h",
+        "uthash.h",
+        "utstring.h",
     ],
     outs = [
         "bootstrap.h"
@@ -254,6 +254,9 @@ genrule(
         "    $(location metaparser.c) \\",
         "    $(location obazl.c) \\",
         "    $(location opam.c) \\",
+        "    $(location utarray.h) \\",
+        "    $(location uthash.h) \\",
+        "    $(location utstring.h) \\",
         "> $@"
         # "cp $${SRCDIR1}/*.h $(@D)",
     ]),

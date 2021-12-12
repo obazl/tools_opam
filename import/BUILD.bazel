@@ -1,6 +1,6 @@
 cc_binary(
-    name  = "init",
-    srcs  = ["init.c"],
+    name  = "import",
+    srcs  = ["import.c"],
     defines = select({
         "//bzl/host:debug": [], # "DEBUG_TRACE"],
         "//conditions:default":   []

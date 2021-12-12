@@ -38,7 +38,7 @@ int rc;
 
 #if INTERFACE
 typedef int (*file_handler)(char *rootdir,
-                            char *bzlroot,
+                            char *obazl_opam_root,
                             /* char *imports_path, */
                             char *pkgdir,
                             char *metafile);
@@ -52,25 +52,26 @@ typedef int (*file_handler)(char *rootdir,
 /*      return --dest; */
 /* } */
 
-EXPORT char *mkdir_r(char *base, char *path)
+EXPORT char *mkdir_r_impl(char *base, char *path)
 {
-    /* log_debug("entering mkdir_r base: '%s', path: '%s'\n", base, path); */
+    log_debug("entering mkdir_r_impl base: '%s', path: '%s'\n", base, path);
 
     char *buf_dirname[PATH_MAX];
     char *buf_basename[PATH_MAX];
 
-    if ( access(base, R_OK) ) {
-        /* base does not exist */
-        /* log_debug("mkdir_r recurring to create base: %s, path: %s", */
-        /*           dirname_r(base, buf_dirname), basename_r(base, buf_basename)); */
-        mkdir_r(dirname_r(base, (char*)buf_dirname), basename_r(base, (char*)buf_basename));
+    if ( access(base, F_OK) < 0 ) {
+        /* base does not exist, recur to start at existing seg */
+        log_debug("mkdir_r recurring to create base"); // : %s, path: %s",
+                  /* dirname_r(base, buf_dirname), basename_r(base, buf_basename)); */
+        mkdir_r_impl(dirname_r(base, (char*)buf_dirname),
+                     basename_r(base, (char*)buf_basename));
     }
     /* now base should exist */
-    if ( access(base, R_OK) ) {
+    if ( access(base, F_OK) < 0 ) {
         log_fatal("no base: %s", base);
         exit(EXIT_FAILURE);
-    /* } else { */
-        /* log_info("base exists: %s, %s", base, path); */
+    } else {
+        log_info("base exists: %s, %s", base, path);
     }
 
     if ( strlen(path) == 0 ) return base;
@@ -115,7 +116,7 @@ EXPORT char *mkdir_r(char *base, char *path)
 
         // RECUR
         /* log_debug("mkdir_r recurring on %s with pending last_seg %s\n", d, last_seg); */
-        char *so_far = mkdir_r(base, d);
+        char *so_far = mkdir_r_impl(base, d);
         /* log_debug("mkdir_r resuming after %s with pending last_seg %s\n", d, last_seg); */
 
         /* log_debug("mkdir_r so far: %s\n", so_far); */
@@ -144,8 +145,33 @@ EXPORT char *mkdir_r(char *base, char *path)
     }
 }
 
+void mkdir_r_loop(char *path)
+{
+    char *sep = strrchr(path, '/');
+    if (sep != NULL) {
+        *sep = '\0';
+        mkdir_r_loop(path);
+        *sep = '/';
+    }
+    errno = 0;
+    if (mkdir(path, 0777) && errno != EEXIST)
+        printf("error %s while trying to create '%s'\n",
+               strerror(errno), path);
+}
+
+EXPORT char *mkdir_r(char *_path)
+{
+    char *path = strdup(_path);
+    errno = 0;
+    if(mkdir(path, 0777) < 0) {
+        if (errno == ENOENT) { // EEXIST)
+            mkdir_r_loop(path);
+        }
+    }
+}
+
 EXPORT int meta_walk(char *srcroot,
-                     char *bzlroot,
+                     char *obazl_opam_root,
                      bool linkfiles,
                      /* char *file_to_handle, /\* 'META' or NULL *\/ */
                      file_handler handle_meta)
@@ -154,7 +180,7 @@ EXPORT int meta_walk(char *srcroot,
         log_error("walk called with NULL callback fn ptr.");
         return -1;
     }
-    return meta_walk_impl(srcroot, bzlroot,
+    return meta_walk_impl(srcroot, obazl_opam_root,
                      "",        /* bazel_pkg */
                      "",        /* directory */
                      linkfiles,
@@ -168,7 +194,7 @@ EXPORT int meta_walk(char *srcroot,
       for each directory in basedir, recur
  */
 LOCAL int meta_walk_impl(char *basedir,
-                     char *bzlroot,
+                     char *obazl_opam_root,
                     char *bazel_pkg,
                     char *directory,
                     /* char *out_directory, */
@@ -231,7 +257,7 @@ LOCAL int meta_walk_impl(char *basedir,
                        ))
                  ) {
                 /* log_debug("recurring on subdir %s for outdir: %s\n", dir_entry->d_name, outdir); */
-                meta_walk_impl(currdir, bzlroot,
+                meta_walk_impl(currdir, obazl_opam_root,
                                currpkg, dir_entry->d_name,
                                linkfiles,
                                /* file_to_handle, */
@@ -241,7 +267,7 @@ LOCAL int meta_walk_impl(char *basedir,
                 if (dir_entry->d_type == DT_REG) {
                     if ( (strlen(dir_entry->d_name) == 4)
                          && (strncmp(dir_entry->d_name, "META", 4) == 0) ) {
-                        int rc = handle_meta(basedir, bzlroot,
+                        int rc = handle_meta(basedir, obazl_opam_root,
                                              currpkg, dir_entry->d_name);
                         if (rc) {
                             log_error("handle_meta fail for %s/%s", currpkg, dir_entry->d_name);

@@ -29,7 +29,8 @@ bool debug;
 bool verbose;
 
 FILE *log_fp;
-const char *logfile = "./.opam.d/update.log";
+/* const char *logfile = OBAZL_OPAM_ROOT "/update.log"; */
+UT_string *logfile;
 bool logging_to_file = false;
 
 char log_buf[512];
@@ -207,23 +208,35 @@ void log_fn(log_Event *evt)
     fprintf(log_fp, "%s\n", log_buf);
 }
 
-EXPORT void config_logging(void)
+EXPORT void config_logging(char *_logfile)
 {
+    /* printf("config_logging: %s\n", OBAZL_OPAM_ROOT); */
     /* CWD = getcwd(NULL, 0); */
-    int rc = access(".opam.d", R_OK);
+    int rc = access(OBAZL_OPAM_ROOT, F_OK);
     if (rc < 0) {
-        /* FIXME: create .opam.d */
-        fprintf(stderr, "ERROR: .opam.d not found at %s\n",
-                getcwd(NULL, 0));
+        printf("creating %s\n", OBAZL_OPAM_ROOT);
+        mkdir_r(OBAZL_OPAM_ROOT);
+        /* fprintf(stderr, "ERROR: %s not found at %s\n", */
+        /*         OBAZL_OPAM_ROOT, getcwd(NULL, 0)); */
+        /* exit(EXIT_FAILURE); */
+    }
+    rc = access(OBAZL_OPAM_ROOT, F_OK);
+    if (rc < 0) {
+        printf("huh?\n");
         exit(EXIT_FAILURE);
     }
-    log_fp = fopen(logfile, "w");
+
+    utstring_new(logfile);
+    utstring_printf(logfile, "%s/%s.log", OBAZL_OPAM_ROOT, _logfile);
+    log_fp = fopen(utstring_body(logfile), "w");
     if (log_fp == NULL) {
-        perror(logfile);
+        perror(utstring_body(logfile));
         log_error("fopen fail on %s", logfile);
         fflush(stderr); fflush(stdout);
+        utstring_free(logfile);
         exit(EXIT_FAILURE);
     }
+    utstring_free(logfile);
     logging_to_file = true;
     /* fprintf(stdout, "opened logfile %s\n", logfile); */
 

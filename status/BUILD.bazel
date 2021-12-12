@@ -8,6 +8,16 @@ cc_binary(
     copts = [
         "-std=c11",
         "-pedantic-errors",
+
+        "-I",
+        "-I$(GENDIR)",
+
+        "-Ibootstrap",
+        "-I$(GENDIR)/bootstrap",
+
+        "-Iopam/bootstrap",
+        "-I$(GENDIR)/opam/bootstrap",
+
         "-Iexternal/opam/bootstrap",
         "-I$(GENDIR)/external/opam/bootstrap",
     ],

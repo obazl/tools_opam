@@ -101,6 +101,11 @@ EXPORT void obazl_configure(char *_exec_root)
 {
     /* log_debug("obazl_configure"); */
 
+    /* if (access("bazel-out/volatile.txt", F_OK)) */
+    /*     printf("FOUND: bazel-out/volatile.txt\n"); */
+    /* else */
+    /*     printf("NOT FOUND: bazel-out/volatile.txt\n"); */
+
     utstring_new(exec_root);
     utstring_printf(exec_root, "%s", _exec_root);
     if (debug)

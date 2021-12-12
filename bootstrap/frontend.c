@@ -23,33 +23,11 @@
 #include "log.h"
 
 #include "bootstrap.h"
-/* FIXME: consolidate hdrs from libbootstrap */
-/* #include "config.h" */
-/* #include "driver.h" */
-/* #include "meta_flags.h" */
-/* #include "obazl.h" */
-/* #include "opam.h" */
-
 #include "frontend.h"
 
 extern bool debug;
 extern bool local_opam;
 extern bool verbose;
-
-/* char *host_repo = "ocaml"; */
-
-/* char *CWD; */
-/* char log_buf[512]; */
-
-/* **************************************************************** */
-/* static int level = 0; */
-/* static int spfactor = 4; */
-/* static char *sp = " "; */
-
-/* static int indent = 2; */
-/* static int delta = 2; */
-
-/* **************************************************************** */
 
 /* static int verbosity = 0; */
 int errnum;
@@ -76,8 +54,12 @@ struct fileset_s *filesets = NULL;
 
 EXPORT int opam_main(int argc, char *argv[]) // , char **envp)
 {
-    char *opts = "dhls";
+    char *opts = "dfhlm:p:s:v";
     char *opam_switch = NULL;
+
+    bool force = false;
+    char *manifest = NULL;
+    char *package = NULL;
 
     int opt;
     while ((opt = getopt(argc, argv, opts)) != -1) {
@@ -93,11 +75,20 @@ EXPORT int opam_main(int argc, char *argv[]) // , char **envp)
         case 'd':
             debug = true;
             break;
+        case 'f':
+            force = true;
+            break;
         case 'l':
             local_opam = true;
             break;
+        case 'm':
+            manifest = optarg;
+            break;
+        case 'p':
+            package = optarg;
+            break;
         case 's':
-            printf("option s (switch): %s\n", optarg);
+            /* printf("option s (switch): %s\n", optarg); */
             opam_switch = strndup(optarg, PATH_MAX);
             break;
         /* case 'x': */
@@ -131,8 +122,7 @@ EXPORT int opam_main(int argc, char *argv[]) // , char **envp)
 
     /* obazl config sets cwd, must be called first */
     obazl_configure(getcwd(NULL, 0));
-    config_logging();
-
+    config_logging(basename(argv[0]));
     /* char *wd = getcwd(NULL, 0); */
     /* fprintf(stdout, "CWD after bzl config: %s\n", wd); */
 
@@ -142,28 +132,35 @@ EXPORT int opam_main(int argc, char *argv[]) // , char **envp)
 
     initialize_config_flags();
 
-    char bzlroot[PATH_MAX];
-
-    mystrcat(bzlroot, "./.opam.d");
-
-    printf("PROG: %s\n", basename(argv[0]));
-    if (strcmp(basename(argv[0]), "init") == 0) {
-        install_project_opam(opam_switch, bzlroot);
-    } else {
-        if (strcmp(basename(argv[0]), "ingest") == 0) {
-            opam_ingest(opam_switch, bzlroot);
-        } else {
-            if (strcmp(basename(argv[0]), "install") == 0) {
-                printf("install\n");
-                /* opam_install(opam_switch, bzlroot); */
-            } else {
-                if (strcmp(basename(argv[0]), "status") == 0) {
-                    printf("status\n");
-                    /* opam_status(opam_switch, bzlroot); */
-                }
-            }
-        }
+    /* printf("@opam//%s\n", basename(argv[0])); */
+    if (strcmp(basename(argv[0]), "export") == 0) {
+        opam_export(manifest);
     }
+    else if (strcmp(basename(argv[0]), "import") == 0) {
+        opam_import(manifest);
+    }
+    else if (strcmp(basename(argv[0]), "init") == 0) {
+        opam_init_project_switch(force, opam_switch);
+    }
+    else if (strcmp(basename(argv[0]), "ingest") == 0) {
+        opam_ingest(opam_switch, obazl_opam_root);
+    }
+    else if (strcmp(basename(argv[0]), "install") == 0) {
+        if (package)
+            opam_install(package);
+        else
+            printf("remove command requires -p <pkg> arg\n");
+    }
+    else if (strcmp(basename(argv[0]), "remove") == 0) {
+        if (package)
+            opam_remove(package);
+        else
+            printf("remove command requires -p <pkg> arg\n");
+    }
+    else if (strcmp(basename(argv[0]), "status") == 0) {
+        opam_status();
+    }
+    else printf("Unknown cmd: %s\n", basename(argv[0]));
 
     dispose_flag_table();
 
@@ -177,7 +174,7 @@ EXPORT int opam_main(int argc, char *argv[]) // , char **envp)
     /* fclose(opam_resolver); */
 
 #ifdef DEBUG
-    log_info("bzlroot: %s", bzlroot);
+    log_info("obazl_opam_root: %s", obazl_opam_root);
     log_info("FINISHED");
 #endif
 

@@ -139,7 +139,7 @@ We use `UT_string` and `UT_array` from
 [uthash](https://troydhanson.github.io/uthash/). The former makes it
 easy to construct strings.
 
-`char bzlroot[PATH_MAX]`: the output root dir
+`char obazl_opam_root[PATH_MAX]`: the output root dir
 * prod: `$(bazel info output_base)/external/opam`. The bootstrapper
   will be run by a repository rule that defines the `@opam`
   repository. Evidently a side effect of running such a repository
@@ -154,8 +154,8 @@ Symlinks to expose the OPAM resources we need:
 
 * `switch_bin` : `$(OPAM_SWITCH_PREFIX)/bin` = `$ opam var bin`
 * `switch_lib` : `$(OPAM_SWITCH_PREFIX)/lib` = `$ opam var lib`
-* `bzl_bin`   : `$(bzlroot)/_bin`
-* `bzl_lib`   : `$(bzlroot)/_lib`
+* `bzl_bin`   : `$(obazl_opam_root)/_bin`
+* `bzl_lib`   : `$(obazl_opam_root)/_lib`
 
 the links:
 * `bzl_bin` -> `switch_bin`

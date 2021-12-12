@@ -24,6 +24,7 @@ clean:
 	@-rm -f lemon makeheaders
 	@-rm -f config.h
 	@-rm -f driver.h
+	@-rm -f frontend.h
 	@-rm -f emit_build_bazel.h
 	@-rm -f lexer.h
 	@-rm -f meta*.h
