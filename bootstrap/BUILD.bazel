@@ -42,15 +42,14 @@ cc_library(
         "meta_values.h",
         "metalexer.c",
         "metalexer.h",
-        "metaparser.c",
-        "metaparser.h",
+        "meta_parser.c",
+        "meta_parser.h",
         "obazl.c",
         "obazl.h",
         "opam.c",
         "opam.h",
-
-        # "opam_bootstrap.c",
-        # "opam_bootstrap.h",
+        "opam_deps.c",
+        "opam_deps.h",
 
         "log.c",
         "log.h",
@@ -59,7 +58,10 @@ cc_library(
         "utstring.h",
     ],
     hdrs = [
-        "bootstrap.h"
+        "bootstrap.h",
+        "utarray.h",
+        "uthash.h",
+        "utstring.h",
     ],
     defines = select({
         "//bzl/host:debug": [], # "DEBUG_TRACE"],
@@ -71,22 +73,25 @@ cc_library(
 
         "-UDEBUG", # FIXME: macos fastbuild only
 
+        ## NB: we need '-I.' because re2c will this into meta_parser.c:
+        ## #include "bazel-out/darwin-fastbuild/bin/external/opam/bootstrap/meta_parser.h"
         "-I.",
-        "-I$(GENDIR)",
+
 
         "-Ibootstrap",
-        "-Iopam/bootstrap",
-        "-Iexternal/opam/bootstrap",
-
         "-I$(GENDIR)/bootstrap",
-        "-I$(GENDIR)/external/bootstrap",
 
-        "-I$(GENDIR)/opam/bootstrap",
+        # "-I$(GENDIR)/opam/bootstrap",
+
+        ## WARNING: importing this repo under any name other than
+        ## 'opam' with break this:
+        "-Iexternal/opam/bootstrap",
         "-I$(GENDIR)/external/opam/bootstrap",
 
         "-Iexternal/libinih",
     ],
     deps = [
+        ":opam_parser",
         "//external/libinih:inih",
     ],
     visibility = ["//visibility:public"]
@@ -95,8 +100,8 @@ cc_library(
 ########
 gensyntax(
     name = "gensyntaxis",
-    yy   = "metaparser.y",
-    outs = ["metaparser.c","metaparser.out"],
+    yy   = "meta_parser.y",
+    outs = ["meta_parser.c","meta_parser.out"],
     defines = select({
         ":yydebug-vectors": ["YYDEBUG_VECTORS"],
         "//conditions:default":   []
@@ -113,10 +118,13 @@ gensyntax(
 )
 
 ########
+## re2c takes a long time to build. we do not need to run it every
+## time once the grammar is stable, so we put the .c file under
+## version control
 # genrule(
-#     name = "gen_lexis",
+#     name = "gen_meta_lexis",
 #     srcs = [
-#         "metalexer.re",
+#         "meta_lexer.re",
 #     ],
 #     tools = ["@opam_re2c//:re2c"],
 #     outs  = [
@@ -138,6 +146,120 @@ gensyntax(
 #     visibility = ["//visibility:public"]
 # )
 
+################################################################
+####    OPAM Parser
+################################################################
+cc_library(
+    name = "opam_parser",
+    srcs = [
+        "opam_parser.c",
+        "opam_parser.h",
+        "log.h",
+        "utarray.h",
+        "uthash.h",
+        "utstring.h",
+        ],
+    copts = [
+        "-Ibootstrap",
+        "-Iopam/bootstrap",
+        "-I$(GENDIR)/bootstrap",
+        "-I$(GENDIR)/opam/bootstrap",
+    ],
+    deps = ["opam_lexer"]
+)
+
+gensyntax(
+    name = "gen_opam_syntaxis",
+    yy   = "opam_parser.y",
+    outs = ["opam_parser.c","opam_parser.out"],
+    defines = select({
+        ":yydebug-vectors": ["YYDEBUG_VECTORS"],
+        "//conditions:default":   []
+    }) + select({
+        ":yydebug-dicts": ["YYDEBUG_DICTS"],
+        "//conditions:default":   []
+    }) + select({
+        ":yydebug-targets": ["YYDEBUG_TARGETS"],
+        "//conditions:default":   []
+    }) + select({
+        ":yydebug-loads": ["YYDEBUG_LOADSTMTS"],
+        "//conditions:default":   []
+    })
+)
+
+cc_library(
+    name = "opam_lexer",
+    srcs = [
+        "opam_lexer.c", "opam_lexer.h",
+        "opam_lexis.c", "opam_lexis.h",
+        "log.c", "log.h",
+        "utarray.h",
+        "uthash.h",
+        "utstring.h",
+    ],
+    hdrs = [
+        "log.h",
+        "opam_lexer.h"
+    ],
+    copts = [
+        "-Ibootstrap",
+        "-Iopam/bootstrap",
+        "-I$(GENDIR)/bootstrap",
+        "-I$(GENDIR)/opam/bootstrap"
+    ],
+    visibility = [
+        "//test:__subpackages__"
+    ]
+)
+
+genrule(
+    name = "gen_opam_lexis",
+    outs  = ["opam_lexis.c"],
+    srcs = ["opam_lexis.re"],
+    tools = ["@opam_re2c//:re2c"],
+    cmd   = "\n".join([
+        "for f in $(locations @opam_re2c//:re2c)",
+        "do",
+        "    if [ -f $$f ]",
+        "    then",
+        "        if [ re2c = `basename $$f` -a -x $$f ]",
+        "        then",
+        "            break",
+        "        fi",
+        "    fi",
+        "done",
+        "$$f --conditions --tags -o $(@D)/opam_lexis.c $(location opam_lexis.re)",
+    ]),
+    visibility = ["//visibility:public"]
+)
+
+genrule(
+    name = "lex_mkhdrs",
+    srcs = [
+        "opam_lexer.c",
+        "opam_lexis.c",
+        "opam_parser.c",
+    ],
+    outs = [
+        "opam_lexer.h",
+        "opam_lexis.h",
+        "opam_parser.h",
+    ],
+    cmd = "\n".join([
+        "SRC1=$(location opam_lexer.c)",
+        "SRCDIR1=`dirname $$SRC1`",
+        "$(location :makeheaders) \\",
+        "    $(location opam_lexer.c) \\",
+        "    $(location opam_lexis.c) \\",
+        "    $(location opam_parser.c)",
+        "cp $${SRCDIR1}/*.h $(@D)",
+    ]),
+    tools = [":makeheaders"],
+    visibility = ["//visibility:public"]
+)
+
+################################################################
+
 ########
 genrule(
     name = "mkhdrs",
@@ -154,10 +276,14 @@ genrule(
         "meta_settings.c",
         "meta_values.c",
         "metalexer.c",
-        "metaparser.c",
+        "meta_parser.c",
         "obazl.c",
         "opam.c",
-        # "opam_bootstrap.c",
+        "opam_deps.c",
+        # "opam_lexer.c",
+        # "opam_lexis.c",
+        # "opam_parser.c",
+
         # "log.c",
         # "log.h",
         # "utarray.h",
@@ -177,9 +303,13 @@ genrule(
         "meta_settings.h",
         "meta_values.h",
         "metalexer.h",
-        "metaparser.h",
+        "meta_parser.h",
         "obazl.h",
         "opam.h",
+        "opam_deps.h",
+        # "opam_lexer.h",
+        # "opam_lexis.h",
+        # "opam_parser.h",
     ],
     cmd = "\n".join([
         "SRC1=$(location config.c)",
@@ -197,9 +327,13 @@ genrule(
         "    $(location meta_settings.c) \\",
         "    $(location meta_values.c) \\",
         "    $(location metalexer.c) \\",
-        "    $(location metaparser.c) \\",
+        "    $(location meta_parser.c) \\",
         "    $(location obazl.c) \\",
-        "    $(location opam.c)",
+        "    $(location opam.c) \\",
+        "    $(location opam_deps.c)",
+        # "    $(location opam_lexer.c) \\",
+        # "    $(location opam_lexis.c) \\",
+        # "    $(location opam_parser.c)",
         "cp $${SRCDIR1}/*.h $(@D)",
     ]),
     tools = [":makeheaders"],
@@ -222,15 +356,18 @@ genrule(
         "meta_settings.c",
         "meta_values.c",
         "metalexer.c",
-        "metaparser.c",
+        "meta_parser.c",
         "obazl.c",
         "opam.c",
-        # "opam_bootstrap.c",
+        "opam_deps.c",
+        # "opam_lexer.c",
+        # "opam_parser.c",
+
         # "log.c",
         # "log.h",
-        "utarray.h",
-        "uthash.h",
-        "utstring.h",
+        # "utarray.h",
+        # "uthash.h",
+        # "utstring.h",
     ],
     outs = [
         "bootstrap.h"
@@ -251,12 +388,15 @@ genrule(
         "    $(location meta_settings.c) \\",
         "    $(location meta_values.c) \\",
         "    $(location metalexer.c) \\",
-        "    $(location metaparser.c) \\",
+        "    $(location meta_parser.c) \\",
         "    $(location obazl.c) \\",
         "    $(location opam.c) \\",
-        "    $(location utarray.h) \\",
-        "    $(location uthash.h) \\",
-        "    $(location utstring.h) \\",
+        "    $(location opam_deps.c) \\",
+        # "    $(location opam_lexer.c) \\",
+        # "    $(location opam_parser.c) \\",
+        # "    $(location utarray.h) \\",
+        # "    $(location uthash.h) \\",
+        # "    $(location utstring.h) \\",
         "> $@"
         # "cp $${SRCDIR1}/*.h $(@D)",
     ]),
@@ -282,6 +422,7 @@ cc_binary(
         "//init:__pkg__",
         "//install:__pkg__",
         "//status:__pkg__",
+        "//test:__subpackages__",
         "//update:__pkg__"
     ]
 )
