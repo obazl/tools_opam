@@ -62,6 +62,12 @@ bool verbose;
 /* LOCAL UT_string *opam_bin; */
 /* LOCAL UT_string *opam_lib; */
 
+#if INTERFACE
+#define OBAZL_ROOT ".obazl.d"
+#endif
+
+char *obazl_root = OBAZL_ROOT;
+
 UT_string *exec_root;
 UT_string *runfiles_root;
 UT_string *proj_root;

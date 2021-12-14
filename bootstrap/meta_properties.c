@@ -16,6 +16,9 @@ static char *sp = " ";
 #define TOKEN_NAME(x) (char*)#x
 #endif
 
+// NB: token constants are emitted by the parser, so it must be run
+// before the lexer. they're in the generated c code, which we
+// processing with makeheaders.
 char *token_names[256] = {
     [DESCRIPTION] = TOKEN_NAME(description),
     [DIRECTORY] = TOKEN_NAME(directory),

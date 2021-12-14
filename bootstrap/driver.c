@@ -24,7 +24,7 @@
 int errnum;
 bool local_opam;
 
-extern bool g_ppx_pkg;
+bool g_ppx_pkg;
 
 /* global: we write on new_local_repository rule per build file */
 FILE *repo_rules_FILE;

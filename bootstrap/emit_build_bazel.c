@@ -26,7 +26,8 @@ static char *sp = " ";
 
 bool stdlib_root = false;
 
-char *buildfile_prefix = "@//.opam.d/buildfiles";
+char *buildfile_prefix = "@//" OBAZL_OPAM_ROOT "/buildfiles";
+/* was: "@//.opam.d/buildfiles"; */
 
 long *KPM_TABLE;
 
@@ -275,7 +276,7 @@ void emit_new_local_pkg_repo(FILE *repo_rules_FILE,
 void emit_bazel_hdr(FILE* ostream, int level, char *repo, char *pkg_prefix, obzl_meta_package *_pkg)
 {
     fprintf(ostream, "load(\n");
-    fprintf(ostream, "%*s\"@obazl_rules_ocaml//ocaml:rules.bzl\",\n", 5, sp);
+    fprintf(ostream, "%*s\"@ocaml//ocaml:rules.bzl\",\n", 5, sp);
     fprintf(ostream, "%*s\"ocaml_import\"\n", 5, sp);
     fprintf(ostream, ")\n");
 }
