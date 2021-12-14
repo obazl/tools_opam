@@ -13,10 +13,12 @@ http_archive(
 )
 
 git_repository(
-    name = "ocaml",
+    name = "rules_ocaml",
     remote = "https://github.com/obazl/rules_ocaml",
     branch = "obazl3",
 )
+load("@rules_ocaml//:WORKSPACE.bzl", "ocaml_configure")
+ocaml_configure()
 
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 bazel_skylib_workspace()
@@ -37,10 +39,10 @@ rules_foreign_cc_dependencies(
 # stardoc_repositories()
 
 # load("@obazl_rules_ocaml//ocaml:bootstrap.bzl", "ocaml_configure")
-load("@ocaml//ocaml:bootstrap.bzl",
-     "ocaml_configure",
-     "ocaml_register_toolchains",
-     "ocaml_toolchain")
+# load("@ocaml//ocaml:bootstrap.bzl",
+#      "ocaml_configure",
+#      "ocaml_register_toolchains",
+#      "ocaml_toolchain")
 
 # ocaml_configure(switch = "4.10",
 #                 # debug = True,
@@ -51,5 +53,5 @@ load("@ocaml//ocaml:bootstrap.bzl",
 #     bootstrap_register_toolchains(installation="host")
 
 ## NB: really means "register toolchain _bindings_"
-register_toolchains("//:ocaml_macos")
+# register_toolchains("//:ocaml_macos")
 

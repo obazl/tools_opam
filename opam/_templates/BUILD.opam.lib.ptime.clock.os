@@ -1,7 +1,7 @@
 ## original: /Users/gar/.opam/4.10/lib/ptime/META
 
 load(
-    "@ocaml//ocaml:rules.bzl",
+    "@rules_ocaml//build:rules.bzl",
     "ocaml_import"
 )
 

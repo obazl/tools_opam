@@ -2,28 +2,6 @@
 # constraint_value(name = "native", visibility = ["//visibility:public"], constraint_setting="mode")
 # constraint_value(name = "bytecode", visibility = ["//visibility:public"], constraint_setting="mode")
 
-load("@ocaml//ocaml:bootstrap.bzl", "ocaml_toolchain")
-
-toolchain( ## == toolchain_binding (of defn to type-tag)
-    name = "ocaml_macos",  ## to be passed to  register_toolchains
-    toolchain_type = "@ocaml//ocaml:toolchain",
-    toolchain = ":ocaml_toolchain_macos", # == toolchain_definition
-    exec_compatible_with = [
-        "@platforms//os:macos",
-    ],
-    target_compatible_with = [
-        "@platforms//os:macos",
-    ],
-    visibility = ["//visibility:public"]
-)
-
-ocaml_toolchain(
-    name = "ocaml_toolchain_macos",
-    ocamlc = "@ocaml.toolchain//bin:ocamlc",
-    ocamlopt = "@ocaml.toolchain//bin:ocamlopt",
-    linkmode = "dynamic",
-)
-
 platform(
     name = "macos_native",
     visibility = ["//visibility:public"],

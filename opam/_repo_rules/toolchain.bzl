@@ -5,8 +5,7 @@ load("//opam/_functions:xdg.bzl", "get_xdg_paths")
 
 #####################################
 def _install_opam_symlinks(repo_ctx, opam_switch_prefix):
-    if repo_ctx.attr.verbose:
-        repo_ctx.report_progress("creating OPAM symlinks")
+    repo_ctx.report_progress("symlinking opam toolchain")
 
     repo_ctx.file("bin/BUILD.bazel",
                   content = """exports_files(glob([\"**\"]))""")
@@ -99,94 +98,35 @@ def _install_opam_symlinks(repo_ctx, opam_switch_prefix):
 ###############################
 def _opam_toolchain_impl(repo_ctx):
 
-    print("running opam_toolchain for pkg: %s" % repo_ctx.attr.package)
+    print("_opam_toolchain_impl (repo rule)")
     debug = False
     # if (ctx.label.name == "zexe_backend_common"):
     #     debug = True
 
-    pkg_path = opam_get_current_switch_libdir(repo_ctx) + "/" + repo_ctx.attr.package
-    print("NEW LOCAL pkg_path: %s" % pkg_path)
-
     opam_switch_prefix = opam_get_current_switch_prefix(repo_ctx)
 
     _install_opam_symlinks(repo_ctx, opam_switch_prefix)
-
-    ## link each file, so the BUILD file is in same dir, and
-    ## user-provided content can refer to files in current dir.
-    ## can't read dir contents in starlark, so:
-    # link_tgt = pkg_path + "/*"
-    # repo_ctx.execute(["sh", "-c", "ln -s {} .".format(link_tgt)])
-
-    # if repo_ctx.attr.workspace_file:
-    #     ## todo: copy file
-    #     fail("NOT IMPLEMENTED YET...")
-    # elif repo_ctx.attr.workspace_file_content:
-    #     repo_ctx.file(
-    #         "WORKSPACE.bazel",
-    #         content = repo_ctx.attr.build_file_content,
-    #         executable=False
-    #     )
-    # else:
-    #     repo_ctx.file(
-    #         "WORKSPACE.bazel",
-    #         content = """workspace( name = \"{pkg}\" )
-    #         """.format(pkg = repo_ctx.attr.package),
-    #         executable=False
-    #     )
-
-    # if repo_ctx.attr.build_file:
-    #     ## todo: copy file
-    #     fail("NOT IMPLEMENTED YET...")
-    # elif repo_ctx.attr.build_file_content:
-    #     repo_ctx.file(
-    #         "BUILD.bazel",
-    #         content = repo_ctx.attr.build_file_content,
-    #         executable=False
-    #     )
-    # else:
-    #     fail("One of build_file and build_file_content required.")
 
 ##################################
 _opam_toolchain = repository_rule(
     doc = "Create an opam-based ocaml toolchain",
     implementation = _opam_toolchain_impl,
     attrs = dict(
-
         switch = attr.string(
+            ## TODO: by default we use the current switch. support
+            ## switch selection.
         ),
-
-        package = attr.string(
-            doc = """OPAM package name.
-
-            """,
-        ),
-
-        build_file  = attr.label(
-            doc = "build file"
-        ),
-
-        build_file_content  = attr.string(
-            doc = "build file content"
-        ),
-
-        workspace_file  = attr.label(
-            doc = "workspace file"
-        ),
-
-        workspace_file_content  = attr.string(
-            doc = "workspace file content"
-        ),
-
-        install = attr.bool(
-            # run opam commands to install?
-            default = False,
-        ),
-
-        verbose = attr.bool()
-        # _rule = attr.string( default = "new_local_opam_repositories" ),
     ),
 )
 
 def opam_toolchain():
     print("opam_toolchain (fn)")
-    return _opam_toolchain(name="ocaml.toolchain")
+
+    # repository rule creates symlinks to opam switch:
+    _opam_toolchain(name="ocaml.toolchain")
+
+    # toolchains depend on targets in @ocaml.toolchain
+    native.register_toolchains("//toolchain:ocaml_macos")
+    native.register_toolchains("//toolchain:ocaml_linux_x86_64")
+
+    ## TODO: one toolchain for each supported platform

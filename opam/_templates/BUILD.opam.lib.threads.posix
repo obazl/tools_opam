@@ -1,5 +1,5 @@
 load(
-    "@ocaml//ocaml:rules.bzl",
+    "@rules_ocaml//build:rules.bzl",
     "ocaml_import"
 )
 

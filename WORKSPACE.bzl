@@ -1,10 +1,10 @@
-load("@bazel_tools//tools/build_defs/repo:git.bzl",
-     "git_repository", "new_git_repository")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+# , "new_git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
-load("@ocaml//ocaml/_repo_rules:new_local_pkg_repository.bzl",
-     "new_local_pkg_repository")
+# load("@rules_ocaml//ocaml/_repo_rules:new_local_pkg_repository.bzl",
+#      "new_local_pkg_repository")
 
 load("//opam/_repo_rules:toolchain.bzl", "opam_toolchain")
 
@@ -20,12 +20,12 @@ def opam_fetch_repos():
         # branch = "master"
     )
 
-    maybe(
-        git_repository,
-        name = "obazl_tools_obazl",
-        remote = "https://github.com/obazl/tools_obazl",
-        branch = "dev",
-    )
+    # maybe(
+    #     git_repository,
+    #     name = "obazl_tools_obazl",
+    #     remote = "https://github.com/obazl/tools_obazl",
+    #     branch = "dev",
+    # )
 
     # maybe(
     #     http_archive,
@@ -97,58 +97,59 @@ filegroup(name = "hdrs", srcs = ["ini.h"], visibility = ["//visibility:public"])
     # )
 
 ################################################################
-def install_kernel_libs():
-    print("INSTALLING kernel libs repos")
-    # path attr: relative to OPAM_SWITCH_PREFIX
+# def install_kernel_libs():
+#     print("INSTALLING kernel libs repos")
+#     # path attr: relative to OPAM_SWITCH_PREFIX
 
-    new_local_pkg_repository(
-        name = "ocaml.compiler-libs",
-        # path = OPAM_SWITCH_PREFIX + "/lib/ocaml/compiler-libs",
-        path = "ocaml/compiler-libs",
-        build_file = "@opam//opam/_templates:ocaml.compiler-libs.REPO"
-    )
+#     new_local_pkg_repository(
+#         name = "ocaml.compiler-libs",
+#         # path = OPAM_SWITCH_PREFIX + "/lib/ocaml/compiler-libs",
+#         path = "ocaml/compiler-libs",
+#         build_file = "@opam//opam/_templates:ocaml.compiler-libs.REPO"
+#     )
 
-    new_local_pkg_repository(
-        name = "ocaml.ffi",
-        path = "ocaml/caml",
-        build_file = "@opam//opam/_templates:ocaml.ffi.REPO"
-    )
+#     new_local_pkg_repository(
+#         name = "ocaml.ffi",
+#         path = "ocaml/caml",
+#         build_file = "@opam//opam/_templates:ocaml.ffi.REPO"
+#     )
 
-    new_local_pkg_repository(
-        name = "ocaml.bigarray",
-        path = "ocaml",
-        build_file = "@opam//opam/_templates:ocaml.bigarray.REPO"
-    )
+#     new_local_pkg_repository(
+#         name = "ocaml.bigarray",
+#         path = "ocaml",
+#         build_file = "@opam//opam/_templates:ocaml.bigarray.REPO"
+#     )
 
-    new_local_pkg_repository(
-        name = "ocaml.dynlink",
-        path = "ocaml",
-        build_file = "@opam//opam/_templates:ocaml.dynlink.REPO"
-    )
+#     new_local_pkg_repository(
+#         name = "ocaml.dynlink",
+#         path = "ocaml",
+#         build_file = "@opam//opam/_templates:ocaml.dynlink.REPO"
+#     )
 
-    new_local_pkg_repository(
-        name = "ocaml.str",
-        path = "ocaml",
-        build_file = "@opam//opam/_templates:ocaml.str.REPO"
-    )
+#     new_local_pkg_repository(
+#         name = "ocaml.str",
+#         path = "ocaml",
+#         build_file = "@opam//opam/_templates:ocaml.str.REPO"
+#     )
 
-    new_local_pkg_repository(
-        name = "ocaml.unix",
-        path = "ocaml",
-        build_file = "@opam//opam/_templates:ocaml.unix.REPO"
-    )
+#     new_local_pkg_repository(
+#         name = "ocaml.unix",
+#         path = "ocaml",
+#         build_file = "@opam//opam/_templates:ocaml.unix.REPO"
+#     )
 
-    new_local_pkg_repository(
-        name = "ocaml.threads",
-        path = "ocaml/threads",
-        build_file = "@opam//opam/_templates:ocaml.threads.REPO"
-    )
+#     new_local_pkg_repository(
+#         name = "ocaml.threads",
+#         path = "ocaml/threads",
+#         build_file = "@opam//opam/_templates:ocaml.threads.REPO"
+#     )
 
 ################################################################
 def opam_configure():
 
     opam_fetch_repos()
 
-    install_kernel_libs()
+    # install_kernel_libs()
 
+    # opam_toolchain configures @ocaml.toolchain
     opam_toolchain()

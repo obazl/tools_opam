@@ -276,7 +276,7 @@ void emit_new_local_pkg_repo(FILE *repo_rules_FILE,
 void emit_bazel_hdr(FILE* ostream, int level, char *repo, char *pkg_prefix, obzl_meta_package *_pkg)
 {
     fprintf(ostream, "load(\n");
-    fprintf(ostream, "%*s\"@ocaml//ocaml:rules.bzl\",\n", 5, sp);
+    fprintf(ostream, "%*s\"@rules_ocaml//build:rules.bzl\",\n", 5, sp);
     fprintf(ostream, "%*s\"ocaml_import\"\n", 5, sp);
     fprintf(ostream, ")\n");
 }
