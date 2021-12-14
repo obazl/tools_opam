@@ -10,12 +10,15 @@ filegroup(
 configure_make(
     name = "re2c",
     out_binaries = ["re2c"],
-    autogen = True,
+    # autogen = True,
+    env = {
+        "AR": "" # macos
+    },
+    install_prefix = "${INSTALLDIR}",
     autoreconf = True,
     autoreconf_options = ["-i", "-W", "all"],
     configure_in_place = True,
     configure_options = [
-        "--prefix", "${INSTALLDIR}",
         "--disable-golang",
         "--disable-benchmarks",
         "--disable-benchmarks-regenerate",
