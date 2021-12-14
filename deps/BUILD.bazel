@@ -1,0 +1,15 @@
+cc_binary(
+    name  = "deps",
+    srcs  = ["deps.c"],
+    defines = select({
+        "//bzl/host:debug": [], # "DEBUG_TRACE"],
+        "//conditions:default":   []
+    }),
+    copts = [
+        "-std=c11",
+        "-pedantic-errors",
+        "-Iexternal/opam/bootstrap",
+        "-I$(GENDIR)/external/opam/bootstrap",
+    ],
+    deps = ["//bootstrap"],
+)

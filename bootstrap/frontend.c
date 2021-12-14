@@ -33,8 +33,6 @@ extern bool verbose;
 int errnum;
 int rc;
 
-bool g_ppx_pkg;
-
 char work_buf[PATH_MAX];
 
 UT_array *opam_packages;
@@ -54,10 +52,11 @@ struct fileset_s *filesets = NULL;
 
 EXPORT int opam_main(int argc, char *argv[]) // , char **envp)
 {
-    char *opts = "dfhlm:p:s:v";
+    char *opts = "dfhlm:p:r:s:v";
     char *opam_switch = NULL;
 
     bool force = false;
+    char *deps_root = NULL;
     char *manifest = NULL;
     char *package = NULL;
 
@@ -86,6 +85,9 @@ EXPORT int opam_main(int argc, char *argv[]) // , char **envp)
             break;
         case 'p':
             package = optarg;
+            break;
+        case 'r':
+            deps_root = optarg;
             break;
         case 's':
             /* printf("option s (switch): %s\n", optarg); */
@@ -132,8 +134,10 @@ EXPORT int opam_main(int argc, char *argv[]) // , char **envp)
 
     initialize_config_flags();
 
-    /* printf("@opam//%s\n", basename(argv[0])); */
-    if (strcmp(basename(argv[0]), "export") == 0) {
+    if (strcmp(basename(argv[0]), "deps") == 0) {
+        opam_deps(deps_root);
+    }
+    else if (strcmp(basename(argv[0]), "export") == 0) {
         opam_export(manifest);
     }
     else if (strcmp(basename(argv[0]), "import") == 0) {
@@ -149,7 +153,7 @@ EXPORT int opam_main(int argc, char *argv[]) // , char **envp)
         if (package)
             opam_install(package);
         else
-            printf("remove command requires -p <pkg> arg\n");
+            printf("install command requires -p <pkg> arg\n");
     }
     else if (strcmp(basename(argv[0]), "remove") == 0) {
         if (package)

@@ -29,7 +29,7 @@ bool local_opam;
 FILE *repo_rules_FILE;
 
 #if INTERFACE
-#define OBAZL_OPAM_ROOT ".obazl.d/opam"
+#define OBAZL_OPAM_ROOT OBAZL_ROOT "/opam"
 #endif
 
 char *obazl_opam_root = OBAZL_OPAM_ROOT;
@@ -192,7 +192,7 @@ void init_opam_resolver_raw()
        routines can use to resolve opam pkg names to obazl target
        labels. */
 
-    char * raw_resolver_file = ".obazl.d/opam/opam_resolver_raw.scm";
+    char * raw_resolver_file = OBAZL_OPAM_ROOT "/opam_resolver_raw.scm";
     /* if (access(raw_resolver_file, R_OK) != 0) return; */
 
     //FIXME: config the correct outfile name
@@ -366,14 +366,15 @@ EXPORT void opam_init_project_switch(bool force, char *_opam_switch)
     log_debug("opam_init_project_switch");
     log_debug("  force: %d, switch: %s", force, _opam_switch);
 
+    /* FIXME: prevent use of system compiler for project switch */
     UT_string *opam_switch;
     utstring_new(opam_switch);
     if (_opam_switch == NULL) {
         printf("_opam_switch is NULL\n");
-        if (access(".obazl.d/opam.switch", R_OK) == 0) {
-            printf("using .obazl.d/opam.switch\n");
+        if (access(OBAZL_ROOT "/opam.switch", R_OK) == 0) {
+            printf("using " OBAZL_ROOT "/opam.switch\n");
             char buff[512];
-            FILE *f = fopen(".obazl.d/opam.switch", "r");
+            FILE *f = fopen(OBAZL_ROOT "/opam.switch", "r");
             fgets(buff, 512, f);
             printf("String read: '%s'\n", buff);
             int len = strnlen(buff, 512);
@@ -383,7 +384,7 @@ EXPORT void opam_init_project_switch(bool force, char *_opam_switch)
             utstring_printf(opam_switch, "%s", buff);
             fclose(f);
         } else {
-            printf(".obazl.d/opam.switch not found\n");
+            printf(OBAZL_ROOT "/opam.switch not found\n");
             exit(EXIT_FAILURE);
         }
     } else {
@@ -489,11 +490,24 @@ EXPORT void opam_ingest(char *_opam_switch, char *obazl_opam_root)
     init_opam_resolver_raw();
     /* _initialize_skipped_pkg_list(); */
 
+    /* first make obazl_opam a Bazel package */
+    if (access(OBAZL_OPAM_ROOT "/BUILD.bazel", R_OK) != 0) {
+        FILE *f = fopen(OBAZL_OPAM_ROOT "/BUILD.bazel", "w");
+        if (f == NULL) {
+            perror(OBAZL_OPAM_ROOT "/BUILD.bazel");
+            exit(EXIT_FAILURE);
+        }
+        fprintf(f, "## do not remove\n");
+        fclose(f);
+    }
+
     /* we're going to write one 'new_local_repository' target per
        build file: */
     UT_string *repo_rules_filename = NULL;
     utstring_new(repo_rules_filename);
-    utstring_printf(repo_rules_filename, "%s/opam_repos.bzl", obazl_opam_root);
+    utstring_printf(repo_rules_filename,
+                    "%s/opam_repos.bzl",
+                    obazl_opam_root);
     log_debug("repo_rules_filename: %s",
               utstring_body(repo_rules_filename));
 
@@ -503,7 +517,7 @@ EXPORT void opam_ingest(char *_opam_switch, char *obazl_opam_root)
         exit(EXIT_FAILURE);
     }
     utstring_free(repo_rules_filename);
-    fprintf(repo_rules_FILE, "load(\"@obazl_rules_ocaml//ocaml/_repo_rules:new_local_pkg_repository.bzl\",\n");
+    fprintf(repo_rules_FILE, "load(\"@ocaml//ocaml/_repo_rules:new_local_pkg_repository.bzl\",\n");
     fprintf(repo_rules_FILE, "     \"new_local_pkg_repository\")\n");
     fprintf(repo_rules_FILE, "\n");
     fprintf(repo_rules_FILE, "def fetch():\n");
