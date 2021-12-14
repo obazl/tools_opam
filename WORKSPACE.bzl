@@ -3,26 +3,13 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl",
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
-all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
+load("@ocaml//ocaml/_repo_rules:new_local_pkg_repository.bzl",
+     "new_local_pkg_repository")
 
+load("//opam/_repo_rules:toolchain.bzl", "opam_toolchain")
+
+################################################################
 def opam_fetch_repos():
-
-    maybe(
-        git_repository,
-        name = "obazl_tools_obazl",
-        remote = "https://github.com/obazl/tools_obazl",
-        branch = "dev",
-    )
-
-    maybe(
-        http_archive,
-        name = "bazel_skylib",
-        urls = [
-            "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.0.2/bazel-skylib-1.0.2.tar.gz",
-            "https://github.com/bazelbuild/bazel-skylib/releases/download/1.0.2/bazel-skylib-1.0.2.tar.gz",
-        ],
-        sha256 = "97e70364e9249702246c0e9444bccdc4b847bed1eb03c5a3ece4f83dfe6abc44",
-    )
 
     maybe(
         git_repository,
@@ -34,10 +21,25 @@ def opam_fetch_repos():
     )
 
     maybe(
+        git_repository,
+        name = "obazl_tools_obazl",
+        remote = "https://github.com/obazl/tools_obazl",
+        branch = "dev",
+    )
+
+    # maybe(
+    #     http_archive,
+    #     name = "rules_foreign_cc",
+    #     strip_prefix = "rules_foreign_cc-0.6.0",
+    #     url = "https://github.com/bazelbuild/rules_foreign_cc/archive/0.6.0.tar.gz",
+    # )
+
+    maybe(
         http_archive,
         name = "rules_foreign_cc",
-        strip_prefix = "rules_foreign_cc-0.6.0",
-        url = "https://github.com/bazelbuild/rules_foreign_cc/archive/0.6.0.tar.gz",
+        sha256 = "1df78c7d7eed2dc21b8b325a2853c31933a81e7b780f9a59a5d078be9008b13a",
+        strip_prefix = "rules_foreign_cc-0.7.0",
+        url = "https://github.com/bazelbuild/rules_foreign_cc/archive/0.7.0.tar.gz",
     )
 
     maybe(
@@ -94,3 +96,59 @@ filegroup(name = "hdrs", srcs = ["ini.h"], visibility = ["//visibility:public"])
     #     tag = "0.4.0",
     # )
 
+################################################################
+def install_kernel_libs():
+    print("INSTALLING kernel libs repos")
+    # path attr: relative to OPAM_SWITCH_PREFIX
+
+    new_local_pkg_repository(
+        name = "ocaml.compiler-libs",
+        # path = OPAM_SWITCH_PREFIX + "/lib/ocaml/compiler-libs",
+        path = "ocaml/compiler-libs",
+        build_file = "@opam//opam/_templates:ocaml.compiler-libs.REPO"
+    )
+
+    new_local_pkg_repository(
+        name = "ocaml.ffi",
+        path = "ocaml/caml",
+        build_file = "@opam//opam/_templates:ocaml.ffi.REPO"
+    )
+
+    new_local_pkg_repository(
+        name = "ocaml.bigarray",
+        path = "ocaml",
+        build_file = "@opam//opam/_templates:ocaml.bigarray.REPO"
+    )
+
+    new_local_pkg_repository(
+        name = "ocaml.dynlink",
+        path = "ocaml",
+        build_file = "@opam//opam/_templates:ocaml.dynlink.REPO"
+    )
+
+    new_local_pkg_repository(
+        name = "ocaml.str",
+        path = "ocaml",
+        build_file = "@opam//opam/_templates:ocaml.str.REPO"
+    )
+
+    new_local_pkg_repository(
+        name = "ocaml.unix",
+        path = "ocaml",
+        build_file = "@opam//opam/_templates:ocaml.unix.REPO"
+    )
+
+    new_local_pkg_repository(
+        name = "ocaml.threads",
+        path = "ocaml/threads",
+        build_file = "@opam//opam/_templates:ocaml.threads.REPO"
+    )
+
+################################################################
+def opam_configure():
+
+    opam_fetch_repos()
+
+    install_kernel_libs()
+
+    opam_toolchain()
