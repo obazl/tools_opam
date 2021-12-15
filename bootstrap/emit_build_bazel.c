@@ -26,7 +26,7 @@ static char *sp = " ";
 
 bool stdlib_root = false;
 
-char *buildfile_prefix = "@//" OBAZL_OPAM_ROOT "/buildfiles";
+/* char *buildfile_prefix = "@//" OBAZL_OPAM_ROOT "/buildfiles"; */
 /* was: "@//.opam.d/buildfiles"; */
 
 long *KPM_TABLE;
@@ -151,8 +151,9 @@ void emit_new_local_subpkg_entries(FILE *repo_rules_FILE,
                     ;           /* skip */
                 } else {
                     fprintf(repo_rules_FILE,
-                            "            \"%s/%s/%s:BUILD.bazel\":\n",
-                            buildfile_prefix,
+                            "            \"@//%s/buildfiles/%s/%s:BUILD.bazel\":\n",
+                            /* buildfile_prefix, */
+                            bzl_switch_root,
                             utstring_body(_new_pkg_prefix),
                             /* pkg_name, */
                             subpkg->name);
@@ -228,15 +229,15 @@ void emit_new_local_pkg_repo(FILE *repo_rules_FILE,
     fprintf(repo_rules_FILE, "        build_file = ");
     if (_pkg_prefix == NULL)
         fprintf(repo_rules_FILE,
-                /* "\"@demos//.opam/buildfiles/%s:BUILD.bazel\",\n", */
-                "\"%s/%s:BUILD.bazel\",\n",
-                buildfile_prefix,
+                "\"@//%s/buildfiles/%s:BUILD.bazel\",\n",
+                /* buildfile_prefix, */
+                bzl_switch_root,
                 pkg_name);
     else
         fprintf(repo_rules_FILE,
-                /* "\"@demos//.opam/buildfiles/%s/%s:BUILD.bazel\",\n", */
-                "\"%s/%s/%s:BUILD.bazel\",\n",
-                buildfile_prefix,
+                "\"@//%s/buildfiles/%s/%s:BUILD.bazel\",\n",
+                /* buildfile_prefix, */
+                bzl_switch_root,
                 _pkg_prefix, pkg_name);
 
     fprintf(repo_rules_FILE, "        path       = ");

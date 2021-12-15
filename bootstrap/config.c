@@ -21,11 +21,14 @@
 #include "log.h"
 /* #include "s7.h" */
 #include "utarray.h"
+#if INTERFACE
 #include "utstring.h"
+#endif
 
 #include "config.h"
 
 bool debug;
+bool dry_run;
 bool verbose;
 
 FILE *log_fp;
@@ -142,26 +145,30 @@ void log_fn(log_Event *evt)
     fprintf(log_fp, "%s\n", log_buf);
 }
 
-EXPORT void config_logging(char *_logfile)
+UT_string *logfile;
+EXPORT void config_logging(UT_string *_logfile)
 {
-    /* printf("config_logging: %s\n", OBAZL_OPAM_ROOT); */
+    /* printf("config_logging: %s\n", utstring_body(_logfile)); */
     /* CWD = getcwd(NULL, 0); */
-    int rc = access(OBAZL_OPAM_ROOT, F_OK);
+    int rc = access(OBAZL_ROOT "/logs", F_OK);
     if (rc < 0) {
-        printf("creating %s\n", OBAZL_OPAM_ROOT);
-        mkdir_r(OBAZL_OPAM_ROOT);
+        printf("creating %s/logs\n", OBAZL_ROOT);
+        mkdir_r(OBAZL_ROOT "/logs");
         /* fprintf(stderr, "ERROR: %s not found at %s\n", */
         /*         OBAZL_OPAM_ROOT, getcwd(NULL, 0)); */
         /* exit(EXIT_FAILURE); */
     }
-    rc = access(OBAZL_OPAM_ROOT, F_OK);
+    rc = access(OBAZL_ROOT, F_OK);
     if (rc < 0) {
         printf("huh?\n");
         exit(EXIT_FAILURE);
     }
 
     utstring_new(logfile);
-    utstring_printf(logfile, "%s/%s.log", OBAZL_OPAM_ROOT, _logfile);
+    utstring_printf(logfile, "%s/logs/%s.log",
+                    OBAZL_ROOT,
+                    utstring_body(_logfile));
+    /* printf("logfile: %s\n", utstring_body(logfile)); */
     log_fp = fopen(utstring_body(logfile), "w");
     if (log_fp == NULL) {
         perror(utstring_body(logfile));
@@ -170,7 +177,7 @@ EXPORT void config_logging(char *_logfile)
         utstring_free(logfile);
         exit(EXIT_FAILURE);
     }
-    utstring_free(logfile);
+    /* utstring_free(logfile); */
     logging_to_file = true;
     /* fprintf(stdout, "opened logfile %s\n", logfile); */
 
@@ -205,6 +212,8 @@ EXPORT void shutdown(void)
         fclose(log_fp);
         if (verbose)
             fprintf(stdout, "logfile: %s/%s\n",
-                    getcwd(NULL, 0), logfile);
+                    getcwd(NULL, 0), utstring_body(logfile));
+        utstring_free(logfile);
+
     }
 }

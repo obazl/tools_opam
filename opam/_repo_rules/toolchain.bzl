@@ -120,7 +120,7 @@ _opam_toolchain = repository_rule(
 )
 
 def opam_toolchain():
-    print("opam_toolchain (fn)")
+    # print("opam_toolchain (fn)")
 
     # repository rule creates symlinks to opam switch:
     _opam_toolchain(name="ocaml.toolchain")

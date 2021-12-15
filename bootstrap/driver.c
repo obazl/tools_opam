@@ -22,7 +22,7 @@
 #include "driver.h"
 
 int errnum;
-bool local_opam;
+/* bool local_opam; */
 
 bool g_ppx_pkg;
 

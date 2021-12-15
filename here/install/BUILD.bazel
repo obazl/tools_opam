@@ -1,3 +1,5 @@
+load("//bootstrap:BUILD.bzl", "CMD_FLAGS", "BOOTSTRAP_INCLUDES")
+
 cc_binary(
     name  = "install",
     srcs  = ["install.c"],
@@ -5,11 +7,6 @@ cc_binary(
         "//bzl/host:debug": [], # "DEBUG_TRACE"],
         "//conditions:default":   []
     }),
-    copts = [
-        "-std=c11",
-        "-pedantic-errors",
-        "-Iexternal/opam/bootstrap",
-        "-I$(GENDIR)/external/opam/bootstrap",
-    ],
+    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES,
     deps = ["//bootstrap"],
 )

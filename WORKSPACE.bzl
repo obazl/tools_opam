@@ -51,7 +51,7 @@ def opam_fetch_repos():
         strip_prefix = "re2c-2.0.3",
         sha256 = "8f74163d02b4ce371d69876af1610177b45055b387656d0fb22c3eab131ccbf9",
         workspace_file_content = "workspace( name = \"opam-re2c\" )",
-        build_file = "@opam//remote/re2c:BUILD.bazel"
+        build_file = "@opam//external/re2c:BUILD.bazel"
         # build_file_content = "\n".join([
         #     "filegroup(name = \"all\",",
         #     "srcs = glob([\"**\"]),",

@@ -26,8 +26,10 @@
 #include "frontend.h"
 
 extern bool debug;
-extern bool local_opam;
+//extern bool dry_run;
 extern bool verbose;
+
+/* extern bool local_opam; */
 
 /* static int verbosity = 0; */
 int errnum;
@@ -50,16 +52,52 @@ struct fileset_s *filesets = NULL;
 
 /* struct package_s *packages = NULL; */
 
+void print_usage(char *cmd)
+{
+    printf("Usage: bazel run @opam//%s -- [args]\n", cmd);
+    if (strcmp(cmd, "config") == 0) {
+        printf("\targs: none\n");
+    }
+    else if (strcmp(cmd, "deps") == 0) {
+    }
+    else if (strcmp(cmd, "export") == 0) {
+        printf("\targs: -m <manifest file>\n");
+    }
+    else if (strcmp(cmd, "import") == 0) {
+        printf("\targs: -m <manifest file>\n");
+        printf("\tDefault (no args): imports <pkg>.opam.manifest if found.\n");
+    }
+    else if (strcmp(cmd, "init") == 0) {
+        printf("\targs: -c <compiler version>\n");
+        printf("\tDefault: uses compiler version listed in .obazl.d/opam.switch if found; otherwise uses compiler for current switch, unless it is the system compiler.\n");
+    }
+    else if (strcmp(cmd, "install") == 0) {
+        printf("\targs: -p <package>\n");
+    }
+    else if (strcmp(cmd, "remove") == 0) {
+        printf("\targs: -p <package>\n");
+    }
+    else if (strcmp(cmd, "status") == 0) {
+        printf("\targs: none\n");
+    }
+}
+
+void ignore_msg(void)
+{
+    printf("(obazl says: you can ignore any advice about running eval to update the shell environment, so long as you use @opam commands to control your here-switch.)\n");
+}
+
 EXPORT int opam_main(int argc, char *argv[]) // , char **envp)
 {
-    char *opts = "dfhlm:p:r:s:v";
     char *opam_switch = NULL;
+    char *compiler_version = NULL;
 
     bool force = false;
     char *deps_root = NULL;
     char *manifest = NULL;
     char *package = NULL;
 
+    char *opts = "c:dfhm:p:r:s:vx";
     int opt;
     while ((opt = getopt(argc, argv, opts)) != -1) {
         switch (opt) {
@@ -71,15 +109,18 @@ EXPORT int opam_main(int argc, char *argv[]) // , char **envp)
             log_debug("uknown option: %c", optopt);
             exit(EXIT_FAILURE);
             break;
+        case 'c':
+            compiler_version = strndup(optarg, PATH_MAX);
+            break;
         case 'd':
             debug = true;
             break;
         case 'f':
             force = true;
             break;
-        case 'l':
-            local_opam = true;
-            break;
+        /* case 'l': */
+        /*     local_opam = true; */
+        /*     break; */
         case 'm':
             manifest = optarg;
             break;
@@ -89,23 +130,18 @@ EXPORT int opam_main(int argc, char *argv[]) // , char **envp)
         case 'r':
             deps_root = optarg;
             break;
+        case 'x':
+            dry_run = true;
+            break;
         case 's':
             /* printf("option s (switch): %s\n", optarg); */
             opam_switch = strndup(optarg, PATH_MAX);
             break;
-        /* case 'x': */
-        /*     verbosity++; */
-        /*     break; */
         case 'v':
             verbose = true;
             break;
         case 'h':
-            log_info("Usage: install [options]");
-#ifdef DEBUG
-            log_info("\toptions: -d (debug), -l (local opam)");
-#else
-            log_info("\toptions: -d debug, -l (local opam)");
-#endif
+            print_usage(basename(argv[0]));
             exit(EXIT_SUCCESS);
             break;
         default:
@@ -116,6 +152,9 @@ EXPORT int opam_main(int argc, char *argv[]) // , char **envp)
     if (debug)
         fprintf(stdout, "DEBUGGING\n");
 
+    if (dry_run)
+        printf("DRY RUN\n");
+
     /* we search all pkg names for '/'; this table means we only build
        the internal Knuth-Morris-Pratt table once */
     extern long *KPM_TABLE; /* in emit_build_bazel.c */
@@ -124,17 +163,23 @@ EXPORT int opam_main(int argc, char *argv[]) // , char **envp)
 
     /* obazl config sets cwd, must be called first */
     obazl_configure(getcwd(NULL, 0));
-    config_logging(basename(argv[0]));
-    /* char *wd = getcwd(NULL, 0); */
-    /* fprintf(stdout, "CWD after bzl config: %s\n", wd); */
 
-    /* CWD = getcwd(NULL, 0); */
+    UT_string *logfile;
+    utstring_new(logfile);
+    utstring_printf(logfile, "opam_%s", basename(argv[0]));
+    config_logging(logfile);
+    utstring_free(logfile);
 
     utarray_new(opam_packages, &ut_str_icd);
 
     initialize_config_flags();
 
-    if (strcmp(basename(argv[0]), "deps") == 0) {
+    int result;
+
+    if (strcmp(basename(argv[0]), "config") == 0) {
+        opam_config(opam_switch); //, obazl_opam_root);
+    }
+    else if (strcmp(basename(argv[0]), "deps") == 0) {
         opam_deps(deps_root);
     }
     else if (strcmp(basename(argv[0]), "export") == 0) {
@@ -142,24 +187,33 @@ EXPORT int opam_main(int argc, char *argv[]) // , char **envp)
     }
     else if (strcmp(basename(argv[0]), "import") == 0) {
         opam_import(manifest);
+        ignore_msg();
     }
     else if (strcmp(basename(argv[0]), "init") == 0) {
-        opam_init_project_switch(force, opam_switch);
-    }
-    else if (strcmp(basename(argv[0]), "ingest") == 0) {
-        opam_ingest(opam_switch, obazl_opam_root);
+        if (compiler_version && opam_switch) {
+            printf("@opam/here/init: only one of -c and -s may be passed\n");
+            exit(EXIT_FAILURE);
+        }
+        result = opam_init_here(force, compiler_version, opam_switch);
+        if (result == 0)
+            ignore_msg();
     }
     else if (strcmp(basename(argv[0]), "install") == 0) {
-        if (package)
+        if (package) {
             opam_install(package);
-        else
+            ignore_msg();
+        } else
             printf("install command requires -p <pkg> arg\n");
     }
     else if (strcmp(basename(argv[0]), "remove") == 0) {
-        if (package)
+        if (package) {
             opam_remove(package);
-        else
+            ignore_msg();
+        } else
             printf("remove command requires -p <pkg> arg\n");
+    }
+    else if (strcmp(basename(argv[0]), "show") == 0) {
+        opam_status();
     }
     else if (strcmp(basename(argv[0]), "status") == 0) {
         opam_status();
@@ -168,8 +222,8 @@ EXPORT int opam_main(int argc, char *argv[]) // , char **envp)
 
     dispose_flag_table();
 
-    if (opam_switch)
-        free(opam_switch);
+    if (compiler_version) free(compiler_version);
+    if (opam_switch) free(opam_switch);
 
     free(KPM_TABLE);
 

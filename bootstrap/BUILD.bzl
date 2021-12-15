@@ -1,5 +1,18 @@
 load("@bazel_skylib//lib:paths.bzl", "paths")
 
+CMD_FLAGS = [
+    "-std=c11",
+    "-pedantic-errors",
+]
+
+BOOTSTRAP_INCLUDES = [
+    "-Ibootstrap",
+    "-Iexternal/opam/bootstrap",
+
+    "-I$(GENDIR)/bootstrap",
+    "-I$(GENDIR)/external/opam/bootstrap",
+]
+
 def _gensyntax_impl(ctx):
 
     (bn, ext) = paths.split_extension(ctx.file.yy.basename)
