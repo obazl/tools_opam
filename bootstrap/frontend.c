@@ -65,7 +65,7 @@ void print_usage(char *cmd)
     }
     else if (strcmp(cmd, "import") == 0) {
         printf("\targs: -m <manifest file>\n");
-        printf("\tDefault (no args): imports <pkg>.opam.manifest if found.\n");
+        printf("\tDefault (no args): imports .obazl.d/opam/here.packages if found.\n");
     }
     else if (strcmp(cmd, "init") == 0) {
         printf("\targs: -c <compiler version>\n");
@@ -176,8 +176,12 @@ EXPORT int opam_main(int argc, char *argv[]) // , char **envp)
 
     int result;
 
-    if (strcmp(basename(argv[0]), "config") == 0) {
-        opam_config(opam_switch); //, obazl_opam_root);
+    if (strncmp(basename(argv[0]), "config", 6) == 0) {
+        if (strncmp(basename(dirname(argv[0])), "here", 4) == 0) {
+            opam_config(NULL);
+        } else {
+            opam_config(opam_switch);
+        }
     }
     else if (strcmp(basename(argv[0]), "deps") == 0) {
         opam_deps(deps_root);

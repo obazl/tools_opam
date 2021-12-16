@@ -38,13 +38,14 @@ char *run_cmd(char *cmd)
     char buf[PATH_MAX];
     FILE *fp;
 
+    errno = 0;
     if ((fp = popen(cmd, "r")) == NULL) {
         printf("Error opening pipe!\n");
         return NULL;
     }
 
+    errno = 0;
     while (fgets(buf, sizeof buf, fp) != NULL) {
-        /* printf("SWITCH: %s\n", buf); */
         buf[strcspn(buf, "\n")] = 0;
     }
 

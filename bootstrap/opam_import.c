@@ -14,7 +14,8 @@ char *prompt_import_manifest(void)
     fflush(stdin);
     fgets(manifest, 127, stdin);
 
-    return strndup(manifest, strlen(manifest));
+    // rm newline
+    return strndup(manifest, strlen(manifest) - 1);
 }
 
 /*
@@ -54,18 +55,19 @@ EXPORT void opam_import(char *manifest)
     char *exe;
     int result;
 
-    if (access(".opam", F_OK) != 0) {
-        //FIXME: print error msg
-        log_error("Project-local OPAM root '.opam' not found.");
-        printf("Project-local OPAM root '.opam' not found.\n");
-        exit(EXIT_FAILURE);
+    if (access(ROOT_DIRNAME, F_OK) != 0) {
+        if (!dry_run) {
+            log_error("Project-local OPAM root '.opam' not found.");
+            printf("Project-local OPAM root '.opam' not found.\n");
+            exit(EXIT_FAILURE);
+        }
     } else {
         exe = "opam";
         char *argv[] = {
             "opam", "switch",
             "--cli=2.1",
-            "--root=./.opam",
-            "--switch", "obazl",
+            "--root=./" ROOT_DIRNAME,
+            "--switch", HERE_SWITCH_NAME,
             "--yes",
             "import",
             utstring_body(manifest_name),
@@ -77,7 +79,7 @@ EXPORT void opam_import(char *manifest)
         int argc = (sizeof(argv) / sizeof(argv[0])) - 1;
         result = spawn_cmd(exe, argc, argv);
         if (result != 0) {
-            fprintf(stderr, "FAIL: run_cmd(opam import --root .opam --switch obazl %s)\n", utstring_body(manifest_name));
+            fprintf(stderr, "FAIL: run_cmd(opam import --root .opam --switch _here %s)\n", utstring_body(manifest_name));
             exit(EXIT_FAILURE);
         /* } else { */
         /*     printf("import result: %s\n", result); */

@@ -8,11 +8,11 @@
 EXPORT void opam_status(void) // char *_opam_switch, char *obazl_opam_root)
 {
     printf("@opam//here/status\n");
-    printf("\troot:   .opam\n");
-    printf("\tswitch: obazl\n");
+    printf("\troot:   " ROOT_DIRNAME "\n");
+    printf("\tswitch: " HERE_SWITCH_NAME "\n");
     log_info("opam_status");
 
-    if (access(".opam", F_OK) != 0) {
+    if (access(ROOT_DIRNAME, F_OK) != 0) {
         log_info("Project-local OPAM root '.opam' not found.\n");
         printf("Project-local OPAM root '.opam' not found.\n");
     } else {
@@ -23,8 +23,8 @@ EXPORT void opam_status(void) // char *_opam_switch, char *obazl_opam_root)
         exe = "opam";
         char *argv[] = {
             "opam", "var",
-            "--root", ".opam",
-            "--switch", "obazl",
+            "--root", ROOT_DIRNAME,
+            "--switch", HERE_SWITCH_NAME,
             NULL // null-terminated array of ptrs to null-terminated strings
         };
 
@@ -40,8 +40,8 @@ EXPORT void opam_status(void) // char *_opam_switch, char *obazl_opam_root)
         //*var_argv = NULL; //FIXME: otherwise run_cmd gets confused
         char *list_argv[] = {
             "opam", "list",
-            "--root", ".opam",
-            "--switch", "obazl",
+            "--root",   ROOT_DIRNAME,
+            "--switch", HERE_SWITCH_NAME,
             "--columns", "name,version",
             NULL
         };

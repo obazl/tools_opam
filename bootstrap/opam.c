@@ -32,8 +32,11 @@ int errnum;
 FILE *repo_rules_FILE;
 
 #if INTERFACE
+#define ROOT_DIRNAME ".opam"
 #define OBAZL_OPAM_ROOT OBAZL_ROOT "/opam"
-#define  HERE_SWITCH_BAZEL_ROOT OBAZL_OPAM_ROOT "/obazl"
+#define HERE_COMPILER_FILE OBAZL_OPAM_ROOT "/here.compiler"
+#define HERE_SWITCH_BAZEL_ROOT OBAZL_OPAM_ROOT "/_here"
+#define HERE_SWITCH_NAME "_here"
 #endif
 
 char *obazl_opam_root = OBAZL_OPAM_ROOT;
@@ -67,6 +70,7 @@ char * read_here_compiler_file(void)
 
 void init_opam_resolver_raw(char *_opam_switch)
 {
+    printf("init_opam_resolver_raw, switch: %s\n", _opam_switch);
     /* we're going to write out a scheme file that our dune conversion
        routines can use to resolve opam pkg names to obazl target
        labels. */
@@ -87,7 +91,7 @@ void init_opam_resolver_raw(char *_opam_switch)
     extern FILE *opam_resolver;  /* in emit_build_bazel.c */
     opam_resolver = fopen(utstring_body(raw_resolver_file), "w");
     if (opam_resolver == NULL) {
-        perror("opam_resolver fopen");
+        perror(utstring_body(raw_resolver_file));
         exit(EXIT_FAILURE);
     }
     utstring_free(raw_resolver_file);
@@ -165,18 +169,20 @@ EXPORT void opam_export(char *manifest)
     if (manifest) {
         utstring_printf(manifest_name, "%s", manifest);
     } else {
-        char *workspace = get_workspace_name();
-        printf("wsn: '%s'\n", workspace);
-        utstring_printf(manifest_name, "%s.opam.manifest", workspace);
+        /* char *workspace = get_workspace_name(); */
+        /* printf("wsn: '%s'\n", workspace); */
+        /* utstring_printf(manifest_name, "%s.opam.manifest", workspace); */
+        utstring_printf(manifest_name, "%s/here.packages",
+                        obazl_opam_root);
     }
 
     char *exe;
     int result;
 
-    if (access(".opam", F_OK) != 0) {
+    if (access(ROOT_DIRNAME, F_OK) != 0) {
         //FIXME: print error msg
-        log_error("Project-local OPAM root '.opam' not found.");
-        printf("Project-local OPAM root '.opam' not found.\n");
+        log_error("OPAM root '" ROOT_DIRNAME "' not found.");
+        printf("Project-local OPAM root '" ROOT_DIRNAME "' not found.\n");
         exit(EXIT_FAILURE);
     } else {
         exe = "opam";
@@ -184,9 +190,10 @@ EXPORT void opam_export(char *manifest)
             "opam", "switch",
             "export",
             "--cli=2.1",
-            "--root=./.opam",
-            "--switch", "obazl",
-            "--freeze", "--full",
+            "--root=./" ROOT_DIRNAME,
+            "--switch", HERE_SWITCH_NAME,
+            "--freeze",
+            "--full",
             utstring_body(manifest_name),
             NULL
         };
@@ -195,16 +202,17 @@ EXPORT void opam_export(char *manifest)
         int argc = (sizeof(argv) / sizeof(argv[0])) - 1;
         result = spawn_cmd(exe, argc, argv);
         if (result != 0) {
-            fprintf(stderr, "FAIL: spawn_cmd(opam var --root .opam --switch obazl)\n");
+            fprintf(stderr, "FAIL: spawn_cmd(opam var --root .opam --switch _here)\n");
             exit(EXIT_FAILURE);
         /* } else { */
         /*     printf("export result: %s\n", result); */
         }
     }
+    // chmod(OBAZL_OPAM_ROOT "/here.compiler", S_IRUSR|S_IRGRP|S_IROTH);
 }
 
 /* opam_install -p <pkg>
-   init a new opam installation rooted at ./opam, switch 'obazl',
+   init a new opam installation rooted at ./opam, switch '_here',
    and install pkgs
  */
 EXPORT void opam_install(char *_package)
@@ -214,10 +222,10 @@ EXPORT void opam_install(char *_package)
     char *exe;
     int result;
 
-    if (access(".opam", F_OK) != 0) {
+    if (access(ROOT_DIRNAME, F_OK) != 0) {
         //FIXME: print error msg
-        log_error("Project-local OPAM root '.opam' not found.");
-        printf("Project-local OPAM root '.opam' not found.\n");
+        log_error("OPAM root '" ROOT_DIRNAME "' not found.");
+        printf("Project-local OPAM root '" ROOT_DIRNAME "' not found.\n");
         exit(EXIT_FAILURE);
     } else {
 
@@ -227,8 +235,8 @@ EXPORT void opam_install(char *_package)
             /* "-v", */
             "--yes",
             "--cli=2.1",
-            "--root=./.opam",
-            "--switch", "obazl",
+            "--root=./" ROOT_DIRNAME,
+            "--switch", HERE_SWITCH_NAME,
             "--require-checksums",
             _package,
             NULL
@@ -239,7 +247,7 @@ EXPORT void opam_install(char *_package)
             printf("Installing OPAM package: %s\n", _package);
         result = spawn_cmd(exe, argc, argv);
         if (result != 0) {
-            fprintf(stderr, "FAIL: spawn_cmd(opam install --root .opam --switch obazl --require-checksums %s)\n", _package);
+            fprintf(stderr, "FAIL: spawn_cmd(opam install --root .opam --switch _here --require-checksums %s)\n", _package);
             exit(EXIT_FAILURE);
         } else {
             printf("install result: %s\n", result);
@@ -254,10 +262,10 @@ EXPORT void opam_remove(char *_package)
     char *exe;
     int result;
 
-    if (access(".opam", F_OK) != 0) {
+    if (access(ROOT_DIRNAME, F_OK) != 0) {
         //FIXME: print error msg
-        log_error("Project-local OPAM root '.opam' not found.");
-        printf("Project-local OPAM root '.opam' not found.\n");
+        log_error("OPAM root '" ROOT_DIRNAME "' not found.");
+        printf("OPAM root '" ROOT_DIRNAME "' not found.\n");
         exit(EXIT_FAILURE);
     } else {
 
@@ -267,8 +275,8 @@ EXPORT void opam_remove(char *_package)
             /* "-v", */ // verbose? "-v" : "",
             "--yes",
             "--cli=2.1",
-            "--root=./.opam",
-            "--switch", "obazl",
+            "--root=./" ROOT_DIRNAME,
+            "--switch", HERE_SWITCH_NAME,
             _package,
             NULL
         };
@@ -277,7 +285,7 @@ EXPORT void opam_remove(char *_package)
         int argc = (sizeof(argv) / sizeof(argv[0])) - 1;
         result = spawn_cmd(exe, argc, argv);
         if (result != 0) {
-            fprintf(stderr, "FAIL: spawn_cmd(opam remove --root .opam --switch obazl %s)\n", _package);
+            fprintf(stderr, "FAIL: spawn_cmd(opam remove --root .opam --switch _here %s)\n", _package);
             exit(EXIT_FAILURE);
         /* } else { */
         /*     printf("remove result: %s\n", result); */

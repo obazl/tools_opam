@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "utstring.h"
@@ -51,11 +54,12 @@ char *prompt_compiler_version(void)
     fflush(stdin);
     fgets(version, 127, stdin);
 
-    return strndup(version, strlen(version));
+    // remove newline
+    return strndup(version, strlen(version) - 1);
 }
 
 /* opam_init_here
-   init a new opam installation rooted at ./opam, switch 'obazl',
+   init a new opam installation rooted at ./opam, switch '_here',
    and install pkgs
 
    Default: install here.compiler and import here.packages
@@ -72,7 +76,10 @@ EXPORT int opam_init_here(bool force, char *_compiler_version, char *_opam_switc
     if (access(".opam", F_OK) == 0) {
 
         char *here_switch = run_cmd("opam switch --root .opam show");
-        char *here_compiler = run_cmd("opam exec --root .opam --switch obazl -- ocamlc --version");
+        char *here_compiler = run_cmd(
+             "opam exec --root " ROOT_DIRNAME
+             " --switch " HERE_SWITCH_NAME
+             " -- ocamlc --version");
 
         printf("OPAM here-switch already configured at root ./.opam, switch '%s', compiler: '%s'.\n", here_switch, here_compiler);
 
@@ -104,7 +111,7 @@ EXPORT int opam_init_here(bool force, char *_compiler_version, char *_opam_switc
         }
         if (replace) {
             printf("removing ./.opam\n");
-            run_cmd("rm -rf ./.opam");
+            run_cmd("rm -rf " ROOT_DIRNAME);
         } else {
             printf("cancelling init\n");
             return -1;
@@ -141,7 +148,7 @@ EXPORT int opam_init_here(bool force, char *_compiler_version, char *_opam_switc
         char *switch_compiler = run_cmd(utstring_body(cmd));
         if (switch_compiler == NULL) {
             log_error("Switch %s not found.", _opam_switch);
-            printf("obazl: switch %s not found.\n", _opam_switch);
+            printf("_here: switch %s not found.\n", _opam_switch);
             exit(EXIT_FAILURE);
         }
         printf("Using compiler version %s from opam switch %s\n",
@@ -171,7 +178,11 @@ EXPORT int opam_init_here(bool force, char *_compiler_version, char *_opam_switc
 
             free(compiler_version);
 
-            opam_import(NULL); // import .obazl.d/opam/here.packages
+            if (access(OBAZL_OPAM_ROOT "/here.packages", R_OK) == 0)
+                opam_import(NULL);
+            else
+                if (dry_run)
+                    printf("here.packages not found\n");
 
             exit(EXIT_SUCCESS);
 
@@ -184,7 +195,7 @@ EXPORT int opam_init_here(bool force, char *_compiler_version, char *_opam_switc
             /* printf("current switch %s\n", current_switch); */
 
             compiler_version = run_cmd("opam exec -- ocamlc --version");
-            printf("current switch ocamlc version: %s\n", compiler_version);
+            /* printf("current switch ocamlc version: %s\n", compiler_version); */
 
             bool use_current = prompt_use_current(current_switch, compiler_version);
             if (!use_current) {
@@ -239,7 +250,7 @@ LOCAL int _opam_init(void)
     int argc = (sizeof(init_argv) / sizeof(init_argv[0])) - 1;
     result = spawn_cmd(exe, argc, init_argv);
     if (result != 0) {
-        fprintf(stderr, "FAIL: run_cmd(opam var --root .opam --switch obazl)\n");
+        fprintf(stderr, "FAIL: run_cmd(opam var --root .opam --switch _here)\n");
     }
     return result;
 }
@@ -260,7 +271,7 @@ LOCAL int _opam_create_switch(char *compiler_version)
         "--cli=2.1",
         "--root=./.opam",
         /* "--description", utstring_body(desc), */
-        "create", "obazl",
+        "create", "_here", // "obazl",
         compiler_version,
         NULL
     };
@@ -268,7 +279,37 @@ LOCAL int _opam_create_switch(char *compiler_version)
     int argc = (sizeof(switch_argv) / sizeof(switch_argv[0])) - 1;
     result = spawn_cmd(exe, argc, switch_argv);
     if (result != 0) {
-        fprintf(stderr, "FAIL: run_cmd(opam switch --root .opam create obazl)\n");
+        fprintf(stderr, "FAIL: run_cmd(opam switch --root .opam create _here)\n");
     }
+
+    FILE *f = fopen(HERE_COMPILER_FILE, "w");
+    if (f == NULL) {
+        if (errno = EACCES) {
+            int rc = unlink(HERE_COMPILER_FILE);
+            if (rc == 0) {
+                printf("unlinked %s\n", HERE_COMPILER_FILE);
+                f = fopen(HERE_COMPILER_FILE, "w");
+                if (f == NULL) {
+                    perror(HERE_COMPILER_FILE);
+                    exit(EXIT_FAILURE);
+                }
+                printf("opened %s for w\n", HERE_COMPILER_FILE);
+            } else {
+                perror(HERE_COMPILER_FILE);
+                exit(EXIT_FAILURE);
+            }
+        } else {
+            perror(HERE_COMPILER_FILE);
+            exit(EXIT_FAILURE);
+        }
+    }
+    if (dry_run)
+        printf("writing %s to %s", compiler_version, OBAZL_OPAM_ROOT "/here.compiler\n");
+
+    fprintf(f, "%s\n", compiler_version);
+    fclose(f);
+
+    chmod(HERE_COMPILER_FILE, S_IRUSR|S_IRGRP|S_IROTH);
+
     return result;
 }

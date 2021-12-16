@@ -55,12 +55,13 @@ EXPORT void opam_config(char *_opam_switch) //, char *bzl_switch_root)
 
     if (_opam_switch != NULL) {
         // configure non-here-switch
+        printf("using current switch of sys opam\n");
         log_info("using current switch of sys opam");
 
         cmd = "opam var switch";
         opam_switch = run_cmd(cmd);
         if (result == NULL) {
-            fprintf(stderr, "FAIL: run_cmdx(%s)\n", cmd);
+            fprintf(stderr, "FAIL: run_cmd(%s)\n", cmd);
             exit(EXIT_FAILURE);
         }
         /* } else */
@@ -89,15 +90,17 @@ EXPORT void opam_config(char *_opam_switch) //, char *bzl_switch_root)
 
     } else {
         // configure here-switch
-        /* printf("configuring here-switch\n") */
+        printf("configuring here-switch\n");
         /* opam_switch = "obazl"; // strndup(_opam_switch, PATH_MAX); */
         /* utstring_printf(switch_bin, "./.opam/%s/bin", opam_switch); */
         /* utstring_printf(switch_lib, "./.opam/%s/lib", opam_switch); */
 
         cmd = "opam var --root .opam switch";
+        errno = 0;
         opam_switch = run_cmd(cmd);
-        if (result == NULL) {
-            fprintf(stderr, "FAIL: run_cmdx(%s)\n", cmd);
+        if (opam_switch == NULL) {
+            perror(cmd);
+            /* fprintf(stderr, "Fail: run_cmd(%s)\n", cmd); */
             exit(EXIT_FAILURE);
         }
         printf("found here-switch %s\n", opam_switch);
