@@ -1,4 +1,5 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bootstrap:BUILD.bzl", "CMD_FLAGS", "BOOTSTRAP_INCLUDES")
 
 ################################################################
 ## testing lexis, syntaxis
@@ -9,68 +10,50 @@ cc_binary(
         "opam_lex.c",
         "opam_lex.h",
     ],
-    copts = select({
-        # strdup is non-standard, not supported on linux in strict c11 mode
-        "//bzl/host:macos": ["-std=c11"],
-        "//bzl/host:linux": ["-std=gnu11"],
-        "//conditions:default": ["-std=c11"],
-    }) + [
-        "-pedantic-errors",
-
-        "-Ibootstrap",
-        "-I$(GENDIR)/bootstrap",
-
-        "-I", "$(GENDIR)/test",
-
-        # "-I", "external/obazl/vendored/logc",
-        # "-I", "external/tools_obazl/vendored/logc",
-
-        "-Iexternal/opam/bootstrap",
-        "-I$(GENDIR)/external/opam/bootstrap",
+    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES + [
+        "-I$(GENDIR)/test",
+        "-I$(GENDIR)/external/opam/test"
     ],
     defines = ["DEBUG", "DEBUG_TRACE"],
     deps = [
         "//bootstrap:opam_lexer"
     ],
-    # linkopts = select({
-    #     "//bzl/host:linux": [],
-    #     "//bzl/host:macos": ["-framework", "CoreServices"],
-    # }),
     linkstatic = 1
 )
 
-##########
+
 cc_binary(
-    name  = "parse_file",
+    name  = "opam_parse",
     srcs  = [
-        "parse_file.c",
-        "parse_file.h",
-        # "//src:sealark_debug.c",
+        "opam_parse.c",
+        "opam_parse.h",
     ],
-    copts = select({
-        # strdup is non-standard, not supported on linux in strict c11 mode
-        "//bzl/host:macos": ["-std=c11"],
-        "//bzl/host:linux": ["-std=gnu11"],
-        "//conditions:default": ["-std=c11"],
-    }) + [
-        "-pedantic-errors",
-
+    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES + [
         "-I$(GENDIR)/test",
-        # "-I$(GENDIR)/external/sealark/test",
-
-        "-I$(GENDIR)/src",
-
-        # "-Ivendored/logc",
-        # "-Iexternal/sealark/vendored/logc",
-
-        # "-Ivendored/uthash",
-        # "-Iexternal/sealark/vendored/uthash",
+        "-I$(GENDIR)/external/opam/test"
     ],
+    # copts = select({
+    #     # strdup is non-standard, not supported on linux in strict c11 mode
+    #     "//bzl/host:macos": ["-std=c11"],
+    #     "//bzl/host:linux": ["-std=gnu11"],
+    #     "//conditions:default": ["-std=c11"],
+    # }) + [
+    #     "-pedantic-errors",
+
+    #     "-I$(GENDIR)/test",
+    #     # "-I$(GENDIR)/external/sealark/test",
+
+    #     "-I$(GENDIR)/src",
+
+    #     # "-Ivendored/logc",
+    #     # "-Iexternal/sealark/vendored/logc",
+
+    #     # "-Ivendored/uthash",
+    #     # "-Iexternal/sealark/vendored/uthash",
+    # ],
     defines = ["DEBUG", "DEBUG_TRACE"],
     deps = [
-        "//src:sealark",
-        "//vendored/logc",
-        "//vendored/uthash",
+        "//bootstrap:opam_parser"
     ],
     linkstatic = 1
 )
@@ -78,13 +61,14 @@ cc_binary(
 ################################################################
 genrule(
     name = "mkhdrs",
-    srcs = ["opam_lex.c"],
-    outs = ["opam_lex.h"],
+    srcs = ["opam_lex.c", "opam_parse.c"],
+    outs = ["opam_lex.h", "opam_parse.h"],
     cmd = "\n".join([
         "SRC1=$(location opam_lex.c)",
         "SRCDIR1=`dirname $$SRC1`",
         "$(location //bootstrap:makeheaders) \\",
-        "    $(location opam_lex.c)",
+        "    $(location opam_lex.c) \\",
+        "    $(location opam_parse.c)",
         "cp $${SRCDIR1}/*.h $(@D)",
     ]),
     tools = ["//bootstrap:makeheaders"],
