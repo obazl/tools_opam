@@ -38,7 +38,7 @@ union opam_token
     char *s;
 };
 
-struct opam_lexer
+struct opam_lexer_s
 {
     const char *filename;
     const char *tok;
@@ -67,7 +67,7 @@ static void mtag(int t)
 #define YYMTAGP(t) mtag(YYCURSOR)
 #define YYMTAGN(t) mtag(NULL)
 
-int get_next_opam_token(struct opam_lexer *lexer, union opam_token *otok)
+int get_next_opam_token(struct opam_lexer_s *lexer, union opam_token *otok)
 {
     /* const char *YYMARKER; */
 
@@ -292,7 +292,7 @@ loop:
     */
 }
 
-void opam_lexer_init(struct opam_lexer *lexer, const char*filename, const char *input)
+void opam_lexer_init(struct opam_lexer_s *lexer, const char*filename, const char *input)
 {
     lexer->filename = filename;
     lexer->cursor = input;

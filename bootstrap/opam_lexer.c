@@ -125,7 +125,7 @@ EXPORT void opam_lex_file(char *fname)
         exit(EXIT_FAILURE);
     }
 
-    struct opam_lexer * lexer = malloc(sizeof(struct opam_lexer));
+    struct opam_lexer_s * lexer = malloc(sizeof(struct opam_lexer_s));
     opam_lexer_init(lexer, fname, buffer);
     /* struct bf_lexer_s * lexer = malloc(sizeof(struct bf_lexer_s)); */
     /* lexer_init(fname, lexer, buffer); */
@@ -153,8 +153,6 @@ EXPORT void opam_lex_file(char *fname)
         /*     log_debug("other: %d", tok); break; */
         }
 #endif
-        /* utarray_push_back(token_list, otok); */
-
         otok = malloc(sizeof(union opam_token));
     }
     log_trace("opam_lexer: end of input");

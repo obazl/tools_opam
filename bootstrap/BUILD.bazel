@@ -40,10 +40,10 @@ cc_library(
         "meta_settings.h",
         "meta_values.c",
         "meta_values.h",
-        "metalexer.c",
-        "metalexer.h",
-        "meta_parser.c",
-        "meta_parser.h",
+        # "meta_lexis.c",
+        # "meta_lexis.h",
+        # "meta_syntaxis.c",
+        # "meta_syntaxis.h",
         "obazl.c",
         "obazl.h",
         "opam.c",
@@ -84,8 +84,8 @@ cc_library(
 
         "-UDEBUG", # FIXME: macos fastbuild only
 
-        ## NB: we need '-I.' because re2c will this into meta_parser.c:
-        ## #include "bazel-out/darwin-fastbuild/bin/external/opam/bootstrap/meta_parser.h"
+        ## NB: we need '-I.' because re2c will this into meta_syntaxis.c:
+        ## #include "bazel-out/darwin-fastbuild/bin/external/opam/bootstrap/meta_syntaxis.h"
         "-I.",
 
 
@@ -102,17 +102,43 @@ cc_library(
         "-Iexternal/libinih",
     ],
     deps = [
-        ":opam_parser",
+        ":meta_lexis",
+        ":meta_syntaxis",
+        ":opam_syntaxis",
         "//external/libinih:inih",
     ],
     visibility = ["//visibility:public"]
 )
 
+###########
+cc_library(
+    name = "meta_syntaxis",
+    srcs = [
+        "meta_syntaxis.c",
+        "meta_syntaxis.h",
+        "log.h",
+        "utarray.h",
+        "uthash.h",
+        "utstring.h",
+        ],
+    # alwayslink = True,
+    copts = [
+        "-I.",
+        "-Ibootstrap",
+        "-Iopam/bootstrap",
+        "-Iexternal/opam/bootstrap",
+        "-I$(GENDIR)/external/opam/bootstrap",
+
+    ],
+    deps = ["opam_lexer"],
+    visibility = ["//test:__subpackages__"]
+)
+
 ########
 gensyntax(
     name = "gensyntaxis",
-    yy   = "meta_parser.y",
-    outs = ["meta_parser.c","meta_parser.out"],
+    yy   = "meta_syntaxis.y",
+    outs = ["meta_syntaxis.c","meta_syntaxis.out"],
     defines = select({
         ":yydebug-vectors": ["YYDEBUG_VECTORS"],
         "//conditions:default":   []
@@ -128,48 +154,75 @@ gensyntax(
     })
 )
 
+###########
+cc_library(
+    name = "meta_lexis",
+    srcs = [
+        # "meta_lexer.c", "meta_lexer.h",
+        "meta_lexis.c", "meta_lexis.h",
+        "log.c", "log.h",
+        "utarray.h",
+        "uthash.h",
+        "utstring.h",
+    ],
+    # alwayslink = True,
+    hdrs = [
+        "log.h",
+        # "meta_lexer.h"
+    ],
+    copts = [
+        "-Ibootstrap",
+        "-Iopam/bootstrap",
+        "-I$(GENDIR)/bootstrap",
+        "-I$(GENDIR)/opam/bootstrap",
+        "-I$(GENDIR)/external/opam/bootstrap"
+    ],
+    visibility = ["//test:__subpackages__"]
+)
+
 ########
 ## re2c takes a long time to build. we do not need to run it every
 ## time once the grammar is stable, so we put the .c file under
 ## version control
-# genrule(
-#     name = "gen_meta_lexis",
-#     srcs = [
-#         "meta_lexer.re",
-#     ],
-#     tools = ["@opam_re2c//:re2c"],
-#     outs  = [
-#         "metalexer.c"
-#     ],
-#     cmd   = "\n".join([
-#         "for f in $(locations @opam_re2c//:re2c)",
-#         "do",
-#         "    if [ -f $$f ]",
-#         "    then",
-#         "        if [ re2c = `basename $$f` -a -x $$f ]",
-#         "        then",
-#         "            break",
-#         "        fi",
-#         "    fi",
-#         "done",
-#         "$$f --conditions --tags -o $(@D)/metalexer.c $(location metalexer.re)",
-#     ]),
-#     visibility = ["//visibility:public"]
-# )
+genrule(
+    name = "gen_meta_lexis",
+    srcs = [
+        "meta_lexis.re",
+    ],
+    tools = ["@opam_re2c//:re2c"],
+    outs  = [
+        "meta_lexis.c"
+    ],
+    cmd   = "\n".join([
+        "for f in $(locations @opam_re2c//:re2c)",
+        "do",
+        "    if [ -f $$f ]",
+        "    then",
+        "        if [ re2c = `basename $$f` -a -x $$f ]",
+        "        then",
+        "            break",
+        "        fi",
+        "    fi",
+        "done",
+        "$$f --conditions --tags -o $(@D)/meta_lexis.c $(location meta_lexis.re)",
+    ]),
+    visibility = ["//visibility:public"]
+)
 
 ################################################################
 ####    OPAM Parser
 ################################################################
 cc_library(
-    name = "opam_parser",
+    name = "opam_syntaxis",
     srcs = [
-        "opam_parser.c",
-        "opam_parser.h",
+        "opam_syntaxis.c",
+        "opam_syntaxis.h",
         "log.h",
         "utarray.h",
         "uthash.h",
         "utstring.h",
         ],
+    # alwayslink = True,
     copts = [
         "-I.",
         "-Ibootstrap",
@@ -178,13 +231,14 @@ cc_library(
         "-I$(GENDIR)/external/opam/bootstrap",
 
     ],
-    deps = ["opam_lexer"]
+    deps = ["opam_lexer"],
+    visibility = ["//test:__subpackages__"]
 )
 
 gensyntax(
     name = "gen_opam_syntaxis",
-    yy   = "opam_parser.y",
-    outs = ["opam_parser.c","opam_parser.out"],
+    yy   = "opam_syntaxis.y",
+    outs = ["opam_syntaxis.c","opam_syntaxis.out"],
     defines = select({
         ":yydebug-vectors": ["YYDEBUG_VECTORS"],
         "//conditions:default":   []
@@ -215,6 +269,7 @@ cc_library(
         "log.h",
         "opam_lexer.h"
     ],
+    # alwayslink = True,
     copts = [
         "-Ibootstrap",
         "-Iopam/bootstrap",
@@ -222,9 +277,7 @@ cc_library(
         "-I$(GENDIR)/opam/bootstrap",
         "-I$(GENDIR)/external/opam/bootstrap"
     ],
-    visibility = [
-        "//test:__subpackages__"
-    ]
+    visibility = ["//test:__subpackages__"]
 )
 
 genrule(
@@ -253,12 +306,12 @@ genrule(
     srcs = [
         "opam_lexer.c",
         "opam_lexis.c",
-        "opam_parser.c",
+        "opam_syntaxis.c",
     ],
     outs = [
         "opam_lexer.h",
         "opam_lexis.h",
-        "opam_parser.h",
+        "opam_syntaxis.h",
     ],
     cmd = "\n".join([
         "SRC1=$(location opam_lexer.c)",
@@ -266,7 +319,7 @@ genrule(
         "$(location :makeheaders) \\",
         "    $(location opam_lexer.c) \\",
         "    $(location opam_lexis.c) \\",
-        "    $(location opam_parser.c)",
+        "    $(location opam_syntaxis.c)",
         "cp $${SRCDIR1}/*.h $(@D)",
     ]),
     tools = [":makeheaders"],
@@ -290,8 +343,8 @@ genrule(
         "meta_properties.c",
         "meta_settings.c",
         "meta_values.c",
-        "metalexer.c",
-        "meta_parser.c",
+        "meta_lexis.c",
+        "meta_syntaxis.c",
         "obazl.c",
         "opam.c",
         "opam_config.c",
@@ -313,8 +366,8 @@ genrule(
         "meta_properties.h",
         "meta_settings.h",
         "meta_values.h",
-        "metalexer.h",
-        "meta_parser.h",
+        "meta_lexis.h",
+        "meta_syntaxis.h",
         "obazl.h",
         "opam.h",
         "opam_config.h",
@@ -339,8 +392,8 @@ genrule(
         "    $(location meta_properties.c) \\",
         "    $(location meta_settings.c) \\",
         "    $(location meta_values.c) \\",
-        "    $(location metalexer.c) \\",
-        "    $(location meta_parser.c) \\",
+        "    $(location meta_lexis.c) \\",
+        "    $(location meta_syntaxis.c) \\",
         "    $(location obazl.c) \\",
         "    $(location opam.c) \\",
         "    $(location opam_config.c) \\",
@@ -370,8 +423,8 @@ genrule(
         "meta_properties.c",
         "meta_settings.c",
         "meta_values.c",
-        "metalexer.c",
-        "meta_parser.c",
+        "meta_lexis.c",
+        "meta_syntaxis.c",
         "obazl.c",
         "opam.c",
         "opam_config.c",
@@ -399,8 +452,8 @@ genrule(
         "    $(location meta_properties.c) \\",
         "    $(location meta_settings.c) \\",
         "    $(location meta_values.c) \\",
-        "    $(location metalexer.c) \\",
-        "    $(location meta_parser.c) \\",
+        "    $(location meta_lexis.c) \\",
+        "    $(location meta_syntaxis.c) \\",
         "    $(location obazl.c) \\",
         "    $(location opam.c) \\",
         "    $(location opam_config.c) \\",

@@ -14,7 +14,7 @@
 
 #include <sys/errno.h>
 
-#include "metalexer.h"
+#include "meta_lexis.h"
 
 #if EXPORT_INTERFACE
 #define BUFSIZE 1024
@@ -32,7 +32,7 @@ union meta_token
     char *s;
 };
 
-struct meta_lexer
+struct meta_lexer_s
 {
     const char *filename;
     const char *tok;
@@ -61,7 +61,7 @@ static void mtag(int t)
 #define YYMTAGP(t) mtag(YYCURSOR)
 #define YYMTAGN(t) mtag(NULL)
 
-int get_next_token(struct meta_lexer *lexer, union meta_token *mtok)
+int get_next_meta_token(struct meta_lexer_s *lexer, union meta_token *mtok)
 {
     /* const char *YYMARKER; */
 
@@ -239,7 +239,7 @@ loop:
     */
 }
 
-void lexer_init(struct meta_lexer *lexer, const char*filename, const char *input)
+void meta_lexer_init(struct meta_lexer_s *lexer, const char*filename, const char *input)
 {
     lexer->filename = filename;
     lexer->cursor = input;
