@@ -35,7 +35,8 @@ int errnum;
 */
 char *run_cmd(char *cmd)
 {
-    char buf[PATH_MAX];
+    char buf[28];
+    memset(buf, '\0', 28);
     FILE *fp;
 
     errno = 0;

@@ -55,7 +55,7 @@ EXPORT void opam_import(char *manifest)
     char *exe;
     int result;
 
-    if (access(ROOT_DIRNAME, F_OK) != 0) {
+    if (access(HERE_OPAM_ROOT, F_OK) != 0) {
         if (!dry_run) {
             log_error("Project-local OPAM root '.opam' not found.");
             printf("Project-local OPAM root '.opam' not found.\n");
@@ -66,7 +66,7 @@ EXPORT void opam_import(char *manifest)
         char *argv[] = {
             "opam", "switch",
             "--cli=2.1",
-            "--root=./" ROOT_DIRNAME,
+            "--root=./" HERE_OPAM_ROOT,
             "--switch", HERE_SWITCH_NAME,
             "--yes",
             "import",

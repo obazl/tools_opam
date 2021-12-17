@@ -151,7 +151,7 @@ void emit_new_local_subpkg_entries(FILE *repo_rules_FILE,
                     ;           /* skip */
                 } else {
                     fprintf(repo_rules_FILE,
-                            "            \"@//%s/buildfiles/%s/%s:BUILD.bazel\":\n",
+                            "            \"@//%s/%s/%s:BUILD.bazel\":\n",
                             /* buildfile_prefix, */
                             bzl_switch_root,
                             utstring_body(_new_pkg_prefix),
@@ -229,13 +229,13 @@ void emit_new_local_pkg_repo(FILE *repo_rules_FILE,
     fprintf(repo_rules_FILE, "        build_file = ");
     if (_pkg_prefix == NULL)
         fprintf(repo_rules_FILE,
-                "\"@//%s/buildfiles/%s:BUILD.bazel\",\n",
+                "\"@//%s/%s:BUILD.bazel\",\n",
                 /* buildfile_prefix, */
                 bzl_switch_root,
                 pkg_name);
     else
         fprintf(repo_rules_FILE,
-                "\"@//%s/buildfiles/%s/%s:BUILD.bazel\",\n",
+                "\"@//%s/%s/%s:BUILD.bazel\",\n",
                 /* buildfile_prefix, */
                 bzl_switch_root,
                 _pkg_prefix, pkg_name);

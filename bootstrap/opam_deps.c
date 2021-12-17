@@ -1,8 +1,10 @@
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>              /* open() */
 #if INTERFACE
 #include <fts.h>
 #endif
+#include <spawn.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,35 +17,84 @@
 #include "log.h"
 #include "opam_deps.h"
 
-#define OPAM_SRC_ROOT ".opam/obazl/.opam-switch/sources"
-
-EXPORT void run_codept(void)
+LOCAL int run_codept(char *codept_args_file, /* input */
+                     char *codept_deps_file) /* output */
 {
-    log_debug("run_codept");
+    printf("running codept from %s\n", getcwd(NULL, 0));
 
-    /* char *exe, *result; */
+    if (access(codept_args_file, R_OK) != 0) {
+        printf("codept.args file inaccessible\n");
+        return -1;
+    }
 
-    /* if (access(".opam", F_OK) != 0) { */
-    /*     //FIXME: print error msg */
-    /*     log_error("Project-local OPAM root '.opam' not found."); */
-    /*     printf("Project-local OPAM root '.opam' not found.\n"); */
-    /*     exit(EXIT_FAILURE); */
-    /* } else { */
+    int rc;
 
-    /*     exe = "opam"; */
-    /*     char *install_argv[] = { */
-    /*         NULL */
-    /*     }; */
+    /* tell posix_spawn to redirect stdout/stderr */
+    /* FIXME: write stderr to log instead of dev/null? */
+    int DEVNULL_FILENO = open("/dev/null", O_WRONLY);
+    posix_spawn_file_actions_t action;
+    posix_spawn_file_actions_init(&action);
 
-    /*     printf("Installing package %s\n", _package); */
-    /*     result = run_cmd(exe, install_argv); */
-    /*     if (result == NULL) { */
-    /*         fprintf(stderr, "FAIL: run_cmd(opam install --root .opam --switch obazl --require-checksums %s)\n", _package); */
-    /*         exit(EXIT_FAILURE); */
-    /*     } else { */
-    /*         printf("install result: %s\n", result); */
-    /*     } */
-    /* } */
+    /* stdout > codept_deps_file */
+    if ((rc = posix_spawn_file_actions_addopen
+         (&action, STDOUT_FILENO, codept_deps_file,
+          O_WRONLY | O_CREAT | O_TRUNC,
+          S_IRUSR | S_IWUSR | S_IRGRP ))) {
+        perror("posix_spawn_file_actions_adddopen");
+        posix_spawn_file_actions_destroy(&action);
+        return rc;
+    }
+    /* fi */
+    /* stderr > /dev/null */
+    if ((rc = posix_spawn_file_actions_adddup2(&action,
+                                              DEVNULL_FILENO,
+                                               STDERR_FILENO))) {
+        perror("posix_spawn_file_actions_adddup2");
+        posix_spawn_file_actions_destroy(&action);
+        return rc;
+    }
+
+    char *exe = "codept";
+    char *argv[] = {
+        "codept",
+        "-sexp",
+        "-k",
+        "-args", codept_args_file,
+        NULL};
+
+    /* echo command first */
+    int argc = (sizeof(argv) / sizeof(argv[0])) - 1;
+    printf("obazl: ");
+    for (int i =0; i < argc; i++) {
+        printf("%s ", (char*)argv[i]);
+    }
+    printf("\n");
+
+    extern char **environ;
+    pid_t pid;
+    rc = posix_spawn(&pid, exe, NULL, NULL, argv, environ);
+
+    if (rc == 0) {
+        /* log_debug("posix_spawn child pid: %i\n", pid); */
+        if (waitpid(pid, &rc, 0) != -1) {
+            if ( !WIFEXITED(rc) ) {
+                // signaled or stopped
+                log_error("codept rc: %d", rc);
+            } else {
+                // normal termination
+            }
+        } else {
+            perror("codept waitpid");
+            log_error("run_codept posix_spawn");
+        }
+        posix_spawn_file_actions_destroy(&action);
+        return 0;
+    } else {
+        /* does not set errno */
+        log_fatal("run_codept posix_spawn error rc: %d, %s", rc, strerror(rc));
+        posix_spawn_file_actions_destroy(&action);
+        return rc;
+    }
 }
 
 UT_array  *segs;
@@ -141,6 +192,7 @@ void emit_codept_group_elts(FILE *out, FTS *tree)
 
 EXPORT void emit_codept_args(FILE *out, FTS *tree)
 {
+    printf("emit_codept_args\n");
     FTSENT *ftsentry     = NULL;
     FTSENT *rootentry = fts_read(tree);
 
@@ -327,6 +379,8 @@ void opam_deps(char *_root)
 {
     printf("opam_deps\n");
     log_debug("opam_deps");
+    printf("cwd: %s\n", getcwd(NULL, 0));
+
     FTS* tree = NULL;
     FTSENT *ftsentry     = NULL;
 
@@ -362,8 +416,17 @@ void opam_deps(char *_root)
     out = fopen("codept.args", "w");
     emit_codept_args(out, tree);
     fclose(out);
-
     fts_close(tree);
+
+    /* now run codept ?? */
+    /* int rc = run_codept("codept.args", "codept.deps"); */
+
+    char cmd[PATH_MAX];
+    sprintf(cmd, "codept -verbosity info -sexp -k -args %s 1> %s 2> /dev/null",
+            "codept.args", "codept.deps");
+            /* codept_args_file); */
+    char *res = run_cmd(cmd);
+    printf("codept res: %s\n", res);
 
     return;
 }

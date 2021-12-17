@@ -77,7 +77,7 @@ EXPORT int opam_init_here(bool force, char *_compiler_version, char *_opam_switc
 
         char *here_switch = run_cmd("opam switch --root .opam show");
         char *here_compiler = run_cmd(
-             "opam exec --root " ROOT_DIRNAME
+             "opam exec --root " HERE_OPAM_ROOT
              " --switch " HERE_SWITCH_NAME
              " -- ocamlc --version");
 
@@ -111,7 +111,7 @@ EXPORT int opam_init_here(bool force, char *_compiler_version, char *_opam_switc
         }
         if (replace) {
             printf("removing ./.opam\n");
-            run_cmd("rm -rf " ROOT_DIRNAME);
+            run_cmd("rm -rf " HERE_OPAM_ROOT);
         } else {
             printf("cancelling init\n");
             return -1;

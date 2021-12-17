@@ -32,11 +32,14 @@ int errnum;
 FILE *repo_rules_FILE;
 
 #if INTERFACE
-#define ROOT_DIRNAME ".opam"
+#define HERE_OPAM_ROOT ".opam"
 #define OBAZL_OPAM_ROOT OBAZL_ROOT "/opam"
 #define HERE_COMPILER_FILE OBAZL_OPAM_ROOT "/here.compiler"
 #define HERE_SWITCH_BAZEL_ROOT OBAZL_OPAM_ROOT "/_here"
 #define HERE_SWITCH_NAME "_here"
+
+#define OPAM_SRC_ROOT HERE_OPAM_ROOT "/" HERE_SWITCH_NAME "/.opam-switch/sources"
+
 #endif
 
 char *obazl_opam_root = OBAZL_OPAM_ROOT;
@@ -179,10 +182,10 @@ EXPORT void opam_export(char *manifest)
     char *exe;
     int result;
 
-    if (access(ROOT_DIRNAME, F_OK) != 0) {
+    if (access(HERE_OPAM_ROOT, F_OK) != 0) {
         //FIXME: print error msg
-        log_error("OPAM root '" ROOT_DIRNAME "' not found.");
-        printf("Project-local OPAM root '" ROOT_DIRNAME "' not found.\n");
+        log_error("OPAM root '" HERE_OPAM_ROOT "' not found.");
+        printf("Project-local OPAM root '" HERE_OPAM_ROOT "' not found.\n");
         exit(EXIT_FAILURE);
     } else {
         exe = "opam";
@@ -190,7 +193,7 @@ EXPORT void opam_export(char *manifest)
             "opam", "switch",
             "export",
             "--cli=2.1",
-            "--root=./" ROOT_DIRNAME,
+            "--root=./" HERE_OPAM_ROOT,
             "--switch", HERE_SWITCH_NAME,
             "--freeze",
             "--full",
@@ -222,10 +225,10 @@ EXPORT void opam_install(char *_package)
     char *exe;
     int result;
 
-    if (access(ROOT_DIRNAME, F_OK) != 0) {
+    if (access(HERE_OPAM_ROOT, F_OK) != 0) {
         //FIXME: print error msg
-        log_error("OPAM root '" ROOT_DIRNAME "' not found.");
-        printf("Project-local OPAM root '" ROOT_DIRNAME "' not found.\n");
+        log_error("OPAM root '" HERE_OPAM_ROOT "' not found.");
+        printf("Project-local OPAM root '" HERE_OPAM_ROOT "' not found.\n");
         exit(EXIT_FAILURE);
     } else {
 
@@ -235,7 +238,7 @@ EXPORT void opam_install(char *_package)
             /* "-v", */
             "--yes",
             "--cli=2.1",
-            "--root=./" ROOT_DIRNAME,
+            "--root=./" HERE_OPAM_ROOT,
             "--switch", HERE_SWITCH_NAME,
             "--require-checksums",
             _package,
@@ -249,8 +252,8 @@ EXPORT void opam_install(char *_package)
         if (result != 0) {
             fprintf(stderr, "FAIL: spawn_cmd(opam install --root .opam --switch _here --require-checksums %s)\n", _package);
             exit(EXIT_FAILURE);
-        } else {
-            printf("install result: %s\n", result);
+        /* } else { */
+        /*     printf("install result: %s\n", result); */
         }
     }
 }
@@ -262,10 +265,10 @@ EXPORT void opam_remove(char *_package)
     char *exe;
     int result;
 
-    if (access(ROOT_DIRNAME, F_OK) != 0) {
+    if (access(HERE_OPAM_ROOT, F_OK) != 0) {
         //FIXME: print error msg
-        log_error("OPAM root '" ROOT_DIRNAME "' not found.");
-        printf("OPAM root '" ROOT_DIRNAME "' not found.\n");
+        log_error("OPAM root '" HERE_OPAM_ROOT "' not found.");
+        printf("OPAM root '" HERE_OPAM_ROOT "' not found.\n");
         exit(EXIT_FAILURE);
     } else {
 
@@ -275,7 +278,7 @@ EXPORT void opam_remove(char *_package)
             /* "-v", */ // verbose? "-v" : "",
             "--yes",
             "--cli=2.1",
-            "--root=./" ROOT_DIRNAME,
+            "--root=./" HERE_OPAM_ROOT,
             "--switch", HERE_SWITCH_NAME,
             _package,
             NULL

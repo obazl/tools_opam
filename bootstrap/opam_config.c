@@ -221,7 +221,7 @@ EXPORT void opam_config(char *_opam_switch) //, char *bzl_switch_root)
 
     UT_string *bzl_lib;
     utstring_new(bzl_lib);
-    utstring_printf(bzl_lib, "%s/buildfiles", bzl_switch_root);
+    utstring_printf(bzl_lib, "%s", bzl_switch_root);
 
     log_debug("bzl_bin: %s", utstring_body(bzl_bin));
     log_debug("bzl_lib: %s", utstring_body(bzl_lib));

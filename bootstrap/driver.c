@@ -29,7 +29,7 @@ bool g_ppx_pkg;
 /* global: we write on new_local_repository rule per build file */
 FILE *repo_rules_FILE;
 
-char *rootdir = "buildfiles";
+char *rootdir = ""; // buildfiles";
 
 #if EXPORT_INTERFACE
 #include <stdbool.h>
@@ -181,10 +181,10 @@ EXPORT struct obzl_meta_package *obzl_meta_parse_file(char *fname)
     /* THE_METAFILE[0] = '\0'; */
     /* mystrcat(THE_METAFILE, fname); */
 
-    struct meta_lexer * lexer = malloc(sizeof(struct meta_lexer));
-    lexer_init(lexer, fname, buffer);
+    struct meta_lexer_s *meta_lexer = malloc(sizeof(struct meta_lexer_s));
+    meta_lexer_init(meta_lexer, fname, buffer);
 
-    void* pParser = ParseAlloc (malloc);
+    void* pMetaParser = ParseAlloc (malloc);
     /* InitParserState(ast); */
     /* ParseTrace(stdout, "trace_"); */
     int tok;
@@ -206,7 +206,7 @@ EXPORT struct obzl_meta_package *obzl_meta_parse_file(char *fname)
     MAIN_PKG->directory = MAIN_PKG->name; // dirname(fname);
     MAIN_PKG->metafile  = fname;
 
-    while ( (tok = get_next_token(lexer, mtok)) != 0 ) {
+    while ( (tok = get_next_meta_token(meta_lexer, mtok)) != 0 ) {
         /* log_set_quiet(true); */
 #if defined(DEBUG_LEX)
         switch(tok) {
@@ -248,7 +248,7 @@ EXPORT struct obzl_meta_package *obzl_meta_parse_file(char *fname)
             log_trace("other: %d", tok); break;
         }
 #endif
-        Parse(pParser, tok, mtok, MAIN_PKG); // , &sState);
+        Parse(pMetaParser, tok, mtok, MAIN_PKG); // , &sState);
 
         mtok = malloc(sizeof(union meta_token));
         /* if (logger.lex_verbosity == 0) */
@@ -267,8 +267,8 @@ EXPORT struct obzl_meta_package *obzl_meta_parse_file(char *fname)
 
     log_trace("lex: end of input");
 
-    Parse(pParser, 0, mtok, MAIN_PKG); // , &sState);
-    ParseFree(pParser, free );
+    Parse(pMetaParser, 0, mtok, MAIN_PKG); // , &sState);
+    ParseFree(pMetaParser, free );
 
     /* if (logger.verbosity == 0) */
     /*     log_set_quiet(false); */
