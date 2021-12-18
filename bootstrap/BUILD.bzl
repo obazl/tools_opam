@@ -13,7 +13,7 @@ BOOTSTRAP_INCLUDES = [
     "-I$(GENDIR)/external/opam/bootstrap",
 ]
 
-def _gensyntax_impl(ctx):
+def _lemon_impl(ctx):
 
     (bn, ext) = paths.split_extension(ctx.file.yy.basename)
 
@@ -27,12 +27,19 @@ def _gensyntax_impl(ctx):
     else:
         defs = ""
 
-    cmd = "{lemon} -m {yy} {defines} -T{template} -d{outdir}".format(
+    if not ctx.attr.compress:
+        compress = "-c"
+    else:
+        compress = ""
+
+    cmd = "{lemon} -m {yy} {compress} {defines} -T{template} -d{outdir}".format(
         lemon=exe, yy=ctx.file.yy.path,
+        compress=compress,
         defines=defs,
         template=ctx.file.template.path,
         outdir=out_c.dirname
     )
+
     ctx.actions.run_shell(
         inputs = [ctx.file.yy, ctx.file.template],
         outputs = ctx.outputs.outs,
@@ -42,14 +49,18 @@ def _gensyntax_impl(ctx):
 
     return [DefaultInfo(files = depset(ctx.outputs.outs))]
 
-gensyntax = rule(
-    implementation = _gensyntax_impl,
+lemon = rule(
+    implementation = _lemon_impl,
     attrs = {
         "yy": attr.label(
             allow_single_file = True,
             default = "syntaxis.y"
         ),
         "outs": attr.output_list( ),
+        "compress": attr.bool(
+            doc = "False: pass -c, do not compress action tables",
+            default = True
+        ),
         "defines": attr.string_list(
         ),
         "template": attr.label(

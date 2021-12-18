@@ -5,6 +5,7 @@
 
 enum phrase_type_e {
     BINDING_BOOL,
+    BINDING_BUILD,
     BINDING_DEPENDS,
     BINDING_INT,
     BINDING_STRING,

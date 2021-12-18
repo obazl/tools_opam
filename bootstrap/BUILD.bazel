@@ -2,7 +2,7 @@ load("@bazel_skylib//rules:common_settings.bzl",
      "bool_flag", "string_flag")
 load("//bootstrap:BUILD.bzl", "CMD_FLAGS", "BOOTSTRAP_INCLUDES")
 
-load(":BUILD.bzl", "gensyntax") # , "DEBUG_DEFINES")
+load(":BUILD.bzl", "lemon") # , "DEBUG_DEFINES")
 
 exports_files([
     "log.c", "log.h", "utarray.h", "uthash.h", "utstring.h"
@@ -12,16 +12,22 @@ exports_files([
 bool_flag(name = "yydebug", build_setting_default = 0)
 config_setting(name = "yydebug-enabled", flag_values = {":yydebug": "True"})
 config_setting(name = "yydebug-disabled", flag_values = {":yydebug": "False"})
+bool_flag(name = "yydebug-exit-on-error", build_setting_default = 0)
+config_setting(name = "yydebug-exit-on-error-enabled",
+               flag_values = {":yydebug-exit-on-error": "True"})
+
 bool_flag(name = "yytrace", build_setting_default = 0)
 config_setting(name = "yytrace-enabled", flag_values = {":yytrace": "True"})
 config_setting(name = "yytrace-disabled", flag_values = {":yytrace": "False"})
 
 ## debug parse rules
 string_flag(name = "yydebug-rules", build_setting_default = "")
-config_setting(name = "yydebug-filter",
-               flag_values = {":yydebug-rules": "filter"})
 config_setting(name = "yydebug-fpf",
                flag_values = {":yydebug-rules": "fpf"})
+config_setting(name = "yydebug-fvf",
+               flag_values = {":yydebug-rules": "fvf"})
+config_setting(name = "yydebug-filter",
+               flag_values = {":yydebug-rules": "filter"})
 
 ## enable lexer debugging: --//bootstrap:lexdebug
 bool_flag(name = "lexdebug", build_setting_default = 0)
@@ -33,6 +39,10 @@ config_setting(name = "lexdebug-version",
                flag_values = {":lexdebug-rules": "version"})
 config_setting(name = "lexdebug-fpf",
                flag_values = {":lexdebug-rules": "fpf"})
+config_setting(name = "lexdebug-fvf",
+               flag_values = {":lexdebug-rules": "fvf"})
+config_setting(name = "lexdebug-filter",
+               flag_values = {":lexdebug-rules": "filter"})
 
 ##########
 cc_library(
@@ -153,8 +163,8 @@ cc_library(
 )
 
 ########
-gensyntax(
-    name = "gensyntaxis",
+lemon(
+    name = "gen_meta_syntaxis",
     yy   = "meta_syntaxis.y",
     outs = ["meta_syntaxis.c","meta_syntaxis.out"],
     defines = select({
@@ -248,23 +258,33 @@ cc_library(
     }) + select({
         ":lexdebug-enabled": ["LEXDEBUG"],
         "//conditions:default":   []
+    }) + select({
+        ":lexdebug-fvf": ["LEXDEBUG_FVF"],
+        "//conditions:default":   []
     }),
     deps = ["opam_lexer"],
     visibility = ["//test:__subpackages__"]
 )
 
-gensyntax(
+lemon(
     name = "gen_opam_syntaxis",
     yy   = "opam_syntaxis.y",
     outs = ["opam_syntaxis.c","opam_syntaxis.out"],
+    compress = False,
     defines = select({
         ":yydebug-enabled": ["YYDEBUG"],
+        "//conditions:default":   []
+    }) + select({
+        ":yydebug-exit-on-error-enabled": ["YYDEBUG_EXIT_ON_ERROR"],
         "//conditions:default":   []
     }) + select({
         ":yydebug-filter": ["YYDEBUG_FILTER"],
         "//conditions:default":   []
     }) + select({
         ":yydebug-fpf": ["YYDEBUG_FPF"],
+        "//conditions:default":   []
+    }) + select({
+        ":lexdebug-fvf": ["YYDEBUG_FVF"],
         "//conditions:default":   []
     })
 )
@@ -292,6 +312,9 @@ cc_library(
         "//conditions:default":   []
     }) + select({
         ":lexdebug-fpf": ["LEXDEBUG_FPF"],
+        "//conditions:default":   []
+    }) + select({
+        ":lexdebug-fvf": ["LEXDEBUG_FVF"],
         "//conditions:default":   []
     }),
     visibility = ["//test:__subpackages__"]

@@ -16,6 +16,7 @@
 #define TOKEN_NAME(x) (char*)#x
 #endif
 
+#if defined(LEXDEBUG)
 char *opam_token_names[256] = {
     [AMP]      = TOKEN_NAME(amp),
     [AUTHORS]      = TOKEN_NAME(authors),
@@ -41,10 +42,11 @@ char *opam_token_names[256] = {
     [ERROR]        = TOKEN_NAME(error),
     [EXTRA_FILES]      = TOKEN_NAME(extra_files),
     [EXTRA_SOURCE]      = TOKEN_NAME(extra_source),
-    [FALSE]        = TOKEN_NAME(false),
+    [FALSE]        = TOKEN_NAME(FALSE),
     [FEATURES]      = TOKEN_NAME(features),
     [FILTER]      = TOKEN_NAME(filter),
     [FLAGS]      = TOKEN_NAME(flags),
+    /* [FVF_LOGOP]      = TOKEN_NAME(FVF_LOGOP), */
     [HOMEPAGE]     = TOKEN_NAME(homepage),
     [IDENT]      = TOKEN_NAME(ident),
     [IDENTCHAR]      = TOKEN_NAME(identchar),
@@ -53,7 +55,7 @@ char *opam_token_names[256] = {
     [LBRACE]      = TOKEN_NAME(lbrace),
     [LBRACKET]      = TOKEN_NAME(lbracket),
     [LICENSE]      = TOKEN_NAME(license),
-    [LOGOP]      = TOKEN_NAME(logop),
+    [LOGOP]      = TOKEN_NAME(LOGOP),
     [LPAREN]       = TOKEN_NAME(lparen),
     [MAINTAINER]   = TOKEN_NAME(maintainer),
     [MESSAGES]      = TOKEN_NAME(messages),
@@ -76,12 +78,16 @@ char *opam_token_names[256] = {
     [SUBSTS]      = TOKEN_NAME(substs),
     [SYNOPSIS]      = TOKEN_NAME(synopsis),
     [TAGS]      = TOKEN_NAME(tags),
-    [TRUE]         = TOKEN_NAME(true),
+    [TERM]      = TOKEN_NAME(TERM),
+    [TERM_STRING]      = TOKEN_NAME(TERM_STRING),
+    [TERM_VARIDENT]      = TOKEN_NAME(TERM_VARIDENT),
+    [TRUE]         = TOKEN_NAME(TRUE),
     [URL]      = TOKEN_NAME(url),
     [VARIDENT]     = TOKEN_NAME(varident),
     [VERSION]      = TOKEN_NAME(version),
     NULL
 };
+#endif
 
 bool is_empty(const char *s)
 {
@@ -164,6 +170,9 @@ EXPORT void opam_lex_file(char *fname)
         case RELOP:
         case STRING:
         case SYNOPSIS:
+        case TERM:
+        case TERM_STRING:
+        case TERM_VARIDENT:
         case VARIDENT:
         case VERSION:
             log_debug("\ts: %s", (char*)otok.s); break;

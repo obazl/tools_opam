@@ -93,27 +93,41 @@ static void mtag(int t)
 
 int get_next_opam_token(struct opam_lexer_s *lexer, union opam_token_u *otok)
 {
-#if defined(LEXDEBUG_VERSION)
-    log_debug("yycinit: %d, yycdepends: %d, yycversion: %d",
-              yycinit, yycdepends, yycpkgs, yycversion);
+#if defined(LEXDEBUG_FVF)
+    log_debug("yycinit: %d, yycdepends: %d, yycfpf %d, yycfvf: %d",
+              yycinit, yycdepends, yycfpf, yycfvf);
     // only set lexer->mode on initial call
-    static bool start = true;
-    if (start) {
-        lexer->mode = yycpkgs;
-        log_debug("start mode: %d", lexer->mode);
-        start = false;
-    }
-#elif defined (LEXDEBUG_FPF)
-    log_debug("yycinit: %d, yycdepends: %d, yycfpf %d, yycversion: %d",
-              yycinit, yycdepends, yycfpf, yycversion);
     static bool start = true;
     if (start) {
         lexer->mode = yycfpf;
         log_debug("start mode: %d", lexer->mode);
         start = false;
     }
+#elif defined (LEXDEBUG_FPF)
+    log_debug("yycinit: %d, yycdepends: %d, yycfpf %d, yycfvf: %d",
+              yycinit, yycdepends, yycfpf, yycfvf);
+    static bool start = true;
+    if (start) {
+        lexer->mode = yycfpf;
+        log_debug("start mode: %d", lexer->mode);
+        start = false;
+    }
+#elif defined (LEXDEBUG_FILTERS)
+    log_debug("yycinit: %d, yycdepends: %d, yycfpf %d, yycfvf: %d",
+              yycinit, yycdepends, yycfpf, yycfvf);
+    static bool start = true;
+    if (start) {
+        lexer->mode = yycfvf;
+        log_debug("start mode: %d", lexer->mode);
+        start = false;
+    }
 #else
-    lexer->mode = yycinit;
+    /* static bool start = true; */
+    /* if (start) { */
+    /*     lexer->mode = yycinit; */
+    /*     log_debug("start mode: %d", lexer->mode); */
+    /*     start = false; */
+    /* } */
 #endif
 
     /* stags */
@@ -184,12 +198,12 @@ loop:
         // for debugging we may want to start with any start condition.
         // this <> seems to be necessary to initialize all yyc* vars
         <> {
-            /* printf("yycinit: %d, yycdepends: %d, yycversion: %d\n", */
-            /*        yycinit, yycdepends, yycversion); */
+            /* printf("yycinit: %d, yycdepends: %d, yycfvf: %d\n", */
+            /*        yycinit, yycdepends, yycfvf); */
             /* lexer->mode = yycdepends; */
         }
 
-        <init> "&"  { return AMP; }
+        /* <init> "&"  { return AMP; } */
         <init> "(" { return LPAREN; }
         <init> ")" { return RPAREN; }
         <init> "\[" { return LBRACKET; }
@@ -236,17 +250,51 @@ loop:
              | "depexts"
              | "synopsis"
              | "description"
-             | "build"
+             /* | "build" */
              ) @s2 {
             otok->s = strndup(s1, (size_t)(s2-s1));
             return KEYWORD;
         }
 
+        <init> "build" => build {
+            log_debug("build, mode: %d", lexer->mode);
+            return BUILD;
+        }
+
+        <build> ":" { return COLON; }
+        <build> "[" => buildlist {
+            log_debug("<build> lbracket, mode %d", lexer->mode);
+            return LBRACKET; }
+        <build> "]" => init { return RBRACKET; }
+        <buildlist> "[" => term {
+            log_debug("<buildlist> lbracket, mode %d", lexer->mode);
+            return LBRACKET; }
+        <buildlist> "]" => init {
+            // always marks end of build fld so back to <init>
+            return RBRACKET;
+        }
+
+        // <term> ::= <string> | <varident>
+        <term> "\"" @s1 [^"]* @s2 "\"" {
+                otok->s = strndup(s1, (size_t)(s2-s1));
+                return TERM_STRING;
+        }
+        <term> @s1 Varident @s2 {
+                otok->s = strndup(s1, (size_t)(s2-s1));
+                return TERM_VARIDENT;
+        }
+        <term> "{" => termfilter { return LBRACE; }
+        <termfilter> "}" => buildlist { return RBRACE; }
+
+        <term> "[" { return LBRACKET; }
+        <term> "]" { return RBRACKET; }
+
+
+
         <init> "depends" => depends {
             return DEPENDS;
         }
 
-        // <version> ::= (") { <identchar> | "+" | "." | "~" }+ (")
         <depends> ":" { return COLON; }
         <depends> "[" => fpf { return LBRACKET; }
 
@@ -257,33 +305,39 @@ loop:
         <fpf> "(" { return LPAREN; }
         <fpf> ")" => init { return RPAREN; }
         <fpf> "]" => init { return RBRACKET; }
-        <fpf> "{" => version {
+        <fpf> "{" => fvf {
             log_debug("mode %d: LBRACE", lexer->mode);
             return LBRACE;
         }
 
-        <version> "}" => fpf { return RBRACE; }
+        <fvf> "}" => fpf { return RBRACE; }
 
-        /* <version> "\"" { fprintf(stderr, "DQ\n"); return DQ;} */
+        <fvf> "(" { return LPAREN; }
+        <fvf> ")" { return RPAREN; }
 
-        <version> Dq @s1 ( Identchar | "+" | "." | "~" )+ @s2 Dq {
+        <fvf> @s1 ("&" | "|") @s2 {
+            otok->s = strndup(s1, (size_t)(s2-s1));
+            return LOGOP;
+        }
+
+        <fvf> Dq @s1 ( Identchar | "+" | "." | "~" )+ @s2 Dq {
                 otok->s = strndup(s1, (size_t)(s2-s1));
                 return VERSION;
         }
 
-        <version> @s1 Varident @s2 {
+        <fvf,termfilter> @s1 Varident @s2 {
                 otok->s = strndup(s1, (size_t)(s2-s1));
                 return FILTER;
         }
-        <version> @s1 String @s2 {
+        <fvf,termfilter> @s1 String @s2 {
                 otok->s = strndup(s1, (size_t)(s2-s1));
                 return FILTER;
         }
-        <version> @s1 Int @s2 {
+        <fvf,termfilter> @s1 Int @s2 {
                 otok->s = strndup(s1, (size_t)(s2-s1));
                 return FILTER;
         }
-        <version> @s1 ("true" | "false") @s2 {
+        <fvf> @s1 ("true" | "false") @s2 {
                 otok->s = strndup(s1, (size_t)(s2-s1));
                 return BOOL;
         }
@@ -333,7 +387,7 @@ loop:
         }
 
         <*> end       {
-            log_debug("end");
+            log_debug("lexing completed");
             return 0;
         }
 

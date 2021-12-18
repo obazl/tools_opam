@@ -6,14 +6,23 @@
 build --incompatible_enable_cc_toolchain_resolution
 
 common:yydebug --//bootstrap:yydebug
+# common:yydebug --//bootstrap:yydebug-exit-on-error
 common:yydebug --//bootstrap:yytrace
-
 common:yydebug --//bootstrap:lexdebug
-# common:yydebug --//bootstrap:lexdebug-rules=version
+
 
 # fpf = filtered-package-formula
-common:yydebug --//bootstrap:yydebug-rules=fpf
-common:yydebug --//bootstrap:lexdebug-rules=fpf
+# common:yydebug --//bootstrap:yydebug-rules=fpf
+# common:yydebug --//bootstrap:lexdebug-rules=fpf
+
+# fvf = filtered-version-formula
+# common:yydebug --//bootstrap:yydebug-rules=fvf
+# common:yydebug --//bootstrap:lexdebug-rules=fvf
+
+# common:yydebug --//bootstrap:yydebug-rules=filter
+# common:yydebug --//bootstrap:lexdebug-rules=filter
+
+# common:yydebug --//bootstrap:lexdebug-rules=version
 
 try-import .private/bazelrc
 
