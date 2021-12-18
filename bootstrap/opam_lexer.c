@@ -20,11 +20,14 @@ char *opam_token_names[256] = {
     [AMP]      = TOKEN_NAME(amp),
     [AUTHORS]      = TOKEN_NAME(authors),
     [AVAILABLE]      = TOKEN_NAME(available),
+    [BANG]      = TOKEN_NAME(bang),
+    [BOOL]      = TOKEN_NAME(bool),
     [BUG_REPORTS]  = TOKEN_NAME(bug_reports),
     [BUILD]      = TOKEN_NAME(build),
     [BUILD_DOC]      = TOKEN_NAME(build_doc),
     [BUILD_ENV]      = TOKEN_NAME(build_env),
     [COLON]        = TOKEN_NAME(colon),
+    [COMMA]        = TOKEN_NAME(comma),
     [CONFLICTS]      = TOKEN_NAME(conflicts),
     [CONFLICT_CLASS]      = TOKEN_NAME(conflict_class),
     [DEPENDS]      = TOKEN_NAME(depends),
@@ -40,12 +43,17 @@ char *opam_token_names[256] = {
     [EXTRA_SOURCE]      = TOKEN_NAME(extra_source),
     [FALSE]        = TOKEN_NAME(false),
     [FEATURES]      = TOKEN_NAME(features),
+    [FILTER]      = TOKEN_NAME(filter),
     [FLAGS]      = TOKEN_NAME(flags),
     [HOMEPAGE]     = TOKEN_NAME(homepage),
+    [IDENT]      = TOKEN_NAME(ident),
+    [IDENTCHAR]      = TOKEN_NAME(identchar),
     [INSTALL]      = TOKEN_NAME(install),
+    [KEYWORD]      = TOKEN_NAME(keyword),
     [LBRACE]      = TOKEN_NAME(lbrace),
     [LBRACKET]      = TOKEN_NAME(lbracket),
     [LICENSE]      = TOKEN_NAME(license),
+    [LOGOP]      = TOKEN_NAME(logop),
     [LPAREN]       = TOKEN_NAME(lparen),
     [MAINTAINER]   = TOKEN_NAME(maintainer),
     [MESSAGES]      = TOKEN_NAME(messages),
@@ -53,14 +61,17 @@ char *opam_token_names[256] = {
     [PACKAGE]      = TOKEN_NAME(package),
     [PATCHES]      = TOKEN_NAME(patches),
     [PIN_DEPENDS]      = TOKEN_NAME(pin_depends),
+    [PKGNAME]      = TOKEN_NAME(pkgname),
     [POST_MESSAGES]      = TOKEN_NAME(post_messages),
+    [QMARK]      = TOKEN_NAME(qmark),
     [RBRACE]      = TOKEN_NAME(rbrace),
     [RBRACKET]      = TOKEN_NAME(rbracket),
-    [RELOP_GE]      = TOKEN_NAME(relop_ge),
+    [RELOP]      = TOKEN_NAME(relop),
     [REMOVE]      = TOKEN_NAME(remove),
     [RPAREN]       = TOKEN_NAME(rparen),
     [RUN_TEST]      = TOKEN_NAME(run_test),
     [SETENV]      = TOKEN_NAME(setenv),
+    [SQ]      = TOKEN_NAME(sq),
     [STRING]       = TOKEN_NAME(string),
     [SUBSTS]      = TOKEN_NAME(substs),
     [SYNOPSIS]      = TOKEN_NAME(synopsis),
@@ -126,34 +137,41 @@ EXPORT void opam_lex_file(char *fname)
     }
 
     struct opam_lexer_s * lexer = malloc(sizeof(struct opam_lexer_s));
-    opam_lexer_init(lexer, fname, buffer);
+    opam_lexer_init(fname, lexer, buffer);
     /* struct bf_lexer_s * lexer = malloc(sizeof(struct bf_lexer_s)); */
     /* lexer_init(fname, lexer, buffer); */
 
     int tok;
-    union opam_token *otok = malloc(sizeof(union opam_token));
+    union opam_token_u otok; // = malloc(sizeof(union opam_token));
 
 
     log_set_quiet(false);
     log_set_level(LOG_TRACE);
     /* log_info("starting lex"); */
 
-    while ( (tok = get_next_opam_token(lexer, otok)) != 0 ) {
-#if !defined(DEBUG_LEX)
-        log_debug("token type: %d: %s", tok, opam_token_names[tok]);
+    while ( (tok = get_next_opam_token(lexer, &otok)) != 0 ) {
+#if defined(LEXDEBUG)
+        log_debug("mode: %d; token type: %d: %s",
+                  lexer->mode,
+                  tok, opam_token_names[tok]);
         switch(tok) {
         case DESCRIPTION:
+        case FILTER:
+        case KEYWORD:
+        case LOGOP:
         case OPAM_VERSION:
+        case PKGNAME:
+        case RELOP:
         case STRING:
         case SYNOPSIS:
         case VARIDENT:
         case VERSION:
-            log_debug("\ts: %s", otok->s); break;
+            log_debug("\ts: %s", (char*)otok.s); break;
         /* default: */
         /*     log_debug("other: %d", tok); break; */
         }
 #endif
-        otok = malloc(sizeof(union opam_token));
+        /* otok = malloc(sizeof(union opam_token)); */
     }
     log_trace("opam_lexer: end of input");
     free(buffer);

@@ -1,16 +1,38 @@
-load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
-load(":BUILD.bzl", "gensyntax")
+load("@bazel_skylib//rules:common_settings.bzl",
+     "bool_flag", "string_flag")
+load("//bootstrap:BUILD.bzl", "CMD_FLAGS", "BOOTSTRAP_INCLUDES")
+
+load(":BUILD.bzl", "gensyntax") # , "DEBUG_DEFINES")
 
 exports_files([
     "log.c", "log.h", "utarray.h", "uthash.h", "utstring.h"
 ])
 
-## to enable parser/lexer debugging pass --//sealark:debug=bindings,vectors,...
-string_list_flag(name = "yydebug", build_setting_default = [])
-config_setting(name = "yydebug-dicts", flag_values = {":yydebug": "dicts"})
-config_setting(name = "yydebug-targets", flag_values = {":yydebug": "targets"})
-config_setting(name = "yydebug-loads", flag_values = {":yydebug": "loads"})
-config_setting(name = "yydebug-vectors", flag_values = {":yydebug": "vectors"})
+## enable parser debugging: --//bootstrap:yydebug
+bool_flag(name = "yydebug", build_setting_default = 0)
+config_setting(name = "yydebug-enabled", flag_values = {":yydebug": "True"})
+config_setting(name = "yydebug-disabled", flag_values = {":yydebug": "False"})
+bool_flag(name = "yytrace", build_setting_default = 0)
+config_setting(name = "yytrace-enabled", flag_values = {":yytrace": "True"})
+config_setting(name = "yytrace-disabled", flag_values = {":yytrace": "False"})
+
+## debug parse rules
+string_flag(name = "yydebug-rules", build_setting_default = "")
+config_setting(name = "yydebug-filter",
+               flag_values = {":yydebug-rules": "filter"})
+config_setting(name = "yydebug-fpf",
+               flag_values = {":yydebug-rules": "fpf"})
+
+## enable lexer debugging: --//bootstrap:lexdebug
+bool_flag(name = "lexdebug", build_setting_default = 0)
+config_setting(name = "lexdebug-enabled", flag_values = {":lexdebug": "True"})
+config_setting(name = "lexdebug-disabled", flag_values = {":lexdebug": "False"})
+
+string_flag(name = "lexdebug-rules", build_setting_default = "")
+config_setting(name = "lexdebug-version",
+               flag_values = {":lexdebug-rules": "version"})
+config_setting(name = "lexdebug-fpf",
+               flag_values = {":lexdebug-rules": "fpf"})
 
 ##########
 cc_library(
@@ -40,10 +62,6 @@ cc_library(
         "meta_settings.h",
         "meta_values.c",
         "meta_values.h",
-        # "meta_lexis.c",
-        # "meta_lexis.h",
-        # "meta_syntaxis.c",
-        # "meta_syntaxis.h",
         "obazl.c",
         "obazl.h",
         "opam.c",
@@ -104,7 +122,7 @@ cc_library(
     deps = [
         ":meta_lexis",
         ":meta_syntaxis",
-        ":opam_syntaxis",
+        ":opam_parser",
         "//external/libinih:inih",
     ],
     visibility = ["//visibility:public"]
@@ -140,16 +158,10 @@ gensyntax(
     yy   = "meta_syntaxis.y",
     outs = ["meta_syntaxis.c","meta_syntaxis.out"],
     defines = select({
-        ":yydebug-vectors": ["YYDEBUG_VECTORS"],
+        ":yydebug-enabled": ["YYDEBUG"],
         "//conditions:default":   []
     }) + select({
-        ":yydebug-dicts": ["YYDEBUG_DICTS"],
-        "//conditions:default":   []
-    }) + select({
-        ":yydebug-targets": ["YYDEBUG_TARGETS"],
-        "//conditions:default":   []
-    }) + select({
-        ":yydebug-loads": ["YYDEBUG_LOADSTMTS"],
+        ":yytrace-enabled": ["YYTRACE"],
         "//conditions:default":   []
     })
 )
@@ -213,8 +225,11 @@ genrule(
 ####    OPAM Parser
 ################################################################
 cc_library(
-    name = "opam_syntaxis",
+    name = "opam_parser",
+    # name = "opam_syntaxis",
     srcs = [
+        "opam_parser.c",
+        "opam_parser.h",
         "opam_syntaxis.c",
         "opam_syntaxis.h",
         "log.h",
@@ -222,15 +237,18 @@ cc_library(
         "uthash.h",
         "utstring.h",
         ],
-    # alwayslink = True,
-    copts = [
-        "-I.",
-        "-Ibootstrap",
-        "-Iopam/bootstrap",
-        "-Iexternal/opam/bootstrap",
-        "-I$(GENDIR)/external/opam/bootstrap",
-
+    hdrs = [
+        "libopamparser.h",
+        # "opam_parser.h"
     ],
+    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES,
+    defines = select({
+        ":yydebug-enabled": ["YYDEBUG"],
+        "//conditions:default":   []
+    }) + select({
+        ":lexdebug-enabled": ["LEXDEBUG"],
+        "//conditions:default":   []
+    }),
     deps = ["opam_lexer"],
     visibility = ["//test:__subpackages__"]
 )
@@ -240,16 +258,13 @@ gensyntax(
     yy   = "opam_syntaxis.y",
     outs = ["opam_syntaxis.c","opam_syntaxis.out"],
     defines = select({
-        ":yydebug-vectors": ["YYDEBUG_VECTORS"],
+        ":yydebug-enabled": ["YYDEBUG"],
         "//conditions:default":   []
     }) + select({
-        ":yydebug-dicts": ["YYDEBUG_DICTS"],
+        ":yydebug-filter": ["YYDEBUG_FILTER"],
         "//conditions:default":   []
     }) + select({
-        ":yydebug-targets": ["YYDEBUG_TARGETS"],
-        "//conditions:default":   []
-    }) + select({
-        ":yydebug-loads": ["YYDEBUG_LOADSTMTS"],
+        ":yydebug-fpf": ["YYDEBUG_FPF"],
         "//conditions:default":   []
     })
 )
@@ -265,18 +280,20 @@ cc_library(
         "uthash.h",
         "utstring.h",
     ],
-    hdrs = [
-        "log.h",
-        "opam_lexer.h"
-    ],
-    # alwayslink = True,
-    copts = [
-        "-Ibootstrap",
-        "-Iopam/bootstrap",
-        "-I$(GENDIR)/bootstrap",
-        "-I$(GENDIR)/opam/bootstrap",
-        "-I$(GENDIR)/external/opam/bootstrap"
-    ],
+    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES,
+    defines = select({
+        ":yydebug-enabled": ["YYDEBUG"],
+        "//conditions:default":   []
+    }) + select({
+        ":lexdebug-enabled": ["LEXDEBUG"],
+        "//conditions:default":   []
+    }) + select({
+        ":lexdebug-version": ["LEXDEBUG_VERSION"],
+        "//conditions:default":   []
+    }) + select({
+        ":lexdebug-fpf": ["LEXDEBUG_FPF"],
+        "//conditions:default":   []
+    }),
     visibility = ["//test:__subpackages__"]
 )
 
@@ -302,15 +319,18 @@ genrule(
 )
 
 genrule(
-    name = "lex_mkhdrs",
+    name = "parse_mkhdrs",
     srcs = [
         "opam_lexer.c",
         "opam_lexis.c",
-        "opam_syntaxis.c",
+        "opam_parser.c",
+        "opam_syntaxis.c", ## defines token_type constants
+        "opam_package.c" ## ast node types, etc.
     ],
     outs = [
         "opam_lexer.h",
         "opam_lexis.h",
+        "opam_parser.h",
         "opam_syntaxis.h",
     ],
     cmd = "\n".join([
@@ -319,8 +339,39 @@ genrule(
         "$(location :makeheaders) \\",
         "    $(location opam_lexer.c) \\",
         "    $(location opam_lexis.c) \\",
+        "    $(location opam_package.c) \\",
+        "    $(location opam_parser.c) \\",
         "    $(location opam_syntaxis.c)",
         "cp $${SRCDIR1}/*.h $(@D)",
+        # "> $@"
+    ]),
+    tools = [":makeheaders"],
+    visibility = ["//visibility:public"]
+)
+
+genrule(
+    name = "parse_mkhdrs_export",
+    srcs = [
+        "opam_lexer.c",
+        "opam_lexis.c",
+        "opam_parser.c",
+        "opam_syntaxis.c",
+        "opam_package.c"
+    ],
+    outs = [
+        "libopamparser.h",
+    ],
+    cmd = "\n".join([
+        "SRC1=$(location opam_lexis.c)",
+        "SRCDIR1=`dirname $$SRC1`",
+        "$(location :makeheaders) -H \\",
+        "    $(location opam_lexer.c) \\",
+        "    $(location opam_lexis.c) \\",
+        "    $(location opam_package.c) \\",
+        "    $(location opam_parser.c) \\",
+        "    $(location opam_syntaxis.c) \\",
+        "> $@"
+        # "cp $${SRCDIR1}/*.h $(@D)",
     ]),
     tools = [":makeheaders"],
     visibility = ["//visibility:public"]
@@ -352,6 +403,7 @@ genrule(
         "opam_import.c",
         "opam_init_here.c",
         "opam_status.c",
+        # "opam_syntaxis.c",
         "run_cmd.c"
     ],
     outs = [
@@ -375,6 +427,7 @@ genrule(
         "opam_import.h",
         "opam_init_here.h",
         "opam_status.h",
+        # "opam_syntaxis.h",
         "run_cmd.h"
     ],
     cmd = "\n".join([
@@ -401,6 +454,7 @@ genrule(
         "    $(location opam_import.c) \\",
         "    $(location opam_init_here.c) \\",
         "    $(location opam_status.c) \\",
+        # "    $(location opam_syntaxis.h) \\",
         "    $(location run_cmd.c)",
         "cp $${SRCDIR1}/*.h $(@D)",
     ]),
@@ -431,6 +485,8 @@ genrule(
         "opam_deps.c",
         "opam_import.c",
         "opam_init_here.c",
+        "opam_lexer.c",
+        "opam_parser.c",
         "opam_status.c",
         "run_cmd.c"
     ],
@@ -460,6 +516,8 @@ genrule(
         "    $(location opam_deps.c) \\",
         "    $(location opam_import.c) \\",
         "    $(location opam_init_here.c) \\",
+        "    $(location opam_lexer.c) \\",
+        "    $(location opam_parser.c) \\",
         "    $(location opam_status.c) \\",
         "    $(location run_cmd.c) \\",
         "> $@"

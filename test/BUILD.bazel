@@ -21,7 +21,7 @@ cc_binary(
     linkstatic = 1
 )
 
-
+##########
 cc_binary(
     name  = "opam_parse",
     srcs  = [
@@ -29,6 +29,10 @@ cc_binary(
         "opam_parse.h",
     ],
     copts = CMD_FLAGS + BOOTSTRAP_INCLUDES + [
+        # "-Ibootstrap",
+        # "-I$(GENDIR)",
+        # "-I$(GENDIR)/opam",
+        # "-I$(GENDIR)/opam/bootstrap",
         "-I$(GENDIR)/test",
         "-I$(GENDIR)/external/opam/test"
     ],

@@ -5,8 +5,15 @@
 # always enable platform-based toolchain resolution:
 build --incompatible_enable_cc_toolchain_resolution
 
-## for private control over bazel, use ./user.bazelrc
-## (which should be listed in .gitignore)
+common:yydebug --//bootstrap:yydebug
+common:yydebug --//bootstrap:yytrace
+
+common:yydebug --//bootstrap:lexdebug
+# common:yydebug --//bootstrap:lexdebug-rules=version
+
+# fpf = filtered-package-formula
+common:yydebug --//bootstrap:yydebug-rules=fpf
+common:yydebug --//bootstrap:lexdebug-rules=fpf
 
 try-import .private/bazelrc
 
