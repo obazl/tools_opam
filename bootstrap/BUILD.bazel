@@ -28,6 +28,8 @@ config_setting(name = "yydebug-fvf",
                flag_values = {":yydebug-rules": "fvf"})
 config_setting(name = "yydebug-filter",
                flag_values = {":yydebug-rules": "filter"})
+config_setting(name = "yydebug-build-filter",
+               flag_values = {":yydebug-rules": "build-filter"})
 
 ## enable lexer debugging: --//bootstrap:lexdebug
 bool_flag(name = "lexdebug", build_setting_default = 0)
@@ -43,6 +45,8 @@ config_setting(name = "lexdebug-fvf",
                flag_values = {":lexdebug-rules": "fvf"})
 config_setting(name = "lexdebug-filter",
                flag_values = {":lexdebug-rules": "filter"})
+config_setting(name = "lexdebug-build-filter",
+               flag_values = {":lexdebug-rules": "build-filter"})
 
 ##########
 cc_library(
@@ -286,6 +290,9 @@ lemon(
     }) + select({
         ":lexdebug-fvf": ["YYDEBUG_FVF"],
         "//conditions:default":   []
+    }) + select({
+        ":yydebug-build-filter": ["YYDEBUG_BUILD_FILTER"],
+        "//conditions:default":   []
     })
 )
 
@@ -315,6 +322,9 @@ cc_library(
         "//conditions:default":   []
     }) + select({
         ":lexdebug-fvf": ["LEXDEBUG_FVF"],
+        "//conditions:default":   []
+    }) + select({
+        ":lexdebug-build-filter": ["LEXDEBUG_BUILD_FILTER"],
         "//conditions:default":   []
     }),
     visibility = ["//test:__subpackages__"]

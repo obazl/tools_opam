@@ -89,7 +89,11 @@ int main(int argc, char *argv[])
     for (binding = opam_pkg->entries;
          binding != NULL;
          binding = binding->hh.next) {
-        if (binding->t == BINDING_STRINGLIST) {
+        switch (binding->t) {
+        case BINDING_STRING:
+            printf("binding: %s: %s\n", binding->name, (char*)binding->val);
+            break;
+        case BINDING_STRINGLIST: {
             UT_array *strings = (UT_array*)binding->val;
             printf("Binding: %s: <stringlist> ct: %d\n",
                    binding->name, utarray_len(strings));
@@ -97,7 +101,19 @@ int main(int argc, char *argv[])
             while ( (p=(char**)utarray_next(strings, p))) {
                 printf("\t%s\n", *p);
             }
-        } else {
+        }
+            break;
+        case BINDING_DEPENDS: {
+            /* UT_array *strings = (UT_array*)binding->val; */
+            /* printf("Binding: %s: <stringlist> ct: %d\n", */
+            /*        binding->name, utarray_len(strings)); */
+            /* char **p = NULL; */
+            /* while ( (p=(char**)utarray_next(strings, p))) { */
+            /*     printf("\t%s\n", *p); */
+            /* } */
+        }
+            break;
+        default:
             printf("binding: %s: %s\n", binding->name, (char*)binding->val);
         }
     }

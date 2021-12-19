@@ -68,19 +68,21 @@ char *opam_token_names[256] = {
     [QMARK]      = TOKEN_NAME(qmark),
     [RBRACE]      = TOKEN_NAME(rbrace),
     [RBRACKET]      = TOKEN_NAME(rbracket),
-    [RELOP]      = TOKEN_NAME(relop),
+    [RELOP]      = TOKEN_NAME(RELOP),
     [REMOVE]      = TOKEN_NAME(remove),
     [RPAREN]       = TOKEN_NAME(rparen),
     [RUN_TEST]      = TOKEN_NAME(run_test),
     [SETENV]      = TOKEN_NAME(setenv),
     [SQ]      = TOKEN_NAME(sq),
     [STRING]       = TOKEN_NAME(string),
+    [STRING3]       = TOKEN_NAME(string3),
     [SUBSTS]      = TOKEN_NAME(substs),
     [SYNOPSIS]      = TOKEN_NAME(synopsis),
     [TAGS]      = TOKEN_NAME(tags),
     [TERM]      = TOKEN_NAME(TERM),
     [TERM_STRING]      = TOKEN_NAME(TERM_STRING),
     [TERM_VARIDENT]      = TOKEN_NAME(TERM_VARIDENT),
+    [TQ]         = TOKEN_NAME(TQ),
     [TRUE]         = TOKEN_NAME(TRUE),
     [URL]      = TOKEN_NAME(url),
     [VARIDENT]     = TOKEN_NAME(varident),
@@ -169,6 +171,7 @@ EXPORT void opam_lex_file(char *fname)
         case PKGNAME:
         case RELOP:
         case STRING:
+        case STRING3:
         case SYNOPSIS:
         case TERM:
         case TERM_STRING:

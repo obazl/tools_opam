@@ -233,17 +233,18 @@ loop:
              | "version"
              | "maintainer"
              | "authors"
+             | "name"
              | "license"
              | "homepage"
-             | "doc:"
+             | "doc"
              | "bug-reports"
              | "dev-repo"
              | "tags"
              | "patches"
              | "substs"
-             | "install"
+             /* | "install" */
              | "build-doc"
-             | "run-test"
+             /* | "run-test" */
              | "remove"
              /* | "depends" */
              | "depopts"
@@ -260,6 +261,14 @@ loop:
             log_debug("build, mode: %d", lexer->mode);
             return BUILD;
         }
+        <init> "install" => build {
+            log_debug("install, mode: %d", lexer->mode);
+            return INSTALL;
+        }
+        <init> "run-test" => build {
+            log_debug("run-test, mode: %d", lexer->mode);
+            return RUN_TEST;
+        }
 
         <build> ":" { return COLON; }
         <build> "[" => buildlist {
@@ -273,9 +282,13 @@ loop:
             // always marks end of build fld so back to <init>
             return RBRACKET;
         }
+        <buildlist> "{" => termlist_filter {
+            log_debug("<buildlist> lbrace mode %d", lexer->mode);
+            return LBRACE;
+        }
 
         // <term> ::= <string> | <varident>
-        <term> "\"" @s1 [^"]* @s2 "\"" {
+        <term> "\"" @s1 ([^"] | "\\\"" )* @s2 "\"" {
                 otok->s = strndup(s1, (size_t)(s2-s1));
                 return TERM_STRING;
         }
@@ -283,14 +296,23 @@ loop:
                 otok->s = strndup(s1, (size_t)(s2-s1));
                 return TERM_VARIDENT;
         }
-        <term> "{" => termfilter { return LBRACE; }
-        <termfilter> "}" => buildlist { return RBRACE; }
+        <term> "{" => term_filter {
+                log_debug("<term> lbrace mode %d", lexer->mode);
+                return LBRACE; }
+        <term_filter> "}" => term {
+                log_debug("<term_filter> rbrace mode %d", lexer->mode);
+                return RBRACE; }
+
+        <termlist_filter> "}" => buildlist {
+                log_debug("<termlist_filter> rbrace mode %d", lexer->mode);
+                return RBRACE; }
 
         <term> "[" { return LBRACKET; }
-        <term> "]" { return RBRACKET; }
+        <term> "]" => buildlist { return RBRACKET; }
 
-
-
+        <init> "conflicts" => depends {
+            return CONFLICTS;
+        }
         <init> "depends" => depends {
             return DEPENDS;
         }
@@ -325,15 +347,15 @@ loop:
                 return VERSION;
         }
 
-        <fvf,termfilter> @s1 Varident @s2 {
+                <fvf,termlist_filter,term_filter> @s1 Varident @s2 {
                 otok->s = strndup(s1, (size_t)(s2-s1));
-                return FILTER;
+                return VARIDENT;
         }
-        <fvf,termfilter> @s1 String @s2 {
+        <fvf,termlist_filter,term_filter> @s1 String @s2 {
                 otok->s = strndup(s1, (size_t)(s2-s1));
-                return FILTER;
+                return STRING;
         }
-        <fvf,termfilter> @s1 Int @s2 {
+        <fvf,termlist_filter,term_filter> @s1 Int @s2 {
                 otok->s = strndup(s1, (size_t)(s2-s1));
                 return FILTER;
         }
@@ -344,17 +366,23 @@ loop:
 
         // STRINGS
         // <string> ::= ( (") { <char> }* (") ) | ( (""") { <char> }* (""") )
-        // single-quoted
-        <init> "\"" @s1 [^"]* @s2 "\"" {
-                otok->s = strndup(s1, (size_t)(s2-s1));
-                return STRING;
-            }
-        // double-quoted
-        <init> "\"\"\"" @s1 [^"]* @s2 "\"\"\"" {
+        // triple-quoted - this doesn't quite get it right
+        <init> "\"\"\"" => triplequote { return TQ; }
+        <triplequote> "\"\"\"" => init { return TQ; }
+        <triplequote> @s1 "\"" ([^"] | "\\\"" )* "\"" @s2 {
             otok->s = strndup(s1, (size_t)(s2-s1));
             return STRING;
         }
+        <triplequote> @s1 [^"]* @s2 {
+            otok->s = strndup(s1, (size_t)(s2-s1));
+            return STRING3;
+        }
 
+        // single-quoted
+        <init> "\"" @s1 ([^"] | "\\\"" )+ @s2 "\"" {
+                otok->s = strndup(s1, (size_t)(s2-s1));
+                return STRING;
+            }
         /* "," { goto loop; } */
         <*> wsnl { goto loop; }
 
@@ -375,10 +403,13 @@ loop:
             return VARIDENT;
         }
 
-        <init> "=" { return EQ; }
+        <init> @s1 "=" @s2 {
+            otok->s = strndup(s1, (size_t)(s2-s1));
+            return RELOP;
+        }
 
-        <init> "\"" { return DQ; }
-        <init> "'" { return SQ; }
+        /* <init> "\"" { return DQ; } */
+        /* <init> "'" { return SQ; } */
 
         <*>*         {
             fprintf(stderr, "ERROR lexing: %s: %s\n",

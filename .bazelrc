@@ -24,6 +24,10 @@ common:yydebug --//bootstrap:lexdebug
 
 # common:yydebug --//bootstrap:lexdebug-rules=version
 
+common:yydebug --//bootstrap:yydebug-rules=build-filter
+common:yydebug --//bootstrap:lexdebug-rules=build-filter
+
+
 try-import .private/bazelrc
 
 ## copy the following to user.bazelrc to get started:

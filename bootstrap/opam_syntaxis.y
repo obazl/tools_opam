@@ -84,22 +84,25 @@ update it directly */
 %token SETENV.
 %token SQ.
 %token STRING.
+%token STRING3.
 %token SUBSTS.
 %token SYNOPSIS.
 %token TAGS.
 %token TERM.
 %token TERM_STRING.
 %token TERM_VARIDENT.
+%token TQ.
 %token TRUE.
 %token URL.
 %token VARIDENT.
 %token VERSION.
 
-%right RELOP.
+%right LOGOP.
 %right BANG.
 %right QMARK.
 
-%right LOGOP.
+%right RELOP.
+
 
 /* **************** */
 %token_type { union opam_token_u } /* terminals */
@@ -108,7 +111,7 @@ update it directly */
 
 %type package { struct opam_package_s * }
 %type binding { struct opam_binding_s * }
-%type deps { struct opam_deps_s * }
+%type fpf { struct opam_deps_s * }
 %type stringlist { UT_array * }
 
 %syntax_error {
@@ -146,6 +149,12 @@ package ::= bindings . {
               HASH_CNT(hh, opam_parse_state->pkg->entries));
 #endif
 }
+
+%ifdef YYDEBUG_BUILD_FILTER
+package ::= build_filter . {
+    log_debug("START build_filter");
+}
+%endif
 
 %ifdef YYDEBUG_FILTER
 package ::= filter . {
@@ -201,6 +210,20 @@ binding(Binding) ::= KEYWORD(Keyword) COLON STRING(String) . {
                     Binding->name, strlen(Binding->name), Binding);
 }
 
+binding(Binding) ::= KEYWORD(Keyword) COLON string3(String) . {
+#if YYDEBUG
+    log_debug("BINDING: %s: %s", Keyword.s, String.s);
+#endif
+    /* create a binding and add it to the pkg hashmap */
+    Binding = calloc(sizeof(struct opam_binding_s), 1);
+    Binding->name = Keyword.s;
+    Binding->t = BINDING_STRING;
+    Binding->val = strdup(String.s);
+    HASH_ADD_KEYPTR(hh, // opam_parse_state->pkg->entries->hh,
+                    opam_parse_state->pkg->entries,
+                    Binding->name, strlen(Binding->name), Binding);
+}
+
 binding(Binding) ::= KEYWORD(Keyword) COLON LBRACKET stringlist(Stringlist) RBRACKET . {
 #if YYDEBUG
     log_debug("BINDING stringlist %s, ct: %d",
@@ -221,14 +244,16 @@ binding(Binding) ::= KEYWORD(Keyword) COLON LBRACKET stringlist(Stringlist) RBRA
 }
 
 /****************************************************************/
-/* build: [ [ <term> { <filter> } ... ] { <filter> } ... ] */
+/* build, install, run-test all have the same grammar:
+    [ [ <term> { <filter> } ... ] { <filter> } ... ]
+ */
 binding(Binding) ::=
-    BUILD COLON LBRACKET build_cmds RBRACKET . {
+    BUILD COLON LBRACKET term_grammar RBRACKET . {
 #if YYDEBUG
         log_debug("BINDING build");
 #endif
     Binding = calloc(sizeof(struct opam_binding_s), 1);
-    Binding->name = strndup("build", 7);
+    Binding->name = strndup("build", 5);
     Binding->t = BINDING_BUILD;
     /* Binding->val =  */
     HASH_ADD_KEYPTR(hh,
@@ -236,19 +261,47 @@ binding(Binding) ::=
                     Binding->name, strlen(Binding->name), Binding);
 }
 
-build_cmds ::= . {
-    log_debug("build_cmds null");
+binding(Binding) ::=
+    INSTALL COLON LBRACKET term_grammar RBRACKET . {
+#if YYDEBUG
+        log_debug("BINDING install");
+#endif
+    Binding = calloc(sizeof(struct opam_binding_s), 1);
+    Binding->name = strndup("install", 7);
+    Binding->t = BINDING_BUILD;
+    /* Binding->val =  */
+    HASH_ADD_KEYPTR(hh,
+                    opam_parse_state->pkg->entries,
+                    Binding->name, strlen(Binding->name), Binding);
 }
 
-build_cmds ::= build_cmds build_cmd . {
-    log_debug("build_cmds list");
+binding(Binding) ::=
+    RUN_TEST COLON LBRACKET term_grammar RBRACKET . {
+#if YYDEBUG
+        log_debug("BINDING run-test");
+#endif
+    Binding = calloc(sizeof(struct opam_binding_s), 1);
+    Binding->name = strndup("run-test", 8);
+    Binding->t = BINDING_BUILD;
+    /* Binding->val =  */
+    HASH_ADD_KEYPTR(hh,
+                    opam_parse_state->pkg->entries,
+                    Binding->name, strlen(Binding->name), Binding);
+}
+
+term_grammar ::= . {
+    log_debug("term_grammar null");
+}
+
+term_grammar ::= term_grammar build_cmd . {
+    log_debug("term_grammar list");
 }
 
 build_cmd ::= LBRACKET build_terms RBRACKET . {
     log_debug("build_cmd");
 }
 
-build_cmd ::= LBRACKET build_terms RBRACKET term_filter . {
+build_cmd ::= LBRACKET build_terms RBRACKET build_filter . {
     log_debug("build_cmd filtered");
 }
 
@@ -256,20 +309,61 @@ build_terms ::= . {
     log_debug("build_terms");
 }
 
-build_terms ::= build_terms TERM_STRING . {
-    log_debug("build_terms TERM");
+/* build_terms ::= build_terms TERM_STRING . { */
+/*     log_debug("build_terms TERM_STRING"); */
+/* } */
+
+build_terms ::= build_terms build_term . {
+    log_debug("build_terms build_term");
 }
 
-build_terms ::= build_terms TERM_VARIDENT . {
-    log_debug("build_terms TERM");
+build_term ::= TERM_STRING . {
+    log_debug("build_term TERM_VARIDENT");
 }
 
-term_filter ::= LBRACE FILTER RBRACE . {
-    log_debug("term_filter");
+build_term ::= TERM_STRING build_filter . {
+    log_debug("build_term TERM_STRING build_term");
 }
+
+build_term ::= TERM_VARIDENT . {
+    log_debug("build_term TERM_VARIDENT");
+}
+
+build_term ::= TERM_VARIDENT build_filter . {
+    log_debug("build_term TERM_VARIDENT build_term");
+}
+
+build_filter ::= LBRACE FILTER RBRACE . {
+    log_debug("build_filter");
+}
+
+build_filter ::= LBRACE build_filter_expr RBRACE . {
+    log_debug("build_filter");
+}
+
+build_filter_expr ::= STRING . {
+    log_debug("build_filter");
+}
+
+build_filter_expr ::= VARIDENT . {
+    log_debug("build_filter");
+}
+
+build_filter_expr ::= build_filter_expr LOGOP build_filter_expr . {
+    log_debug("build_filter");
+}
+
+build_filter_expr ::= build_filter_expr RELOP build_filter_expr . {
+    log_debug("build_filter");
+}
+
+/* build_filter_expr ::= FILTER . { */
+/*     log_debug("build_filter"); */
+/* } */
 
 /****************************************************************/
-// depends: [ <filtered-package-formula> ... ]
+// depends and conflicts use same content model
+//    [ <filtered-package-formula> ... ]
 binding(Binding) ::=
     DEPENDS COLON LBRACKET filtered_package_formulas RBRACKET . {
 #if YYDEBUG
@@ -277,6 +371,20 @@ binding(Binding) ::=
 #endif
     Binding = calloc(sizeof(struct opam_binding_s), 1);
     Binding->name = strndup("depends", 7);
+    Binding->t = BINDING_DEPENDS;
+    /* Binding->val =  */
+    HASH_ADD_KEYPTR(hh,
+                    opam_parse_state->pkg->entries,
+                    Binding->name, strlen(Binding->name), Binding);
+}
+
+binding(Binding) ::=
+    CONFLICTS COLON LBRACKET filtered_package_formulas RBRACKET . {
+#if YYDEBUG
+        log_debug("BINDING conflicts");
+#endif
+    Binding = calloc(sizeof(struct opam_binding_s), 1);
+    Binding->name = strndup("conflicts", 9);
     Binding->t = BINDING_DEPENDS;
     /* Binding->val =  */
     HASH_ADD_KEYPTR(hh,
@@ -339,16 +447,18 @@ stringlist(Stringlist_lhs) ::= stringlist(Stringlist) STRING(String) . {
 #endif
     }
 
-    fpf ::= PKGNAME fvf_expr . {
-        log_debug("fpf: pkgname fvf_expr");
+    fpf ::= PKGNAME(Pkg) fvf_expr . {
+        log_debug("fpf: pkgname fvf_expr:**************** %s",
+                  Pkg.s);
 #if YYDEBUG
 #endif
     }
 
-    fpf ::= PKGNAME . {
+    fpf ::= PKGNAME(Pkg) . {
 #if YYDEBUG
-        log_debug("fpf: pkgname");
+        log_debug("fpf: **************** pkgname: %s", Pkg.s);
 #endif
+        /* Deps = calloc(sizeof(struct opam_binding_s), 1); */
     }
 
     // ################################################################
@@ -459,7 +569,7 @@ stringlist(Stringlist_lhs) ::= stringlist(Stringlist) STRING(String) . {
    NB: <varident>, <string>, <int>, <bool> are lexed as FILTER tokens
     */
 
-        filter_expr ::= filter . [LOGOP] {
+filter_expr ::= filter . [LOGOP] {
 #if YYDEBUG
         log_debug("filter_expr: filter");
 #endif
@@ -489,7 +599,7 @@ stringlist(Stringlist_lhs) ::= stringlist(Stringlist) STRING(String) . {
 /* #endif */
 /*     } */
 
-    filter ::= LPAREN filter RPAREN . {
+filter ::= LPAREN filter RPAREN . {
 #if YYDEBUG
         log_debug("filter: (filter)");
 #endif
@@ -513,8 +623,14 @@ stringlist(Stringlist_lhs) ::= stringlist(Stringlist) STRING(String) . {
 #endif
     }
 
-    filter ::= VARIDENT . {
+filter ::= VARIDENT . {
 #if YYDEBUG
         log_debug("filter: VARIDENT");
 #endif
-    }
+}
+
+string3 ::= TQ STRING3 TQ . {
+}
+
+string3 ::= TQ STRING3 STRING STRING3 TQ . {
+}
