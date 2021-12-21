@@ -6,6 +6,7 @@ CMD_FLAGS = [
 ]
 
 BOOTSTRAP_INCLUDES = [
+    "-I.",
     "-Ibootstrap",
     "-Iexternal/opam/bootstrap",
 
