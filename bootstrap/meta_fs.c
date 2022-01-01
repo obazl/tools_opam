@@ -147,16 +147,22 @@ EXPORT char *mkdir_r_impl(char *base, char *path)
 
 void mkdir_r_loop(char *path)
 {
+    /* printf("mkdir_r_loop: %s\n", path); */
+    if (access(path, F_OK) == 0) return;
+
     char *sep = strrchr(path, '/');
     if (sep != NULL) {
         *sep = '\0';
-        mkdir_r_loop(path);
+        if (access(path, F_OK) < 0) {
+            mkdir_r_loop(path);
+        }
         *sep = '/';
     }
     errno = 0;
     if (mkdir(path, 0777) && errno != EEXIST)
-        printf("error %s while trying to create '%s'\n",
-               strerror(errno), path);
+        fprintf(stderr,
+                "mkdir_r_loop error %s while trying to create '%s'\n",
+                strerror(errno), path);
 }
 
 EXPORT char *mkdir_r(char *_path)
