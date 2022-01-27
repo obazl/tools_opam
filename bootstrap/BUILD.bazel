@@ -209,31 +209,31 @@ cc_library(
 ########
 ## re2c takes a long time to build. we do not need to run it every
 ## time once the grammar is stable, so we put the .c file under
-## version control
-genrule(
-    name = "gen_meta_lexis",
-    srcs = [
-        "meta_lexis.re",
-    ],
-    tools = ["@opam_re2c//:re2c"],
-    outs  = [
-        "meta_lexis.c"
-    ],
-    cmd   = "\n".join([
-        "for f in $(locations @opam_re2c//:re2c)",
-        "do",
-        "    if [ -f $$f ]",
-        "    then",
-        "        if [ re2c = `basename $$f` -a -x $$f ]",
-        "        then",
-        "            break",
-        "        fi",
-        "    fi",
-        "done",
-        "$$f --conditions --tags -o $(@D)/meta_lexis.c $(location meta_lexis.re)",
-    ]),
-    visibility = ["//visibility:public"]
-)
+## version control. if you need to work on the meta lexer, uncomment this:
+# genrule(
+#     name = "gen_meta_lexis",
+#     srcs = [
+#         "meta_lexis.re",
+#     ],
+#     tools = ["@opam_re2c//:re2c"],
+#     outs  = [
+#         "meta_lexis.c"
+#     ],
+#     cmd   = "\n".join([
+#         "for f in $(locations @opam_re2c//:re2c)",
+#         "do",
+#         "    if [ -f $$f ]",
+#         "    then",
+#         "        if [ re2c = `basename $$f` -a -x $$f ]",
+#         "        then",
+#         "            break",
+#         "        fi",
+#         "    fi",
+#         "done",
+#         "$$f --conditions --tags -o $(@D)/meta_lexis.c $(location meta_lexis.re)",
+#     ]),
+#     visibility = ["//visibility:public"]
+# )
 
 ################################################################
 ####    OPAM Parser
@@ -330,26 +330,29 @@ cc_library(
     visibility = ["//test:__subpackages__"]
 )
 
-genrule(
-    name = "gen_opam_lexis",
-    outs  = ["opam_lexis.c"],
-    srcs = ["opam_lexis.re"],
-    tools = ["@opam_re2c//:re2c"],
-    cmd   = "\n".join([
-        "for f in $(locations @opam_re2c//:re2c)",
-        "do",
-        "    if [ -f $$f ]",
-        "    then",
-        "        if [ re2c = `basename $$f` -a -x $$f ]",
-        "        then",
-        "            break",
-        "        fi",
-        "    fi",
-        "done",
-        "$$f --conditions --tags -o $(@D)/opam_lexis.c $(location opam_lexis.re)",
-    ]),
-    visibility = ["//visibility:public"]
-)
+## re2c takes a long time to build. we do not need to run it every
+## time once the grammar is stable, so we put the .c file under
+## version control. if you need to work on the opam lexer, uncomment this:
+# genrule(
+#     name = "gen_opam_lexis",
+#     outs  = ["opam_lexis.c"],
+#     srcs = ["opam_lexis.re"],
+#     tools = ["@opam_re2c//:re2c"],
+#     cmd   = "\n".join([
+#         "for f in $(locations @opam_re2c//:re2c)",
+#         "do",
+#         "    if [ -f $$f ]",
+#         "    then",
+#         "        if [ re2c = `basename $$f` -a -x $$f ]",
+#         "        then",
+#         "            break",
+#         "        fi",
+#         "    fi",
+#         "done",
+#         "$$f --conditions --tags -o $(@D)/opam_lexis.c $(location opam_lexis.re)",
+#     ]),
+#     visibility = ["//visibility:public"]
+# )
 
 genrule(
     name = "parse_mkhdrs",
