@@ -507,6 +507,50 @@ void emit_ocaml_toolchain_buildfile(char *switch_name)
     _emit_toolchain_bin_symlinks();
 }
 
+void _symlink_buildfile(char *buildfile, UT_string *to_file) {
+    UT_string *src;
+    utstring_new(src);
+    utstring_printf(src,
+                    "%s/external/opam/bazelfiles/%s",
+                    utstring_body(runfiles_root),
+                    buildfile);
+    int rc = access(utstring_body(src), F_OK);
+    if (rc != 0) {
+        log_error("not found: %s", utstring_body(src));
+        fprintf(stderr, "not found: %s\n", utstring_body(src));
+        return;
+    }
+
+    if (debug) {
+        log_debug("c_libs: symlinking %s to %s\n",
+                  utstring_body(src),
+                  utstring_body(to_file));
+    }
+    errno = 0;
+    rc = symlink(utstring_body(src),
+                 utstring_body(to_file));
+    if (rc != 0) {
+        switch (errno) {
+        case EEXIST:
+            goto ignore;
+        case ENOENT:
+            log_error("symlink ENOENT: %s", strerror(errno));
+            /* log_error("a component of '%s' does not name an existing file",  utstring_body(dst_dir)); */
+            fprintf(stderr, "symlink ENOENT: %s\n", strerror(errno));
+            /* fprintf(stderr, "A component of '%s' does not name an existing file.\n",  utstring_body(dst_dir)); */
+            break;
+        default:
+            log_error("symlink err: %s", strerror(errno));
+            fprintf(stderr, "symlink err: %s", strerror(errno));
+        }
+        log_error("Exiting");
+        fprintf(stderr, "Exiting\n");
+        exit(EXIT_FAILURE);
+    ignore:
+        ;
+    }
+}
+
 void _symlink_ocaml_bigarray(char *tgtdir)
 {
     if (debug)
@@ -577,17 +621,19 @@ void emit_ocaml_bigarray_pkg(char *switch_name)
 
     utstring_printf(ocaml_file, "/BUILD.bazel");
 
-    FILE *ostream;
-    ostream = fopen(utstring_body(ocaml_file), "w");
-    if (ostream == NULL) {
-        perror(utstring_body(ocaml_file));
-        exit(EXIT_FAILURE);
-    }
+    _symlink_buildfile("ocaml_bigarray.BUILD", ocaml_file);
 
-#include "ocaml_bigarray.BUILD.h"
-    fprintf(ostream, "%s", bigarray_buildfile);
+/*     FILE *ostream; */
+/*     ostream = fopen(utstring_body(ocaml_file), "w"); */
+/*     if (ostream == NULL) { */
+/*         perror(utstring_body(ocaml_file)); */
+/*         exit(EXIT_FAILURE); */
+/*     } */
 
-    fclose(ostream);
+/* #include "ocaml_bigarray.BUILD.h" */
+/*     fprintf(ostream, "%s", bigarray_buildfile); */
+
+/*     fclose(ostream); */
     utstring_free(ocaml_file);
 }
 
@@ -660,17 +706,19 @@ void emit_ocaml_compiler_libs_pkg(char *switch_name)
 
     utstring_printf(ocaml_file, "/BUILD.bazel");
 
-    FILE *ostream;
-    ostream = fopen(utstring_body(ocaml_file), "w");
-    if (ostream == NULL) {
-        perror(utstring_body(ocaml_file));
-        exit(EXIT_FAILURE);
-    }
+    _symlink_buildfile("ocaml_compiler-libs.BUILD", ocaml_file);
 
-#include "ocaml_compiler-libs.BUILD.h"
-    fprintf(ostream, "%s", compiler_libs_buildfile);
+/*     FILE *ostream; */
+/*     ostream = fopen(utstring_body(ocaml_file), "w"); */
+/*     if (ostream == NULL) { */
+/*         perror(utstring_body(ocaml_file)); */
+/*         exit(EXIT_FAILURE); */
+/*     } */
 
-    fclose(ostream);
+/* #include "ocaml_compiler-libs.BUILD.h" */
+/*     fprintf(ostream, "%s", compiler_libs_buildfile); */
+
+/*     fclose(ostream); */
     utstring_free(ocaml_file);
 }
 
@@ -744,17 +792,19 @@ void emit_ocaml_dynlink_pkg(char *switch_name)
 
     utstring_printf(ocaml_file, "/BUILD.bazel");
 
-    FILE *ostream;
-    ostream = fopen(utstring_body(ocaml_file), "w");
-    if (ostream == NULL) {
-        perror(utstring_body(ocaml_file));
-        exit(EXIT_FAILURE);
-    }
+    _symlink_buildfile("ocaml_dynlinks.BUILD", ocaml_file);
 
-#include "ocaml_dynlinks.BUILD.h"
-    fprintf(ostream, "%s", dynlinks_buildfile);
+/*     FILE *ostream; */
+/*     ostream = fopen(utstring_body(ocaml_file), "w"); */
+/*     if (ostream == NULL) { */
+/*         perror(utstring_body(ocaml_file)); */
+/*         exit(EXIT_FAILURE); */
+/*     } */
 
-    fclose(ostream);
+/* #include "ocaml_dynlinks.BUILD.h" */
+/*     fprintf(ostream, "%s", dynlinks_buildfile); */
+
+/*     fclose(ostream); */
     utstring_free(ocaml_file);
 }
 
@@ -828,17 +878,19 @@ void emit_ocaml_str_pkg(char *switch_name)
 
     utstring_printf(ocaml_file, "/BUILD.bazel");
 
-    FILE *ostream;
-    ostream = fopen(utstring_body(ocaml_file), "w");
-    if (ostream == NULL) {
-        perror(utstring_body(ocaml_file));
-        exit(EXIT_FAILURE);
-    }
+    _symlink_buildfile("ocaml_str.BUILD", ocaml_file);
 
-#include "ocaml_str.BUILD.h"
-    fprintf(ostream, "%s", str_buildfile);
+/*     FILE *ostream; */
+/*     ostream = fopen(utstring_body(ocaml_file), "w"); */
+/*     if (ostream == NULL) { */
+/*         perror(utstring_body(ocaml_file)); */
+/*         exit(EXIT_FAILURE); */
+/*     } */
 
-    fclose(ostream);
+/* #include "ocaml_str.BUILD.h" */
+/*     fprintf(ostream, "%s", str_buildfile); */
+
+/*     fclose(ostream); */
     utstring_free(ocaml_file);
 }
 
@@ -917,17 +969,19 @@ void emit_ocaml_threads_pkg(char *switch_name)
 
     utstring_printf(ocaml_file, "/BUILD.bazel");
 
-    FILE *ostream;
-    ostream = fopen(utstring_body(ocaml_file), "w");
-    if (ostream == NULL) {
-        perror(utstring_body(ocaml_file));
-        exit(EXIT_FAILURE);
-    }
+    _symlink_buildfile("ocaml_threads.BUILD", ocaml_file);
 
-#include "ocaml_threads.BUILD.h"
-    fprintf(ostream, "%s", threads_buildfile);
+/*     FILE *ostream; */
+/*     ostream = fopen(utstring_body(ocaml_file), "w"); */
+/*     if (ostream == NULL) { */
+/*         perror(utstring_body(ocaml_file)); */
+/*         exit(EXIT_FAILURE); */
+/*     } */
 
-    fclose(ostream);
+/* #include "ocaml_threads.BUILD.h" */
+/*     fprintf(ostream, "%s", threads_buildfile); */
+
+/*     fclose(ostream); */
     utstring_free(ocaml_file);
 }
 
@@ -1007,17 +1061,19 @@ void emit_ocaml_unix_pkg(char *switch_name)
 
     utstring_printf(ocaml_file, "/BUILD.bazel");
 
-    FILE *ostream;
-    ostream = fopen(utstring_body(ocaml_file), "w");
-    if (ostream == NULL) {
-        perror(utstring_body(ocaml_file));
-        exit(EXIT_FAILURE);
-    }
+    _symlink_buildfile("ocaml_unix.BUILD", ocaml_file);
 
-#include "ocaml_unix.BUILD.h"
-    fprintf(ostream, "%s", unix_buildfile);
+/*     FILE *ostream; */
+/*     ostream = fopen(utstring_body(ocaml_file), "w"); */
+/*     if (ostream == NULL) { */
+/*         perror(utstring_body(ocaml_file)); */
+/*         exit(EXIT_FAILURE); */
+/*     } */
 
-    fclose(ostream);
+/* #include "ocaml_unix.BUILD.h" */
+/*     fprintf(ostream, "%s", unix_buildfile); */
+
+/*     fclose(ostream); */
     utstring_free(ocaml_file);
 }
 
@@ -1173,87 +1229,9 @@ void emit_ocaml_c_api_pkg(char *switch_name)
 
     utstring_printf(ocaml_file, "/BUILD.bazel");
 
-    printf("runfiles root: %s\n", utstring_body(runfiles_root));
-    UT_string *src;
-    utstring_new(src);
-    utstring_printf(src,
-                    /* "%s/bazelfiles/ocaml_c_api.BUILD", */
-                    "%s/external/opam/bazelfiles/ocaml_c_api.BUILD",
-                    utstring_body(runfiles_root));
-    int rc = access(utstring_body(src), F_OK);
-    if (rc == 0) {
-        printf("found: %s\n", utstring_body(src));
-    } else {
-        printf("not found: %s\n", utstring_body(src));
-        return;
-    }
+    _symlink_buildfile("ocaml_c_api.BUILD", ocaml_file);
 
-    /* utstring_renew(dst); */
-    /* utstring_printf(dst, "%s/%s", */
-    /*                 utstring_body(obazldir), /\* tgtdir, *\/ */
-    /*                 direntry->d_name); */
-
-    if (debug) {
-        log_debug("c_libs: symlinking %s to %s\n",
-                  utstring_body(src),
-                  utstring_body(ocaml_file));
-    }
-    errno = 0;
-    rc = symlink(utstring_body(src),
-                 utstring_body(ocaml_file));
-    if (rc != 0) {
-        switch (errno) {
-        case EEXIST:
-            goto ignore;
-        case ENOENT:
-            log_error("symlink ENOENT: %s", strerror(errno));
-            /* log_error("a component of '%s' does not name an existing file",  utstring_body(dst_dir)); */
-            fprintf(stderr, "symlink ENOENT: %s\n", strerror(errno));
-            /* fprintf(stderr, "A component of '%s' does not name an existing file.\n",  utstring_body(dst_dir)); */
-            break;
-        default:
-            log_error("symlink err: %s", strerror(errno));
-            fprintf(stderr, "symlink err: %s", strerror(errno));
-        }
-        log_error("Exiting");
-        fprintf(stderr, "Exiting\n");
-        exit(EXIT_FAILURE);
-    ignore:
-        ;
-    }
-
-
-/*     FILE *ostream = _open_buildfile(ocaml_file); */
-/* #include "ocaml_c_api.BUILD.h" */
-/*     fprintf(ostream, "%s", c_api_buildfile); */
-
-/*     fclose(ostream); */
-
-/*     /\* **************** *\/ */
-/*     utstring_renew(ocaml_file); */
-/*     utstring_concat(ocaml_file, bzl_switch_pfx); */
-/*     utstring_printf(ocaml_file, "/ocaml/c/lib"); */
-/*     utstring_printf(ocaml_file, "/BUILD.bazel"); */
-
-/*     ostream = _open_buildfile(ocaml_file); */
-/* #include "ocaml_c_api_libs.BUILD.h" */
-/*     fprintf(ostream, "%s", c_api_libs_buildfile); */
-
-/*     fclose(ostream); */
-
-/*     /\* **************** *\/ */
-/*     utstring_renew(ocaml_file); */
-/*     utstring_concat(ocaml_file, bzl_switch_pfx); */
-/*     utstring_printf(ocaml_file, "/ocaml/c/caml"); */
-/*     utstring_printf(ocaml_file, "/BUILD.bazel"); */
-
-/*     ostream = _open_buildfile(ocaml_file); */
-/* #include "ocaml_c_api_hdrs.BUILD.h" */
-/*     fprintf(ostream, "%s", c_api_hdrs_buildfile); */
-
-/*     fclose(ostream); */
-
-/*     utstring_free(ocaml_file); */
+    utstring_free(ocaml_file);
 }
 
 /* **************************************************************** */
