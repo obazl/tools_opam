@@ -8,90 +8,37 @@
 #include "utstring.h"
 
 #include "log.h"
-#include "opam_init_here.h"
+#include "opam_init_xdg.h"
 
-/* opam_init_here
-   init a new opam installation rooted at ./opam, switch 'here',
+/* opam_init_xdg
+   init a new opam installation rooted at xdg
    and install pkgs
 
-   Default: install here.compiler and import here.packages
+   Default: current switch
    Alternative: -c compiler version, -s switch (use its compiler)
    Fallback: prompt user
 */
-EXPORT int opam_init_here(bool force, char *_compiler_version, char *_opam_switch)
+EXPORT int opam_init_xdg(bool force, char *_compiler_version, char *_opam_switch)
 {
-    log_debug("opam_init_here");
+    log_debug("opam_init_xdg");
     /* log_debug("  force: %d, switch: %s", force, _compiler_version); */
 
     bool replace = false;
 
-    if (access(".opam", F_OK) == 0) {
-
-        char *here_switch = run_cmd("opam switch --root .opam show");
-        char *here_compiler = run_cmd(
-             "opam exec --root " HERE_OPAM_ROOT
-             " --switch " HERE_SWITCH_NAME
-             " -- ocamlc --version");
-
-        printf("OPAM here-switch already configured at root ./.opam, switch '%s', compiler: '%s'.\n", here_switch, here_compiler);
-
-        free(here_switch);
-        free(here_compiler);
-
-        char do_replace[2];
-        printf("Replace? [yN] ");
-        while(1) {
-            memset(do_replace, '\0', 2);
-            fflush(stdin);
-            fgets(do_replace, 2, stdin);
-            if (do_replace[0] == '\n') {
-                break; // default: no
-            } else {
-                if ( (do_replace[0] == 'y') || (do_replace[0] == 'Y') ) {
-                    /* printf("Replacing y\n"); */
-                    replace = true;
-                    break;
-                } else {
-                    if ( (do_replace[0] == 'n') || (do_replace[0] == 'N') ) {
-                        break;
-                    } else {
-                        printf("Please enter y or n (or <enter> for default)\n");
-                        printf("Replace? [Yn] ");
-                    }
-                }
-            }
-        }
-        if (replace) {
-            printf("removing ./.opam\n");
-            run_cmd("rm -rf " HERE_OPAM_ROOT);
-        } else {
-            printf("cancelling here-switch init\n");
-            return -1;
-        }
-    }
-
-    /* if we got this far, then there is no here-switch at ./.opam */
-
-    /* FIXME: prevent use of system compiler for project switch */
-    /* UT_string *compiler_version; */
-    /* utstring_new(compiler_version); */
-
-    /* frontend guarantees only one of _compiler_version or
-       _opam_switch is defined */
-
+    char *compiler_version;
     if (_compiler_version != NULL) {
         /* utstring_printf(compiler_version, "%s", _compiler_version); */
-        /* compiler_version = _compiler_version; */
+        compiler_version = _compiler_version;
 
         _opam_init();
 
-        _opam_create_switch(_compiler_version);
+        _opam_create_switch(compiler_version);
 
-        free(_compiler_version);
+        free(compiler_version);
 
         // do not import here.packages if -c passed
 
-        return 0;
+        exit(EXIT_SUCCESS);
 
     }
     else if (_opam_switch != NULL) {
@@ -102,7 +49,7 @@ EXPORT int opam_init_here(bool force, char *_compiler_version, char *_opam_switc
         char *switch_compiler = run_cmd(utstring_body(cmd));
         if (switch_compiler == NULL) {
             log_error("Switch %s not found.", _opam_switch);
-            printf("here: switch %s not found.\n", _opam_switch);
+            printf("_here: switch %s not found.\n", _opam_switch);
             exit(EXIT_FAILURE);
         }
         printf("Using compiler version %s from opam switch %s\n",
@@ -116,18 +63,17 @@ EXPORT int opam_init_here(bool force, char *_compiler_version, char *_opam_switc
 
         free(switch_compiler);
 
-        return 0;
+        exit(EXIT_SUCCESS);
+
+
     } else {
         /* log_debug("-c <version> not passed\n"); */
-
-        char *compiler_version = read_here_compiler_file();
+        /* if -c not passed, then use version from here.compiler */
+        compiler_version = read_here_compiler_file();
         if (compiler_version) {
             if (verbose) {
-                fprintf(stderr, "INFO installing compiler version '%s' (specified in %s)\n",  compiler_version, HERE_OBAZL_ROOT HERE_COMPILER);
-                log_info("@opam//init: installing compiler version '%s' (specified in %s)",  compiler_version, HERE_OBAZL_ROOT HERE_COMPILER);
+                log_info("@opam//init: installing compiler version '%s' (specified in %s)",  HERE_OBAZL_ROOT HERE_COMPILER, compiler_version);
             }
-
-            /* exit(EXIT_FAILURE); /\* TESTING *\/ */
 
             _opam_init();
 
@@ -141,11 +87,11 @@ EXPORT int opam_init_here(bool force, char *_compiler_version, char *_opam_switc
                 if (dry_run)
                     printf("here.packages not found\n");
 
-            return 0;
+            exit(EXIT_SUCCESS);
 
         } else {
-            /* if (verbose) */
-            /*     log_debug(HERE_OBAZL_ROOT HERE_COMPILER " not found.\n"); */
+            if (verbose)
+                log_debug(HERE_OBAZL_ROOT HERE_COMPILER " not found.\n");
             // get compiler for current switch
             // 'opam var switch' returns switch name, not compiler
             char *current_switch = run_cmd("opam var switch");
@@ -162,11 +108,9 @@ EXPORT int opam_init_here(bool force, char *_compiler_version, char *_opam_switc
                     log_info("cancelling");
                     printf("cancelling\n");
                     //FIXME: cleanup
-                    return 0;
+                    exit(EXIT_SUCCESS);
                 }
             }
-
-            /* exit(EXIT_FAILURE); /\* TESTING *\/ */
 
             _opam_init();
 
@@ -177,25 +121,17 @@ EXPORT int opam_init_here(bool force, char *_compiler_version, char *_opam_switc
             free(current_switch);
             free(compiler_version);
 
-            if (use_current)
-                return 1;
-            else
-                return 0;
+            exit(EXIT_SUCCESS);
         }
     }
 
-    /* should not get here? */
+    if (_opam_init() != 0) {
+        free(compiler_version);
+        exit(EXIT_FAILURE);
+    }
 
-    fprintf(stderr, "FIXME\n");
-    exit(EXIT_FAILURE);
-
-    /* if (_opam_init() != 0) { */
-    /*     free(compiler_version); */
-    /*     exit(EXIT_FAILURE); */
-    /* } */
-
-    /* _opam_create_switch(compiler_version); */
-    /* free(compiler_version); */
+    _opam_create_switch(compiler_version);
+    free(compiler_version);
 
     /* free(compiler_version); */
     return 0;
@@ -226,7 +162,7 @@ LOCAL int _opam_init(void)
     int argc = (sizeof(init_argv) / sizeof(init_argv[0])) - 1;
     result = spawn_cmd(exe, argc, init_argv);
     if (result != 0) {
-        fprintf(stderr, "FAIL: run_cmd(opam var --root .opam --switch here)\n");
+        fprintf(stderr, "FAIL: run_cmd(opam var --root .opam --switch _here)\n");
     }
     return result;
 }
@@ -243,10 +179,8 @@ LOCAL int _opam_create_switch(char *compiler_version)
     int result;
 
     if (verbose)
-        log_info("creating switch with compiler version %s",
-                 compiler_version);
+        log_info("creating switch with compiler version %s", compiler_version);
 
-    exe = "opam";
     char *switch_argv[] = {
         "opam", "switch",
         "--cli=2.1",
@@ -261,12 +195,10 @@ LOCAL int _opam_create_switch(char *compiler_version)
     int argc = (sizeof(switch_argv) / sizeof(switch_argv[0])) - 1;
     result = spawn_cmd(exe, argc, switch_argv);
     if (result != 0) {
-        fprintf(stderr, "FAIL: run_cmd(opam switch --root .opam create here)\n");
+        fprintf(stderr, "FAIL: run_cmd(opam switch --root .opam create _here)\n");
     }
 
     if (!dry_run) {
-        mkdir_r(HERE_OBAZL_ROOT);
-        /* printf("opam_init_here opening " HERE_COMPILER_FILE "\n"); */
         FILE *here_compiler_file = fopen(HERE_COMPILER_FILE, "w");
         if (here_compiler_file == NULL) {
             if (errno == EACCES) {
@@ -280,21 +212,11 @@ LOCAL int _opam_create_switch(char *compiler_version)
                     }
                     /* log_debug("opened %s for w\n", HERE_COMPILER_FILE); */
                 } else {
-                    log_error("fopen %s: %s",
-                              HERE_COMPILER_FILE,
-                              strerror(errno));
-                    fprintf(stderr, "fopen %s: %s",
-                            HERE_COMPILER_FILE,
-                            strerror(errno));
+                    perror(HERE_COMPILER_FILE);
                     exit(EXIT_FAILURE);
                 }
             } else {
-                log_error("fopen %s: %s",
-                          HERE_COMPILER_FILE,
-                          strerror(errno));
-                fprintf(stderr, "fopen %s: %s",
-                        HERE_COMPILER_FILE,
-                        strerror(errno));
+                perror(HERE_COMPILER_FILE);
                 exit(EXIT_FAILURE);
             }
         }

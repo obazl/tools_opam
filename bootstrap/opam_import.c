@@ -36,9 +36,9 @@ EXPORT void opam_import(char *manifest)
 
     } else {
 
-        if (access(OBAZL_OPAM_ROOT "/here.packages", R_OK) == 0) {
+        if (access(HERE_OBAZL_ROOT "/here.packages", R_OK) == 0) {
             utstring_printf(manifest_name, "%s",
-                            OBAZL_OPAM_ROOT "/here.packages");
+                            HERE_OBAZL_ROOT "/here.packages");
         } else {
             char *m = prompt_import_manifest();
             if (m)

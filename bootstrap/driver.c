@@ -27,9 +27,9 @@ int errnum;
 bool g_ppx_pkg;
 
 /* global: we write on new_local_repository rule per build file */
-FILE *repo_rules_FILE;
+/* FILE *bootstrap_FILE; */
 
-char *rootdir = ""; // buildfiles";
+char *pfxdir = NULL; // ""; // buildfiles";
 
 #if EXPORT_INTERFACE
 #include <stdbool.h>
@@ -107,25 +107,60 @@ bool _skip_pkg(char *pkg)
 {
     int len = strlen(pkg);
 
+    /* skip pkgs "distributed with OCaml" - repo rule installs them
+      to skip: compiler-libs, dynlink, str, unix, stdlib, threads,
+      bigarray, num,
+      raw_spacetime (removed in 4.12.0)
+      ocamldoc
+    */
+
     /* avoid matching ocaml-compiler-libs */
     if (strncmp(pkg + len - 19, "/compiler-libs/META", 19) == 0) {
         log_warn("SKIPPING compiler-libs/META");
         return true;
     }
-    /* skip pkgs "distributed with OCaml" - repo rule installs them */
-    /* if (strncmp(pkg + len - 12, "dynlink/META", 12) == 0) { */
-    /*     log_warn("SKIPPING dynlink/META"); */
-    /*     return true; */
-    /* } */
-    /* if (strncmp(pkg + len - 12, "threads/META", 12) == 0) { */
-    /*     log_warn("SKIPPING threads/META"); */
-    /*     return true; */
-    /* } */
-    /* if (strncmp(pkg + len - 9, "unix/META", 9) == 0) { */
-    /*     log_warn("SKIPPING unixt/META"); */
-    /*     return true; */
-    /* } */
 
+    if (strncmp(pkg + len - 12, "dynlink/META", 12) == 0) {
+        log_warn("SKIPPING dynlink/META");
+        return true;
+    }
+    if (strncmp(pkg + len - 13, "ocamldoc/META", 13) == 0) {
+        log_warn("SKIPPING ocamldoc/META");
+        return true;
+    }
+    if (strncmp(pkg + len - 12, "threads/META", 12) == 0) {
+        log_warn("SKIPPING threads/META");
+        return true;
+    }
+    if (strncmp(pkg + len - 9, "unix/META", 9) == 0) {
+        log_warn("SKIPPING unix/META");
+        return true;
+    }
+
+    // version-dependent: bigarray, num, raw_spacetime
+
+    // Bigarray moved to standard lib in v. 4.07
+    // so no need to list as explicit dep?
+    if (strncmp(pkg + len - 13, "bigarray/META", 13) == 0) {
+        log_warn("SKIPPING bigarray/META");
+        return true;
+    }
+
+    // raw_spacetime - removed in v. 4.12(?)
+    if (strncmp(pkg + len - 18, "raw_spacetime/META", 18) == 0) {
+        log_warn("SKIPPING raw_spacetime/META");
+        return true;
+    }
+
+    // num - moved from core to separate lib in v. 4.06.0
+    // skip if version < 4.06 ?
+    // however, opam seems to install num* in lib/ocaml "for backward compatibility", and installs lib/num/META.
+    /* "New applications that need arbitrary-precision arithmetic should use the Zarith library (https://github.com/ocaml/Zarith) instead of the Num library, and older applications that already use Num are encouraged to switch to Zarith." */
+    // https://www.dra27.uk/blog/platform/2018/01/31/num-system.html
+    if (strncmp(pkg + len - 8, "num/META", 8) == 0) {
+        log_warn("SKIPPING num/META");
+        return true;
+    }
 
     /* TMP HACK: skip some pkgs for which we use template BUILD files */
     /* if (strncmp(pkg + len - 13, "digestif/META", 13) == 0) { */
@@ -203,6 +238,7 @@ EXPORT struct obzl_meta_package *obzl_meta_parse_file(char *fname)
 
     MAIN_PKG = (struct obzl_meta_package*)calloc(sizeof(struct obzl_meta_package), 1);
     MAIN_PKG->name      = package_name_from_file_name(fname);
+    MAIN_PKG->path      = dirname(fname);
     MAIN_PKG->directory = MAIN_PKG->name; // dirname(fname);
     MAIN_PKG->metafile  = fname;
 
@@ -265,7 +301,7 @@ EXPORT struct obzl_meta_package *obzl_meta_parse_file(char *fname)
     /*         log_set_level(logger.parse_log_level); */
     /* log_set_quiet(true); */
 
-    log_trace("lex: end of input");
+    /* log_trace("lex: end of input"); */
 
     Parse(pMetaParser, 0, mtok, MAIN_PKG); // , &sState);
     ParseFree(pMetaParser, free );
@@ -345,7 +381,7 @@ int handle_lib_meta(char *switch_lib,
     /* fclose(f); */
 
     errno = 0;
-    log_debug("PARSING: %s", buf);
+    /* log_debug("PARSING: %s", buf); */
     struct obzl_meta_package *pkg = obzl_meta_parse_file(buf);
     if (pkg == NULL) {
         if (errno == -1)
@@ -377,15 +413,17 @@ int handle_lib_meta(char *switch_lib,
             return 0;
         }
 
-        emit_new_local_pkg_repo(repo_rules_FILE,
-                                /* _pkg_prefix, */
-                                pkg);
+        /* emit_new_local_pkg_repo(bootstrap_FILE, /\* _pkg_prefix, *\/ */
+        /*                         pkg); */
+        emit_local_repo_decl(bootstrap_FILE, pkg);
 
         UT_string *imports_path;
         utstring_new(imports_path);
         /* utstring_printf(imports_path, "_lib/%s", */
         utstring_printf(imports_path, "%s",
                         obzl_meta_package_name(pkg));
+        log_debug("emitting buildfile for pkg: %s", pkg->name);
+        /* dump_package(0, pkg); */
         emit_build_bazel(host_repo,
                          obazl_opam_root,      /* _repo_root: "." or "./tmp/opam" */
                          NULL, // "buildfiles",        /* _pkg_prefix */

@@ -10,7 +10,8 @@ static char *sp = " ";
 #if INTERFACE
 struct obzl_meta_package {
     char *name;
-    char *directory;
+    char *path;
+    char *directory;            /* subdir */
     char *metafile;
     obzl_meta_entries *entries;          /* list of struct obzl_meta_entry */
 };
@@ -146,6 +147,7 @@ void dump_package(int indent, struct obzl_meta_package *pkg)
     log_debug("%*sdump_package:", indent, sp);
     log_debug("%*sname:      %s", delta+indent, sp, pkg->name);
     log_debug("%*sdirectory: %s", delta+indent, sp, pkg->directory);
+    log_debug("%*spath: %s", delta+indent, sp, pkg->path);
     log_debug("%*smetafile:  %s", delta+indent, sp, pkg->metafile);
     dump_entries(delta+indent, pkg->entries);
 }

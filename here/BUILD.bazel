@@ -1,8 +1,8 @@
 load("//bootstrap:BUILD.bzl", "CMD_FLAGS", "BOOTSTRAP_INCLUDES")
 
 cc_binary(
-    name  = "config",
-    srcs  = ["config.c"],
+    name  = "here",
+    srcs  = ["here.c"],
     defines = select({
         "//bzl/host:debug": [], # "DEBUG_TRACE"],
         "//conditions:default":   []

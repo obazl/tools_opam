@@ -4,13 +4,16 @@ CMD_FLAGS = [
     "-std=c11",
     "-pedantic-errors",
 ]
+## macos: -UDEBUG
 
 BOOTSTRAP_INCLUDES = [
     "-I.",
     "-Ibootstrap",
     "-Iexternal/opam/bootstrap",
 
+    "-I$(GENDIR)",
     "-I$(GENDIR)/bootstrap",
+    "-I$(GENDIR)/opam/bootstrap",
     "-I$(GENDIR)/external/opam/bootstrap",
 ]
 

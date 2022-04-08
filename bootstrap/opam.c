@@ -28,21 +28,23 @@
 int errnum;
 /* bool local_opam; */
 
-/* global: we write on new_local_repository rule per build file */
+/* global: we write on local_repository rule per build file */
 FILE *repo_rules_FILE;
 
 #if INTERFACE
 #define HERE_OPAM_ROOT ".opam"
-#define OBAZL_OPAM_ROOT OBAZL_ROOT "/opam"
-#define HERE_COMPILER_FILE OBAZL_OPAM_ROOT "/here.compiler"
-#define HERE_SWITCH_BAZEL_ROOT OBAZL_OPAM_ROOT "/_here"
-#define HERE_SWITCH_NAME "_here"
+#define HERE_OBAZL_ROOT OBAZL_ROOT "/opam"
+#define HERE_COMPILER_FILE HERE_OBAZL_ROOT "/here.compiler"
+//FIXME: rename, HERE_OBAZL_OPAM_WSS?
+#define HERE_SWITCH_BAZEL_ROOT HERE_OBAZL_ROOT "/here"
+#define HERE_OBAZL_OPAM_WSS_OCAML HERE_OBAZL_ROOT "/here/ocaml"
+#define HERE_SWITCH_NAME "here"
 
 #define OPAM_SRC_ROOT HERE_OPAM_ROOT "/" HERE_SWITCH_NAME "/.opam-switch/sources"
 
 #endif
 
-char *obazl_opam_root = OBAZL_OPAM_ROOT;
+char *here_obazl_root = HERE_OBAZL_ROOT; // only for here-switch!!!
 char *here_switch_bazel_root = HERE_SWITCH_BAZEL_ROOT;
 
 
@@ -50,30 +52,73 @@ char *here_switch_bazel_root = HERE_SWITCH_BAZEL_ROOT;
 #define HERE_COMPILER "/here.compiler"
 #endif
 
-char * read_here_compiler_file(void)
+char *read_here_compiler_file(void)
 {
-    char *here_compiler = OBAZL_OPAM_ROOT HERE_COMPILER;
-    /* printf("reading %s\n", here_compiler); */
-    if (access(here_compiler, R_OK) == 0) {
-        char buff[512];
-        FILE *f = fopen(here_compiler, "r");
-        fgets(buff, 512, f);
-        /* printf("String read: '%s'\n", buff); */
-        int len = strnlen(buff, 512);
-        if (buff[len-1] == '\n') { // remove newline
-            buff[len - 1] = '\0';
+    char *here_compiler_file = HERE_OBAZL_ROOT HERE_COMPILER;
+    /* printf("reading %s\n", here_compiler_file); */
+    if (access(here_compiler_file, R_OK) == 0) {
+        char here_version[512];
+        FILE *f = fopen(here_compiler_file, "r");
+        fgets(here_version, 512, f);
+        /* printf("String read: '%s'\n", here_version); */
+        int len = strnlen(here_version, 512);
+        if (here_version[len-1] == '\n') { // remove newline
+            here_version[len - 1] = '\0';
         }
         fclose(f);
-        printf("found %s specifying version: %s\n",
-               here_compiler, buff);
-        return strndup(buff, len);
+        /* printf("found %s specifying version: %s\n", */
+        /*        here_compiler_file, here_version); */
+        printf("Your here switch is configured to use compiler version: %s"
+               " (specified in %s)\n",
+               here_version, here_compiler_file);
+
+        printf("Reconfigure using with same version?"
+               " (if no, you will be prompted for a different version)\n"
+               "[Yn] ");
+
+        bool use_current = false;
+        char ok[2];
+        while(1) {
+            memset(ok, '\0', 2);
+            fflush(stdin);
+            fgets(ok, 2, stdin);
+            /* printf("ok[0]: %c\n", ok[0]); */
+            if (ok[0] == '\n') {
+                use_current = true;
+                fflush(stdin);
+                break;
+            } else {
+                if ( (ok[0] == 'y') || (ok[0] == 'Y') ) {
+                    /* printf("Using same version y\n"); */
+                    use_current = true;
+                    break;
+                } else {
+                    if ( (ok[0] == 'n') || (ok[0] == 'N') ) {
+                        use_current = false;
+                        break;
+                    } else {
+                        fprintf(stdout,
+                                "Please enter y or n\n");
+                        fprintf(stdout,
+                                "Configure here-switch with compiler version %s? [Yn] ",
+                                here_version);
+                    }
+                }
+            }
+        }
+
+        if (use_current) {
+            return strndup(here_version, len);
+        } else {
+            return NULL;
+        }
     }
     return NULL;
 }
 
-void init_opam_resolver_raw(char *_opam_switch)
+void init_opam_resolver_raw(char *_opam_switch_name)
 {
-    printf("init_opam_resolver_raw, switch: %s\n", _opam_switch);
+    printf("init_opam_resolver_raw, switch: %s\n", _opam_switch_name);
     /* we're going to write out a scheme file that our dune conversion
        routines can use to resolve opam pkg names to obazl target
        labels. */
@@ -81,10 +126,12 @@ void init_opam_resolver_raw(char *_opam_switch)
     UT_string *raw_resolver_file;
     utstring_new(raw_resolver_file);
     utstring_printf(raw_resolver_file, "%s/%s/%s",
-                    OBAZL_OPAM_ROOT,
-                    _opam_switch,
+                    HERE_OBAZL_ROOT,
+                    _opam_switch_name,
                     "opam_resolver_raw.scm");
     /* if (access(raw_resolver_file, R_OK) != 0) return; */
+
+    printf("opam_resolver_raw: %s\n", utstring_body(raw_resolver_file));
 
     if (dry_run) {
         printf("opam_resolver_raw: %s\n", utstring_body(raw_resolver_file));
@@ -105,32 +152,32 @@ void init_opam_resolver_raw(char *_opam_switch)
 
     /* write predefined opam pkg mappings */
     fprintf(opam_resolver, "(%s . %s)\n",
-            "compiler-libs", "@ocaml//compiler-libs");
+            "compiler-libs", "@rules_ocaml//cfg/compiler-libs");
     fprintf(opam_resolver, "(%s . %s)\n",
-            "compiler-libs.common", "@ocaml//compiler-libs/common");
+            "compiler-libs.common", "@rules_ocaml//cfg/compiler-libs/common");
     fprintf(opam_resolver, "(%s . %s)\n",
-            "compiler-libs.bytecomp", "@ocaml//compiler-libs/bytecomp");
+            "compiler-libs.bytecomp", "@rules_ocaml//cfg/compiler-libs/bytecomp");
     fprintf(opam_resolver, "(%s . %s)\n",
-            "compiler-libs.optcomp", "@ocaml//compiler-libs/optcomp");
+            "compiler-libs.optcomp", "@rules_ocaml//cfg/compiler-libs/optcomp");
     fprintf(opam_resolver, "(%s . %s)\n",
-            "compiler-libs.toplevel", "@ocaml//compiler-libs/toplevel");
+            "compiler-libs.toplevel", "@rules_ocaml//cfg/compiler-libs/toplevel");
     fprintf(opam_resolver, "(%s . %s)\n",
             "compiler-libs.native-toplevel",
-            "@ocaml//compiler-libs/native-toplevel");
+            "@rules_ocaml//cfg/compiler-libs/native-toplevel");
 
     fprintf(opam_resolver, "(%s . %s)\n",
-            "bigarray", "@ocaml//bigarray");
+            "bigarray", "@rules_ocaml//cfg/bigarray");
     fprintf(opam_resolver, "(%s . %s)\n",
-            "dynlink", "@ocaml//dynlink");
+            "dynlink", "@rules_ocaml//cfg/dynlink");
     fprintf(opam_resolver, "(%s . %s)\n",
-            "str", "@ocaml//str");
+            "str", "@rules_ocaml//cfg/str");
     fprintf(opam_resolver, "(%s . %s)\n",
-            "unix", "@ocaml//unix");
+            "unix", "@rules_ocaml//cfg/unix");
 
     fprintf(opam_resolver, "(%s . %s)\n",
-            "threads.posix", "@ocaml//threads");
+            "threads.posix", "@rules_ocaml//cfg/threads");
     fprintf(opam_resolver, "(%s . %s)\n",
-            "threads.vm", "@ocaml//threads");
+            "threads.vm", "@rules_ocaml//cfg/threads");
 }
 
 char *get_workspace_name()
@@ -176,7 +223,7 @@ EXPORT void opam_export(char *manifest)
         /* printf("wsn: '%s'\n", workspace); */
         /* utstring_printf(manifest_name, "%s.opam.manifest", workspace); */
         utstring_printf(manifest_name, "%s/here.packages",
-                        obazl_opam_root);
+                        here_obazl_root);
     }
 
     char *exe;
@@ -211,7 +258,7 @@ EXPORT void opam_export(char *manifest)
         /*     printf("export result: %s\n", result); */
         }
     }
-    // chmod(OBAZL_OPAM_ROOT "/here.compiler", S_IRUSR|S_IRGRP|S_IROTH);
+    // chmod(HERE_OBAZL_ROOT "/here.compiler", S_IRUSR|S_IRGRP|S_IROTH);
 }
 
 /* opam_install -p <pkg>
@@ -260,7 +307,8 @@ EXPORT void opam_install(char *_package)
 
 EXPORT void opam_remove(char *_package)
 {
-    log_debug("opam_remove: %s", _package);
+    if (debug)
+        log_debug("opam_remove: %s", _package);
 
     char *exe;
     int result;
@@ -271,7 +319,6 @@ EXPORT void opam_remove(char *_package)
         printf("OPAM root '" HERE_OPAM_ROOT "' not found.\n");
         exit(EXIT_FAILURE);
     } else {
-
         exe = "opam";
         char *argv[] = {
             "opam", "remove",
@@ -284,7 +331,8 @@ EXPORT void opam_remove(char *_package)
             NULL
         };
 
-        /* printf("Removing package %s\n", _package); */
+        if (verbose)
+            log_info("Removing package %s from here-switch\n", _package);
         int argc = (sizeof(argv) / sizeof(argv[0])) - 1;
         result = spawn_cmd(exe, argc, argv);
         if (result != 0) {

@@ -7,9 +7,11 @@
 
 #include "log.h"
 
-/* static int indent = 2; */
-/* static int delta = 2; */
-/* static char *sp = " "; */
+#if defined(YYDEBUG)
+static int indent = 2;
+static int delta = 2;
+static char *sp = " ";
+#endif
 
 #if INTERFACE
 #ifndef YYMALLOCARGTYPE
@@ -120,9 +122,9 @@
     exit(EXIT_FAILURE);
 }
 
-%parse_accept {
-    log_trace("Parsing complete");
-}
+/* %parse_accept { */
+/*     log_trace("Parsing complete"); */
+/* } */
 
 /*
 We have two kinds of properties, simple and compound. Simple: foo =
@@ -142,9 +144,9 @@ package(PKG) ::= entries(ENTRIES) . {
 #if YYDEBUG
     log_trace("\n");
     log_trace(">>package ::= entries");
-    log_trace("  package (PKG)");
-    log_trace("  entries (ENTRIES)");
-    dump_entries(0, ENTRIES);
+    /* log_trace("  package (PKG)"); */
+    /* log_trace("  entries (ENTRIES)"); */
+    /* dump_entries(0, ENTRIES); */
 #endif
     /* PKG = (struct obzl_meta_package*)calloc(sizeof(struct obzl_meta_package), 1); */
     /* PKG->entries = ENTRIES; */
@@ -152,9 +154,9 @@ package(PKG) ::= entries(ENTRIES) . {
     /* *the_root_pkg = PKG; */
     PKG = the_root_pkg;
 #if YYDEBUG
-    log_debug("DUMPING PKG");
+    log_trace("DUMPING Pkg: %s", PKG->name);
     dump_package(0, PKG);
-    log_debug("DUMPED PKG");
+    log_trace("DUMPED Pkg: PKG");
 #endif
 }
 
@@ -308,6 +310,7 @@ entry(ENTRY) ::= PACKAGE(PKG) LPAREN entries(ENTRIES) RPAREN. {
     log_trace("  entry lhs(ENTRY): %p", ENTRY);
     log_trace("  entries rhs(ENTRIES)");
     log_trace("  the_root_pkg->name: %s", the_root_pkg->name);
+    log_trace("  the_root_pkg->path: %s", the_root_pkg->path);
     log_trace("  the_root_pkg->directory: %s", the_root_pkg->directory);
     log_trace("  the_root_pkg->metafile: %s", the_root_pkg->metafile);
     /* entries: utarray of struct obzl_meta_entry */
@@ -318,6 +321,7 @@ entry(ENTRY) ::= PACKAGE(PKG) LPAREN entries(ENTRIES) RPAREN. {
     new_package->name = PKG->s;
     /* directory will be filled in during post-processing, from parent and directory prop. */
     /* new_package->directory = the_root_pkg->directory; */
+    new_package->path = the_root_pkg->path; // directory;
     new_package->metafile = the_root_pkg->metafile; // THE_METAFILE;
     new_package->entries = ENTRIES;
     /* dump_package(indent, new_package); */
@@ -325,7 +329,8 @@ entry(ENTRY) ::= PACKAGE(PKG) LPAREN entries(ENTRIES) RPAREN. {
     ENTRY = (struct obzl_meta_entry*)calloc(sizeof(struct obzl_meta_entry), 1);
     ENTRY->type = OMP_PACKAGE;
     ENTRY->package = new_package;
-    /* dump_entry(0, ENTRY); */
+    /* log_trace("xxxxxxxxxxxxxxxx"); */
+    /* dump_entry(indent, ENTRY); */
 }
 
 /* ************************************************************ */

@@ -25,18 +25,17 @@
 int errnum;
 /* bool local_opam; */
 
-/* global: we write on new_local_repository rule per build file */
-/* FILE *repo_rules_FILE; */
-
 /* UT_array *opam_packages; */
 
 /*
   use popen to run a cmd, returning output string, which must be freed
 */
-char *run_cmd(char *cmd)
+char *run_cmd(char *cmd)        /* FIXME: make sure clients free result */
 {
-    char buf[28];
-    memset(buf, '\0', 28);
+    if (debug)
+        log_debug("run_cmd: %s", cmd);
+    char buf[256];
+    memset(buf, '\0', 256);
     FILE *fp;
 
     errno = 0;
@@ -64,14 +63,19 @@ char *run_cmd(char *cmd)
  */
 int spawn_cmd(char *executable, int argc, char *argv[])
 {
-    /* always echo the command first */
-    printf("obazl: ");
-    for (int i =0; i < argc; i++) {
-        printf("%s ", (char*)argv[i]);
+    if (verbose) {
+        log_info("obazl:");
+        printf("obazl: ");
+        for (int i =0; i < argc; i++) {
+            log_info("%s", (char*)argv[i]);
+            printf("%s ", (char*)argv[i]);
+        }
+        printf("\n");
     }
-    printf("\n");
 
     if (dry_run) return 0;
+
+    printf("Begining OPAM processor output:\n");
 
     pid_t pid;
     int rc;

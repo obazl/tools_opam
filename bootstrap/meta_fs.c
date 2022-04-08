@@ -165,7 +165,7 @@ void mkdir_r_loop(char *path)
                 strerror(errno), path);
 }
 
-EXPORT char *mkdir_r(char *_path)
+EXPORT void mkdir_r(char *_path)
 {
     char *path = strdup(_path);
     errno = 0;

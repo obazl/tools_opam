@@ -285,11 +285,11 @@ bool obzl_meta_flags_to_select_condition(obzl_meta_flags *flags,
                 if (utarray_len(flags->list) == 1) {
                     a_flag = obzl_meta_flags_nth(flags, 0);
                     if (strncmp(a_flag->s, "byte", 4) == 0) {
-                        utstring_printf(_cname, "@ocaml//mode:bytecode");
+                        utstring_printf(_cname, "@rules_ocaml//build/mode:bytecode");
                         return true; // _cname;
                     }
                     if (strncmp(a_flag->s, "native", 6) == 0) {
-                        utstring_printf(_cname, "@ocaml//mode:native");
+                        utstring_printf(_cname, "@rules_ocaml//build/mode:native");
                         return true; // _cname;
                     }
                     if (strncmp(a_flag->s, "ppx_driver", 10) == 0) {
@@ -310,9 +310,9 @@ bool obzl_meta_flags_to_select_condition(obzl_meta_flags *flags,
                        other flags start with "mt" */
                     if (strncmp(a_flag->s, "mt", 2) == 0) return false;
 
-                    /* FIXME: rename? @ocaml//cfg is cli build settings */
+                    /* FIXME: rename? @rules_ocaml//cfg/cfg is cli build settings */
                     /* for selecting plugin, mode */
-                    /* utstring_printf(_cname, "%s", "@ocaml//cfg:"); */
+                    /* utstring_printf(_cname, "%s", "@rules_ocaml//cfg/cfg:"); */
                     /* if ( !a_flag->polarity ) /\* '-' prefix *\/ */
                     /*     utstring_printf(_cname, "no_"); */
                     /* utstring_printf(_cname, "%s", a_flag->s); */
@@ -335,13 +335,13 @@ bool obzl_meta_flags_to_select_condition(obzl_meta_flags *flags,
                         }
                         if (strncmp(a_flag->s, "byte", 4) == 0) {
                             if (saw_ppx_driver>0) {
-                                utstring_printf(_cname, "@ocaml//mode:bytecode");
+                                utstring_printf(_cname, "@rules_ocaml//build/mode:bytecode");
                                 return true;
                             }
                         }
                         if (strncmp(a_flag->s, "native", 6) == 0) {
                             if (saw_ppx_driver>0) {
-                                utstring_printf(_cname, "@ocaml//mode:native");
+                                utstring_printf(_cname, "@rules_ocaml//build/mode:native");
                                 return true;
                             }
                         }
@@ -378,7 +378,7 @@ bool obzl_meta_flags_to_select_condition(obzl_meta_flags *flags,
 
                     /* register compound flags, so we can generate config_setting rules */
                     /* struct config_setting *a_condition; */
-                    /* utstring_printf(_cname, "@ocaml//cfg:%s", config_name); */
+                    /* utstring_printf(_cname, "@rules_ocaml//cfg/cfg:%s", config_name); */
                     /* HASH_FIND_STR(the_config_settings, config_name, a_condition);  /\* already in the hash? *\/ */
                     /* if (a_condition == NULL) { */
                     /*     a_condition = calloc(sizeof(struct config_setting), 1); */
@@ -418,7 +418,7 @@ EXPORT void initialize_config_flags()
     strncpy(a_flag->repo, "@ocaml", 6);
     strncpy(a_flag->package, "mode", 4);
     strncpy(a_flag->target, "bytecode", 8);
-    strncpy(a_flag->label, "@ocaml//mode:bytecode", 21);
+    strncpy(a_flag->label, "@rules_ocaml//build/mode:bytecode", 21);
     HASH_ADD_STR(the_flag_table, name, a_flag);
 
     a_flag = calloc(sizeof(struct config_flag), 1);
@@ -426,7 +426,7 @@ EXPORT void initialize_config_flags()
     strncpy(a_flag->repo, "@ocaml", 6);
     strncpy(a_flag->package, "mode", 4);
     strncpy(a_flag->target, "native", 6);
-    strncpy(a_flag->label, "@ocaml//mode:native", 19);
+    strncpy(a_flag->label, "@rules_ocaml//build/mode:native", 19);
     HASH_ADD_STR(the_flag_table, name, a_flag);
 
     a_flag = calloc(sizeof(struct config_flag), 1);
@@ -434,7 +434,7 @@ EXPORT void initialize_config_flags()
     strncpy(a_flag->repo, "@ocaml", 5);
     strncpy(a_flag->package, "cfg/mt", 6);
     strncpy(a_flag->target, "default", 7);
-    strncpy(a_flag->label, "@ocaml//cfg/mt:default", 21);
+    strncpy(a_flag->label, "@rules_ocaml//cfg/cfg/mt:default", 21);
     HASH_ADD_STR(the_flag_table, name, a_flag);
 
     a_flag = calloc(sizeof(struct config_flag), 1);
@@ -442,7 +442,7 @@ EXPORT void initialize_config_flags()
     strncpy(a_flag->repo, "@ocaml", 5);
     strncpy(a_flag->package, "cfg/mt", 6);
     strncpy(a_flag->target, "posix", 5);
-    strncpy(a_flag->label, "@ocaml//cfg/mt:posix", 19);
+    strncpy(a_flag->label, "@rules_ocaml//cfg/cfg/mt:posix", 19);
     HASH_ADD_STR(the_flag_table, name, a_flag);
 
     a_flag = calloc(sizeof(struct config_flag), 1);
@@ -450,7 +450,7 @@ EXPORT void initialize_config_flags()
     strncpy(a_flag->repo, "@ocaml", 5);
     strncpy(a_flag->package, "cfg/mt", 6);
     strncpy(a_flag->target, "vm", 2);
-    strncpy(a_flag->label, "@ocaml//cfg/mt:vm", 16);
+    strncpy(a_flag->label, "@rules_ocaml//cfg/cfg/mt:vm", 16);
     HASH_ADD_STR(the_flag_table, name, a_flag);
 
     a_flag = calloc(sizeof(struct config_flag), 1);
@@ -458,7 +458,7 @@ EXPORT void initialize_config_flags()
     strncpy(a_flag->repo, "@ocaml", 5);
     strncpy(a_flag->package, "cfg", 3);
     strncpy(a_flag->target, "gprof", 5);
-    strncpy(a_flag->label, "@ocaml//cfg:gprof", 16);
+    strncpy(a_flag->label, "@rules_ocaml//cfg/cfg:gprof", 16);
     HASH_ADD_STR(the_flag_table, name, a_flag);
 
     a_flag = calloc(sizeof(struct config_flag), 1);
@@ -466,7 +466,7 @@ EXPORT void initialize_config_flags()
     strncpy(a_flag->repo, "@ocaml", 5);
     strncpy(a_flag->package, "cfg", 3);
     strncpy(a_flag->target, "driver", 6);
-    strncpy(a_flag->label, "@ocaml//cfg:ppx_driver", 21);
+    strncpy(a_flag->label, "@rules_ocaml//cfg/cfg:ppx_driver", 21);
     HASH_ADD_STR(the_flag_table, name, a_flag);
 
     a_flag = calloc(sizeof(struct config_flag), 1);
@@ -474,7 +474,7 @@ EXPORT void initialize_config_flags()
     strncpy(a_flag->repo, "@ocaml", 5);
     strncpy(a_flag->package, "cfg", 3);
     strncpy(a_flag->target, "custom", 6);
-    strncpy(a_flag->label, "@ocaml//cfg:ppx_custom", 21);
+    strncpy(a_flag->label, "@rules_ocaml//cfg/cfg:ppx_custom", 21);
     HASH_ADD_STR(the_flag_table, name, a_flag);
 
     /* these seem to be associated with camlp4; ignore for now: */

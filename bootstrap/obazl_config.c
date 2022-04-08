@@ -23,7 +23,7 @@
 #include "utarray.h"
 #include "utstring.h"
 
-#include "config.h"
+#include "obazl_config.h"
 
 bool debug;
 bool verbose;
@@ -103,7 +103,7 @@ struct configuration_s obazl_config = {.obazl_version = OBAZL_VERSION, .libct = 
 
 UT_array *src_files;            /* FIXME: put this in configuration_s? */
 
-EXPORT void obazl_configure(char *_exec_root)
+EXPORT void obazl_configure(char *_exec_root, char *cmd)
 {
     /* log_debug("obazl_configure"); */
 
@@ -146,18 +146,24 @@ EXPORT void obazl_configure(char *_exec_root)
     else
         utstring_printf(proj_root, "%s", _proj_root);
 
-    /* .obazlrc config file */
-    utstring_new(obazl_ini_path);
-    utstring_printf(obazl_ini_path, "%s/%s", utstring_body(proj_root), obazl_ini_file);
-
     /* we always want cwd to be proj root  */
     chdir(_proj_root);
     /* _config_logging(); */
 
+    UT_string *logfile;
+    utstring_new(logfile);
+    utstring_printf(logfile, "opam_%s", cmd);
+    config_logging(logfile);
+    utstring_free(logfile);
+
+    /* .obazlrc config file */
+    utstring_new(obazl_ini_path);
+    utstring_printf(obazl_ini_path, "%s/%s", utstring_body(proj_root), obazl_ini_file);
+
     rc = access(utstring_body(obazl_ini_path), R_OK);
     if (rc) {
-        if (verbose || debug)
-            log_warn("Config file %s not found.", utstring_body(obazl_ini_path));
+        /* if (verbose || debug) */
+        log_warn("Config file %s not found.", utstring_body(obazl_ini_path));
     } else {
         ini_error = false;
         utarray_new(obazl_config.src_dirs, &ut_str_icd);
