@@ -29,7 +29,7 @@ ocaml_toolchain(
 ################################
 toolchain( ## == toolchain_binding (of defn to type-tag)
     name = "ocaml_macos",  ## to be passed to  register_toolchains
-    toolchain_type = "@ocaml//ocaml:toolchain",
+    toolchain_type = "@rules_ocaml//ocaml:toolchain",
     toolchain = ":opam_toolchain", # == toolchain_definition
     exec_compatible_with = [
         "@platforms//os:macos",
@@ -45,7 +45,7 @@ toolchain( ## == toolchain_binding (of defn to type-tag)
 ################################
 toolchain(
     name = "ocaml_linux_x86_64",
-    toolchain_type = "@ocaml//ocaml:toolchain",
+    toolchain_type = "@rules_ocaml//ocaml:toolchain",
     toolchain = ":opam_toolchain",
     exec_compatible_with = [
         "@platforms//os:linux",
@@ -68,7 +68,7 @@ toolchain(
 ################################
 # toolchain(
 #     name = "ocaml_linux_x86_32",
-#     toolchain_type = "@ocaml//ocaml:toolchain",
+#     toolchain_type = "@rules_ocaml//ocaml:toolchain",
 #     exec_compatible_with = [
 #         "@platforms//os:linux",
 #         "@platforms//cpu:x86_32",
@@ -83,6 +83,6 @@ toolchain(
 
 # ocaml_toolchain(
 #     name = "ocaml_toolchain_linux",
-#     ocamlc = "@ocaml//bin:ocamlc",
+#     ocamlc = "@rules_ocaml//cfg/bin:ocamlc",
 #     linkmode = "static",
 # )

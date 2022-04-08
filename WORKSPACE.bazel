@@ -39,7 +39,7 @@ rules_foreign_cc_dependencies(
 # stardoc_repositories()
 
 # load("@obazl_rules_ocaml//ocaml:bootstrap.bzl", "ocaml_configure")
-# load("@ocaml//ocaml:bootstrap.bzl",
+# load("@rules_ocaml//cfg/ocaml:bootstrap.bzl",
 #      "ocaml_configure",
 #      "ocaml_register_toolchains",
 #      "ocaml_toolchain")
