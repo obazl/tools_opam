@@ -309,6 +309,33 @@ entry(ENTRY) ::= DIRECTORY(D) . {
 /*     /\* dump_entry(0, ENTRY); *\/ */
 /* } */
 
+/* empty package allowed */
+entry(ENTRY) ::= PACKAGE(PKG) LPAREN RPAREN. {
+#if YYDEBUG
+    log_trace("\n");
+    log_trace(">>entry ::= PACKAGE LPAREN RPAREN");
+    log_trace("  entry lhs(ENTRY): %p", ENTRY);
+    log_trace("  the_root_pkg->name: %s", the_root_pkg->name);
+    log_trace("  the_root_pkg->path: %s", the_root_pkg->path);
+    log_trace("  the_root_pkg->directory: %s", the_root_pkg->directory);
+    log_trace("  the_root_pkg->metafile: %s", the_root_pkg->metafile);
+#endif
+    struct obzl_meta_package *new_package = (struct obzl_meta_package*)calloc(sizeof(struct obzl_meta_package), 1);
+    new_package->name = PKG->s;
+    /* directory will be filled in during post-processing, from parent and directory prop. */
+    /* new_package->directory = the_root_pkg->directory; */
+    new_package->path = the_root_pkg->path; // directory;
+    new_package->metafile = the_root_pkg->metafile; // THE_METAFILE;
+    new_package->entries = NULL;
+    /* dump_package(indent, new_package); */
+
+    ENTRY = (struct obzl_meta_entry*)calloc(sizeof(struct obzl_meta_entry), 1);
+    ENTRY->type = OMP_PACKAGE;
+    ENTRY->package = new_package;
+    /* log_trace("xxxxxxxxxxxxxxxx"); */
+    /* dump_entry(indent, ENTRY); */
+}
+
 /* **************************************************************** */
 entry(ENTRY) ::= PACKAGE(PKG) LPAREN entries(ENTRIES) RPAREN. {
 #if YYDEBUG

@@ -1891,6 +1891,8 @@ EXPORT void emit_build_bazel(char *_repo,
     }
     /* printf("_PKG_PREFIX: %s\n", _pkg_prefix); */
 
+    /* WARNING: pkg may be empty (no entries) */
+    /* e.g. js_of_ocaml contains: package "weak" ( ) */
     obzl_meta_entries *entries = _pkg->entries;
     UT_string *new_filedeps_path = NULL;
     utstring_renew(new_filedeps_path);
@@ -2018,119 +2020,122 @@ EXPORT void emit_build_bazel(char *_repo,
     /* } */
 
     obzl_meta_entry *e = NULL;
-    for (int i = 0; i < obzl_meta_entries_count(_pkg->entries); i++) {
-        e = obzl_meta_entries_nth(_pkg->entries, i);
+    if (_pkg->entries == NULL) {
+        log_debug("EMPTY ENTRIES\n");
+    } else {
+        for (int i = 0; i < obzl_meta_entries_count(_pkg->entries); i++) {
+            e = obzl_meta_entries_nth(_pkg->entries, i);
 
-        /* if (strncmp(_pkg->name, "ppx_fixed_literal", 17) == 0) */
-        /*     log_debug("PPX_FIXED_LITERAL, entry %d, name: %s, type %d", */
-        /*               i, e->property->name, e->type); */
-
-        /*
-          FIXME: some packages use plugin or toploop flags in an
-          'archive' property. We need to check the archive property,
-          and if this is the case, generate separate import targets
-          for them. Unlike findlib we do not use flags to select the
-          files we want; instead we expose everything using
-          ocaml_import targets.
-         */
-
-        if (e->type == OMP_PROPERTY) {
-        /* if ((e->type == OMP_PROPERTY) || (e->type == OMP_PACKAGE)) { */
-            /* log_debug("\tOMP_PROPERTY"); */
-
-            /* 'library_kind` :=  'ppx_deriver' or 'ppx_rewriter' */
-            /* if (strncmp(e->property->name, "library_kind", 12) == 0) { */
-            /*     emit_bazel_ppx_dummy_rule(ostream, 1, host_repo, "_lib", _pkg_path, pkg_name, entries); */
-            /*     continue; */
-            /* } */
-
-            if (strncmp(e->property->name, "archive", 7) == 0) {
-                log_debug("calling emit_bazel_archive_rule with %s",
-                          _filedeps_path);
-                emit_bazel_archive_rule(ostream, 1,
-                                        _repo, // host_repo,
-                                        //_filedeps_path,
-                                        utstring_body(new_filedeps_path),
-                                        _pkg_prefix,
-                                        pkg_name,
-                                        entries, //);
-                                        _pkg);
-                                        /* subpkg_dir); */
-                continue;
-            }
-
-    /* log_debug("PDUMP0 %s", _pkg->name); */
-    /* dump_entries(0, entries); */
-
-            if (strncmp(e->property->name, "plugin", 6) == 0) {
-                /* log_debug("PDUMPPPP plugin"); */
-                emit_bazel_plugin_rule(ostream, 1,
-                                       host_repo,
-                                       utstring_body(new_filedeps_path),
-                                       _pkg_prefix,
-                                       pkg_name,
-                                       entries, //);
-                                       _pkg);
-                continue;
-            }
-            /* if (strncmp(e->property->name, "ppx", 3) == 0) { */
-            /*     log_warn("IGNORING PPX PROPERTY for %s", pkg_name); */
-            /*     continue; */
-            /* } */
-
-            /* at this point we've processed archive and plugin props.
-               now we handle pkgs that have deps ('requires') but do
-               not deliver any files ('archive' or 'plugin').
-             */
-
-            if (strncmp(e->property->name, "requires", 6) == 0) {
-                /* some pkgs have 'requires' but no 'archive' nor 'plugin' */
-                /* compiler-libs has 'requires = ""' and 'director = "+compiler-libs"' */
-                /* ppx packages have 'requires(ppx_driver)' and 'requires(-ppx_driver)' */
-
-                /* we should've already handled these 2: */
-                if (obzl_meta_entries_property(entries, "archive"))
-                    continue;
-                if (obzl_meta_entries_property(entries, "plugin"))
-                    continue;
-
-                /* compatibility pkgs whose resources are now
-                   'distributed with OCaml' may not have 'archive' or
-                   'plugin', but we still need to generate a target,
-                   since they have deps ('requires') that legacy code
-                   may depend on. */
-
-                /* UPDATE: we now generate the standard dummy pkgs
-                   like bigarray and threads using a repo rule */
-                emit_bazel_deps_target(ostream, 1, host_repo,
-                                        _pkg_prefix,
-                                        pkg_name, entries);
-                continue;
-            }
             /* if (strncmp(_pkg->name, "ppx_fixed_literal", 17) == 0) */
-            /*     log_debug("PPX_fixed_literal, entry %d, name: %s, type %d", */
+            /*     log_debug("PPX_FIXED_LITERAL, entry %d, name: %s, type %d", */
             /*               i, e->property->name, e->type); */
-            /* no 'archive', 'plugin', or 'requires' */
-            /* if (strncmp(e->property->name, "directory", 9) == 0) { */
-            /*     handle_directory_property(ostream, 1, host_repo, */
-            /*                               "_lib", pkg_name, entries); */
-            /*     continue; */
-            /* } */
 
-            if (obzl_meta_entries_property(entries, "error")) {
-                emit_bazel_error_target(ostream, 1, host_repo,
-                                        "FIXME_ERROR",
-                                        /* _pkg_prefix, */
-                                        pkg_name, entries);
-                break;
+            /*
+              FIXME: some packages use plugin or toploop flags in an
+              'archive' property. We need to check the archive property,
+              and if this is the case, generate separate import targets
+              for them. Unlike findlib we do not use flags to select the
+              files we want; instead we expose everything using
+              ocaml_import targets.
+            */
+
+            if (e->type == OMP_PROPERTY) {
+                /* if ((e->type == OMP_PROPERTY) || (e->type == OMP_PACKAGE)) { */
+                /* log_debug("\tOMP_PROPERTY"); */
+
+                /* 'library_kind` :=  'ppx_deriver' or 'ppx_rewriter' */
+                /* if (strncmp(e->property->name, "library_kind", 12) == 0) { */
+                /*     emit_bazel_ppx_dummy_rule(ostream, 1, host_repo, "_lib", _pkg_path, pkg_name, entries); */
+                /*     continue; */
+                /* } */
+
+                if (strncmp(e->property->name, "archive", 7) == 0) {
+                    log_debug("calling emit_bazel_archive_rule with %s",
+                              _filedeps_path);
+                    emit_bazel_archive_rule(ostream, 1,
+                                            _repo, // host_repo,
+                                            //_filedeps_path,
+                                            utstring_body(new_filedeps_path),
+                                            _pkg_prefix,
+                                            pkg_name,
+                                            entries, //);
+                                            _pkg);
+                    /* subpkg_dir); */
+                    continue;
+                }
+
+                /* log_debug("PDUMP0 %s", _pkg->name); */
+                /* dump_entries(0, entries); */
+
+                if (strncmp(e->property->name, "plugin", 6) == 0) {
+                    /* log_debug("PDUMPPPP plugin"); */
+                    emit_bazel_plugin_rule(ostream, 1,
+                                           host_repo,
+                                           utstring_body(new_filedeps_path),
+                                           _pkg_prefix,
+                                           pkg_name,
+                                           entries, //);
+                                           _pkg);
+                    continue;
+                }
+                /* if (strncmp(e->property->name, "ppx", 3) == 0) { */
+                /*     log_warn("IGNORING PPX PROPERTY for %s", pkg_name); */
+                /*     continue; */
+                /* } */
+
+                /* at this point we've processed archive and plugin props.
+                   now we handle pkgs that have deps ('requires') but do
+                   not deliver any files ('archive' or 'plugin').
+                */
+
+                if (strncmp(e->property->name, "requires", 6) == 0) {
+                    /* some pkgs have 'requires' but no 'archive' nor 'plugin' */
+                    /* compiler-libs has 'requires = ""' and 'director = "+compiler-libs"' */
+                    /* ppx packages have 'requires(ppx_driver)' and 'requires(-ppx_driver)' */
+
+                    /* we should've already handled these 2: */
+                    if (obzl_meta_entries_property(entries, "archive"))
+                        continue;
+                    if (obzl_meta_entries_property(entries, "plugin"))
+                        continue;
+
+                    /* compatibility pkgs whose resources are now
+                       'distributed with OCaml' may not have 'archive' or
+                       'plugin', but we still need to generate a target,
+                       since they have deps ('requires') that legacy code
+                       may depend on. */
+
+                    /* UPDATE: we now generate the standard dummy pkgs
+                       like bigarray and threads using a repo rule */
+                    emit_bazel_deps_target(ostream, 1, host_repo,
+                                           _pkg_prefix,
+                                           pkg_name, entries);
+                    continue;
+                }
+                /* if (strncmp(_pkg->name, "ppx_fixed_literal", 17) == 0) */
+                /*     log_debug("PPX_fixed_literal, entry %d, name: %s, type %d", */
+                /*               i, e->property->name, e->type); */
+                /* no 'archive', 'plugin', or 'requires' */
+                /* if (strncmp(e->property->name, "directory", 9) == 0) { */
+                /*     handle_directory_property(ostream, 1, host_repo, */
+                /*                               "_lib", pkg_name, entries); */
+                /*     continue; */
+                /* } */
+
+                if (obzl_meta_entries_property(entries, "error")) {
+                    emit_bazel_error_target(ostream, 1, host_repo,
+                                            "FIXME_ERROR",
+                                            /* _pkg_prefix, */
+                                            pkg_name, entries);
+                    break;
+                }
+
+                log_warn("processing other property: %s", e->property->name);
+                /* dump_entry(0, e); */
+                // push all flags to global pos_flags
             }
-
-            log_warn("processing other property: %s", e->property->name);
-            /* dump_entry(0, e); */
-            // push all flags to global pos_flags
         }
     }
-
     /* emit_bazel_flags(ostream, _repo_root, _repo, _pkg_prefix, _pkg); */
 
     fclose(ostream);
@@ -2140,34 +2145,36 @@ EXPORT void emit_build_bazel(char *_repo,
         emit_workspace_file(pkg_name);
 
     // now links
-    emit_pkg_symlinks(bazel_pkg_root,
-                      new_filedeps_path,
-                      pkg_name);
+    if (_pkg->entries != NULL) {
+        emit_pkg_symlinks(bazel_pkg_root,
+                          new_filedeps_path,
+                          pkg_name);
 
-    /* char new_pkg_path[PATH_MAX]; */
-    /* new_pkg_path[0] = '\0'; */
-    /* mystrcat(new_pkg_path, _pkg_path); */
-    /* if (strlen(_pkg_path) > 0) */
-    /*     mystrcat(new_pkg_path, "/"); */
+        /* char new_pkg_path[PATH_MAX]; */
+        /* new_pkg_path[0] = '\0'; */
+        /* mystrcat(new_pkg_path, _pkg_path); */
+        /* if (strlen(_pkg_path) > 0) */
+        /*     mystrcat(new_pkg_path, "/"); */
 
-    /* subpackage may not have a 'directory' property. example: ptime */
-    /* char  *subpkg_name = obzl_meta_package_name(_pkg); */
-    /* char *subpkg_dir = obzl_meta_directory_property(entries); */
-    /* log_debug("SUBPKG NAME: %s; DIR: %s", subpkg_name, subpkg_dir); */
+        /* subpackage may not have a 'directory' property. example: ptime */
+        /* char  *subpkg_name = obzl_meta_package_name(_pkg); */
+        /* char *subpkg_dir = obzl_meta_directory_property(entries); */
+        /* log_debug("SUBPKG NAME: %s; DIR: %s", subpkg_name, subpkg_dir); */
 
-    /* mystrcat(new_pkg_path, subpkg_name); */
-    /* log_debug("NEW_PKG_PATH: %s; PFX: %s", new_pkg_path, _pkg_prefix); */
-    /* log_debug("_PKG_PREFIX: %s, _PKG_PATH: %s, _PKG: %s", */
-    /*           _pkg_prefix, _pkg_path, _pkg->name); */
+        /* mystrcat(new_pkg_path, subpkg_name); */
+        /* log_debug("NEW_PKG_PATH: %s; PFX: %s", new_pkg_path, _pkg_prefix); */
+        /* log_debug("_PKG_PREFIX: %s, _PKG_PATH: %s, _PKG: %s", */
+        /*           _pkg_prefix, _pkg_path, _pkg->name); */
 
-    /* SPECIAL CASE: compiler-libs */
-    /* if (strncmp(_pkg_path, "compiler-libs", 13) == 0) { */
-    /*     /\* emit_bazel_compiler_lib_subpackages(_repo_root, _repo, _pkg_prefix, new_pkg_path, _pkg); *\/ */
-    /*     emit_bazel_subpackages(_repo, _repo_root, */
-    /*                            _pkg_prefix, _filedeps_path, */
-    /*                            // _pkg_path, */
-    /*                            _pkg); //, _subpkg_dir); */
-    /* } else { */
+        /* SPECIAL CASE: compiler-libs */
+        /* if (strncmp(_pkg_path, "compiler-libs", 13) == 0) { */
+        /*     /\* emit_bazel_compiler_lib_subpackages(_repo_root, _repo, _pkg_prefix, new_pkg_path, _pkg); *\/ */
+        /*     emit_bazel_subpackages(_repo, _repo_root, */
+        /*                            _pkg_prefix, _filedeps_path, */
+        /*                            // _pkg_path, */
+        /*                            _pkg); //, _subpkg_dir); */
+        /* } else { */
+
         emit_bazel_subpackages(_repo,
                                _repo_root,
                                _pkg_prefix,
@@ -2175,5 +2182,5 @@ EXPORT void emit_build_bazel(char *_repo,
                                //_filedeps_path,
                                // new_pkg_path,
                                _pkg); //, _subpkg_dir);
-    /* } */
+    }
 }
