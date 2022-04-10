@@ -118,7 +118,14 @@ static char *sp = " ";
 
 
 %syntax_error {
-    log_trace("**************** Syntax error! ****************");
+    log_error("meta_syntaxis.y: **************** Syntax error! ****************");
+    fprintf(stdout, "meta_syntaxis.y: **************** Syntax error! ****************\n");
+    /* fprintf(stdout, "meta_syntaxis.y: name: %s\n", the_root_pkg->name); */
+    log_error("meta_syntaxis.y: path: %s\n", the_root_pkg->path);
+    fprintf(stdout, "meta_syntaxis.y: path: %s\n", the_root_pkg->path);
+    /* fprintf(stdout, "meta_syntaxis.y: dir: %s\n", the_root_pkg->directory); */
+    log_error("meta_syntaxis.y: meta: %s\n", the_root_pkg->metafile);
+    fprintf(stdout, "meta_syntaxis.y: meta: %s\n", the_root_pkg->metafile);
     exit(EXIT_FAILURE);
 }
 
