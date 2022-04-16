@@ -220,7 +220,7 @@ EXPORT void opam_config_xdg(char *_opam_switch_name)
     // FIXME: always convert everything. otherwise we have to follow
     // the deps to make sure they are all converted.
     // (for dev/test, retain ability to do just one dir)
-    utstring_printf(bzl_switch_pfx, "/pkgs");
+    utstring_printf(bzl_switch_pfx, COSWITCH_LIB); // "/pkgs");
 
     if (utarray_len(opam_packages) == 0) {
         /* printf("WALKING, opam_switch_lib: %s\n", */

@@ -213,6 +213,7 @@ EXPORT void opam_config_here(void) // char *_opam_switch_name)
 
     /* printf("opam_switch_lib: %s\n", utstring_body(opam_switch_lib)); */
     /* printf("bzl_switch_pfx: %s\n", utstring_body(bzl_switch_pfx)); */
+    utstring_printf(bzl_switch_pfx, COSWITCH_LIB); // "/pkgs");
 
     if (utarray_len(opam_packages) == 0) {
         /* printf("WALKING, opam_switch_lib: %s\n", */

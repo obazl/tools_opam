@@ -38,6 +38,10 @@ FILE *repo_rules_FILE;
 //FIXME: rename, HERE_OBAZL_OPAM_WSS?
 #define HERE_SWITCH_BAZEL_ROOT HERE_OBAZL_ROOT "/here"
 #define HERE_OBAZL_OPAM_WSS_OCAML HERE_OBAZL_ROOT "/here/ocaml"
+#define COSWITCH_LIB "/lib"
+#define HERE_OBAZL_OPAM_WSS_PKGS HERE_SWITCH_BAZEL_ROOT COSWITCH_LIB
+//"/here/pkgs"
+#define HERE_OBAZL_OPAM_WSS_STUBLIBS HERE_OBAZL_ROOT "/here/stublibs"
 #define HERE_SWITCH_NAME "here"
 
 #define OPAM_SRC_ROOT HERE_OPAM_ROOT "/" HERE_SWITCH_NAME "/.opam-switch/sources"
