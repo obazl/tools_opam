@@ -1,0 +1,4 @@
+alias(
+    name = "delete",
+    actual = "//remove"
+)

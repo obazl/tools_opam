@@ -1,0 +1,56 @@
+#with-test
+
+#!with-test
+#?with-test
+
+#(with-test)
+#(with-test & with-doc)
+#(with-test & !with-doc)
+#(with-test & (!with-doc))
+#(?with-test & with-doc)
+
+#(with-test | with-doc)
+#(with-test | !with-doc)
+#(with-test | (!with-doc))
+#(?with-test | with-doc)
+
+#!(with-test & with-doc)
+
+#!(with-test)
+#?(with-test)
+
+#!(?with-test)
+
+#!(?with-test & with-test != bar)
+!(?with-test & (with-test != bar))
+#!( (?with-test & with-test) != bar)
+
+## build filters:
+# {os != "openbsd" & os != "freebsd" & os != "macos"}
+# {os = "openbsd" | os = "freebsd"}
+
+################################################################
+# Filters are formulas based on variables. Their main use is as optional conditions to commands or command arguments, using the postfix-braces syntax:
+
+# [ "./configure" "--use-foo" {foo:installed} ]
+
+# The following are allowed in filters:
+
+# String, integer and boolean literals
+# Idents
+# Parentheses
+# Logical operators (binary AND &, binary OR |, prefix, unary NOT !)
+# The unary operator ? for detecting whether an expression contains undefined variables
+# Binary relational operators (=, !=, <, <=, >, >=)
+
+    #     <filter> ::= <filter> <logop> <filter>
+    # | "!" <filter>
+    # | "?" <filter>
+    # | ( <filter> )
+    # | <filter> <relop> <filter>
+    # | <varident>
+    # | <string>
+    # | <int>
+    # | <bool>
+    #  */
+

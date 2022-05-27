@@ -1,0 +1,88 @@
+load("@rules_ocaml//toolchain:rules.bzl", "ocaml_toolchain")
+
+## IMPORTANT: the register_toolchains function takes a 'toolchain'
+## target, not an 'ocaml_toolchain' target. The former is bound to the
+## latter via its 'toolchain' attribute.
+
+## NB: @ocaml.toolchain must have been configured by calling the
+## _opam_toolchain repository rule.
+
+## We use the same ocaml_toolchain for both macos and linux Bazel
+## toolchains, since the same @ocaml.toolchain and its targets will be
+## configured on both.
+
+# we name this "opam_toolchain", since it uses @ocaml.toolchain
+# targets that are symlinked to an OPAM switch.
+ocaml_toolchain(
+    name = "opam_toolchain",
+    ocamlc = "@ocaml.toolchain//bin:ocamlc",
+    ocamlc_opt = "@ocaml.toolchain//bin:ocamlc.opt",
+    ocamlopt = "@ocaml.toolchain//bin:ocamlopt",
+    ocamlopt_opt = "@ocaml.toolchain//bin:ocamlopt.opt",
+    ocamllex = "@ocaml.toolchain//bin:ocamllex",
+    ocamlyacc = "@ocaml.toolchain//bin:ocamlyacc",
+    linkmode = "dynamic",
+)
+
+## TODO: one toolchain for each supported platform
+
+################################
+toolchain( ## == toolchain_binding (of defn to type-tag)
+    name = "ocaml_macos",  ## to be passed to  register_toolchains
+    toolchain_type = "@rules_ocaml//ocaml:toolchain",
+    toolchain = ":opam_toolchain", # == toolchain_definition
+    exec_compatible_with = [
+        "@platforms//os:macos",
+        ## we could define a toolchain for 32-bit macos, but we do not
+        ## expect that will ever be needed.
+    ],
+    target_compatible_with = [
+        "@platforms//os:macos",
+    ],
+    visibility = ["//visibility:public"]
+)
+
+################################
+toolchain(
+    name = "ocaml_linux_x86_64",
+    toolchain_type = "@rules_ocaml//ocaml:toolchain",
+    toolchain = ":opam_toolchain",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    visibility = ["//visibility:public"]
+)
+
+# ocaml_toolchain(
+#     name = "ocaml_toolchain_linux",
+#     ocamlc = "@ocaml.toolchain//bin:ocamlc",
+#     ocamlopt = "@ocaml.toolchain//bin:ocamlopt",
+#     linkmode = "static",
+# )
+
+################################
+# toolchain(
+#     name = "ocaml_linux_x86_32",
+#     toolchain_type = "@rules_ocaml//ocaml:toolchain",
+#     exec_compatible_with = [
+#         "@platforms//os:linux",
+#         "@platforms//cpu:x86_32",
+#     ],
+#     target_compatible_with = [
+#         "@platforms//os:linux",
+#         "@platforms//cpu:x86_32",
+#     ],
+#     toolchain = ":ocaml_toolchain_linux",
+#     visibility = ["//visibility:public"]
+# )
+
+# ocaml_toolchain(
+#     name = "ocaml_toolchain_linux",
+#     ocamlc = "@rules_ocaml//cfg/bin:ocamlc",
+#     linkmode = "static",
+# )

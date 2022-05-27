@@ -1,0 +1,39 @@
+.Dd April 9, 2022
+.Dt @OPAM-HERE-OPAM-REMOVE 1
+.Os OBazl User Manual
+.Sh NAME
+.Nm @opam//here/opam:remove
+.Nd Remove OPAM package from
+.Sy here
+switch.
+.Sh SYNOPSIS
+.Sy @opam//here/opam:remove
+[
+.Fl -
+.Op Ar package
+.Op Fl h
+.Sy ]
+.Sh DESCRIPTION
+Removes OPAM package
+.Ar package
+from
+.Sy here
+switch.
+.Sh OPTIONS
+.Bl -tag -width -indent
+.It Ar package
+Remove
+.Ar package
+from the
+.Pa .opam
+switch.
+.It Fl h
+Display this help screen.
+.El
+.Sh SEE ALSO
+.Xr @opam//here:create
+.Xr @opam//here/opam:init
+.Xr @opam//here/opam:install
+.Xr here
+.Sh AUTHORS
+.An Gregg Reynolds

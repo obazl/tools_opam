@@ -1,0 +1,3 @@
+config_setting(name = "trace",
+               flag_values = {"//bzl/debug:trace": str(True)},
+               visibility = ["//visibility:public"])

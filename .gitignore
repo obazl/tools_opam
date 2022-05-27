@@ -1,8 +1,13 @@
+.obazl.d
+.opam
 .bazel
+.private
 bazel-*
 user.bazelrc
 obsolete
+*.h
 *.log
+*.dSYM
 
 *.annot
 *.cmo

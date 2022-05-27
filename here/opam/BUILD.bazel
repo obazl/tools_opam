@@ -1,0 +1,45 @@
+load("//bootstrap:BUILD.bzl", "CMD_FLAGS", "BOOTSTRAP_INCLUDES")
+
+cc_binary(
+    name  = "opam",
+    srcs  = ["opam.c"],
+    defines = select({
+        "//bzl/debug/trace": [], # "DEBUG_TRACE"],
+        "//conditions:default":   []
+    }),
+    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES,
+    deps = ["//bootstrap"],
+)
+
+cc_binary(
+    name  = "init",
+    srcs  = ["init.c"],
+    defines = select({
+        "//bzl/debug/trace": [], # "DEBUG_TRACE"],
+        "//conditions:default":   []
+    }),
+    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES,
+    deps = ["//bootstrap"],
+)
+
+cc_binary(
+    name  = "install",
+    srcs  = ["install.c"],
+    defines = select({
+        "//bzl/debug/trace": [], # "DEBUG_TRACE"],
+        "//conditions:default":   []
+    }),
+    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES,
+    deps = ["//bootstrap"],
+)
+
+cc_binary(
+    name  = "remove",
+    srcs  = ["remove.c"],
+    defines = select({
+        "//bzl/debug/trace": [], # "DEBUG_TRACE"],
+        "//conditions:default":   []
+    }),
+    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES,
+    deps = ["//bootstrap"],
+)
