@@ -1,0 +1,27 @@
+# "mypkg" { ! "4.04.0"}
+# "mypkg" { ? "4.04.0"}
+# "mypkg" { ("4.04.0") }
+#"mypkg" { ( ! "4.04.0") }
+"mypkg" { ( ? "4.04.0") }
+
+#"mypkg" {"some string"}
+# "mypkg" {true}
+#"mypkg" {4}
+"mypkg" {"4.04.0"}
+#"mypkg" {= "4.04.0"}
+#"mypkg" {>= "4.04.0"}
+
+#"mypkg" {with-test & >= "0.8.1"}
+
+#"mypkg" {build}
+
+#("mypkg")
+
+#"mypkg"
+
+#"foo" & "bar"
+
+#"foo" {>= "3.12"} & "bar"
+
+## "foo" { >= "3.12" } & ("bar" | "baz" { !(> "2" & < "3.5") & != "5.1" })
+

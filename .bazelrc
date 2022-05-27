@@ -1,15 +1,27 @@
-try-import user.bazelrc
-
 build --color=yes
-build --subcommands=pretty_print  # same, but args are newline-separated
-build --verbose_failures
-build --sandbox_debug
-build --verbose_explanations
-build --explain bazel.log
-# build --toolchain_resolution_debug
-# build --show_timestamps
-# build --keep_going
-# build --jobs 600
-# build --toolchain_resolution_debug
-# build --nobuild  # run load and analysis phases only, do not run execution phase
-# query --keep_going
+
+# always enable platform-based toolchain resolution:
+build --incompatible_enable_cc_toolchain_resolution
+
+common:yydebug --//bootstrap:yydebug
+# common:yydebug --//bootstrap:yydebug-exit-on-error
+common:yydebug --//bootstrap:yytrace
+common:yydebug --//bootstrap:lexdebug
+
+# fpf = filtered-package-formula
+# common:yydebug --//bootstrap:yydebug-rules=fpf
+# common:yydebug --//bootstrap:lexdebug-rules=fpf
+
+# fvf = filtered-version-formula
+# common:yydebug --//bootstrap:yydebug-rules=fvf
+# common:yydebug --//bootstrap:lexdebug-rules=fvf
+
+# common:yydebug --//bootstrap:yydebug-rules=filter
+# common:yydebug --//bootstrap:lexdebug-rules=filter
+
+# common:yydebug --//bootstrap:lexdebug-rules=version
+
+common:yydebug --//bootstrap:yydebug-rules=build-filter
+common:yydebug --//bootstrap:lexdebug-rules=build-filter
+
+try-import .private/bazelrc

@@ -1,0 +1,86 @@
+.Dd April 9, 2022
+.Dt @OPAM-COSWITCH 1
+.Os OBazl User Manual
+.Sh NAME
+.Nm @opam//coswitch
+.Nd Manage multiple OBazl coswitches
+.Sh SYNOPSIS
+.Sy @opam//coswitch[:subcmd]
+.Op --
+.Op Ar options
+.Sh OPTIONS
+All commands take a help option:
+.Ql -- -h
+.Sh DESCRIPTION
+These commands are designed to be run under the control of
+.Em Bazel .
+For example:
+.Bd -literal -offset indent
+$ bazel run @opam//coswitch:list
+.Ed
+.Pp
+OBazl supports two kinds of coswitch:
+.Bl -tag -width indent -offset indent
+.It Em Project-local No (a/k/a Em here No coswitch)
+One per project, located in <projroot>/.obazl.d/opam.
+Each
+.Em Here
+coswitch is based on a switch of the same name installed in a
+project-specific OPAM installation rooted at
+.Em <projroot>/.opam .
+The switch/coswitch are not shared by any other projects.
+.It Em Shared No (a/k/a Em XDG No coswitch)
+Located in $XDG_DATA_HOME/obazl/opam.  XDG coswitches are based on standard OPAM switches installed by default in
+.Em $HOME/.opam .
+They may be shared by multiple projects, just like standard OPAM switches.
+.El
+
+.Sh SUBCOMMANDS
+.Bl -tag -width -indent
+.It Xo Ar :create
+.Xc
+Creates an XDG coswitch from a switch.
+.Bl -tag -width -indent
+.It Fl s
+Name of OPAM switch.
+.El
+.Pp
+To create a
+.Em here
+switch, run
+.Sy $ bazel run @opam//here/create
+.It Xo Ar :set
+.Xc
+Sets the coswitch to use for building the local project.
+.Bl -tag -width -indent
+.It Fl s
+Name of coswitch.
+.El
+.It Xo Ar :list
+.Xc
+Without arg, displays list of coswitches. With
+.Ar -s <coswitch>
+arg, lists configuration of
+.Ar <coswitch> .
+.It Xo Ar :remove
+.Xc
+Removes an XDG coswitch. Has no effect on corresponding OPAM switch.
+.Bl -tag -width -indent
+.It Fl s
+Name of coswitch to remove.
+.El
+.It Ar :show
+Displays name of current coswitch
+.El
+.Sh EXAMPLES
+.Sh SEE ALSO
+To display the manpage for a command:
+.Bd -literal -offset indent
+$ bazel run @opam//coswitch:list -- -h
+.Ed
+.Pp
+.Xr @opam//coswitch:show
+.Xr @opam//coswitch:refresh
+.Xr here
+.Sh AUTHORS
+.An Gregg Reynolds

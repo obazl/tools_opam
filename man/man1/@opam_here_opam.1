@@ -1,0 +1,49 @@
+.Dd April 9, 2022
+.Dt @OPAM-HERE-OPAM 1
+.Os OBazl User Manual
+.Sh NAME
+.Nm @opam//here/opam
+.Nd Manage OPAM here-switch
+.Sh SYNOPSIS
+.Sy @opam//here/opam[:subcmd]
+.Op Ar --
+.Op Ar options
+.Sh OPTIONS
+All commands take a help option:
+.Ql -- -h
+.Sh DESCRIPTION
+These commands are designed to be run under the control of
+.Sy Bazel .
+For example:
+.Bd -literal -offset indent
+.Ic $ bazel run @opam//here:list
+.Ed
+.Sh SUBCOMMANDS
+Without
+.Sy :subcmd ,
+defaults to
+.Sy @opam//here/opam -- -h
+.Bl -tag -width -indent
+.It Xo Ar :init
+.Xc
+Creates an OPAM
+.Sy here
+switch at
+.Pa <projroot>/.opam
+.It Xo Ar :install
+.Xc
+Installs a package in the OPAM here-switch.
+.It Xo Ar :remove
+.Xc
+Removes  a package from the OPAM here-switch.
+.Sh SEE ALSO
+To display the manpage for a command:
+.Bd -literal -offset indent
+$ bazel run @opam//coswitch:list -- -h
+.Ed
+.Pp
+.Xr @opam//coswitch:show
+.Xr @opam//coswitch:refresh
+.Xr here
+.Sh AUTHORS
+.An Gregg Reynolds

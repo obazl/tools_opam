@@ -1,0 +1,72 @@
+load("//bootstrap:BUILD.bzl", "CMD_FLAGS", "BOOTSTRAP_INCLUDES")
+
+cc_binary(
+    name  = "coswitch",
+    srcs  = ["coswitch.c"],
+    defines = select({
+        "//bzl/debug/trace": [], # "DEBUG_TRACE"],
+        "//conditions:default":   []
+    }),
+    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES,
+    deps = ["//bootstrap"],
+)
+
+cc_binary(
+    name  = "list",
+    srcs  = ["list.c"],
+    defines = select({
+        "//bzl/debug/trace": [], # "DEBUG_TRACE"],
+        "//conditions:default":   []
+    }),
+    # args  = ["--xdg"],
+    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES,
+    deps = ["//bootstrap"],
+)
+
+cc_binary(
+    name  = "refresh",
+    srcs  = ["refresh.c"],
+    defines = select({
+        "//bzl/debug/trace": [], # "DEBUG_TRACE"],
+        "//conditions:default":   []
+    }),
+    # args  = ["--xdg"],
+    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES,
+    deps = ["//bootstrap"],
+)
+
+cc_binary(
+    name  = "remove",
+    srcs  = ["remove.c"],
+    defines = select({
+        "//bzl/debug/trace": [], # "DEBUG_TRACE"],
+        "//conditions:default":   []
+    }),
+    # args  = ["--xdg"],
+    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES,
+    deps = ["//bootstrap"],
+)
+
+cc_binary(
+    name  = "set",
+    srcs  = ["set.c"],
+    defines = select({
+        "//bzl/debug/trace": [], # "DEBUG_TRACE"],
+        "//conditions:default":   []
+    }),
+    # args  = ["--xdg"],
+    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES,
+    deps = ["//bootstrap"],
+)
+
+cc_binary(
+    name  = "show",
+    srcs  = ["show.c"],
+    defines = select({
+        "//bzl/debug/trace": [], # "DEBUG_TRACE"],
+        "//conditions:default":   []
+    }),
+    # args  = ["--xdg"],
+    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES,
+    deps = ["//bootstrap"],
+)

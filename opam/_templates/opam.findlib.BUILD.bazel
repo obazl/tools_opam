@@ -1,5 +1,0 @@
-load("@obazl_rules_opam//opam/_rules:findlib.bzl", "findlib_pkg")
-
-package(default_visibility = ["//visibility:public"])
-
-{FINDLIB_PKGS}
