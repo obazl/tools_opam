@@ -1,7 +1,65 @@
-load("//opam/_functions:opam_cmds.bzl",
-     "opam_get_current_switch_libdir",
-     "opam_get_current_switch_prefix")
-load("//opam/_functions:xdg.bzl", "get_xdg_paths")
+# load("//opam/_functions:opam_cmds.bzl",
+#      "opam_get_current_switch_libdir",
+#      "opam_get_current_switch_prefix")
+# load("//opam/_functions:xdg.bzl", "get_xdg_paths")
+
+################################################################
+def get_xdg_paths(repo_ctx):
+    if "HOME" in repo_ctx.os.environ:
+        home = repo_ctx.os.environ["HOME"]
+        # print("HOME: %s" % home)
+    else:
+        fail("HOME not in env.")
+
+    if "XDG_CACHE_HOME" in repo_ctx.os.environ:
+        xdg_cache_home = repo_ctx.os.environ["XDG_CACHE_HOME"]
+    else:
+        xdg_cache_home = home + "/.cache"
+
+    if "XDG_CONFIG_HOME" in repo_ctx.os.environ:
+        xdg_config_home = repo_ctx.os.environ["XDG_CONFIG_HOME"]
+    else:
+        xdg_config_home = home + "/.config"
+
+    if "XDG_DATA_HOME" in repo_ctx.os.environ:
+        xdg_data_home = repo_ctx.os.environ["XDG_DATA_HOME"]
+    else:
+        xdg_data_home = home + "/.local/share"
+
+    return home, repo_ctx.path(xdg_cache_home), repo_ctx.path(xdg_config_home), repo_ctx.path(xdg_data_home)
+
+
+##################################
+def _throw_opam_cmd_error(cmd, r):
+    print("OPAM cmd {cmd} rc    : {rc}".format(cmd=cmd, rc= r.return_code))
+    print("OPAM cmd {cmd} stdout: {stdout}".format(cmd=cmd, stdout= r.stdout))
+    print("OPAM cmd {cmd} stderr: {stderr}".format(cmd=cmd, stderr= r.stderr))
+    fail("OPAM cmd failure.")
+
+################################
+def run_opam_cmd(repo_ctx, cmd):
+
+    result = repo_ctx.execute(cmd)
+    if result.return_code == 0:
+        result = result.stdout.strip()
+        # print("_opam_set_switch result ok: %s" % result)
+    elif result.return_code == 5: # Not found
+        fail("OPAM cmd {cmd} result: not found.".format(cmd = cmd))
+    else:
+        _throw_opam_cmd_error(cmd, result)
+
+    return result
+
+#############################################
+def opam_get_current_switch_prefix(repo_ctx):
+    cmd = ["opam", "var", "prefix"]
+    return run_opam_cmd(repo_ctx, cmd)
+
+#############################################
+def opam_get_current_switch_libdir(repo_ctx):
+    cmd = ["opam", "var", "lib"]
+    return run_opam_cmd(repo_ctx, cmd)
+
 
 #####################################
 def _install_opam_symlinks(repo_ctx, opam_switch_prefix):
