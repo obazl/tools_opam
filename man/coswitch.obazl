@@ -1,0 +1,19 @@
+.Dd April 9, 2022
+.Dt COSWITCH OBazl
+.Os MYOS [v1]
+.Sh NAME
+.Nm @opam//coswitch
+.Nd Manage multiple OBazl coswitches
+.Sh SYNOPSIS
+.Nm
+.Op --
+.Op Ar option
+...
+.Sh DESCRIPTION
+.Sh EXAMPLES
+.Sh SEE ALSO
+.Xr coswitch_show
+.Xr coswitch_refresh
+.Xr here
+.Sh AUTHORS
+.An Gregg Reynolds

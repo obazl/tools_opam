@@ -43,25 +43,32 @@ EXPORT int opam_init_xdg(bool force, char *_compiler_version, char *_opam_switch
     }
     else if (_opam_switch != NULL) {
         UT_string *cmd;
-        utstring_new(cmd);
-        utstring_printf(cmd, "opam exec --switch %s -- ocamlc --version",
-                        _opam_switch);
-        char *switch_compiler = run_cmd(utstring_body(cmd));
-        if (switch_compiler == NULL) {
+        /* utstring_new(cmd); */
+        /* utstring_printf(cmd, "opam exec --switch %s -- ocamlc --version", */
+        /*                 _opam_switch); */
+        /* char *switch_compiler = run_cmd(utstring_body(cmd), false); */
+        char *compiler_version = get_compiler_version(NULL);
+
+        if (compiler_version == NULL) {
             log_error("Switch %s not found.", _opam_switch);
             printf("_here: switch %s not found.\n", _opam_switch);
             exit(EXIT_FAILURE);
         }
         printf("Using compiler version %s from opam switch %s\n",
-               switch_compiler, _opam_switch);
+               compiler_version, _opam_switch);
+        printf("xxxx9\n");
+        char *compiler_variants = get_compiler_variants(NULL);
 
         _opam_init();
 
-        _opam_create_switch(switch_compiler);
+        /* _opam_create_switch(switch_compiler); */
+        opam_here_create_switch(compiler_variants
+                                ?compiler_variants
+                                :compiler_version);
 
         // do not import here.packages if -s passed
 
-        free(switch_compiler);
+        /* free(switch_compiler); */
 
         exit(EXIT_SUCCESS);
 
@@ -70,9 +77,21 @@ EXPORT int opam_init_xdg(bool force, char *_compiler_version, char *_opam_switch
         /* log_debug("-c <version> not passed\n"); */
         /* if -c not passed, then use version from here.compiler */
         compiler_version = read_here_compiler_file();
-        if (compiler_version) {
+        bool use_here_compiler = true;
+        if (compiler_version != NULL) {
+            printf("Your here switch is configured to use compiler version: %s"
+                   " (specified in %s)\n",
+                   compiler_version, HERE_COMPILER_FILE);
+            use_here_compiler = prompt_yn("Reconfigure using same version?"
+                                          " (if no, you will be prompted for"
+                                          " a different version)\n");
+            printf("ANSWER: %d\n", use_here_compiler);
+        }
+
+        /* if (compiler_version) { */
+        if (use_here_compiler) {
             if (verbose) {
-                log_info("@opam//init: installing compiler version '%s' (specified in %s)",  HERE_OBAZL_ROOT HERE_COMPILER, compiler_version);
+                log_info("@opam//init: installing compiler version '%s' (specified in %s)",  HERE_COSWITCH_ROOT HERE_COMPILER, compiler_version);
             }
 
             _opam_init();
@@ -81,7 +100,7 @@ EXPORT int opam_init_xdg(bool force, char *_compiler_version, char *_opam_switch
 
             free(compiler_version);
 
-            if (access(HERE_OBAZL_ROOT "/here.packages", R_OK) == 0)
+            if (access(HERE_COSWITCH_ROOT "/here.packages", R_OK) == 0)
                 opam_import(NULL);
             else
                 if (dry_run)
@@ -90,18 +109,31 @@ EXPORT int opam_init_xdg(bool force, char *_compiler_version, char *_opam_switch
             exit(EXIT_SUCCESS);
 
         } else {
-            if (verbose)
-                log_debug(HERE_OBAZL_ROOT HERE_COMPILER " not found.\n");
             // get compiler for current switch
             // 'opam var switch' returns switch name, not compiler
-            char *current_switch = run_cmd("opam var switch");
+            char *current_switch = run_cmd("opam var switch", false);
             /* printf("current switch %s\n", current_switch); */
 
-            compiler_version = run_cmd("opam exec -- ocamlc --version");
-            if (verbose)
-                log_debug("current switch ocamlc version: %s", compiler_version);
+            compiler_version = get_compiler_version(current_switch);
+            if (verbose) {
+                printf("Compiler version: %s (effective switch: %s)\n",
+                       compiler_version, current_switch);
+                log_debug("Compiler version: %s (effective switch: %s)",
+                          compiler_version, current_switch);
+            }
 
-            bool use_current = prompt_use_current(current_switch, compiler_version);
+            printf("xxxx10\n");
+            char *compiler_variants = get_compiler_variants(current_switch);
+            if (verbose) {
+                printf("Compiler variants: %s (effective switch: %s)\n",
+                       compiler_variants, current_switch);
+                log_debug("Compiler variants: %s (effective switch: %s)",
+                          compiler_variants, current_switch);
+            }
+
+            bool use_current = prompt_use_current_switch(current_switch,
+                                                         compiler_version,
+                                                         compiler_variants);
             if (!use_current) {
                 compiler_version = prompt_compiler_version();
                 if (compiler_version == NULL) {
@@ -195,7 +227,7 @@ LOCAL int _opam_create_switch(char *compiler_version)
     int argc = (sizeof(switch_argv) / sizeof(switch_argv[0])) - 1;
     result = spawn_cmd(exe, argc, switch_argv);
     if (result != 0) {
-        fprintf(stderr, "FAIL: run_cmd(opam switch --root .opam create _here)\n");
+        fprintf(stderr, "FAIL: spawn_cmd(opam switch --root .opam create _here)\n");
     }
 
     if (!dry_run) {

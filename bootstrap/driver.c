@@ -115,24 +115,24 @@ bool _skip_pkg(char *pkg)
     */
 
     /* avoid matching ocaml-compiler-libs */
-    if (strncmp(pkg + len - 19, "/compiler-libs/META", 19) == 0) {
+    if (strncmp(pkg + len - 27, "here/lib/compiler-libs/META", 27) == 0) {
         log_warn("SKIPPING compiler-libs/META");
         return true;
     }
 
-    if (strncmp(pkg + len - 12, "dynlink/META", 12) == 0) {
+    if (strncmp(pkg + len - 21, "here/lib/dynlink/META", 21) == 0) {
         log_warn("SKIPPING dynlink/META");
         return true;
     }
-    if (strncmp(pkg + len - 13, "ocamldoc/META", 13) == 0) {
+    if (strncmp(pkg + len - 22, "here/lib/ocamldoc/META", 22) == 0) {
         log_warn("SKIPPING ocamldoc/META");
         return true;
     }
-    if (strncmp(pkg + len - 12, "threads/META", 12) == 0) {
+    if (strncmp(pkg + len - 21, "here/lib/threads/META", 21) == 0) {
         log_warn("SKIPPING threads/META");
         return true;
     }
-    if (strncmp(pkg + len - 9, "unix/META", 9) == 0) {
+    if (strncmp(pkg + len - 18, "here/lib/unix/META", 18) == 0) {
         log_warn("SKIPPING unix/META");
         return true;
     }
@@ -141,13 +141,13 @@ bool _skip_pkg(char *pkg)
 
     // Bigarray moved to standard lib in v. 4.07
     // so no need to list as explicit dep?
-    if (strncmp(pkg + len - 13, "bigarray/META", 13) == 0) {
+    if (strncmp(pkg + len - 22, "here/lib/bigarray/META", 22) == 0) {
         log_warn("SKIPPING bigarray/META");
         return true;
     }
 
     // raw_spacetime - removed in v. 4.12(?)
-    if (strncmp(pkg + len - 18, "raw_spacetime/META", 18) == 0) {
+    if (strncmp(pkg + len - 27, "here/lib/raw_spacetime/META", 27) == 0) {
         log_warn("SKIPPING raw_spacetime/META");
         return true;
     }
@@ -157,7 +157,7 @@ bool _skip_pkg(char *pkg)
     // however, opam seems to install num* in lib/ocaml "for backward compatibility", and installs lib/num/META.
     /* "New applications that need arbitrary-precision arithmetic should use the Zarith library (https://github.com/ocaml/Zarith) instead of the Num library, and older applications that already use Num are encouraged to switch to Zarith." */
     // https://www.dra27.uk/blog/platform/2018/01/31/num-system.html
-    if (strncmp(pkg + len - 8, "num/META", 8) == 0) {
+    if (strncmp(pkg + len - 17, "here/lib/num/META", 17) == 0) {
         log_warn("SKIPPING num/META");
         return true;
     }

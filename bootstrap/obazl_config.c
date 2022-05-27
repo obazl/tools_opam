@@ -20,8 +20,10 @@
 #include "ini.h"
 #include "log.h"
 /* #include "s7.h" */
-#include "utarray.h"
 #include "utstring.h"
+#if INTERFACE
+#include "utarray.h"
+#endif
 
 #include "obazl_config.h"
 
@@ -42,19 +44,17 @@ bool verbose;
 /* char *callback_script_file = "ocamlark.scm"; // passed in 'data' attrib */
 /* char *callback = "ocamlark_handler"; /\* fn in callback_script_file  *\/ */
 
-/* script directories: sys, user, proj, in order
-   obazl (sys) scripts:
-       run under `bazel run`: dir in runfiles containing callback script
-           defaults to @ocamlark//scm
-       run directly: xdg system dir
-           XDG_DATA_DIRS = (/usr/local/share)/obazl/scm
-   user scripts:
-       ($HOME)/.obazl.d/scm
-       XDG_DATA_HOME = ($HOME/.local/share)/obazl/scm
-   proj scripts:
-       .obazl.d
-
- */
+/* script directories: sys, user, proj, in order */
+   /* obazl (sys) scripts: */
+   /*     run under `bazel run`: dir in runfiles containing callback script */
+   /*         defaults to @ocamlark//scm */
+   /*     run directly: xdg system dir */
+   /*         XDG_DATA_DIRS = (/usr/local/share)/obazl/scm */
+   /* user scripts: */
+   /*     ($HOME)/.obazl.d/scm */
+   /*     XDG_DATA_HOME = ($HOME/.local/share)/obazl/scm */
+   /* proj scripts: */
+   /*     .obazl.d */
 
 /* char *bazel_script_dir = NULL; */
 
@@ -77,7 +77,9 @@ UT_string *runtime_data_dir;
 
 /* bool ini_error = false; */
 UT_string *obazl_ini_path;
-const char *obazl_ini_file = ".obazlrc";
+#if INTERFACE
+#define OBAZL_INI_FILE ".obazlrc"
+#endif
 
 /* UT_string *codept_args_file; */
 /* const char *codept_args_filename = "codept.args"; */
@@ -90,7 +92,15 @@ const char *obazl_ini_file = ".obazlrc";
 struct configuration_s {
     char *obazl_version;
     int libct;
-    UT_array *src_dirs;         /* string list; used by fileseq to get src_files */
+    char *here_root;
+    char *here_switch;
+    char *compiler_version;
+    UT_array *compiler_options;
+
+    UT_array *opam_packages;        /* string list */
+
+    // for dune conversion?
+    UT_array *src_dirs; /* string list; used by fileseq to get src_files */
     UT_array *watch_dirs;       /* string list */
     /* struct lib_s *ocamllibs[10]; /\* is 10 enough? *\/ */
     /* struct lib_s *coqlibs[10]; /\* is 10 enough? *\/ */
@@ -99,46 +109,56 @@ struct configuration_s {
 
 #define OBAZL_VERSION "0.1.0"
 
-struct configuration_s obazl_config = {.obazl_version = OBAZL_VERSION, .libct = 0};
+struct configuration_s obazl_config = {
+    .obazl_version = OBAZL_VERSION,
+    .libct = 0
+};
 
 UT_array *src_files;            /* FIXME: put this in configuration_s? */
 
 EXPORT void obazl_configure(char *_exec_root, char *cmd)
 {
-    /* log_debug("obazl_configure"); */
+#if defined(DEBUG_TRACE)
+    /* printf("obazl_configure: %s, %s\n", _exec_root, cmd); */
+    log_debug("obazl_configure: %s", cmd);
+#endif
 
     /* if (access("bazel-out/volatile.txt", F_OK)) */
     /*     printf("FOUND: bazel-out/volatile.txt\n"); */
     /* else */
     /*     printf("NOT FOUND: bazel-out/volatile.txt\n"); */
 
+    char *subcmd = basename(cmd);
+
     utstring_new(exec_root);
     utstring_printf(exec_root, "%s", _exec_root);
-    if (debug)
-        log_debug("EXEC_ROOT: %s", utstring_body(exec_root));
-
+#if defined(DEBUG_TRACE)
+    log_debug("EXEC_ROOT: %s", utstring_body(exec_root));
+#endif
     utstring_new(runfiles_root);
     utstring_printf(runfiles_root, "%s", getcwd(NULL, 0));
-    if (debug)
-        log_debug("runfiles_root: %s", utstring_body(runfiles_root));
-
+#if defined(DEBUG_TRACE)
+    log_debug("runfiles_root: %s", utstring_body(runfiles_root));
+#endif
     char *_proj_root = getenv("BUILD_WORKSPACE_DIRECTORY");
+
+#if defined(DEBUG_TRACE)
     if (_proj_root == NULL) {
-        if (debug)
-            log_debug("BUILD_WORKSPACE_DIRECTORY: null");
+        log_debug("BUILD_WORKSPACE_DIRECTORY: null");
     } else {
-        if (debug)
-            log_debug("BUILD_WORKSPACE_DIRECTORY: %s", _proj_root);
+        log_debug("BUILD_WORKSPACE_DIRECTORY: %s", _proj_root);
     }
+#endif
 
     char *_wd = getenv("BUILD_WORKING_DIRECTORY");
+
+#if defined(DEBUG_TRACE)
     if (_wd == NULL) {
-        if (debug)
-            log_debug("BUILD_WORKING_DIRECTORY: null");
+        log_debug("BUILD_WORKING_DIRECTORY: null");
     } else {
-        if (debug)
-            log_debug("BUILD_WORKING_DIRECTORY: %s", _wd);
+        log_debug("BUILD_WORKING_DIRECTORY: %s", _wd);
     }
+#endif
 
     utstring_new(proj_root);
     if (_proj_root == NULL)
@@ -158,19 +178,25 @@ EXPORT void obazl_configure(char *_exec_root, char *cmd)
 
     /* .obazlrc config file */
     utstring_new(obazl_ini_path);
-    utstring_printf(obazl_ini_path, "%s/%s", utstring_body(proj_root), obazl_ini_file);
+    utstring_printf(obazl_ini_path, "%s/%s", utstring_body(proj_root), OBAZL_INI_FILE);
 
     rc = access(utstring_body(obazl_ini_path), R_OK);
     if (rc) {
         /* if (verbose || debug) */
         log_warn("Config file %s not found.", utstring_body(obazl_ini_path));
     } else {
+#if defined(DEBUG_TRACE)
+        log_trace("found config file at %s\n",
+                  utstring_body(obazl_ini_path));
+#endif
         ini_error = false;
+        utarray_new(obazl_config.compiler_options, &ut_str_icd);
         utarray_new(obazl_config.src_dirs, &ut_str_icd);
         utarray_new(obazl_config.watch_dirs, &ut_str_icd);
+        utarray_new(obazl_config.opam_packages, &ut_str_icd);
         rc = ini_parse(utstring_body(obazl_ini_path), inih_handler, &obazl_config);
         if (rc < 0) {
-            //FIXME: deal with missing .obazl
+            //FIXME: deal with missing .obazlrc
             perror("ini_parse");
             log_fatal("Can't load/parse ini file: %s", utstring_body(obazl_ini_path));
             exit(EXIT_FAILURE);
@@ -183,6 +209,43 @@ EXPORT void obazl_configure(char *_exec_root, char *cmd)
         }
     }
 
+    /* if (obazl_config.here_root == NULL) { */
+    /*     obazl_config.here_root = malloc(6); */
+    /*     strlcpy(obazl_config.here_root, ".opam", 6); */
+    /* } */
+    /* if (obazl_config.here_switch == NULL) { */
+    /*     obazl_config.here_switch = malloc(5); */
+    /*     strlcpy(obazl_config.here_switch, "here", 5); */
+    /* } */
+
+    /* if (obazl_config.here_compiler == NULL) { */
+    /*     obazl_config.here_compiler = malloc(5); */
+    /*     strlcpy(obazl_config.here_compiler, "here", 5); */
+    /* } */
+
+#if defined(DEBUG_TRACE)
+    if (obazl_config.here_root)
+        log_debug("here root: %s", obazl_config.here_root);
+    if (obazl_config.here_switch)
+        log_debug("here switch: %s", obazl_config.here_switch);
+    if (obazl_config.compiler_version)
+        log_debug("compiler version: %s", obazl_config.compiler_version);
+    if (obazl_config.compiler_options != NULL) {
+        log_debug("compiler_options ct: %d",
+                  utarray_len(obazl_config.compiler_options));
+        char **p = NULL;
+        while ( (p=(char**)utarray_next(obazl_config.compiler_options, p))) {
+            log_debug("option: %s",*p);
+        }
+    }
+    if (obazl_config.opam_packages != NULL) {
+        log_debug("opam deps ct: %d", utarray_len(obazl_config.opam_packages));
+        char **p = NULL;
+        while ( (p=(char**)utarray_next(obazl_config.opam_packages, p))) {
+            log_debug("%s",*p);
+        }
+    }
+#endif
     utarray_new(src_files,&ut_str_icd);
 
     /* _s7_init(); */

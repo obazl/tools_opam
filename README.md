@@ -1,9 +1,16 @@
-# rules_opam
-Bazel rules for OPAM support
+# OBazl tools_opam
+Tools & rules for using OPAM with OBazl
 
+## manpages
+
+You can open them by file path:
+
+`$ man ./man/man1/coswitch.1`
+
+## outdated
 summary:
 
-* `bazel run @opam//init` - creates project-local OPAM installation
+* `bazel run @opam//here` - creates project-local OPAM installation
   with `--root .opam` and `--switch obazl`
 
 * `bazel run @opam//init -- --import <file>` - same as `@opam//init`
@@ -21,6 +28,22 @@ summary:
   writes them to `.opam.d/buildfiles`, and `.opam.d/opam_repos.bzl`
   containing repo rules.
 
+
+## development/testing
+
+In https://github.com/obazl/dev_obazl/toolchains
+
+Run in debug mode:
+
+* `-D`: pass `--debug` to opam cmd
+* `-d`: enable debug in @tools_opam cmd
+* `-D`: pass `--verbose` to opam cmd
+* `-D`: enable verbose in @tools_opam cmd
+* `--@opam//bzl/debug:trace` - compile @tools_opam cmd with `DEBUG_TRACE`. Put this before `--`
+
+E.g.
+
+`$ bazel run @opam//here/opam:install --@opam//bzl/debug:trace -- -DdVv <pkg>`
 
 ## opam commands
 
@@ -44,6 +67,8 @@ These commands have lots of options, use `--help` to see them.
 
 ## "core" libraries/archives/packages
 
+**WARNING** OBSOLETE
+
 **WARNING** In the literature "standard library" is sometimes used to
 refer to `lib/ocaml`. Not to be confused with the module
 [Stdlib](https://ocaml.org/api/Stdlib.html), "The OCaml Standard
@@ -63,21 +88,21 @@ bootstrapper.
 
 Furthermore we adapt findlib names to make them more idiomatic in
 Bazel. Where findlib has `compiler-libs.X`, we have
-`@ocaml//compiler-libs:X`:
+`@rules_ocaml//cfg/compiler-libs:X`:
 
-* `compiler-libs` => `@ocaml//compiler-libs`
-* `compiler-libs.common` => `@ocaml//compiler-libs/common`
-* `compiler-libs.bytecomp` => `@ocaml//compiler-libs/bytecomp`
-* `compiler-libs.optcomp` => `@ocaml//compiler-libs/optcomp`
-* `compiler-libs.toplevel` => `@ocaml//compiler-libs/toplevel`
-* `compiler-libs.native-toplevel` => `@ocaml//compiler-libs/native-toplevel`
+* `compiler-libs` => `@rules_ocaml//cfg/compiler-libs`
+* `compiler-libs.common` => `@rules_ocaml//cfg/compiler-libs/common`
+* `compiler-libs.bytecomp` => `@rules_ocaml//cfg/compiler-libs/bytecomp`
+* `compiler-libs.optcomp` => `@rules_ocaml//cfg/compiler-libs/optcomp`
+* `compiler-libs.toplevel` => `@rules_ocaml//cfg/compiler-libs/toplevel`
+* `compiler-libs.native-toplevel` => `@rules_ocaml//cfg/compiler-libs/native-toplevel`
 
 The others we also put in the `@ocaml` namespace:
 
-* `bigarray` => `@ocaml//bigarray`
-* `dynlink`  =>  `@ocaml//dynlink`
-* `str` => `@ocaml//str`
-* `unix` => `@ocaml//unix`
+* `bigarray` => `@rules_ocaml//cfg/bigarray`
+* `dynlink`  =>  `@rules_ocaml//cfg/dynlink`
+* `str` => `@rules_ocaml//cfg/str`
+* `unix` => `@rules_ocaml//cfg/unix`
 
 The `stdlib` module is always included (and `open`ed) by the compiler,
 so there is no build target for it.
@@ -92,8 +117,8 @@ removed in version X, but threads/META still exposes `threads.vm`.
 OBazl does not support the `ocamlfind` threading options, eliminates
 the distinction between posix and vm threads.
 
-* `threads.posix` => `@ocaml//threads`
-* `threads.vm`    =>  `@ocaml//threads`
+* `threads.posix` => `@rules_ocaml//cfg/threads`
+* `threads.vm`    =>  `@rules_ocaml//cfg/threads`
 
 The list:
 

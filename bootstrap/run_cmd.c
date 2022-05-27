@@ -19,6 +19,10 @@
 
 #define BUFSZ 4096
 
+#if INTERFACE
+#include "utstring.h"
+#endif
+
 #include "log.h"
 #include "run_cmd.h"
 
@@ -30,17 +34,27 @@ int errnum;
 /*
   use popen to run a cmd, returning output string, which must be freed
 */
-char *run_cmd(char *cmd)        /* FIXME: make sure clients free result */
+char *run_cmd(char *cmd, bool mutator) /* FIXME: make sure clients free result */
 {
-    if (debug)
-        log_debug("run_cmd: %s", cmd);
+#if defined(DEBUG_TRACE)
+    log_debug("run_cmd: %s", cmd);
+#endif
+    if ((verbose) || dry_run)
+        printf(YEL "EXEC: " CMDCLR "%s" CRESET "\n", cmd);
+
+    if (dry_run && mutator) {
+        printf("run_cmd dry run\n");
+        return NULL;
+    }
+
     char buf[256];
     memset(buf, '\0', 256);
     FILE *fp;
 
     errno = 0;
     if ((fp = popen(cmd, "r")) == NULL) {
-        printf("Error opening pipe!\n");
+        log_error("Error opening pipe for run_cmd!\n");
+        printf("Error opening pipe for run_cmd!\n");
         return NULL;
     }
 
@@ -51,40 +65,21 @@ char *run_cmd(char *cmd)        /* FIXME: make sure clients free result */
 
     /* pclose waits, returns rc of process */
     if(pclose(fp))  {
-        perror(cmd);
+        fprintf(stderr, "ERROR: %s\n\tfor cmd: %s\n",
+                strerror(errno), cmd);
+        /* perror(cmd); */
+        if (verbose || dry_run) {
+            printf("    => ");
+            printf(CMDCLR "NULL" CRESET "\n");
+        }
         return NULL;
     }
-    return strdup(buf);
-}
-
-/*
-  use posix_spawn to run a command. since the commands are designed to
-  be run by the user at a terminal, we do not need to capture output.
- */
-int spawn_cmd(char *executable, int argc, char *argv[])
-{
-    if (verbose) {
-        log_info("obazl:");
-        printf("obazl: ");
-        for (int i =0; i < argc; i++) {
-            log_info("%s", (char*)argv[i]);
-            printf("%s ", (char*)argv[i]);
-        }
-        printf("\n");
+#if defined(DEBUG_TRACE)
+    log_trace("cmd stdout: '%s'", buf);
+#endif
+    if (verbose || dry_run) {
+        printf("    => ");
+        printf(CMDCLR "%s" CRESET "\n", buf);
     }
-
-    if (dry_run) return 0;
-
-    printf("Begining OPAM processor output:\n");
-
-    pid_t pid;
-    int rc;
-
-    extern char **environ;
-
-    rc = posix_spawnp(&pid, executable, NULL, NULL, argv, environ);
-
-    waitpid(pid, &rc, 0);
-
-    return rc;
+    return strdup(buf);
 }

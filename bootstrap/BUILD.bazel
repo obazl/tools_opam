@@ -8,66 +8,15 @@ exports_files([
     "log.c", "log.h", "utarray.h", "uthash.h", "utstring.h"
 ])
 
-## enable meta ast debugging: --//bootstrap:ast-dump
-bool_flag(name = "ast-dump", build_setting_default = 0)
-config_setting(name = "ast-dump-enabled",
-               flag_values = {":ast-dump": "True"})
-config_setting(name = "ast-dump-disabled",
-               flag_values = {":ast-dump": "False"})
+## to enable DEBUG_TRACE, pass --@opam//bzl/debug:trace
 
-## enable meta ast debugging: --//bootstrap:ast-trace
-bool_flag(name = "ast-trace", build_setting_default = 0)
-config_setting(name = "ast-trace-enabled",
-               flag_values = {":ast-trace": "True"})
-config_setting(name = "ast-trace-disabled",
-               flag_values = {":ast-trace": "False"})
-
-## enable parser debugging: --//bootstrap:yydebug
-bool_flag(name = "yydebug", build_setting_default = 0)
-config_setting(name = "yydebug-enabled", flag_values = {":yydebug": "True"})
-config_setting(name = "yydebug-disabled", flag_values = {":yydebug": "False"})
-bool_flag(name = "yydebug-exit-on-error", build_setting_default = 0)
-config_setting(name = "yydebug-exit-on-error-enabled",
-               flag_values = {":yydebug-exit-on-error": "True"})
-
-bool_flag(name = "yytrace", build_setting_default = 0)
-config_setting(name = "yytrace-enabled", flag_values = {":yytrace": "True"})
-config_setting(name = "yytrace-disabled", flag_values = {":yytrace": "False"})
-
-## debug parse rules
-string_flag(name = "yydebug-rules", build_setting_default = "")
-config_setting(name = "yydebug-fpf",
-               flag_values = {":yydebug-rules": "fpf"})
-config_setting(name = "yydebug-fvf",
-               flag_values = {":yydebug-rules": "fvf"})
-config_setting(name = "yydebug-filter",
-               flag_values = {":yydebug-rules": "filter"})
-config_setting(name = "yydebug-build-filter",
-               flag_values = {":yydebug-rules": "build-filter"})
-
-## enable lexer debugging: --//bootstrap:lexdebug
-bool_flag(name = "lexdebug", build_setting_default = 0)
-config_setting(name = "lexdebug-enabled", flag_values = {":lexdebug": "True"})
-config_setting(name = "lexdebug-disabled", flag_values = {":lexdebug": "False"})
-
-string_flag(name = "lexdebug-rules", build_setting_default = "")
-config_setting(name = "lexdebug-version",
-               flag_values = {":lexdebug-rules": "version"})
-config_setting(name = "lexdebug-fpf",
-               flag_values = {":lexdebug-rules": "fpf"})
-config_setting(name = "lexdebug-fvf",
-               flag_values = {":lexdebug-rules": "fvf"})
-config_setting(name = "lexdebug-filter",
-               flag_values = {":lexdebug-rules": "filter"})
-config_setting(name = "lexdebug-build-filter",
-               flag_values = {":lexdebug-rules": "build-filter"})
+## debug flags etc. for lexing/parsing at bottom of file
 
 ##########
 cc_library(
     name  = "bootstrap",
     alwayslink = True,
     # linkstatic = 1,
-    data  = ["//bazelfiles:ocaml_c_api.BUILD"],
     srcs  = [
         "config.c",
         "config.h",
@@ -78,16 +27,9 @@ cc_library(
         "emit_build_bazel.c",
         "emit_build_bazel.h",
         "emit_ocaml_repo.c",
-        "ocaml_bigarray.BUILD.h",
-        "ocaml_c_api.BUILD.h",
-        "ocaml_c_api_hdrs.BUILD.h",
-        "ocaml_c_api_libs.BUILD.h",
-        "ocaml_compiler-libs.BUILD.h",
-        "ocaml_dynlinks.BUILD.h",
-        "ocaml_str.BUILD.h",
-        "ocaml_threads.BUILD.h",
-        "ocaml_unix.BUILD.h",
         "emit_ocaml_repo.h",
+        "help.c",
+        "help.h",
         "meta_entries.c",
         "meta_entries.h",
         "meta_flags.c",
@@ -114,26 +56,42 @@ cc_library(
         "opam_config_here.h",
         "opam_config_xdg.c",
         "opam_config_xdg.h",
+        "opam_coswitch.c",
+        "opam_coswitch.h",
         "opam_deps.c",
         "opam_deps.h",
         "opam_here.c",
         "opam_here.h",
         "opam_import.c",
         "opam_import.h",
-        "opam_init_here.h",
-        "opam_init_here.c",
+        "opam_here_create.c",
+        "opam_here_create.h",
+        "opam_here_export.c",
+        "opam_here_export.h",
+        "opam_here_opam_init.c",
+        "opam_here_opam_init.h",
+        "opam_here_opam_install.c",
+        "opam_here_opam_install.h",
         "opam_init_prompts.c",
         "opam_init_prompts.h",
         "opam_init_xdg.c",
         "opam_init_xdg.h",
         "opam_status.c",
         "opam_status.h",
+        "opam_xdg_list.c",
+        "opam_xdg_list.h",
 
         "run_cmd.c",
         "run_cmd.h",
 
-        "xdg_config.c",
-        "xdg_config.h",
+        "spawn_cmd.c",
+        "spawn_cmd.h",
+
+        # "xdg_config.c",
+        # "xdg_config.h",
+
+        "utils.c",
+        "utils.h",
 
         "log.c",
         "log.h",
@@ -147,6 +105,37 @@ cc_library(
         "uthash.h",
         "utstring.h",
     ],
+    data  = [
+        "//bazelfiles:ocaml_bigarray.BUILD",
+        "//bazelfiles:ocaml_c_api.BUILD",
+        "//bazelfiles:ocaml_compiler-libs.BUILD",
+        "//bazelfiles:ocaml_dynlinks.BUILD",
+        "//bazelfiles:ocaml_stdlib.BUILD",
+        "//bazelfiles:ocaml_str.BUILD",
+        "//bazelfiles:ocaml_threads.BUILD",
+        "//bazelfiles:ocaml_unix.BUILD",
+        "//man/man1:@opam.1",
+        "//man/man1:@opam_coswitch.1",
+        "//man/man1:@opam_coswitch_list.1",
+        "//man/man1:@opam_coswitch_refresh.1",
+        "//man/man1:@opam_coswitch_remove.1",
+        "//man/man1:@opam_coswitch_set.1",
+        "//man/man1:@opam_here.1",
+        "//man/man1:@opam_here_clean.1",
+        "//man/man1:@opam_here_clone.1",
+        "//man/man1:@opam_here_create.1",
+        "//man/man1:@opam_here_export.1",
+        "//man/man1:@opam_here_expunge.1",
+        "//man/man1:@opam_here_import.1",
+        "//man/man1:@opam_here_list.1",
+        "//man/man1:@opam_here_refresh.1",
+        "//man/man1:@opam_here_reinit.1",
+        "//man/man1:@opam_here_set.1",
+        "//man/man1:@opam_here_opam.1",
+        "//man/man1:@opam_here_opam_init.1",
+        "//man/man1:@opam_here_opam_install.1",
+        "//man/man1:@opam_here_opam_remove.1",
+    ],
     defines = select({
         # ":ast-dump-enabled": ["DEBUG_DUMP"],
         ":yydebug-enabled": ["DEBUG_DUMP"],
@@ -154,11 +143,10 @@ cc_library(
     }) + select({
         ":ast-trace-enabled": ["DEBUG_TRACE"],
         "//conditions:default":   []
+    }) + select({
+        "//bzl/debug/trace": ["DEBUG_TRACE"],
+        "//conditions:default":   []
     }),
-    # defines = select({
-    #     "//bzl/host:debug": ["DEBUG_TRACE"],
-    #     "//conditions:default":   [], ##"DEBUG_DUMP"]
-    # }),
     copts = CMD_FLAGS + BOOTSTRAP_INCLUDES + ["-Iexternal/libinih"],
     # copts = [
     #     "-std=c11",
@@ -273,7 +261,9 @@ cc_library(
 ########
 ## re2c takes a long time to build. we do not need to run it every
 ## time once the grammar is stable, so we put the .c file under
-## version control. if you need to work on the meta lexer, uncomment this:
+## version control. if you need to work on the meta lexer,
+## uncomment this genrule, run it, and replace meta_lexis.c
+## by the newly generated version.
 # genrule(
 #     name = "gen_meta_lexis",
 #     srcs = [
@@ -488,15 +478,7 @@ genrule(
         "frontend.c",
         "emit_build_bazel.c",
         "emit_ocaml_repo.c",
-        "ocaml_bigarray.BUILD.h",
-        "ocaml_c_api.BUILD.h",
-        "ocaml_c_api_hdrs.BUILD.h",
-        "ocaml_c_api_libs.BUILD.h",
-        "ocaml_compiler-libs.BUILD.h",
-        "ocaml_dynlinks.BUILD.h",
-        "ocaml_str.BUILD.h",
-        "ocaml_threads.BUILD.h",
-        "ocaml_unix.BUILD.h",
+        "help.c",
         "meta_entries.c",
         "meta_flags.c",
         "meta_fs.c",
@@ -511,15 +493,22 @@ genrule(
         "opam_config.c",
         "opam_config_here.c",
         "opam_config_xdg.c",
+        "opam_coswitch.c",
         "opam_deps.c",
         "opam_here.c",
         "opam_import.c",
-        "opam_init_here.c",
+        "opam_here_create.c",
+        "opam_here_export.c",
+        "opam_here_opam_init.c",
+        "opam_here_opam_install.c",
         "opam_init_prompts.c",
         "opam_init_xdg.c",
         "opam_status.c",
+        "opam_xdg_list.c",
         "run_cmd.c",
-        "xdg_config.c",
+        "spawn_cmd.c",
+        "utils.c",
+        "ansi_colors.h"
     ],
     outs = [
         "config.h",
@@ -527,6 +516,7 @@ genrule(
         "frontend.h",
         "emit_build_bazel.h",
         "emit_ocaml_repo.h",
+        "help.h",
         "meta_entries.h",
         "meta_flags.h",
         "meta_fs.h",
@@ -541,16 +531,21 @@ genrule(
         "opam_config.h",
         "opam_config_here.h",
         "opam_config_xdg.h",
+        "opam_coswitch.h",
         "opam_deps.h",
         "opam_here.h",
         "opam_import.h",
-        "opam_init_here.h",
+        "opam_here_create.h",
+        "opam_here_export.h",
+        "opam_here_opam_init.h",
+        "opam_here_opam_install.h",
         "opam_init_prompts.h",
         "opam_init_xdg.h",
         "opam_status.h",
-        # "opam_syntaxis.h",
+        "opam_xdg_list.h",
         "run_cmd.h",
-        "xdg_config.h",
+        "spawn_cmd.h",
+        "utils.h",
     ],
     cmd = "\n".join([
         "SRC1=$(location config.c)",
@@ -561,6 +556,7 @@ genrule(
         "    $(location frontend.c) \\",
         "    $(location emit_build_bazel.c) \\",
         "    $(location emit_ocaml_repo.c) \\",
+        "    $(location help.c) \\",
         "    $(location meta_entries.c) \\",
         "    $(location meta_flags.c) \\",
         "    $(location meta_fs.c) \\",
@@ -575,15 +571,22 @@ genrule(
         "    $(location opam_config.c) \\",
         "    $(location opam_config_here.c) \\",
         "    $(location opam_config_xdg.c) \\",
+        "    $(location opam_coswitch.c) \\",
         "    $(location opam_deps.c) \\",
         "    $(location opam_here.c) \\",
         "    $(location opam_import.c) \\",
-        "    $(location opam_init_here.c) \\",
+        "    $(location opam_here_create.c) \\",
+        "    $(location opam_here_export.c) \\",
+        "    $(location opam_here_opam_init.c) \\",
+        "    $(location opam_here_opam_install.c) \\",
         "    $(location opam_init_prompts.c) \\",
         "    $(location opam_init_xdg.c) \\",
         "    $(location opam_status.c) \\",
+        "    $(location opam_xdg_list.c) \\",
         "    $(location run_cmd.c) \\",
-        "    $(location xdg_config.c)",
+        "    $(location spawn_cmd.c) \\",
+        "    $(location utils.c) \\",
+        "    $(location ansi_colors.h)",
         "cp $${SRCDIR1}/*.h $(@D)",
     ]),
     tools = [":makeheaders"],
@@ -599,15 +602,7 @@ genrule(
         "frontend.c",
         "emit_build_bazel.c",
         "emit_ocaml_repo.c",
-        "ocaml_bigarray.BUILD.h",
-        "ocaml_c_api.BUILD.h",
-        "ocaml_c_api_hdrs.BUILD.h",
-        "ocaml_c_api_libs.BUILD.h",
-        "ocaml_compiler-libs.BUILD.h",
-        "ocaml_dynlinks.BUILD.h",
-        "ocaml_str.BUILD.h",
-        "ocaml_threads.BUILD.h",
-        "ocaml_unix.BUILD.h",
+        "help.c",
         "meta_entries.c",
         "meta_flags.c",
         "meta_fs.c",
@@ -622,17 +617,24 @@ genrule(
         "opam_config.c",
         "opam_config_here.c",
         "opam_config_xdg.c",
+        "opam_coswitch.c",
         "opam_deps.c",
         "opam_here.c",
         "opam_import.c",
-        "opam_init_here.c",
+        "opam_here_create.c",
+        "opam_here_export.c",
+        "opam_here_opam_init.c",
+        "opam_here_opam_install.c",
         "opam_init_prompts.c",
         "opam_init_xdg.c",
         "opam_lexer.c",
         "opam_parser.c",
         "opam_status.c",
+        "opam_xdg_list.c",
         "run_cmd.c",
-        "xdg_config.c",
+        "spawn_cmd.c",
+        "utils.c",
+        "ansi_colors.h"
     ],
     outs = [
         "bootstrap.h"
@@ -646,6 +648,7 @@ genrule(
         "    $(location frontend.c) \\",
         "    $(location emit_build_bazel.c) \\",
         "    $(location emit_ocaml_repo.c) \\",
+        "    $(location help.c) \\",
         "    $(location meta_entries.c) \\",
         "    $(location meta_flags.c) \\",
         "    $(location meta_fs.c) \\",
@@ -660,17 +663,24 @@ genrule(
         "    $(location opam_config.c) \\",
         "    $(location opam_config_here.c) \\",
         "    $(location opam_config_xdg.c) \\",
+        "    $(location opam_coswitch.c) \\",
         "    $(location opam_deps.c) \\",
         "    $(location opam_here.c) \\",
         "    $(location opam_import.c) \\",
-        "    $(location opam_init_here.c) \\",
+        "    $(location opam_here_create.c) \\",
+        "    $(location opam_here_export.c) \\",
+        "    $(location opam_here_opam_init.c) \\",
+        "    $(location opam_here_opam_install.c) \\",
         "    $(location opam_init_prompts.c) \\",
         "    $(location opam_init_xdg.c) \\",
         "    $(location opam_lexer.c) \\",
         "    $(location opam_parser.c) \\",
         "    $(location opam_status.c) \\",
+        "    $(location opam_xdg_list.c) \\",
         "    $(location run_cmd.c) \\",
-        "    $(location xdg_config.c) \\",
+        "    $(location spawn_cmd.c) \\",
+        "    $(location utils.c) \\",
+        "    $(location ansi_colors.h) \\",
         "> $@"
     ]),
     tools = [":makeheaders"],
@@ -699,3 +709,59 @@ cc_binary(
         "//update:__pkg__"
     ]
 )
+
+################################################################
+## enable meta ast debugging: --//bootstrap:ast-dump
+bool_flag(name = "ast-dump", build_setting_default = 0)
+config_setting(name = "ast-dump-enabled",
+               flag_values = {":ast-dump": "True"})
+config_setting(name = "ast-dump-disabled",
+               flag_values = {":ast-dump": "False"})
+
+## enable meta ast debugging: --//bootstrap:ast-trace
+bool_flag(name = "ast-trace", build_setting_default = 0)
+config_setting(name = "ast-trace-enabled",
+               flag_values = {":ast-trace": "True"})
+config_setting(name = "ast-trace-disabled",
+               flag_values = {":ast-trace": "False"})
+
+## enable parser debugging: --//bootstrap:yydebug
+bool_flag(name = "yydebug", build_setting_default = 0)
+config_setting(name = "yydebug-enabled", flag_values = {":yydebug": "True"})
+config_setting(name = "yydebug-disabled", flag_values = {":yydebug": "False"})
+bool_flag(name = "yydebug-exit-on-error", build_setting_default = 0)
+config_setting(name = "yydebug-exit-on-error-enabled",
+               flag_values = {":yydebug-exit-on-error": "True"})
+
+bool_flag(name = "yytrace", build_setting_default = 0)
+config_setting(name = "yytrace-enabled", flag_values = {":yytrace": "True"})
+config_setting(name = "yytrace-disabled", flag_values = {":yytrace": "False"})
+
+## debug parse rules
+string_flag(name = "yydebug-rules", build_setting_default = "")
+config_setting(name = "yydebug-fpf",
+               flag_values = {":yydebug-rules": "fpf"})
+config_setting(name = "yydebug-fvf",
+               flag_values = {":yydebug-rules": "fvf"})
+config_setting(name = "yydebug-filter",
+               flag_values = {":yydebug-rules": "filter"})
+config_setting(name = "yydebug-build-filter",
+               flag_values = {":yydebug-rules": "build-filter"})
+
+## enable lexer debugging: --//bootstrap:lexdebug
+bool_flag(name = "lexdebug", build_setting_default = 0)
+config_setting(name = "lexdebug-enabled", flag_values = {":lexdebug": "True"})
+config_setting(name = "lexdebug-disabled", flag_values = {":lexdebug": "False"})
+
+string_flag(name = "lexdebug-rules", build_setting_default = "")
+config_setting(name = "lexdebug-version",
+               flag_values = {":lexdebug-rules": "version"})
+config_setting(name = "lexdebug-fpf",
+               flag_values = {":lexdebug-rules": "fpf"})
+config_setting(name = "lexdebug-fvf",
+               flag_values = {":lexdebug-rules": "fvf"})
+config_setting(name = "lexdebug-filter",
+               flag_values = {":lexdebug-rules": "filter"})
+config_setting(name = "lexdebug-build-filter",
+               flag_values = {":lexdebug-rules": "build-filter"})
+

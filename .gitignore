@@ -1,3 +1,5 @@
+.obazl.d
+.opam
 .bazel
 .private
 bazel-*

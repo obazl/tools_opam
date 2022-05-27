@@ -72,7 +72,7 @@ LOCAL int run_codept(char *codept_args_file, /* input */
 
     extern char **environ;
     pid_t pid;
-    rc = posix_spawn(&pid, exe, NULL, NULL, argv, environ);
+    rc = posix_spawn(&pid, exe, &action, NULL, argv, environ);
 
     if (rc == 0) {
         /* log_debug("posix_spawn child pid: %i\n", pid); */
@@ -425,7 +425,7 @@ void opam_deps(char *_root)
     sprintf(cmd, "codept -verbosity info -sexp -k -args %s 1> %s 2> /dev/null",
             "codept.args", "codept.deps");
             /* codept_args_file); */
-    char *res = run_cmd(cmd);
+    char *res = run_cmd(cmd, true);
     printf("codept res: %s\n", res);
 
     return;

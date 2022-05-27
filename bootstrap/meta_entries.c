@@ -84,6 +84,7 @@ EXPORT char *obzl_meta_directory_property(obzl_meta_entries *_entries)
 /* #if DEBUG_ENTRIES */
 /*     log_trace("obzl_meta_directory_property"); */
 /* #endif */
+    if (_entries == NULL) return NULL;
     /* utarray_find requires a sort; not worth the cost */
     obzl_meta_entry *e = NULL;
     for (int i = 0; i < obzl_meta_entries_count(_entries); i++) {

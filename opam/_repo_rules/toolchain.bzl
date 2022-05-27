@@ -123,7 +123,7 @@ def opam_toolchain():
     # print("opam_toolchain (fn)")
 
     # repository rule creates symlinks to opam switch:
-    _opam_toolchain(name="ocaml.toolchain")
+    # _opam_toolchain(name="ocaml.toolchain")
 
     # toolchains depend on targets in @ocaml.toolchain
     native.register_toolchains("//toolchain:ocaml_macos")

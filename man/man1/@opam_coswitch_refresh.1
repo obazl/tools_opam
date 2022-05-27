@@ -1,0 +1,33 @@
+.Dd April 9, 2022
+.Dt @OPAM-COSWITCH-REFRESH 1
+.Os OBazl User Manual
+.Sh NAME
+.Nm @opam//coswitch:refresh
+.Nd Refresh shared (XDG) coswitch from OPAM switch
+.Sh SYNOPSIS
+.Sy @opam//coswitch:refresh
+.Fl -
+.Ar coswitch
+.Op Fl h
+.Sh OPTIONS
+.Bl -tag -width -indent
+.It Ar coswitch
+Refresh
+.Em coswitch .
+.It Fl h
+Display this help screen.
+.El
+.Sh DESCRIPTION
+Refreshes shared (XDG) coswitch.
+.Sh EXAMPLES
+.Sh SEE ALSO
+To display the manpage for a command:
+.Bd -literal -offset indent
+$ bazel run @opam//coswitch:list -- -h
+.Ed
+.Pp
+.Xr @opam//coswitch:show
+.Xr @opam//coswitch:refresh
+.Xr here
+.Sh AUTHORS
+.An Gregg Reynolds

@@ -31,14 +31,12 @@ EXPORT void opam_import(char *manifest)
     utstring_new(manifest_name);
 
     if (manifest) {
-
         utstring_printf(manifest_name, "%s", manifest);
 
     } else {
-
-        if (access(HERE_OBAZL_ROOT "/here.packages", R_OK) == 0) {
+        if (access(HERE_COSWITCH_ROOT "/here.packages", R_OK) == 0) {
             utstring_printf(manifest_name, "%s",
-                            HERE_OBAZL_ROOT "/here.packages");
+                            HERE_COSWITCH_ROOT "/here.packages");
         } else {
             char *m = prompt_import_manifest();
             if (m)

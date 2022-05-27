@@ -1,0 +1,123 @@
+.Dd April 9, 2022
+.Dt @OPAM-HERE 1
+.Os OBazl User Manual
+.Sh NAME
+.Nm @opam//here
+.Nd Manage OBazl here-coswitch
+.Sh SYNOPSIS
+.Sy @opam//here[:subcmd]
+.Op Ar --
+.Op Ar options
+.Sh OPTIONS
+All commands take a help option:
+.Ql -- -h
+.Sh DESCRIPTION
+These commands are designed to be run under the control of
+.Sy Bazel .
+For example:
+.Bd -literal -offset indent
+.Ic $ bazel run @opam//here:list
+.Ed
+.Sh HERE SWITCH
+The
+.Sy here
+switch is an ordinary OPAM switch installed at
+.Pa <projroot>/.opam
+.Sh HERE COSWITCH
+.Pp
+The
+.Sy here
+coswitch is based on the OPAM here switch.  The location of the
+.Sy here
+coswitch is
+.Pa <projroot>/.obazl.d/opam .
+The here coswitch is composed of:
+.Bl -tag -width -indent
+.It here.compiler
+.It here.packages (optional)
+.It package "adapters" in
+.Pa <projroot>/.obazl.d/opam/here
+.El
+.Pp
+The switch/coswitch are not shared by any other projects.
+.Sh SUBCOMMANDS
+Without
+.Sy :subcmd ,
+defaults to
+.Sy @opam//here -- -h
+.Bl -tag -width -indent
+.It Xo Ar :create
+.Xc
+Creates a
+.Sy here
+switch and coswitch from an existing switch.
+.Bl -tag -width -indent
+.It Fl c
+Compiler version.
+.It Fl s
+Name of OPAM switch.
+.El
+.Pp
+No argument: coswitch is
+based on the current effective OPAM switch.  The
+.Fl c
+and
+.Fl s
+switches are mutually exclusive.
+.It Xo Ar :export
+.Xc
+Exports the OPAM here switch.
+.It Xo Ar :expunge
+.Xc
+Deletes switch and coswitch
+.It Xo Ar :import
+.Xc
+Imports ...
+.It Xo Ar :list
+.Xc
+Lists the here switch ...
+.It Xo Ar :refresh
+.Xc
+Updates the
+.Sy here
+coswitch from the OPAM here switch.  You must run this command if you use standard OPAM commands (e.g.
+.Ic $ opam install --root=./.opam --switch here <pkg>
+) to change the
+.Sy here
+switch.
+.It Xo Ar :set
+.Xc
+Makes the
+.Sy here
+coswitch the effective coswitch, to use for building the local project.
+.It Xo Ar :list
+.Xc
+Lists configuration of the
+.Sy here
+switch
+.It Xo Ar :remove
+.Xc
+Removes the
+.Sy here
+coswitch and OPAM here switch.
+.Sh SEE ALSO
+.Xr @opam//here:clean
+.Xr @opam//here:create
+.Xr @opam//here:export
+.Xr @opam//here:expunge
+.Xr @opam//here:import
+.Xr @opam//here:list
+.Xr @opam//here:refresh
+.Xr @opam//here:reinit
+.Xr @opam//here:set
+.Pp
+.Xr @opam//here/opam:init
+.Xr @opam//here/opam:install
+.Xr @opam//here/opam:remove
+.Pp
+To display the manpage for a command:
+.Bd -literal -offset indent
+$ bazel run @opam//here:<cmd> -- -h
+.Ed
+.Sh AUTHORS
+.An Gregg Reynolds

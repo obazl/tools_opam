@@ -1,0 +1,34 @@
+.Dd April 9, 2022
+.Dt @OPAM-COSWITCH-REMOVE 1
+.Os OBazl User Manual
+.Sh NAME
+.Nm @opam//coswitch:remove
+.Nd Removes coswitch.
+.Sh SYNOPSIS
+.Sy @opam//coswitch:remove
+.Op Fl h
+.Ar coswitch
+.Sh OPTIONS
+.Bl -tag -width -indent
+.It Ar coswitch
+Remove
+.Em coswitch
+as the effective coswitch for building the project.
+.It Fl h
+Display this help screen.
+.El
+.Sh DESCRIPTION
+Removes the
+.Em coswitch .
+.Sh EXAMPLES
+.Sh SEE ALSO
+To display the manpage for a command:
+.Bd -literal -offset indent
+$ bazel run @opam//coswitch:list -- -h
+.Ed
+.Pp
+.Xr @opam//coswitch:show
+.Xr @opam//coswitch:refresh
+.Xr here
+.Sh AUTHORS
+.An Gregg Reynolds

@@ -25,8 +25,10 @@ static int level = 0;
 static int spfactor = 4;
 static char *sp = " ";
 
-/* static int indent = 2; */
-/* static int delta = 2; */
+#if defined(DEBUG_TRACE)
+static int indent = 2;
+static int delta = 2;
+#endif
 
 bool stdlib_root = false;
 
@@ -43,61 +45,61 @@ UT_string *bazel_pkg_root;
 UT_string *build_bazel_file;
 UT_string *workspace_file;
 
-void write_opam_resolver(char *pkg_prefix, char *pkg_name,
-                         obzl_meta_entries *entries)
-{
-    // should only be called for here switch?
-    log_error("write_opam_resolver");
-    // CAVEAT: output will contain duplicate entries
-    if (pkg_prefix == NULL) {
-        fprintf(opam_resolver, "(%s . @%s//:%s)\n",
-                pkg_name, pkg_name, pkg_name);
-    } else {
-        char *split = strchr(pkg_prefix, '/');
-        if ( split == NULL ) {
-            fprintf(opam_resolver, "(%s.%s . @%s//%s)\n",
-                    pkg_prefix, pkg_name,
-                    pkg_prefix, pkg_name);
-        } else {
-            /* this will work for one '/', e.g. mtime/clock,
-               so we're good for up to three segs (e.g. mtime.clock.os)*/
-            int seg1_len = split - pkg_prefix;
-            int seg2_len = strlen(pkg_prefix) - seg1_len;
-            char *split2 = strchr(pkg_prefix + seg1_len + 1, '/');
-            if (split2 == NULL) {
-                // only one '/'
-                fprintf(opam_resolver, "(%.*s.%.*s.%s . @%.*s//%s/%s) ;; %s %s\n",
-                        seg1_len,
-                        pkg_prefix,
-                        seg2_len,
-                        pkg_prefix + seg1_len + 1,
-                        pkg_name,
+/* void write_opam_resolver(char *pkg_prefix, char *pkg_name, */
+/*                          obzl_meta_entries *entries) */
+/* { */
+/*     // should only be called for here switch? */
+/*     log_error("write_opam_resolver"); */
+/*     // CAVEAT: output will contain duplicate entries */
+/*     if (pkg_prefix == NULL) { */
+/*         fprintf(opam_resolver, "(%s . @%s//:%s)\n", */
+/*                 pkg_name, pkg_name, pkg_name); */
+/*     } else { */
+/*         char *split = strchr(pkg_prefix, '/'); */
+/*         if ( split == NULL ) { */
+/*             fprintf(opam_resolver, "(%s.%s . @%s//%s)\n", */
+/*                     pkg_prefix, pkg_name, */
+/*                     pkg_prefix, pkg_name); */
+/*         } else { */
+/*             /\* this will work for one '/', e.g. mtime/clock, */
+/*                so we're good for up to three segs (e.g. mtime.clock.os)*\/ */
+/*             int seg1_len = split - pkg_prefix; */
+/*             int seg2_len = strlen(pkg_prefix) - seg1_len; */
+/*             char *split2 = strchr(pkg_prefix + seg1_len + 1, '/'); */
+/*             if (split2 == NULL) { */
+/*                 // only one '/' */
+/*                 fprintf(opam_resolver, "(%.*s.%.*s.%s . @%.*s//%s/%s) ;; %s %s\n", */
+/*                         seg1_len, */
+/*                         pkg_prefix, */
+/*                         seg2_len, */
+/*                         pkg_prefix + seg1_len + 1, */
+/*                         pkg_name, */
 
-                        seg1_len,
-                        pkg_prefix,
-                        pkg_prefix + seg1_len + 1,
-                        pkg_name,
-                        pkg_prefix, pkg_name);
-            } else {
-                seg2_len = split2 - split - 1;
-                /* int seg3_len = strlen(pkg_prefix) - seg2_len; */
-                fprintf(opam_resolver, "(%.*s.%.*s.%s.%s . @%.*s//%s/%s) ;; %s %s\n",
-                        seg1_len,
-                        pkg_prefix,
-                        seg2_len,
-                        pkg_prefix + seg1_len + 1,
-                        pkg_prefix + seg1_len + seg2_len + 2,
-                        pkg_name,
+/*                         seg1_len, */
+/*                         pkg_prefix, */
+/*                         pkg_prefix + seg1_len + 1, */
+/*                         pkg_name, */
+/*                         pkg_prefix, pkg_name); */
+/*             } else { */
+/*                 seg2_len = split2 - split - 1; */
+/*                 /\* int seg3_len = strlen(pkg_prefix) - seg2_len; *\/ */
+/*                 fprintf(opam_resolver, "(%.*s.%.*s.%s.%s . @%.*s//%s/%s) ;; %s %s\n", */
+/*                         seg1_len, */
+/*                         pkg_prefix, */
+/*                         seg2_len, */
+/*                         pkg_prefix + seg1_len + 1, */
+/*                         pkg_prefix + seg1_len + seg2_len + 2, */
+/*                         pkg_name, */
 
-                        seg1_len,
-                        pkg_prefix,
-                        pkg_prefix + seg1_len + 1,
-                        pkg_name,
-                        pkg_prefix, pkg_name);
-            }
-        }
-    }
-}
+/*                         seg1_len, */
+/*                         pkg_prefix, */
+/*                         pkg_prefix + seg1_len + 1, */
+/*                         pkg_name, */
+/*                         pkg_prefix, pkg_name); */
+/*             } */
+/*         } */
+/*     } */
+/* } */
 
 void emit_new_local_subpkg_entries(FILE *bootstrap_FILE,
                                    struct obzl_meta_package *_pkg,
@@ -891,7 +893,7 @@ bool emit_special_case_rule(FILE* ostream,
     if ((strncmp(_pkg->name, "str", 3) == 0)
         && strlen(_pkg->name) == 3) {
         log_trace("emit_special_case_rule: str");
-        fprintf(ostream, "xxxxxxxxxxxxxxxx");
+        /* fprintf(ostream, "xxxxxxxxxxxxxxxx"); */
         fprintf(ostream, "alias(\n"
                 "    name = \"str\",\n"
                 "    actual = \"@ocaml.str//:str\",\n"
@@ -1749,14 +1751,10 @@ void emit_pkg_symlinks(UT_string *dst_dir,
 {
     if (debug)
         log_debug("emit_symlinks for pkg: %s", pkg_name);
-    if (strncmp(pkg_name, "dune", 4) == 0) {
+    if ((strncmp(pkg_name, "dune", 4) == 0)
+        || (strncmp(utstring_body(src_dir), "dune/configurator", 17) == 0)) {
         if (debug)
-            log_debug("Skipping pkg 'dune'\n");
-        return;
-    }
-    if (strncmp(utstring_body(src_dir), "dune/configurator", 17) == 0) {
-        if (debug)
-            log_debug("Skipping pkg 'dune/configurator'\n");
+            log_debug("Skipping 'dune' stuff\n");
         return;
     }
     if (debug) {
@@ -1781,7 +1779,19 @@ void emit_pkg_symlinks(UT_string *dst_dir,
     log_debug("opening src_dir for read: %s\n", utstring_body(opamdir));
     DIR *d = opendir(utstring_body(opamdir));
     if (d == NULL) {
-        fprintf(stderr, "pkg_symlinks: Unable to opendir %s\n", utstring_body(opamdir));
+        if (strncmp(pkg_name, "care", 4) == 0) {
+            if (strncmp(utstring_body(src_dir),
+                        "topkg/../topkg-care",
+                        19) == 0) {
+                if (debug)
+                    log_debug("Skipping missing 'topkg-care'\n");
+                if (debug && verbose)
+                    fprintf(stdout, "Skipping missing pkg 'topkg-care'\n");
+                return;
+            }
+        } else
+            fprintf(stderr, "pkg_symlinks: Unable to opendir %s\n",
+                    utstring_body(opamdir));
         /* exit(EXIT_FAILURE); */
         /* this can happen if a related pkg is not installed */
         /* example, see topkg and topkg-care */

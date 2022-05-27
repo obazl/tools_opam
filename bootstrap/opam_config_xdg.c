@@ -25,6 +25,71 @@
 int errnum;
 /* bool local_opam; */
 
+#if INTERFACE
+#include "utstring.h"
+#endif
+UT_string *xdg_cache_home;
+UT_string *xdg_config_home;
+UT_string *xdg_data_home;
+UT_string *xdg_coswitch_root;
+
+EXPORT void xdg_configure(void)
+{
+    char *home = getenv("HOME");
+    if (home) {
+        if (verbose)
+            printf("$HOME: %s\n", home);
+    } else {
+        printf("$HOME not in env\n");
+        exit(EXIT_FAILURE);
+    }
+
+    char *val;
+
+    utstring_new(xdg_cache_home);
+    val = getenv("XDG_CACHE_HOME");
+    if (val) {
+        utstring_printf(xdg_cache_home, "%s", val);
+        if (verbose)
+            printf("$XDG_CACHE_HOME (from env): %s\n",
+                   utstring_body(xdg_cache_home));
+    } else {
+        utstring_printf(xdg_cache_home, "%s/.cache", home);
+        if (verbose)
+            printf("xdg_cache_home: %s\n", utstring_body(xdg_cache_home));
+    }
+
+    utstring_new(xdg_config_home);
+    val = getenv("XDG_CONFIG_HOME");
+    if (val) {
+        utstring_printf(xdg_config_home, "%s", val);
+        if (verbose)
+            printf("$XDG_CONFIG_HOME (from env): %s\n",
+                   utstring_body(xdg_config_home));
+    } else {
+        utstring_printf(xdg_cache_home, "%s/.config", home);
+        if (verbose)
+            printf("xdg_config_home: %s\n", utstring_body(xdg_config_home));
+    }
+
+    utstring_new(xdg_data_home);
+    val = getenv("XDG_DATA_HOME");
+    if (val) {
+        utstring_printf(xdg_data_home, "%s", val);
+        if (verbose)
+            printf("$XDG_DATA_HOME (from env): %s\n",
+                   utstring_body(xdg_data_home));
+    } else {
+        utstring_printf(xdg_data_home, "%s/.local/share", home);
+        if (verbose)
+            printf("xdg_data_home: %s\n", utstring_body(xdg_data_home));
+    }
+
+    utstring_new(xdg_coswitch_root);
+    utstring_concat(xdg_coswitch_root, xdg_data_home);
+    utstring_printf(xdg_coswitch_root, "/obazl/opam");
+}
+
 /* #define OPAM_LOADER "BOOTSTRAP.bzl" */
 
 /*
@@ -34,10 +99,12 @@ int errnum;
   assumption: opam_configure() configures @ocaml.toolchain to use same switch
 
  */
-EXPORT void opam_config_xdg(char *_opam_switch_name)
+EXPORT void opam_xdg_refresh(char *_opam_switch_name)
 {
-    if (verbose)
-        log_info("config_xdg_repolib -s %s", _opam_switch_name);
+    if (verbose) {
+        log_info("opam_config_xdg -s %s", _opam_switch_name);
+        printf("opam_config_xdg -s %s\n", _opam_switch_name);
+    }
 
     opam_config_init();
 
@@ -46,11 +113,15 @@ EXPORT void opam_config_xdg(char *_opam_switch_name)
 
     char *result = NULL;
 
+    // FIXME: option to iterate over all installed switches?
+
+    /* USING CURRENT SWITCH */
+
     utstring_renew(cmd);
     utstring_printf(cmd, "opam var root");
     errno = 0;
     result = NULL;
-    result = run_cmd(utstring_body(cmd));
+    result = run_cmd(utstring_body(cmd), false);
     if (result == NULL) {
         perror(utstring_body(cmd));
         /* fprintf(stderr, "Fail: run_cmd(%s)\n", cmd); */
@@ -58,14 +129,16 @@ EXPORT void opam_config_xdg(char *_opam_switch_name)
     } else {
         utstring_printf(opam_switch_root, "%s", result);
     }
-    if (verbose)
-        log_info("opam_switch_root: %s", utstring_body(opam_switch_root));
+    /* if (verbose) { */
+    /*     log_info("opam_switch_root: %s", utstring_body(opam_switch_root)); */
+    /*     printf("opam_switch_root: %s\n", utstring_body(opam_switch_root)); */
+    /* } */
 
     if (_opam_switch_name == NULL) {
         utstring_renew(cmd);
         utstring_printf(cmd, "opam var switch");
         result = NULL;
-        result = run_cmd(utstring_body(cmd));
+        result = run_cmd(utstring_body(cmd), false);
         if (result == NULL) {
             perror(utstring_body(cmd));
             /* fprintf(stderr, "Fail: run_cmd(%s)\n", cmd); */
@@ -78,14 +151,17 @@ EXPORT void opam_config_xdg(char *_opam_switch_name)
         /* printf("using switch: %s\n", _opam_switch_name); */
         utstring_printf(opam_switch_name, "%s", _opam_switch_name);
     }
-    if (verbose)
-        log_info("opam_switch_name: %s", utstring_body(opam_switch_name));
-
+    if (verbose) {
+        log_info("Effective coswitch name: %s\n",
+                 utstring_body(opam_switch_name));
+        printf("Effective coswitch name: %s\n",
+               utstring_body(opam_switch_name));
+    }
     // obtain switch prefix, bin, lib
     utstring_renew(cmd);
     utstring_printf(cmd, "opam var prefix --switch %s",
                     utstring_body(opam_switch_name));
-    result = run_cmd(utstring_body(cmd));
+    result = run_cmd(utstring_body(cmd), false);
     if (result == NULL) {
         fprintf(stderr, "FAIL: run_cmd(%s)\n", utstring_body(cmd));
         exit(EXIT_FAILURE);
@@ -114,7 +190,7 @@ EXPORT void opam_config_xdg(char *_opam_switch_name)
     utstring_printf(cmd, "opam var bin --switch %s",
                     utstring_body(opam_switch_name));
     result = NULL;
-    result = run_cmd(utstring_body(cmd));
+    result = run_cmd(utstring_body(cmd), false);
     if (result == NULL) {
         log_fatal("FAIL: run_cmd(%s)\n", utstring_body(cmd));
         exit(EXIT_FAILURE);
@@ -125,7 +201,7 @@ EXPORT void opam_config_xdg(char *_opam_switch_name)
     utstring_printf(cmd, "opam var lib --switch %s",
                     utstring_body(opam_switch_name));
     result = NULL;
-    result = run_cmd(utstring_body(cmd));
+    result = run_cmd(utstring_body(cmd), false);
     if (result == NULL) {
         log_fatal("FAIL: run_cmd(%s)\n", utstring_body(cmd));
         exit(EXIT_FAILURE);
@@ -133,21 +209,27 @@ EXPORT void opam_config_xdg(char *_opam_switch_name)
         utstring_printf(opam_switch_lib, "%s", result);
 
     /* utstring_printf(bzl_switch_pfx, "%s/%s", */
-    /*                 xdg_opam_root, */
+    /*                 xdg_coswitch_root, */
     /*                 utstring_body(opam_switch_name)); */
-    utstring_free(cmd);
 
     utstring_renew(bzl_switch_pfx);
-    utstring_concat(bzl_switch_pfx, xdg_opam_root);
+    utstring_concat(bzl_switch_pfx, xdg_coswitch_root);
     utstring_printf(bzl_switch_pfx, "/%s", utstring_body(opam_switch_name));
 
-    if (verbose) {
+    if (verbose && debug) {
         log_info("opam_switch_root: %s", utstring_body(opam_switch_root));
         log_info("opam_switch_name: %s", utstring_body(opam_switch_name));
         log_info("opam_switch_pfx: %s", utstring_body(opam_switch_pfx));
         log_info("opam_switch_bin: %s", utstring_body(opam_switch_bin));
         log_info("opam_switch_lib: %s", utstring_body(opam_switch_lib));
         log_info("bzl_switch_pfx: %s", utstring_body(bzl_switch_pfx));
+
+        printf("opam_switch_root: %s\n", utstring_body(opam_switch_root));
+        printf("opam_switch_name: %s\n", utstring_body(opam_switch_name));
+        printf("opam_switch_pfx: %s\n", utstring_body(opam_switch_pfx));
+        printf("opam_switch_bin: %s\n", utstring_body(opam_switch_bin));
+        printf("opam_switch_lib: %s\n", utstring_body(opam_switch_lib));
+        printf("bzl_switch_pfx: %s\n", utstring_body(bzl_switch_pfx));
     }
 
     /* make sure output dir exists */
@@ -156,38 +238,43 @@ EXPORT void opam_config_xdg(char *_opam_switch_name)
     utarray_new(opam_packages, &ut_str_icd);
 
     /* make xdg outdir a Bazel package */
-    UT_string *bzl_switch_buildfile;
-    utstring_new(bzl_switch_buildfile);
-    utstring_printf(bzl_switch_buildfile,
-                    "%s/BUILD.bazel", utstring_body(bzl_switch_pfx));
-    if (access(utstring_body(bzl_switch_buildfile), R_OK) != 0) {
-        FILE *f = fopen(utstring_body(bzl_switch_buildfile), "w");
-        if (f == NULL) {
-            perror(utstring_body(bzl_switch_buildfile));
-            exit(EXIT_FAILURE);
-        }
-        fprintf(f, "## do not remove\n");
-        fclose(f);
-    }
+    /* NOT NEEDED: we use new_local_repository */
+    /* UT_string *bzl_switch_buildfile; */
+    /* utstring_new(bzl_switch_buildfile); */
+    /* utstring_printf(bzl_switch_buildfile, */
+    /*                 "%s/BUILD.bazel", utstring_body(bzl_switch_pfx)); */
+    /* if (access(utstring_body(bzl_switch_buildfile), R_OK) != 0) { */
+    /*     FILE *f = fopen(utstring_body(bzl_switch_buildfile), "w"); */
+    /*     if (f == NULL) { */
+    /*         perror(utstring_body(bzl_switch_buildfile)); */
+    /*         exit(EXIT_FAILURE); */
+    /*     } */
+    /*     fprintf(f, "## do not remove\n"); */
+    /*     fclose(f); */
+    /* } */
 
-    UT_string *repo_rules_filename = NULL;
-    utstring_new(repo_rules_filename);
-    utstring_printf(repo_rules_filename,
+
+    UT_string *bootstrap_filename = NULL;
+    utstring_new(bootstrap_filename);
+    utstring_printf(bootstrap_filename,
                     "%s/%s",
                     utstring_body(bzl_switch_pfx),
                     OPAM_BOOTSTRAP);
-    log_debug("repo_rules_filename: %s",
-              utstring_body(repo_rules_filename));
 
-    bootstrap_FILE = fopen(utstring_body(repo_rules_filename), "w");
+    if (debug) {
+        log_info("writing BOOTSTRAP.bzl: %s",
+                  utstring_body(bootstrap_filename));
+        printf("writing BOOTSTRAP.bzl: %s\n",
+               utstring_body(bootstrap_filename));
+    }
+
+    bootstrap_FILE = fopen(utstring_body(bootstrap_filename), "w");
     if (bootstrap_FILE == NULL) {
-        perror(utstring_body(repo_rules_filename));
+        perror(utstring_body(bootstrap_filename));
         exit(EXIT_FAILURE);
     }
-    utstring_free(repo_rules_filename);
-    /* fprintf(bootstrap_FILE, "load(\"@rules_ocaml//ocaml:rules.bzl\",\n"); */
-    /* fprintf(bootstrap_FILE, "     \"new_local_pkg_repository\")\n"); */
-    /* fprintf(bootstrap_FILE, "\n"); */
+    utstring_free(bootstrap_filename);
+
     fprintf(bootstrap_FILE, "def bootstrap():\n");
 
     /* now link srcs */
@@ -214,13 +301,13 @@ EXPORT void opam_config_xdg(char *_opam_switch_name)
     log_debug("bzl_lib: %s", utstring_body(bzl_lib));
 
     //step 1: generate @ocaml
-    emit_ocaml_repo(utstring_body(opam_switch_name), bootstrap_FILE);
+    emit_ocaml_workspace(utstring_body(opam_switch_name), bootstrap_FILE);
 
     // step 2: pkgs subdir
     // FIXME: always convert everything. otherwise we have to follow
     // the deps to make sure they are all converted.
     // (for dev/test, retain ability to do just one dir)
-    utstring_printf(bzl_switch_pfx, COSWITCH_LIB); // "/pkgs");
+    utstring_printf(bzl_switch_pfx, COSWITCH_LIB);
 
     if (utarray_len(opam_packages) == 0) {
         /* printf("WALKING, opam_switch_lib: %s\n", */
@@ -233,11 +320,14 @@ EXPORT void opam_config_xdg(char *_opam_switch_name)
 
         /* now @ocaml with toolchain & core pkgs, @rules_ocaml//cfg/dynlink,
            @rules_ocaml//cfg/str, etc. */
-
     } else {
         /* WARNING: only works for top-level pkgs */
-        log_debug("converting listed opam pkgs in %s",
-                  utstring_body(opam_switch_lib));
+        if (debug) {
+            log_debug("converting listed opam pkgs in %s",
+                      utstring_body(opam_switch_lib));
+            printf("converting listed opam pkgs in %s",
+                   utstring_body(opam_switch_lib));
+        }
         UT_string *s;
         utstring_new(s);
         char **a_pkg = NULL;
@@ -263,11 +353,12 @@ EXPORT void opam_config_xdg(char *_opam_switch_name)
         utstring_free(s);
     }
 
+    /* printf("PRINTING BOOTSTRAP.BZL\n"); */
     /* fprintf(bootstrap_FILE, "    ## end bootstrap()\n\n"); */
     fprintf(bootstrap_FILE,
     "    native.register_toolchains(\"@ocaml//toolchains:ocaml_macos\")\n");
     fprintf(bootstrap_FILE,
-    "    native.register_toolchains(\"@ocaml//toolchains:ocaml_linux\")");
+    "    native.register_toolchains(\"@ocaml//toolchains:ocaml_linux\")\n");
 
 #ifdef DEBUG_TRACE
     char **p;
