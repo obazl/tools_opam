@@ -138,3 +138,71 @@ EXPORT void opam_here_switch_list(void)
     }
 }
 
+EXPORT void opam_local_switch_list(void)
+{
+    printf("opam_local_switch_list\n");
+    if (access("./_opam", F_OK) != 0) {
+        log_info("Local OPAM switch dir './_opam' not found.");
+        printf("Local OPAM switch dir './_opam' not found.\n");
+        return;
+    } //else {
+
+    /* printf(UWHT "OPAM switch:" CRESET "\n"); */
+    /* errno =0; */
+    /* char *coswitch_root = realpath(HERE_OPAM_ROOT, NULL); */
+    /* if (errno != 0) { */
+    /*     fprintf(stderr, "realpath error %s for %s\n", */
+    /*             strerror(errno), HERE_OPAM_ROOT); */
+    /* } */
+
+    /* printf("root:\t\t\t" BLU "%s" CRESET "\n", coswitch_root); */
+    /* free(coswitch_root); */
+    /* printf("name:\t\t\t" BLU HERE_SWITCH_NAME CRESET "\n"); */
+
+    char *exe = "opam";
+    int result;
+
+    /* char *compiler_version = get_compiler_version(NULL); */
+    /* fprintf(stdout, "compiler version:\t" BLU "%s" CRESET "\n"); */
+
+    char *argv[] = {
+        "opam", "var",
+        /* "--switch", HERE_SWITCH_NAME, */
+        NULL // null-terminated array of ptrs to null-terminated strings
+    };
+
+    int argc = (sizeof(argv) / sizeof(argv[0])) - 1;
+    result = spawn_cmd_with_stdout(exe, argc, argv);
+    if (result != 0) {
+        fprintf(stderr, "FAIL: run_cmd(opam var --root .opam --switch here)\n");
+        exit(EXIT_FAILURE);
+        /* } else { */
+        /*     printf("%s\n", result); */
+    }
+
+    /* printf("Begining OPAM processor output:\n"); */
+
+    printf(CRESET "****************************************************************\n");
+    printf(UWHT "OPAM pkgs:" CRESET "\n");
+
+    //*var_argv = NULL; //FIXME: otherwise run_cmd gets confused
+    char *list_argv[] = {
+        "opam", "list",
+        /* "--root",   HERE_OPAM_ROOT, */
+        /* "--switch", HERE_SWITCH_NAME, */
+        "--columns", "name,version",
+        NULL
+    };
+
+    argc = (sizeof(list_argv) / sizeof(list_argv[0])) - 1;
+
+    result = spawn_cmd_with_stdout(exe, argc, list_argv);
+    if (result != 0) {
+        fprintf(stderr, "FAIL: run_cmd(opam list --root .opam --switch obazl)\n");
+        exit(EXIT_FAILURE);
+        /* } else { */
+        /*     printf("RESULT: %s\n", result); */
+    }
+
+}
+

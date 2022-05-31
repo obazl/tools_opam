@@ -52,13 +52,19 @@ struct fileset_s *filesets = NULL;
 
 /* struct package_s *packages = NULL; */
 
+#if EXPORT_INTERFACE
+#define XDG   0
+#define HERE  1
+#define LOCL 2  // avoid clash with makeheaders LOCAL
+#endif
+
 void print_ignore_msg(void)
 {
     printf("(obazl says: you can ignore any advice about running eval to update the shell environment, so long as you use @opam commands to control your here-switch.)\n");
 }
 
 /* ctx: 1 == here, 0 == xdg  */
-EXPORT int opam_main(int argc, char *argv[], bool here)
+EXPORT int opam_main(int argc, char *argv[], int oswitch) // bool here)
 {
 
     /* printf("OPAM_MAIN ARGC: %d\n", argc); */
@@ -157,14 +163,14 @@ EXPORT int opam_main(int argc, char *argv[], bool here)
 
     initialize_config_flags();
 
-    if (!here) xdg_configure();
+    if (oswitch == XDG) xdg_configure();
 
     int result;
 
-    if (here && strncmp(basename(argv[0]), "clean", 5) == 0) {
+    if (oswitch && strncmp(basename(argv[0]), "clean", 5) == 0) {
         opam_here_clean();
     }
-    else if (here && strncmp(basename(argv[0]), "clone", 5) == 0) {
+    else if (oswitch && strncmp(basename(argv[0]), "clone", 5) == 0) {
         int index;
         char *package = NULL;
         for (index = optind; index < argc; index++) {
@@ -183,12 +189,8 @@ EXPORT int opam_main(int argc, char *argv[], bool here)
         /* copy from switch arg */
         /*     /\* opam_install_here_pkgs(NULL); *\/ */
     }
-    else if (here && strncmp(basename(argv[0]), "refresh", 7) == 0) {
-        if (compiler_version && opam_switch) {
-            printf("@opam/here/init: only one of -c and -s may be passed\n");
-            exit(EXIT_FAILURE);
-        }
-
+    else if (oswitch==HERE
+             && strncmp(basename(argv[0]), "refresh", 7) == 0) {
         if (access(HERE_COSWITCH_ROOT, F_OK) == 0) {
             if (verbose)
                 printf("Wiping existing .obazl.d/opam\n");
@@ -198,7 +200,12 @@ EXPORT int opam_main(int argc, char *argv[], bool here)
         /* now create obazl adapters for here-switch only, not pkgs */
         opam_here_refresh(); // compiler_version);
     }
-    else if (!here && strncmp(basename(argv[0]), "refresh", 7) == 0) {
+    else if (oswitch==LOCL
+             && strncmp(basename(argv[0]), "refresh", 7) == 0) {
+        /* now create obazl adapters for here-switch only, not pkgs */
+        opam_local_refresh(); // compiler_version);
+    }
+    else if (oswitch==XDG && strncmp(basename(argv[0]), "refresh", 7) == 0) {
         /* xdg_configure();        /\* config dir vars *\/ */
         int ct;
         for (int i = optind; i < argc; i++) {
@@ -226,7 +233,7 @@ EXPORT int opam_main(int argc, char *argv[], bool here)
         /*     opam_xdg_refresh(opam_switch); */
         /* } */
     }
-    /* else if (here && strncmp(basename(argv[0]), "ingest", 6) == 0) { */
+    /* else if (oswitch && strncmp(basename(argv[0]), "ingest", 6) == 0) { */
     /*     if (compiler_version && opam_switch) { */
     /*         printf("@opam/here/init: only one of -c and -s may be passed\n"); */
     /*         exit(EXIT_FAILURE); */
@@ -258,7 +265,7 @@ EXPORT int opam_main(int argc, char *argv[], bool here)
     /*     /\* now create obazl adapters for here-switch *\/ */
     /*     opam_config_here(); // compiler_version); */
     /* } */
-    /* else if (!here && strncmp(basename(argv[0]), "ingest", 6) == 0) { */
+    /* else if (here==XDG && strncmp(basename(argv[0]), "ingest", 6) == 0) { */
     /*     if (compiler_version && opam_switch) { */
     /*         printf("@opam/xdg/init: only one of -c and -s may be passed\n"); */
     /*         exit(EXIT_FAILURE); */
@@ -272,15 +279,23 @@ EXPORT int opam_main(int argc, char *argv[], bool here)
     /*     opam_deps(deps_root); */
     /* } */
     /* else if (strncmp(basename(argv[0]), "export", 6) == 0) { */
-    else if (here && strncmp(basename(argv[0]), "export", 6) == 0) {
+    else if (oswitch==HERE && strncmp(basename(argv[0]), "export", 6) == 0) {
         opam_here_export(manifest);
     }
     /* else if (strncmp(basename(argv[0]), "import", 6) == 0) { */
-    else if (here && strncmp(basename(argv[0]), "import", 6) == 0) {
+    else if (oswitch==HERE && strncmp(basename(argv[0]), "import", 6) == 0) {
         opam_import(manifest);
         /* print_ignore_msg(); */
     }
-    else if (here && strncmp(basename(argv[0]), "create", 6) == 0) {
+    else if (oswitch==LOCL && strncmp(basename(argv[0]), "create", 6) == 0) {
+        if (compiler_version && opam_switch) {
+            fprintf(stderr,
+                    "@opam//local:create: only one of -c and -s may be passed\n");
+            exit(EXIT_FAILURE);
+        }
+        /* result = opam_local_create(); */
+    }
+    else if (oswitch==HERE && strncmp(basename(argv[0]), "create", 6) == 0) {
         if (compiler_version && opam_switch) {
             fprintf(stderr,
                     "@opam//here:create: only one of -c and -s may be passed\n");
@@ -291,7 +306,7 @@ EXPORT int opam_main(int argc, char *argv[], bool here)
         /* if (result == 0) */
             /* print_ignore_msg(); */
     }
-    else if (here && strncmp(basename(argv[0]), "init", 4) == 0) {
+    else if (oswitch==HERE && strncmp(basename(argv[0]), "init", 4) == 0) {
         /* HIDDEN, for use during development */
         if (compiler_version && opam_switch) {
             printf("@opam/here/init: only one of -c and -s may be passed\n");
@@ -301,7 +316,7 @@ EXPORT int opam_main(int argc, char *argv[], bool here)
         /* if (result == 0) */
             /* print_ignore_msg(); */
     }
-    else if (here && strncmp(basename(argv[0]), "reinit", 4) == 0) {
+    else if (oswitch==HERE && strncmp(basename(argv[0]), "reinit", 4) == 0) {
         if (compiler_version && opam_switch) {
             printf("@opam/here/init: only one of -c and -s may be passed\n");
             exit(EXIT_FAILURE);
@@ -311,7 +326,7 @@ EXPORT int opam_main(int argc, char *argv[], bool here)
 
         /* result = opam_here_reinit(force, compiler_version, opam_switch); */
     }
-    else if (here && strncmp(basename(argv[0]), "install", 7) == 0) {
+    else if (oswitch==HERE && strncmp(basename(argv[0]), "install", 7) == 0) {
         /* install only valid for here switch */
         int index;
         for (int i = optind; i < argc; i++) {
@@ -323,7 +338,7 @@ EXPORT int opam_main(int argc, char *argv[], bool here)
             }
         }
     }
-    else if (here && strncmp(basename(argv[0]), "remove", 6) == 0) {
+    else if (oswitch==HERE && strncmp(basename(argv[0]), "remove", 6) == 0) {
         /* @opam//here/opam:remove -- pkg */
         for (int i = optind; i < argc; i++) {
             if (argv[i] != NULL) {
@@ -332,11 +347,11 @@ EXPORT int opam_main(int argc, char *argv[], bool here)
             }
         }
     }
-    else if (here && strncmp(basename(argv[0]), "expunge", 6) == 0) {
+    else if (oswitch==HERE && strncmp(basename(argv[0]), "expunge", 6) == 0) {
         /* @opam//here:expunge */
         opam_here_expunge();
     }
-    else if (!here && strncmp(basename(argv[0]), "expunge", 7) == 0) {
+    else if (oswitch==XDG && strncmp(basename(argv[0]), "expunge", 7) == 0) {
         /* @opam//coswitch:expunge -- coswitch */
         int index;
         char *coswitch = NULL;
@@ -353,10 +368,13 @@ EXPORT int opam_main(int argc, char *argv[], bool here)
             opam_coswitch_remove(opam_switch);
         }
     }
-    else if (here && strncmp(basename(argv[0]), "list", 4) == 0) {
+    else if (oswitch==HERE && strncmp(basename(argv[0]), "list", 4) == 0) {
         opam_here_list(); //FIXME: rename: obazl_here_list
     }
-    else if (!here && strncmp(basename(argv[0]), "list", 4) == 0) {
+    else if (oswitch==LOCL && strncmp(basename(argv[0]), "list", 4) == 0) {
+        opam_local_list();
+    }
+    else if (oswitch==XDG && strncmp(basename(argv[0]), "list", 4) == 0) {
         int index;
         char *coswitch = NULL;
         for (index = optind; index < argc; index++) {
@@ -369,16 +387,16 @@ EXPORT int opam_main(int argc, char *argv[], bool here)
         } else
             opam_xdg_list(opam_switch);
     }
-    else if (!here && strncmp(basename(argv[0]), "coswitch", 8) == 0) {
+    else if (oswitch==XDG && strncmp(basename(argv[0]), "coswitch", 8) == 0) {
         opam_xdg_list(opam_switch);
     }
     else if (strncmp(basename(argv[0]), "show", 4) == 0) {
         opam_coswitch_show();
     }
-    else if (here && strncmp(basename(argv[0]), "set", 3) == 0) {
+    else if (oswitch==HERE && strncmp(basename(argv[0]), "set", 3) == 0) {
         opam_coswitch_set("here");
     }
-    else if (!here && strncmp(basename(argv[0]), "set", 3) == 0) {
+    else if (oswitch==XDG && strncmp(basename(argv[0]), "set", 3) == 0) {
         int index;
         char *coswitch = NULL;
         for (index = optind; index < argc; index++) {
@@ -394,7 +412,7 @@ EXPORT int opam_main(int argc, char *argv[], bool here)
             opam_coswitch_set(opam_switch);
         }
     }
-    else if (here && strncmp(basename(argv[0]), "test", 3) == 0) {
+    else if (oswitch==HERE && strncmp(basename(argv[0]), "test", 3) == 0) {
         opam_test();
     }
     else printf(RED "Unknown cmd: %s" CRESET "\n", basename(argv[0]));

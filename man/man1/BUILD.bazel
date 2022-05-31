@@ -20,4 +20,7 @@ exports_files([  ## globbing won't work with @
     "@opam_here_opam_init.1",
     "@opam_here_opam_install.1",
     "@opam_here_opam_remove.1",
+    "@opam_local.1",
+    "@opam_local_list.1",
+    "@opam_local_refresh.1",
 ])

@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[])
 {
-    char *opts = "h";
+    char *opts = "hvVdD";
     int opt;
     while ((opt = getopt(argc, argv, opts)) != -1) {
         switch (opt) {
@@ -18,19 +18,13 @@ int main(int argc, char *argv[])
             break;
         case 'h':
             /* _print_usage(); */
-            display_manpage("man1", "@opam_coswitch.1");
+            display_manpage("man1", "@opam_local.1");
             exit(EXIT_SUCCESS);
             break;
         default:
-            break;
+            return opam_main(argc, argv, LOCL);
         }
     }
     /* default, if no args passed */
-    if (argc < 2) {
-        display_manpage("man1", "@opam_coswitch.1");
-        return 0;
-    }
-
-    optind = 1;
-    return opam_main(argc, argv, XDG);
+    display_manpage("man1", "@opam_local.1");
 }

@@ -2,14 +2,17 @@
 
 #include "bootstrap.h"
 
+/* @opam//local:list */
 int main(int argc, char *argv[])
 {
-    char *opts = "h";
+    bool verbose = false;
+    char *opts = "hdv";
     int opt;
+
     while ((opt = getopt(argc, argv, opts)) != -1) {
         switch (opt) {
         case '?':
-            fprintf(stderr, "uknown opt: %c", optopt);
+            fprintf(stderr, "uknown opt: %c\n", optopt);
             exit(EXIT_FAILURE);
             break;
         case ':':
@@ -17,20 +20,14 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
             break;
         case 'h':
-            /* _print_usage(); */
-            display_manpage("man1", "@opam_coswitch.1");
+            display_manpage("man1", "@opam_local_list.1");
             exit(EXIT_SUCCESS);
             break;
         default:
             break;
         }
     }
-    /* default, if no args passed */
-    if (argc < 2) {
-        display_manpage("man1", "@opam_coswitch.1");
-        return 0;
-    }
 
     optind = 1;
-    return opam_main(argc, argv, XDG);
+    return opam_main(argc, argv, LOCL);
 }

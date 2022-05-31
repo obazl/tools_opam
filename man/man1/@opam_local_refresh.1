@@ -1,11 +1,11 @@
 .Dd April 9, 2022
-.Dt @OPAM-HERE-REFRESH 1
+.Dt @OPAM-LOCAL-REFRESH 1
 .Os OBazl User Manual
 .Sh NAME
-.Nm @opam//here:refresh
-.Nd Refresh here coswitch
+.Nm @opam//local:refresh
+.Nd Refresh local coswitch
 .Sh SYNOPSIS
-.Sy @opam//here:refresh
+.Sy @opam//local:refresh
 .Op Fl h
 .Sh OPTIONS
 .Bl -tag -width -indent
@@ -13,8 +13,8 @@
 Display this help screen.
 .El
 .Sh DESCRIPTION
-Refreshes project-here
-.Sy here
+Refreshes project-local
+.Sy local
 coswitch.
 .Sh EXAMPLES
 .Sh SEE ALSO
@@ -25,6 +25,6 @@ $ bazel run @opam//coswitch:list -- -h
 .Pp
 .Xr @opam//coswitch:show
 .Xr @opam//coswitch:refresh
-.Xr here
+.Xr local
 .Sh AUTHORS
 .An Gregg Reynolds

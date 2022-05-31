@@ -31,5 +31,5 @@ int main(int argc, char *argv[])
     /* } */
 
     optind = 1;
-    return opam_main(argc, argv, false);
+    return opam_main(argc, argv, XDG);
 }
