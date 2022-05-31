@@ -816,6 +816,7 @@ void emit_ocaml_compiler_libs_pkg(char *switch_name)
     utstring_free(ocaml_file);
 }
 
+/* ***************************************** */
 void _symlink_ocaml_dynlink(char *tgtdir)
 {
     if (debug)
@@ -886,12 +887,89 @@ void emit_ocaml_dynlink_pkg(char *switch_name)
 
     utstring_printf(ocaml_file, "/BUILD.bazel");
 
-    _copy_buildfile("ocaml_dynlinks.BUILD", ocaml_file);
+    _copy_buildfile("ocaml_dynlink.BUILD", ocaml_file);
     /* _symlink_buildfile("ocaml_dynlinks.BUILD", ocaml_file); */
 
     utstring_free(ocaml_file);
 }
 
+/* ***************************************** */
+void _symlink_ocaml_num(char *tgtdir)
+{
+    if (debug)
+        log_debug("_symlink_ocaml_num to %s\n", tgtdir);
+
+    UT_string *opamdir;
+    utstring_new(opamdir);
+    utstring_printf(opamdir, "%s/ocaml", utstring_body(opam_switch_lib));
+
+    UT_string *src;
+    utstring_new(src);
+    UT_string *dst;
+    utstring_new(dst);
+    int rc;
+
+    DIR *d = opendir(utstring_body(opamdir));
+    if (d == NULL) {
+        fprintf(stderr, "Unable to opendir for symlinking num: %s\n",
+                utstring_body(opamdir));
+        /* exit(EXIT_FAILURE); */
+        /* this can happen if a related pkg is not installed */
+        /* example, see topkg and topkg-care */
+        return;
+    }
+
+    struct dirent *direntry;
+    while ((direntry = readdir(d)) != NULL) {
+        if(direntry->d_type==DT_REG){
+            /* if (strcasestr(direntry->d_name, "num") == NULL) */
+            if (strncmp("nums.", direntry->d_name, 5) != 0)
+                continue;
+
+            utstring_renew(src);
+            utstring_printf(src, "%s/%s",
+                            utstring_body(opamdir), direntry->d_name);
+            utstring_renew(dst);
+            utstring_printf(dst, "%s/%s",
+                            tgtdir, direntry->d_name);
+            /* printf("symlinking %s to %s\n", */
+            /*        utstring_body(src), */
+            /*        utstring_body(dst)); */
+            rc = symlink(utstring_body(src),
+                         utstring_body(dst));
+            if (rc != 0) {
+                if (errno != EEXIST) {
+                    perror(utstring_body(src));
+                    fprintf(stderr, "exiting\n");
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+    }
+    closedir(d);
+}
+
+void emit_ocaml_num_pkg(char *switch_name)
+{
+    if (debug)
+        log_debug("emit_ocaml_num_pkg");
+
+    UT_string *ocaml_file;
+    utstring_new(ocaml_file);
+    utstring_concat(ocaml_file, bzl_switch_pfx);
+    utstring_printf(ocaml_file, "/ocaml/num");
+    mkdir_r(utstring_body(ocaml_file));
+
+    _symlink_ocaml_num(utstring_body(ocaml_file));
+
+    utstring_printf(ocaml_file, "/BUILD.bazel");
+
+    _copy_buildfile("ocaml_num.BUILD", ocaml_file);
+
+    utstring_free(ocaml_file);
+}
+
+/* ************************************* */
 void _symlink_ocaml_str(char *tgtdir)
 {
     if (debug)
@@ -1055,22 +1133,10 @@ void emit_ocaml_threads_pkg(char *switch_name)
     utstring_printf(ocaml_file, "/BUILD.bazel");
 
     _copy_buildfile("ocaml_threads.BUILD", ocaml_file);
-    /* _symlink_buildfile("ocaml_threads.BUILD", ocaml_file); */
-
-/*     FILE *ostream; */
-/*     ostream = fopen(utstring_body(ocaml_file), "w"); */
-/*     if (ostream == NULL) { */
-/*         perror(utstring_body(ocaml_file)); */
-/*         exit(EXIT_FAILURE); */
-/*     } */
-
-/* #include "ocaml_threads.BUILD.h" */
-/*     fprintf(ostream, "%s", threads_buildfile); */
-
-/*     fclose(ostream); */
     utstring_free(ocaml_file);
 }
 
+/* ************************************** */
 void _symlink_ocaml_unix(char *tgtdir)
 {
     if (debug)
@@ -1150,6 +1216,83 @@ void emit_ocaml_unix_pkg(char *switch_name)
     utstring_printf(ocaml_file, "/BUILD.bazel");
 
     _copy_buildfile("ocaml_unix.BUILD", ocaml_file);
+    utstring_free(ocaml_file);
+}
+
+/* ***************************************** */
+void _symlink_ocaml_ocamldoc(char *tgtdir)
+{
+    if (debug)
+        log_debug("_symlink_ocaml_ocamldoc to %s\n", tgtdir);
+
+    UT_string *opamdir;
+    utstring_new(opamdir);
+    utstring_printf(opamdir, "%s/ocaml/ocamldoc",
+                    utstring_body(opam_switch_lib));
+
+    UT_string *src;
+    utstring_new(src);
+    UT_string *dst;
+    utstring_new(dst);
+    int rc;
+
+    DIR *d = opendir(utstring_body(opamdir));
+    if (d == NULL) {
+        fprintf(stderr, "Unable to opendir for symlinking ocamldoc: %s\n",
+                utstring_body(opamdir));
+        /* exit(EXIT_FAILURE); */
+        /* this can happen if a related pkg is not installed */
+        /* example, see topkg and topkg-care */
+        return;
+    }
+
+    struct dirent *direntry;
+    while ((direntry = readdir(d)) != NULL) {
+        if(direntry->d_type==DT_REG){
+            /* if (strcasestr(direntry->d_name, "ocamldoc") == NULL) */
+            /* if (strncmp("odoc", direntry->d_name, 4) != 0) */
+            /*     continue; */
+
+            utstring_renew(src);
+            utstring_printf(src, "%s/%s",
+                            utstring_body(opamdir), direntry->d_name);
+            utstring_renew(dst);
+            utstring_printf(dst, "%s/%s",
+                            tgtdir, direntry->d_name);
+            /* printf("symlinking %s to %s\n", */
+            /*        utstring_body(src), */
+            /*        utstring_body(dst)); */
+            rc = symlink(utstring_body(src),
+                         utstring_body(dst));
+            if (rc != 0) {
+                if (errno != EEXIST) {
+                    perror(utstring_body(src));
+                    fprintf(stderr, "exiting\n");
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+    }
+    closedir(d);
+}
+
+void emit_ocaml_ocamldoc_pkg(char *switch_name)
+{
+    if (debug)
+        log_debug("emit_ocaml_ocamldoc_pkg");
+
+    UT_string *ocaml_file;
+    utstring_new(ocaml_file);
+    utstring_concat(ocaml_file, bzl_switch_pfx);
+    utstring_printf(ocaml_file, "/ocaml/ocamldoc");
+    mkdir_r(utstring_body(ocaml_file));
+
+    _symlink_ocaml_ocamldoc(utstring_body(ocaml_file));
+
+    utstring_printf(ocaml_file, "/BUILD.bazel");
+
+    _copy_buildfile("ocaml_ocamldoc.BUILD", ocaml_file);
+
     utstring_free(ocaml_file);
 }
 
@@ -1386,7 +1529,8 @@ void emit_ocaml_workspace(char *switch_name, FILE *bootstrap_FILE)
 
     emit_ocaml_bigarray_pkg(switch_name);
     emit_ocaml_dynlink_pkg(switch_name);
-    /* emit_ocaml_ocamldoc_buildfile(switch_name); */
+    emit_ocaml_num_pkg(switch_name);
+    emit_ocaml_ocamldoc_pkg(switch_name);
     emit_ocaml_str_pkg(switch_name);
     emit_ocaml_threads_pkg(switch_name);
     // vmthreads? removed in v. 4.08.0?
