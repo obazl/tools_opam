@@ -820,7 +820,7 @@ Note that "archive" should only be used for archive files that are intended to b
     fprintf(ostream, "    all = glob([\"*.cmx\", \"*.cmi\", \"*.a\", \"*.so\"]),\n");
     emit_bazel_deps_attribute(ostream, 1, host_repo, "lib", _entries);
 
-    emit_bazel_ppx_codeps(ostream, 1, host_repo, "lib", _entries);
+    emit_bazel_ppx_codeps(ostream, 1, host_repo, _pkg_name, "lib", _entries);
     fprintf(ostream, "    visibility = [\"//visibility:public\"]\n");
     fprintf(ostream, ")\n");
 }
@@ -1165,34 +1165,60 @@ void emit_bazel_deps_attribute(FILE* ostream, int level, char *repo, char *pkg,
 
 void emit_bazel_ppx_codeps(FILE* ostream, int level,
                            char *repo,
+                           char *_pkg_name,
                            char *_pkg_prefix,
                            obzl_meta_entries *_entries)
 {
     /* handle both 'ppx_runtime_deps' and 'requires(-ppx_driver)'
-       example: ppx_sexp_conv has no ppx_runtime_deps property but:
+       e.g., base_quickcheck.expander has
+       ppx_runtime_deps =
+       "base_quickcheck base_quickcheck.ppx_quickcheck.runtime"
+
+       otoh: ppx_sexp_conv has no ppx_runtime_deps property but:
        requires(-ppx_driver) = "ppx_sexp_conv.runtime-lib"
 
+       and: ppx_bin_prot has both:
+       ppx_runtime_deps = "bin_prot"
+       requires(-ppx_driver) = "bin_prot ppx_here.runtime-lib"
+       requires(-ppx_driver,-custom_ppx) += "ppx_deriving"
+
        we interpret this to mean: if you build (with ocamlfind) with
-       predicate -ppx_driver, it means you want to use the pkg as a
-       regular dependency, not as part of a ppx executable. so in that
-       case, you have to add the ppx_codep as a dep of the file you're
-       compiling. If you were to use predicate ppx_driver, it would
-       mean you are using ppx_sexp_conv as part of a ppx executable.
-       The assumption then is that the build tool (dune) will compile
-       the ppx executable and use it to compile the source file, as a
-       kind of atomic operation, so to speak, so it must be smart
-       enough to know that the ppx_codep (runtime dep) will be needed
-       to compile the source file after ppx processing. which implies
-       that the build tool must treat the 'requires(-ppx_driver)'
-       value as a (co)dependency even when the predicate is
-       ppx_driver. IOW, '-ppx_driver' does not mean "only use this if
-       -ppx_driver' is passed"
+       predicate -ppx_driver (= NOT ppx_driver), it means you want to
+       use the pkg as a regular dependency, not as part of a ppx
+       executable. so in that case, you have to add the ppx_codep as a
+       normal dep of the file you're compiling. If you were to use
+       predicate ppx_driver, it would mean you are using ppx_sexp_conv
+       as part of a ppx executable. The assumption then is that the
+       build tool (dune) will compile the ppx executable and use it to
+       compile the source file, as a kind of atomic operation, so to
+       speak, so it must be smart enough to know that the ppx_codep
+       (runtime dep) will be needed to compile the source file after
+       ppx processing. which implies that the build tool must treat
+       the 'requires(-ppx_driver)' value as a (co)dependency even when
+       the predicate is ppx_driver. IOW, '-ppx_driver' does not mean
+       "only use this if -ppx_driver' is passed"
+
+       fuck. that means we really need two deps, one for ppx and one
+       for non-ppx dep. Example: ppx_bin_prot. the META files have
+       this comment:
+       # This line makes things transparent for people mixing preprocessors
+       # and normal dependencies
+       requires(-ppx_driver) = "bin_prot ppx_here.runtime-lib"
+
+       meaning we need a target @ppx_bin_prot//:foo for using it as a
+       "normal" dep, not a ppx dep.
+
      */
-
-
 
     //FIXME: skip if no 'requires'
     /* obzl_meta_entries *entries = obzl_meta_package_entries(_pkg); */
+
+    log_debug("emit_bazel_ppx_codeps, repo: %s, pfx: %s, pkg: %s\n",
+              repo, _pkg_prefix, _pkg_name);
+/* (FILE* ostream, int level, */
+/*                            char *repo, */
+/*                            char *_pkg_prefix, */
+/*                            obzl_meta_entries *_entries) */
 
     struct obzl_meta_property *deps_prop = obzl_meta_entries_property(_entries, "ppx_runtime_deps");
     if ( deps_prop == NULL ) {
@@ -1280,7 +1306,8 @@ void emit_bazel_ppx_codeps(FILE* ostream, int level,
 
         for (int j = 0; j < obzl_meta_values_count(vals); j++) {
             v = obzl_meta_values_nth(vals, j);
-            /* log_info("property val: '%s'", *v); */
+            /* log_info("XXXX property val: '%s'", *v); */
+            /* fprintf(ostream, "property val: '%s'\n", *v); */
 
             char *s = (char*)*v;
             while (*s) {
@@ -1304,17 +1331,35 @@ void emit_bazel_ppx_codeps(FILE* ostream, int level,
                     *tmp = '.';
                     s = tmp;
                 }
+
+                /* log_debug("%TESTING %s\n", *v); */
+
                 /* then extract target segment */
-                char * delim1 = strrchr(*v, '.');
-                if (delim1 == NULL)
-                    ;           /* ??? */
-                else {
+                char * delim1 = strchr(*v, '.');
+                if (delim1 == NULL) {
+                    int repo_len = strlen((char*)*v);
+                    fprintf(ostream, "%*s\"@%.*s//:%s\",\n",
+                            (1+level)*spfactor, sp,
+                            repo_len, *v, *v);
+                } else {
+                    //first the repo string
                     /* *delim1 = '\0'; // split string on '.' */
                     int repo_len = delim1 - (char*)*v;
-                    fprintf(ostream, "%*s\"@%.*s//%s\",\n",
+                    /* fprintf(ostream, "%*s\"@%.*s//%s\",\n", */
+                    fprintf(ostream, "%*s\"@%.*s/",
                             (1+level)*spfactor, sp,
-                            repo_len, *v,
-                            delim1+1);
+                            repo_len, *v);
+                            /* delim1+1); */
+                    // then the pkg:target
+                    char *s = (char*)delim1;
+                    char *tmp;
+                    while(s) {
+                        tmp = strchr(s, '.');
+                        if (tmp == NULL) break;
+                        *tmp = '/';
+                        s = tmp;
+                    }
+                    fprintf(ostream, "%s\",\n", delim1);
 
                     /* fprintf(ostream, "%*s\"G@%s//%s\",\n", */
                     /*         (1+level)*spfactor, sp, *v, _pkg_prefix); */
