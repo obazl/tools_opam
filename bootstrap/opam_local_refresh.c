@@ -62,9 +62,6 @@ void _xopam_set_vars(void)
     } else {
         utstring_printf(opam_switch_name, "%s", result);
     }
-    //FIXME: verify switch name == "here"
-    /* printf("found here-switch %s\n", utstring_body(opam_switch_name)); */
-
     utstring_renew(cmd);
     utstring_printf(cmd, "opam var prefix");
     errno = 0;
@@ -143,37 +140,6 @@ EXPORT void opam_local_refresh(void) // char *_opam_switch_name)
                     LOCAL_COSWITCH_ROOT,
                     OPAM_BOOTSTRAP);
 
-    /* UT_string *cmd; */
-    /* utstring_new(cmd); */
-    /* utstring_printf(cmd, */
-    /*                 "opam var ocaml:version --root %s --switch %s", */
-    /*                 LOCAL_OPAM_ROOT, LOCAL_SWITCH_NAME); */
-    /* char *compiler_version = run_cmd(utstring_body(cmd), false); */
-    char *compiler_version = get_compiler_version(NULL);
-    if (verbose) {
-        log_info("Local coswitch compiler version: %s\n",
-                 compiler_version);
-        printf("Local coswitch compiler version: %s\n",
-               compiler_version);
-    }
-
-    /* utstring_renew(cmd); */
-    /* utstring_printf(cmd, */
-    /*                 "opam var ocaml-variants:version --root %s --switch %s", */
-    /*                 LOCAL_OPAM_ROOT, LOCAL_SWITCH_NAME); */
-    /* char *compiler_variants = run_cmd(utstring_body(cmd), false); */
-
-    char *compiler_variants = get_compiler_variants(NULL);
-    if (compiler_variants != NULL) {
-        if (verbose) {
-            log_info("Local coswitch ocaml-variants: %s\n",
-                     compiler_variants);
-            printf("Local coswitch ocaml-variants: %s\n",
-                   compiler_variants);
-        }
-    }
-    /* utstring_free(cmd); */
-
     if (debug) {
         log_debug("writing BOOTSTRAP.bzl: %s",
                   utstring_body(bootstrap_filename));
@@ -191,16 +157,6 @@ EXPORT void opam_local_refresh(void) // char *_opam_switch_name)
     }
 
     fprintf(bootstrap_FILE, "# generated file - DO NOT EDIT\n");
-    /* fprintf(bootstrap_FILE, "# coswitch: local\n", */
-    /*         compiler_version); */
-    /* fprintf(bootstrap_FILE, "#   compiler version: %s\n", */
-    /*         compiler_version); */
-    /* if (compiler_variants != NULL) { */
-    /*     fprintf(bootstrap_FILE, "#   ocaml-variants:   %s\n\n", */
-    /*         compiler_variants); */
-    /* } else { */
-    /*     fprintf(bootstrap_FILE, "\n"); */
-    /* } */
 
     fprintf(bootstrap_FILE, "def bootstrap():\n");
 
