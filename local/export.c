@@ -2,12 +2,9 @@
 
 #include "bootstrap.h"
 
-/* @opam//local:refresh */
+/* @opam//local:export */
 int main(int argc, char *argv[])
 {
-#if defined(DEBUG_PROFILE)
-    printf("local:refresh.main\n");
-#endif
     bool verbose = false;
     char *opts = "hdDvV";
     int opt;
@@ -23,14 +20,13 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
             break;
         case 'h':
-            display_manpage("man1", "@opam_local_refresh.1");
+            display_manpage("man1", "@opam_local_export.1");
             exit(EXIT_SUCCESS);
             break;
         default:
             break;
         }
     }
-
     optind = 1;
     return opam_main(argc, argv, LOCL);
 }

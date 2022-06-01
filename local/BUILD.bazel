@@ -23,41 +23,8 @@ cc_binary(
 )
 
 cc_binary(
-    name  = "clone",
-    srcs  = ["clone.c"],
-    defines = select({
-        "//bzl/debug/trace": [], # "DEBUG_TRACE"],
-        "//conditions:default":   []
-    }),
-    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES,
-    deps = ["//bootstrap"],
-)
-
-cc_binary(
-    name  = "create",
-    srcs  = ["create.c"],
-    defines = select({
-        "//bzl/debug/trace": [], # "DEBUG_TRACE"],
-        "//conditions:default":   []
-    }),
-    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES,
-    deps = ["//bootstrap"],
-)
-
-cc_binary(
     name  = "export",
     srcs  = ["export.c"],
-    defines = select({
-        "//bzl/debug/trace": [], # "DEBUG_TRACE"],
-        "//conditions:default":   []
-    }),
-    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES,
-    deps = ["//bootstrap"],
-)
-
-cc_binary(
-    name  = "expunge",
-    srcs  = ["expunge.c"],
     defines = select({
         "//bzl/debug/trace": [], # "DEBUG_TRACE"],
         "//conditions:default":   []

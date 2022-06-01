@@ -167,10 +167,13 @@ EXPORT int opam_main(int argc, char *argv[], int oswitch) // bool here)
 
     int result;
 
-    if (oswitch && strncmp(basename(argv[0]), "clean", 5) == 0) {
+    if (oswitch==HERE && strncmp(basename(argv[0]), "clean", 5) == 0) {
         opam_here_clean();
     }
-    else if (oswitch && strncmp(basename(argv[0]), "clone", 5) == 0) {
+    else if (oswitch==LOCL && strncmp(basename(argv[0]), "clean", 5) == 0) {
+        opam_local_clean();
+    }
+    else if (oswitch==HERE && strncmp(basename(argv[0]), "clone", 5) == 0) {
         int index;
         char *package = NULL;
         for (index = optind; index < argc; index++) {
@@ -282,9 +285,15 @@ EXPORT int opam_main(int argc, char *argv[], int oswitch) // bool here)
     else if (oswitch==HERE && strncmp(basename(argv[0]), "export", 6) == 0) {
         opam_here_export(manifest);
     }
-    /* else if (strncmp(basename(argv[0]), "import", 6) == 0) { */
+    else if (oswitch==LOCL && strncmp(basename(argv[0]), "export", 6) == 0) {
+        opam_local_export(manifest);
+    }
     else if (oswitch==HERE && strncmp(basename(argv[0]), "import", 6) == 0) {
         opam_import(manifest);
+        /* print_ignore_msg(); */
+    }
+    else if (oswitch==LOCL && strncmp(basename(argv[0]), "import", 6) == 0) {
+        opam_local_import();
         /* print_ignore_msg(); */
     }
     else if (oswitch==LOCL && strncmp(basename(argv[0]), "create", 6) == 0) {

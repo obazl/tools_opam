@@ -12,15 +12,17 @@
 #include "opam_local.h"
 
 #if INTERFACE
-#define LOCAL_OPAM_ROOT ".opam"
-#define LOCAL_COSWITCH_ROOT OBAZL_ROOT "/opam"
+#define LOCAL_OPAM_ROOT ".opam" //FIXME: rename OPAM_HERE_ROOT
+#define LOCAL_SWITCH_DIR "./_opam"
+#define LOCAL_SWITCH_MANIFEST OBAZL_ROOT "/opam/local.manifest"
+#define LOCAL_COSWITCH_ROOT OBAZL_ROOT "/opam/local"
 #define LOCAL_COMPILER "/local.compiler"
 #define LOCAL_COMPILER_FILE LOCAL_COSWITCH_ROOT LOCAL_COMPILER
 //FIXME: rename, LOCAL_OBAZL_OPAM_WSS?
-#define LOCAL_SWITCH_BAZEL_ROOT LOCAL_COSWITCH_ROOT "/local"
+/* #define LOCAL_SWITCH_BAZEL_ROOT LOCAL_COSWITCH_ROOT "/local" */
 #define LOCAL_OBAZL_OPAM_WSS_OCAML LOCAL_COSWITCH_ROOT "/local/ocaml"
 #define COSWITCH_LIB "/lib"
-#define LOCAL_OBAZL_OPAM_WSS_PKGS LOCAL_SWITCH_BAZEL_ROOT COSWITCH_LIB
+#define LOCAL_OBAZL_OPAM_WSS_PKGS LOCAL_COSWITCH_ROOT COSWITCH_LIB
 //"/here/pkgs"
 #define LOCAL_OBAZL_OPAM_WSS_STUBLIBS LOCAL_COSWITCH_ROOT "/local/stublibs"
 #define LOCAL_SWITCH_NAME "here"
@@ -248,31 +250,6 @@ void write_local_coswitch_file(void)
 /*         } */
 /*     } */
 /* } */
-
-void opam_local_clean(void) {
-    /* FIXME: check COSWITCH.bzl to see if here switch is active  */
-    if (verbose)
-        printf("cleaning here coswitch\n");
-    char *argv[] = {
-        "-d", "-R", "-f",
-        opam_cmds_verbose? "-v" : "",
-        LOCAL_COSWITCH_ROOT,
-        NULL
-    };
-    if(debug) {
-        int argc = (sizeof(argv) / sizeof(argv[0])) - 1;
-        UT_string *cmd_str;
-        utstring_new(cmd_str);
-        printf("args ct: %d\n", argc);
-        for (int i=0; i < argc; i++) {
-            utstring_printf(cmd_str, "%s ", (char*)argv[i]);
-        }
-        fprintf(stderr, "cmd: %s\n", utstring_body(cmd_str));
-        fflush(stderr);
-        utstring_free(cmd_str);
-    }
-    execvp("rm", argv);
-}
 
 void opam_local_expunge(void) {
     /* FIXME: check COSWITCH.bzl to see if here switch is active  */

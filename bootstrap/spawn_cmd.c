@@ -44,10 +44,13 @@ static void dump_pipe(int FILEDES, int filedes)
 
     char xbuf[4096];
     read_ct = read(filedes, xbuf, 4096);
-    for (int i=0; i<20; i++) {
-        printf("%02x ", xbuf[i]);
-    }
-    printf("\n");
+    /* if (debug) { */
+    /*     for (int i=0; i<20; i++) { */
+    /*         printf("%02x ", xbuf[i]); */
+    /*     } */
+    /*     printf("\n"); */
+    /* } */
+
     if (strncmp(xbuf,
                 "\033[31m" // RED
                 "[ERROR]"
@@ -63,8 +66,9 @@ static void dump_pipe(int FILEDES, int filedes)
                      14) == 0) {
         printf("opam repository needs UPDATE \n");
         /* return; */
-    } else {
-        printf("X: %s\n", xbuf);
+    /* } else { */
+    /*     if (debug) */
+    /*         printf("X: %s\n", xbuf); */
     }
 
     for (;;)
@@ -80,7 +84,7 @@ static void dump_pipe(int FILEDES, int filedes)
             break;
         }
     }
-    printf("\"\"\"\n");
+    /* printf("\"\"\"\n"); */
 }
 
 /* spawn_cmd
@@ -117,6 +121,7 @@ int spawn_cmd(char *executable, int argc, char *argv[])
     if (rc != 0) {
         log_error("pipe(stdout_pipe) fail: %s", strerror(errno));
         fprintf(stdout, "pipe(stdout_pipe) fail: %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
     }
 
     errno = 0;

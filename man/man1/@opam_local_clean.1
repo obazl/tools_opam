@@ -1,0 +1,59 @@
+.Dd April 9, 2022
+.Dt @OPAM-LOCAL-CLEAN 1
+.Os OBazl User Manual
+.Sh NAME
+.Nm @opam//local:clean
+.Nd Delete
+.Sy local
+coswitch.
+.Sh SYNOPSIS
+.Sy @opam//local:clean
+.Op Fl h
+.Sh DESCRIPTION
+Cleans the OBazl
+.Sy local
+coswitch by deleting:
+.Bd -literal -offset indent
+.It
+.Pa <projroot>/.obazl.d/opam/local No (local coswitch)
+.It
+.Pa <projroot>/_opam No (local switch)
+.Ed
+.Pp
+Also writes a null bootstrap file to
+.Pa <projroot>/.obazl.d/opam/local/BOOTSTRAP.bzl .
+This is to ensure that the following "bootstrap" code (in
+.Pa WORKSPACE.bazel )
+will function before the local coswitch is initialized:
+.Bd -literal -offset indent
+load("//:COSWITCH.bzl", register_coswitch = "register")
+register_coswitch()
+load("@coswitch//:BOOTSTRAP.bzl", "bootstrap")
+bootstrap()
+.Ed
+.Pp
+The following is retained:
+.Bd -literal -offset indent
+.It
+.Pa <projroot>/.obazl.d/opam/local.manifest
+.Ed
+.Sh OPTIONS
+.Bl -tag -width -indent
+.It Fl V
+Pass option
+.Ql --verbose
+to OPAM commands.
+.It Fl v
+Verbose output
+.It Fl h
+Display this help screen.
+.El
+.Sh SEE ALSO
+.Xr @opam//local
+.Xr @opam//local:export
+.Xr @opam//local:import
+.Xr @opam//local:list
+.Xr @opam//local:refresh
+.Xr @opam//local:set
+.Sh AUTHORS
+.An Gregg Reynolds

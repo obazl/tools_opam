@@ -102,7 +102,7 @@ void _xopam_set_vars(void)
     } else
         utstring_printf(opam_switch_lib, "%s", result);
 
-    utstring_printf(bzl_switch_pfx, "%s", LOCAL_SWITCH_BAZEL_ROOT);
+    utstring_printf(bzl_switch_pfx, "%s", LOCAL_COSWITCH_ROOT);
 
     if (verbose) {
         log_info("opam_switch_root: %s", utstring_body(opam_switch_root));
@@ -116,8 +116,14 @@ void _xopam_set_vars(void)
 
 EXPORT void opam_local_refresh(void) // char *_opam_switch_name)
 {
-
     log_info("opam_local_refresh entry"); // -s %s", _opam_switch_name);
+
+    if (access(LOCAL_SWITCH_DIR, F_OK) != 0) {
+        //FIXME: print error msg
+        log_error("OPAM local switch '" LOCAL_SWITCH_DIR "' not found.");
+        printf(RED "ERROR: " CRESET "OPAM local switch '" LOCAL_SWITCH_DIR "' not found.\n");
+        exit(EXIT_FAILURE);
+    }
 
     _xopam_set_vars();
 
@@ -133,7 +139,8 @@ EXPORT void opam_local_refresh(void) // char *_opam_switch_name)
     utstring_new(bootstrap_filename);
     utstring_printf(bootstrap_filename,
                     "%s/%s",
-                    utstring_body(bzl_switch_pfx),
+                    /* utstring_body(bzl_switch_pfx), */
+                    LOCAL_COSWITCH_ROOT,
                     OPAM_BOOTSTRAP);
 
     /* UT_string *cmd; */
@@ -184,16 +191,16 @@ EXPORT void opam_local_refresh(void) // char *_opam_switch_name)
     }
 
     fprintf(bootstrap_FILE, "# generated file - DO NOT EDIT\n");
-    fprintf(bootstrap_FILE, "# coswitch: local\n",
-            compiler_version);
-    fprintf(bootstrap_FILE, "#   compiler version: %s\n",
-            compiler_version);
-    if (compiler_variants != NULL) {
-        fprintf(bootstrap_FILE, "#   ocaml-variants:   %s\n\n",
-            compiler_variants);
-    } else {
-        fprintf(bootstrap_FILE, "\n");
-    }
+    /* fprintf(bootstrap_FILE, "# coswitch: local\n", */
+    /*         compiler_version); */
+    /* fprintf(bootstrap_FILE, "#   compiler version: %s\n", */
+    /*         compiler_version); */
+    /* if (compiler_variants != NULL) { */
+    /*     fprintf(bootstrap_FILE, "#   ocaml-variants:   %s\n\n", */
+    /*         compiler_variants); */
+    /* } else { */
+    /*     fprintf(bootstrap_FILE, "\n"); */
+    /* } */
 
     fprintf(bootstrap_FILE, "def bootstrap():\n");
 

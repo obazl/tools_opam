@@ -12,7 +12,8 @@
 
 EXPORT void opam_here_export(char *manifest)
 {
-    log_debug("opam_here_export: %s", manifest);
+    if (debug)
+        log_debug("opam_here_export: %s", manifest);
 
     UT_string *manifest_name;
     utstring_new(manifest_name);
@@ -39,14 +40,14 @@ EXPORT void opam_here_export(char *manifest)
         char *argv[] = {
             "opam", "switch",
             "export",
-            opam_cmds_verbose? "--verbose": "",
-            opam_cmds_debug? "--debug": "",
             "--cli=2.1",
             "--root=./" HERE_OPAM_ROOT,
             "--switch", HERE_SWITCH_NAME,
             "--freeze",
             /* "--full", */
             utstring_body(manifest_name),
+            /* opam_cmds_verbose? "--verbose": "", */
+            /* opam_cmds_debug? "--debug": "", */
             NULL
         };
         utstring_body(manifest_name);
