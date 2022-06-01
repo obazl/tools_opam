@@ -580,11 +580,27 @@ void emit_bazel_attribute(FILE* ostream,
                 rc = strncmp("ocaml", _filedeps_path, 5);
 
             /* emit 'archive' attr targets */
-            if ( (rc == 0)    /* i.e. 'ocaml' */
+            if (rc == 0)    /* i.e. 'ocaml', 'ocaml/ocamldoc' */
                  /* special cases: unix, dynlink, etc. */
-                && strlen(_filedeps_path) == 5)
-                utstring_printf(label, "@%s//lib:%s",
-                                _filedeps_path, *archive_name);
+                if (strlen(_filedeps_path) == 5) {
+                    utstring_printf(label, "@%s//lib:%s",
+                                    _filedeps_path, *archive_name);
+                } else {
+                    rc = strncmp("ocaml-compiler-libs", _filedeps_path, 19);
+                    if (rc == 0)
+                        /* utstring_printf(label, "ZZZZ@%s:%s", */
+                        /*                 _filedeps_path, *archive_name); */
+                        utstring_printf(label, ":%s",
+                                        *archive_name);
+                    else {
+                        utstring_printf(label, ":%s",
+                                        *archive_name);
+                        utstring_printf(label, "ERROR@%s:%s",
+                                        _filedeps_path, *archive_name);
+
+                        /* ocaml-syntax-shims, ocamlbuild, etc. */
+                    }
+                }
             else {
                 /* we're constructing archive attribute labels
                    _pkg_name is the name of the import target, not the arch
@@ -818,7 +834,7 @@ Note that "archive" should only be used for archive files that are intended to b
                          _pkg);
 
     fprintf(ostream, "    all = glob([\"*.cmx\", \"*.cmi\", \"*.a\", \"*.so\"]),\n");
-    emit_bazel_deps_attribute(ostream, 1, host_repo, "lib", _entries);
+    emit_bazel_deps_attribute(ostream, 1, host_repo, "lib", _pkg_name, _entries);
 
     emit_bazel_ppx_codeps(ostream, 1, host_repo, _pkg_name, "lib", _entries);
     fprintf(ostream, "    visibility = [\"//visibility:public\"]\n");
@@ -857,7 +873,7 @@ void emit_bazel_plugin_rule(FILE* ostream, int level,
                          _entries,
                          "plugin", //);
                          _pkg);
-    emit_bazel_deps_attribute(ostream, 1, host_repo, "lib", _entries);
+    emit_bazel_deps_attribute(ostream, 1, host_repo, "lib", _pkg_name, _entries);
     fprintf(ostream, "    visibility = [\"//visibility:public\"]\n");
     fprintf(ostream, ")\n");
 }
@@ -904,13 +920,68 @@ bool emit_special_case_rule(FILE* ostream,
         return true;
     }
 
+    /* WARNING: some META files list 'compiler-libs' as a requirement,
+       but the META file for compiler-libs itself lists no content for
+       that package, only subpackages compiler-libs.common etc. are
+       populated. The official docs indirectly suggest that the base
+       pkg is compiler-libs.common, so that's what we do here.
+     */
+
+    if ((strncmp(_pkg->name, "compiler-libs", 13) == 0)
+        && strlen(_pkg->name) == 13) {
+        log_trace("emit_special_case_rule: compiler-libs");
+
+        fprintf(ostream, "alias(\n"
+                "    name = \"compiler-libs\",\n"
+                "    actual = \"@ocaml//compiler-libs/common\",\n"
+                "    visibility = [\"//visibility:public\"]\n"
+                ")\n");
+        return true;
+    }
+
+    /* if ((strncmp(_pkg->name, "bytecomp", 8) == 0) */
+    /*     && strlen(_pkg->name) == 8) { */
+    /*     log_trace("emit_special_case_rule: bytecomp"); */
+    /*     log_trace("emit_special_case_rule: pkg->dir: %s", _pkg->directory); */
+    /*     log_trace("emit_special_case_rule: pkg->path: %s", _pkg->path); */
+    /* /\* char *name; *\/ */
+    /* /\* char *path; *\/ */
+    /* /\* char *directory;            /\\* subdir *\\/ *\/ */
+    /* /\* char *metafile; *\/ */
+    /* /\* obzl_meta_entries *entries;          /\\* list of struct obzl_meta_entry *\\/ *\/ */
+
+
+    /*     fprintf(ostream, "alias(\n" */
+    /*             "    name = \"bytecomp\",\n" */
+    /*             "    actual = \"@ocaml//compiler-libs/bytecomp\",\n" */
+    /*             "    visibility = [\"//visibility:public\"]\n" */
+    /*             ")\n"); */
+    /*     return true; */
+    /* } */
+
+    //TODO: compiler-libs/common, bytecomp, optcomp,
+    // toplevel, native-toplevel
+
+
     if ((strncmp(_pkg->name, "num", 3) == 0)
         && strlen(_pkg->name) == 3) {
         log_trace("emit_special_case_rule: num");
 
         fprintf(ostream, "alias(\n"
                 "    name = \"num\",\n"
-                "    actual = \"@ocaml//num\",\n"
+                "    actual = \"@ocaml//num/core\",\n"
+                "    visibility = [\"//visibility:public\"]\n"
+                ")\n");
+        return true;
+    }
+
+    if ((strncmp(_pkg->name, "ocamldoc", 8) == 0)
+        && strlen(_pkg->name) == 8) {
+        log_trace("emit_special_case_rule: ocamldoc");
+
+        fprintf(ostream, "alias(\n"
+                "    name = \"ocamldoc\",\n"
+                "    actual = \"@ocaml//ocamldoc\",\n"
                 "    visibility = [\"//visibility:public\"]\n"
                 ")\n");
         return true;
@@ -962,7 +1033,7 @@ bool special_case_multiseg_dep(FILE* ostream,
 {
     if (delim1 == NULL) {
         if (strncmp(*dep_name, "compiler-libs", 13) == 0) {
-            fprintf(ostream, "%*s    \"@ocaml//compiler-libs\",\n",
+            fprintf(ostream, "%*s    \"@ocaml//compiler-libs/common\",\n",
                     (1+level)*spfactor, sp);
             return true;
         } else {
@@ -976,7 +1047,7 @@ bool special_case_multiseg_dep(FILE* ostream,
 
         if (strncmp(*dep_name, "compiler-libs/", 14) == 0) {
             fprintf(ostream,
-                    "%*s    \"@ocaml//compiler-libs:%s\",\n",
+                    "%*s    \"@ocaml//compiler-libs/%s\",\n",
                     (1+level)*spfactor, sp, delim1+1);
             return true;
         }
@@ -998,7 +1069,8 @@ bool special_case_multiseg_dep(FILE* ostream,
     return false;
 }
 
-void emit_bazel_deps_attribute(FILE* ostream, int level, char *repo, char *pkg,
+void emit_bazel_deps_attribute(FILE* ostream, int level,
+                               char *repo, char *pkg, char *pkg_name,
                                obzl_meta_entries *_entries)
 /* obzl_meta_package *_pkg) */
 {
@@ -1006,9 +1078,20 @@ void emit_bazel_deps_attribute(FILE* ostream, int level, char *repo, char *pkg,
     //FIXME: skip if no 'requires' or requires == ''
     /* obzl_meta_entries *entries = obzl_meta_package_entries(_pkg); */
 
+    struct obzl_meta_property *deps_prop = NULL;
+
+    /* char *kind = "library_kind"; */
+    /* deps_prop = obzl_meta_entries_property(_entries, kind); */
+    /* if ( deps_prop == NULL ) { */
+    /*     printf("NO LIBRARY_KIND! %s\n", pkg_name); */
+    /* } else { */
+    /*     obzl_meta_value k = obzl_meta_property_value(deps_prop); */
+    /*     printf("LIBRARY_KIND! %s: %s\n", pkg_name, (char*)k); */
+    /* } */
+
     char *pname = "requires";
-    /* struct obzl_meta_property *deps_prop = obzl_meta_package_property(_pkg, pname); */
-    struct obzl_meta_property *deps_prop = obzl_meta_entries_property(_entries, pname);
+    deps_prop = NULL;
+    deps_prop = obzl_meta_entries_property(_entries, pname);
     if ( deps_prop == NULL ) return;
     obzl_meta_value ds = obzl_meta_property_value(deps_prop);
     if (ds == NULL) return;
@@ -1156,8 +1239,16 @@ void emit_bazel_deps_attribute(FILE* ostream, int level, char *repo, char *pkg,
                                 fprintf(ostream, "%*s\"@ocaml//unix\",\n",
                                         (1+level)*spfactor, sp);
                             } else {
-                                fprintf(ostream, "%*s\"@%s//:%s\",\n",
-                                        (1+level)*spfactor, sp, *dep_name, *dep_name);
+                                //NOTE: we use @foo instead of @foo//:foo
+                                // seems to work
+                                /* fprintf(ostream, */
+                                /*         "%*s\"@%s\",\n", */
+                                /*         (1+level)*spfactor, sp, */
+                                /*         *dep_name); */
+                                fprintf(ostream,
+                                        "%*s\"@%s//:%s\",\n",
+                                        (1+level)*spfactor, sp,
+                                        *dep_name, *dep_name);
                             }
                         }
                     }
@@ -1196,17 +1287,26 @@ void emit_bazel_ppx_codeps(FILE* ostream, int level,
                            obzl_meta_entries *_entries)
 {
     /* handle both 'ppx_runtime_deps' and 'requires(-ppx_driver)'
-       e.g., base_quickcheck.expander has
-       ppx_runtime_deps =
-       "base_quickcheck base_quickcheck.ppx_quickcheck.runtime"
 
-       otoh: ppx_sexp_conv has no ppx_runtime_deps property but:
+       e.g. ppx_sexp_conv has no ppx_runtime_deps property but:
        requires(-ppx_driver) = "ppx_sexp_conv.runtime-lib"
 
-       and: ppx_bin_prot has both:
+       ppx_bin_prot has both:
+       requires(ppx_driver) = "base
+                        compiler-libs.common
+                        ppx_bin_prot.shape-expander
+                        ppxlib
+                        ppxlib.ast"
        ppx_runtime_deps = "bin_prot"
+       but:
        requires(-ppx_driver) = "bin_prot ppx_here.runtime-lib"
        requires(-ppx_driver,-custom_ppx) += "ppx_deriving"
+
+       and ppx_expect is even worse; in addition to
+       requires(ppx_driver) and requires(-ppx_driver), it has
+       ppx(-ppx_driver,-custom_ppx) = "./ppx.exe --as-ppx"
+
+       what does it all mean?  who knows.
 
        we interpret this to mean: if you build (with ocamlfind) with
        predicate -ppx_driver (= NOT ppx_driver), it means you want to
@@ -1362,34 +1462,45 @@ void emit_bazel_ppx_codeps(FILE* ostream, int level,
 
                 /* then extract target segment */
                 char * delim1 = strchr(*v, '.');
+
                 if (delim1 == NULL) {
+                    if (special_case_multiseg_dep(ostream, v, delim1))
+                        continue;
+                    else {
+                /* if (delim1 == NULL) { */
                     int repo_len = strlen((char*)*v);
-                    fprintf(ostream, "%*s\"@%.*s//:%s\",\n",
+                    /* fprintf(ostream, "%*s\"@%.*s//:%s\",\n", */
+                    fprintf(ostream, "%*s\"@%.*s\",\n",
                             (1+level)*spfactor, sp,
                             repo_len, *v, *v);
-                } else {
-                    //first the repo string
-                    /* *delim1 = '\0'; // split string on '.' */
-                    int repo_len = delim1 - (char*)*v;
-                    /* fprintf(ostream, "%*s\"@%.*s//%s\",\n", */
-                    fprintf(ostream, "%*s\"@%.*s/",
-                            (1+level)*spfactor, sp,
-                            repo_len, *v);
-                            /* delim1+1); */
-                    // then the pkg:target
-                    char *s = (char*)delim1;
-                    char *tmp;
-                    while(s) {
-                        tmp = strchr(s, '.');
-                        if (tmp == NULL) break;
-                        *tmp = '/';
-                        s = tmp;
                     }
-                    fprintf(ostream, "%s\",\n", delim1);
+                } else {
+                    if (special_case_multiseg_dep(ostream, v, delim1))
+                        continue;
+                    else {
+                        //first the repo string
+                        /* *delim1 = '\0'; // split string on '.' */
+                        int repo_len = delim1 - (char*)*v;
+                        /* fprintf(ostream, "%*s\"@%.*s//%s\",\n", */
+                        fprintf(ostream, "%*s\"@%.*s/",
+                                (1+level)*spfactor, sp,
+                                repo_len, *v);
+                        /* delim1+1); */
+                        // then the pkg:target
+                        char *s = (char*)delim1;
+                        char *tmp;
+                        while(s) {
+                            tmp = strchr(s, '.');
+                            if (tmp == NULL) break;
+                            *tmp = '/';
+                            s = tmp;
+                        }
+                        fprintf(ostream, "%s\",\n", delim1);
 
-                    /* fprintf(ostream, "%*s\"G@%s//%s\",\n", */
-                    /*         (1+level)*spfactor, sp, *v, _pkg_prefix); */
-                    /* (1+level)*spfactor, sp, repo, _pkg_prefix, *v); */
+                        /* fprintf(ostream, "%*s\"G@%s//%s\",\n", */
+                        /*         (1+level)*spfactor, sp, *v, _pkg_prefix); */
+                        /* (1+level)*spfactor, sp, repo, _pkg_prefix, *v); */
+                    }
                 }
             }
         }
@@ -1511,7 +1622,7 @@ void emit_bazel_deps_target(FILE* ostream, int level,
                          _repo, // "@ocaml",
                          /* _pkg_path, */
                          _entries, "description", "doc");
-    emit_bazel_deps_attribute(ostream, 1, host_repo, "lib", _entries);
+    emit_bazel_deps_attribute(ostream, 1, host_repo, "lib", _pkg_name, _entries);
     /* emit_bazel_path_attrib(ostream, 1, host_repo, _pkg_prefix, "lib", _entries); */
     fprintf(ostream, "    visibility = [\"//visibility:public\"]\n");
     fprintf(ostream, ")\n");
@@ -1997,8 +2108,7 @@ EXPORT void emit_build_bazel(char *_repo,
             utstring_printf(new_filedeps_path, "ocaml/%s", directory);
             /* utstring_printf(new_filedeps_path, "_lib/ocaml/%s", directory); */
         } else {
-            if ( (strlen(directory) == 1)
-                 && (strncmp(directory, "^", 1) == 0) ) {
+            if (strncmp(directory, "^", 1) == 0) {
                 /* Initial '^' means pkg within stdlib; "Only included
                    because of findlib-browser" or "distributed with
                    Ocaml". only applies to: raw-spacetime, num, threads,
@@ -2007,10 +2117,17 @@ EXPORT void emit_build_bazel(char *_repo,
                    which redirects to files or subdirs in lib/ocaml
                 */
                 /* stdlib = true; */
+                directory++;
                 stdlib_root = true;
-                utstring_printf(new_filedeps_path, "%s", "ocaml");
+                if (strlen(directory) == 1)
+                    utstring_printf(new_filedeps_path, "%s", "ocaml");
+                else
+                    utstring_printf(new_filedeps_path,
+                                    "ocaml/%s",
+                                    directory);
                 /* utstring_printf(new_filedeps_path, "_lib/%s", "ocaml"); */
-                /* log_debug("Found STDLIB root directory '%s' for %s", directory, pkg_name); */
+                log_debug("Found STDLIB root directory for %s: '%s' => '%s'",
+                          pkg_name, directory, utstring_body(new_filedeps_path));
             } else {
                 utstring_printf(new_filedeps_path,
                                 "%s/%s", _filedeps_path, directory);
@@ -2066,8 +2183,8 @@ EXPORT void emit_build_bazel(char *_repo,
     }
 
     if ((_pkg_prefix == NULL)
-        || ((strncmp(_pkg_prefix, "ocaml", 5) == 0)
-            && (strlen(_pkg_prefix) == 5)))
+        || ((strncmp(_pkg_prefix, "ocaml", 5) == 0) ))
+            /* && (strlen(_pkg_prefix) == 5))) */
         if (emit_special_case_rule(ostream, _pkg)) {
             log_trace("emit_special_case_rule:TRUE %s", _pkg->name);
             return;

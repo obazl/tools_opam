@@ -221,7 +221,7 @@ EXPORT void opam_local_refresh(void) // char *_opam_switch_name)
 
         /* now @ocaml with toolchain & core pkgs, @rules_ocaml//cfg/dynlink,
            @rules_ocaml//cfg/str, etc. */
-
+        log_trace("finished meta_walk");
     } else {
         /* WARNING: only works for top-level pkgs */
         /* log_debug("converting listed opam pkgs in %s", */
@@ -300,4 +300,6 @@ EXPORT void opam_local_refresh(void) // char *_opam_switch_name)
     /* write_local_coswitch_file(); */
 
     utstring_free(bootstrap_filename);
+
+    log_info("opam_local_refresh exit");
 }

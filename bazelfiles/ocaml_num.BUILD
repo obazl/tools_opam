@@ -1,7 +1,7 @@
 load("@rules_ocaml//build:rules.bzl", "ocaml_import")
 
 ocaml_import(
-    name = "num",
+    name = "core",
     version = "[distributed with OCaml]",
     archive = select({
         "@rules_ocaml//build/mode:bytecode": [":nums.cma"],

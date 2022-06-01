@@ -430,6 +430,7 @@ int handle_lib_meta(char *switch_lib,
                          utstring_body(imports_path),
                         /* "",      /\* pkg-path *\/ */
                          pkg);
+        log_debug("emittED buildfile for pkg: %s", pkg->name);
     }
     return 0;
 }

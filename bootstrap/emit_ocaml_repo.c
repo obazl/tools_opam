@@ -813,6 +813,28 @@ void emit_ocaml_compiler_libs_pkg(char *switch_name)
 
     _copy_buildfile("ocaml_compiler-libs.BUILD", ocaml_file);
     /* _symlink_buildfile("ocaml_compiler-libs.BUILD", ocaml_file); */
+
+    utstring_renew(ocaml_file);
+    utstring_concat(ocaml_file, bzl_switch_pfx);
+    utstring_printf(ocaml_file, "/ocaml/compiler-libs/common");
+    mkdir_r(utstring_body(ocaml_file));
+    utstring_printf(ocaml_file, "/BUILD.bazel");
+    _copy_buildfile("compiler_libs/common.BUILD", ocaml_file);
+
+    utstring_renew(ocaml_file);
+    utstring_concat(ocaml_file, bzl_switch_pfx);
+    utstring_printf(ocaml_file, "/ocaml/compiler-libs/bytecomp");
+    mkdir_r(utstring_body(ocaml_file));
+    utstring_printf(ocaml_file, "/BUILD.bazel");
+    _copy_buildfile("compiler_libs/bytecomp.BUILD", ocaml_file);
+
+    utstring_renew(ocaml_file);
+    utstring_concat(ocaml_file, bzl_switch_pfx);
+    utstring_printf(ocaml_file, "/ocaml/compiler-libs/optcomp");
+    mkdir_r(utstring_body(ocaml_file));
+    utstring_printf(ocaml_file, "/BUILD.bazel");
+    _copy_buildfile("compiler_libs/optcomp.BUILD", ocaml_file);
+
     utstring_free(ocaml_file);
 }
 
@@ -957,7 +979,7 @@ void emit_ocaml_num_pkg(char *switch_name)
     UT_string *ocaml_file;
     utstring_new(ocaml_file);
     utstring_concat(ocaml_file, bzl_switch_pfx);
-    utstring_printf(ocaml_file, "/ocaml/num");
+    utstring_printf(ocaml_file, "/ocaml/num/core");
     mkdir_r(utstring_body(ocaml_file));
 
     _symlink_ocaml_num(utstring_body(ocaml_file));
