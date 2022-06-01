@@ -103,36 +103,59 @@ UT_array *skipped_pkgs;
 /* { */
 /* } */
 
+/* skip pkgs "distributed with OCaml" - repo rule installs them into @ocaml
+*/
 bool _skip_pkg(char *pkg)
 {
-    int len = strlen(pkg);
+    log_debug("_skip_pkg: %s", pkg);
 
-    /* skip pkgs "distributed with OCaml" - repo rule installs them
-      to skip: compiler-libs, dynlink, str, unix, stdlib, threads,
-      bigarray, num,
-      raw_spacetime (removed in 4.12.0)
-      ocamldoc
-    */
+    static const char * skips[] = {
+        "lib/bigarray/META",
+        "lib/compiler-libs/META",
+        "lib/dynlink/META",
+        "lib/num/META",
+        "lib/ocamldoc/META",
+        "lib/stdlib/META",
+        "lib/str/META",
+        "lib/threads/META",
+        "lib/unix/META",
+        "lib/raw_spacetime/META",
+    };
+
+#define skips_ct (sizeof (skips) / sizeof (const char *))
+
+    int len = strlen(pkg);
+    int skiplen;
+
+    for (int i = 0; i < skips_ct; i++) {
+        skiplen = strlen(skips[i]);
+        if (strncmp(pkg + len - skiplen,
+                    skips[i], skiplen) == 0) {
+            log_warn("SKIPPING %s", skips[i]);
+            return true;
+        }
+    }
+
 
     /* avoid matching ocaml-compiler-libs */
-    if (strncmp(pkg + len - 27, "here/lib/compiler-libs/META", 27) == 0) {
+    if (strncmp(pkg + len - 22, "lib/compiler-libs/META", 16) == 0) {
         log_warn("SKIPPING compiler-libs/META");
         return true;
     }
 
-    if (strncmp(pkg + len - 21, "here/lib/dynlink/META", 21) == 0) {
+    if (strncmp(pkg + len - 16, "lib/dynlink/META", 16) == 0) {
         log_warn("SKIPPING dynlink/META");
         return true;
     }
-    if (strncmp(pkg + len - 22, "here/lib/ocamldoc/META", 22) == 0) {
+    if (strncmp(pkg + len - 22, "lib/ocamldoc/META", 22) == 0) {
         log_warn("SKIPPING ocamldoc/META");
         return true;
     }
-    if (strncmp(pkg + len - 21, "here/lib/threads/META", 21) == 0) {
+    if (strncmp(pkg + len - 21, "lib/threads/META", 21) == 0) {
         log_warn("SKIPPING threads/META");
         return true;
     }
-    if (strncmp(pkg + len - 18, "here/lib/unix/META", 18) == 0) {
+    if (strncmp(pkg + len - 18, "lib/unix/META", 18) == 0) {
         log_warn("SKIPPING unix/META");
         return true;
     }
@@ -141,13 +164,13 @@ bool _skip_pkg(char *pkg)
 
     // Bigarray moved to standard lib in v. 4.07
     // so no need to list as explicit dep?
-    if (strncmp(pkg + len - 22, "here/lib/bigarray/META", 22) == 0) {
+    if (strncmp(pkg + len - 22, "lib/bigarray/META", 22) == 0) {
         log_warn("SKIPPING bigarray/META");
         return true;
     }
 
     // raw_spacetime - removed in v. 4.12(?)
-    if (strncmp(pkg + len - 27, "here/lib/raw_spacetime/META", 27) == 0) {
+    if (strncmp(pkg + len - 27, "lib/raw_spacetime/META", 27) == 0) {
         log_warn("SKIPPING raw_spacetime/META");
         return true;
     }
@@ -157,7 +180,7 @@ bool _skip_pkg(char *pkg)
     // however, opam seems to install num* in lib/ocaml "for backward compatibility", and installs lib/num/META.
     /* "New applications that need arbitrary-precision arithmetic should use the Zarith library (https://github.com/ocaml/Zarith) instead of the Num library, and older applications that already use Num are encouraged to switch to Zarith." */
     // https://www.dra27.uk/blog/platform/2018/01/31/num-system.html
-    if (strncmp(pkg + len - 17, "here/lib/num/META", 17) == 0) {
+    if (strncmp(pkg + len - 17, "lib/num/META", 17) == 0) {
         log_warn("SKIPPING num/META");
         return true;
     }
