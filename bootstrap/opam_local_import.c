@@ -24,7 +24,8 @@ EXPORT void opam_local_import(void)
         exit(EXIT_FAILURE);
     }
 
-    printf("Importing %s\n", LOCAL_SWITCH_MANIFEST);
+    if (verbose)
+        printf("Importing %s\n", LOCAL_SWITCH_MANIFEST);
 
     int result;
 
@@ -42,7 +43,10 @@ EXPORT void opam_local_import(void)
     };
 
     int argc = (sizeof(argv) / sizeof(argv[0])) - 1;
-    result = spawn_cmd_with_stdout(exe, argc, argv);
+    if (verbose)
+        result = spawn_cmd_with_stdout(exe, argc, argv);
+    else
+        result = spawn_cmd(exe, argc, argv);
     if (result != 0) {
         fprintf(stderr, RED "ERROR: " CRESET "opam import\n");
         exit(EXIT_FAILURE);
