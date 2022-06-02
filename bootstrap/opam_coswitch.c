@@ -65,7 +65,8 @@ EXPORT void opam_coswitch_remove(char *coswitch) {
 }
 
 EXPORT void opam_coswitch_set(char *coswitch) {
-    printf("opam_coswitch_set: '%s'\n", coswitch);
+    if (debug)
+        printf("opam_coswitch_set: '%s'\n", coswitch);
 
     if (strncmp(coswitch, "here", 4) == 0) {
         write_here_coswitch_file();
@@ -78,8 +79,9 @@ EXPORT void opam_coswitch_set(char *coswitch) {
         fprintf(stderr, "XDG coswitch root '%s' not found.\n",
                 utstring_body(xdg_coswitch_root));
     } else {
-        printf("xdg_coswitch_root: %s\n",
-               utstring_body(xdg_coswitch_root));
+        if (debug)
+            printf("xdg_coswitch_root: %s\n",
+                   utstring_body(xdg_coswitch_root));
 
         UT_string *coswitch_bootstrapper;
         utstring_new(coswitch_bootstrapper);
@@ -87,14 +89,17 @@ EXPORT void opam_coswitch_set(char *coswitch) {
                         "%s/%s/BOOTSTRAP.bzl",
                         utstring_body(xdg_coswitch_root),
                         coswitch);
-        printf("target bootstrapper: %s\n",
-               utstring_body(coswitch_bootstrapper));
+
+        if (debug)
+            printf("target bootstrapper: %s\n",
+                   utstring_body(coswitch_bootstrapper));
+
         if (access(utstring_body(coswitch_bootstrapper), F_OK) != 0) {
             /* fixme: better msg */
-            log_error("coswitch NOT FOUND: %s; exiting.",
-                      utstring_body(xdg_coswitch_root));
-            fprintf(stderr, "coswitch NOT FOUND: %s; exiting.\n",
-                    utstring_body(xdg_coswitch_root));
+            log_error("coswitch NOT FOUND: %s/%s; exiting.",
+                      utstring_body(xdg_coswitch_root),coswitch);
+            fprintf(stderr, "coswitch NOT FOUND: %s/%s; exiting.\n",
+                      utstring_body(xdg_coswitch_root),coswitch);
             utstring_free(coswitch_bootstrapper);
             exit(EXIT_FAILURE);
         }
@@ -103,7 +108,8 @@ EXPORT void opam_coswitch_set(char *coswitch) {
         utstring_new(coswitch_file);
         utstring_printf(coswitch_file, "%s/COSWITCH.bzl",
                         getcwd(NULL, 0));
-        printf("COSWITCH.bzl: %s\n", utstring_body(coswitch_file));
+        if (verbose)
+            printf("writing: %s\n", utstring_body(coswitch_file));
 
         errno = 0;
         FILE *coswitch_FILE = fopen(utstring_body(coswitch_file), "w");
@@ -163,7 +169,7 @@ EXPORT void opam_coswitch_set(char *coswitch) {
         utstring_free(cmd);
 
         fprintf(coswitch_FILE, "# generated file - DO NOT EDIT\n");
-        fprintf(coswitch_FILE, "# coswitch: %s\txdg: %s\n",
+        fprintf(coswitch_FILE, "# switch name: %s\txdg: %s\n",
                 coswitch, utstring_body(xdg_coswitch_root));
         fprintf(coswitch_FILE, "#   compiler version: %s\n",
                 compiler_version);

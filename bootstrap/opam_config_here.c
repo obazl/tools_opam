@@ -119,9 +119,9 @@ void _opam_set_vars(void)
 
 EXPORT void opam_here_refresh(void) // char *_opam_switch_name)
 {
-
-    log_info("opam_here_refresh entry"); // -s %s", _opam_switch_name);
-
+    if (debug) {
+        log_debug("opam_here_refresh entry"); // -s %s", _opam_switch_name);
+    }
     _opam_set_vars();
 
     /* make sure output dir exists */

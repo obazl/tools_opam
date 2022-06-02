@@ -24,8 +24,9 @@ EXPORT void opam_local_import(void)
         exit(EXIT_FAILURE);
     }
 
-    if (verbose)
-        printf("Importing %s\n", LOCAL_SWITCH_MANIFEST);
+    printf("INFO: " CRESET
+           "Importing %s to local switch; may take several minutes.\n",
+           LOCAL_SWITCH_MANIFEST);
 
     int result;
 

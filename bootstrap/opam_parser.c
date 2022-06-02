@@ -63,7 +63,7 @@ EXPORT struct opam_package_s *opam_parse_file(const char *fname)
 #if defined(DEBUG_PARSERS)
     log_info("opam_parse_file: %s", fname);
 #endif
-    FILE *f, *ftrace;
+    FILE *f;
 
     /* log_debug("CWD: %s", getcwd(NULL, 0)); */
 
@@ -114,6 +114,7 @@ EXPORT struct opam_package_s *opam_parse_file(const char *fname)
 
     /* tracing - FIXME: add flag */
 #if defined(YYTRACE)
+    FILE *ftrace;
     char *trace_file = "lemontrace.log";
     ftrace = fopen(trace_file, "w");
     if (ftrace == NULL) {

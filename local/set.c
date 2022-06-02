@@ -2,7 +2,7 @@
 
 #include "bootstrap.h"
 
-/* @opam//local:clean */
+/* @opam//local:set */
 int main(int argc, char *argv[])
 {
     char *opts = "hdDvV";
@@ -19,13 +19,17 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
             break;
         case 'h':
-            display_manpage("man1", "@opam_local_clean.1");
+            display_manpage("man1", "@opam_local_set.1");
             exit(EXIT_SUCCESS);
             break;
         default:
             break;
         }
     }
+    /* if (argc > 1) { */
+    /*     display_manpage("man1", "@opam_local_set.1"); */
+    /*     return 0; */
+    /* } */
 
     optind = 1;
     return opam_main(argc, argv, LOCL);

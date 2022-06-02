@@ -122,6 +122,7 @@ EXPORT void opam_local_refresh(void) // char *_opam_switch_name)
         exit(EXIT_FAILURE);
     }
 
+    //FIXME: use _opam_set_vars
     _xopam_set_vars();
 
     /* make sure output dir exists */
@@ -130,8 +131,6 @@ EXPORT void opam_local_refresh(void) // char *_opam_switch_name)
 
     utarray_new(opam_packages, &ut_str_icd);
 
-    /* we're going to write one 'new_local_repository' target per
-       build file: */
     UT_string *bootstrap_filename = NULL;
     utstring_new(bootstrap_filename);
     utstring_printf(bootstrap_filename,
@@ -264,5 +263,66 @@ EXPORT void opam_local_refresh(void) // char *_opam_switch_name)
 
     utstring_free(bootstrap_filename);
 
+    opam_local_coswitch_set();
+
     log_info("opam_local_refresh exit");
 }
+
+EXPORT void opam_local_coswitch_set(void) {
+    if (debug)
+        printf("opam_local_coswitch_set\n");
+
+    UT_string *coswitch_bootstrapper;
+    utstring_new(coswitch_bootstrapper);
+    utstring_printf(coswitch_bootstrapper,
+                    LOCAL_COSWITCH_ROOT "/BOOTSTRAP.bzl");
+
+    if (debug)
+        printf("target bootstrapper: %s\n",
+               utstring_body(coswitch_bootstrapper));
+
+    if (access(utstring_body(coswitch_bootstrapper), F_OK) != 0) {
+        /* fixme: better msg */
+        log_error("coswitch NOT FOUND: %s; exiting.",
+                  utstring_body(xdg_coswitch_root));
+        fprintf(stderr, "coswitch NOT FOUND: %s; exiting.\n",
+                utstring_body(xdg_coswitch_root));
+        utstring_free(coswitch_bootstrapper);
+        exit(EXIT_FAILURE);
+    }
+
+    UT_string *coswitch_file;
+    utstring_new(coswitch_file);
+    utstring_printf(coswitch_file, "%s/COSWITCH.bzl",
+                    getcwd(NULL, 0));
+    if (verbose)
+        printf("writing: %s\n", utstring_body(coswitch_file));
+
+    errno = 0;
+    FILE *coswitch_FILE = fopen(utstring_body(coswitch_file), "w");
+    if (coswitch_FILE == NULL) { /* fail */
+        printf("ERROR: failed to fopen %s: %s\n",
+               utstring_body(coswitch_file),
+               strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+
+
+    fprintf(coswitch_FILE, "# generated file - DO NOT EDIT\n");
+    fprintf(coswitch_FILE, "# local switch\n");
+
+    fprintf(coswitch_FILE, "def register():\n");
+    fprintf(coswitch_FILE, "    native.new_local_repository(\n");
+    fprintf(coswitch_FILE, "    name       = \"coswitch\",\n");
+    fprintf(coswitch_FILE, "    path       = \"%s\",\n",
+            LOCAL_COSWITCH_ROOT);
+    fprintf(coswitch_FILE, "    build_file_content = \"#\"\n");
+    fprintf(coswitch_FILE, "    )");
+
+    fclose(coswitch_FILE);
+    /* chmod(utstring_body(coswitch_file), S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH); */
+    /* if (debug) */
+    /*     log_debug("wrote %s", coswitch_file); */
+    utstring_free(coswitch_file);
+}
+

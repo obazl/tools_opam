@@ -2,7 +2,7 @@
 
 #include "bootstrap.h"
 
-/* @opam//coswitch:refresh */
+/* @opam//shared:refresh */
 int main(int argc, char *argv[])
 {
     char *opts = "hvVdD";
@@ -26,9 +26,9 @@ int main(int argc, char *argv[])
             break;
         }
     }
-    /* if (argc < 2) { */
-    /*     display_manpage("man1", "@opam_coswitch_refresh.1"); */
-    /* } */
+    if (argc < 2) {
+        display_manpage("man1", "@opam_coswitch_refresh.1");
+    }
 
     optind = 1;
     return opam_main(argc, argv, XDG);

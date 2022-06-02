@@ -27,10 +27,6 @@ int main(int argc, char *argv[])
             break;
         }
     }
-    if (argc < 2) {
-        display_manpage("man1", "@opam_coswitch_set.1");
-        return 0;
-    }
 
     optind = 1;
     return opam_main(argc, argv, false);

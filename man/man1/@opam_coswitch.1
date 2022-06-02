@@ -21,8 +21,8 @@ $ bazel run @opam//coswitch:list
 .Pp
 OBazl supports three kinds of coswitch:
 .Bl -tag -width indent -offset indent
-.It Em XDG
-(Shared) Based on standard OPAM switches installed by default in
+.It Em Shared
+Based on standard OPAM switches installed by default in
 .Pa $HOME/.opam .
 .Pp
 Located in
@@ -39,7 +39,7 @@ Coswith is located in
 Local coswitches are based on standard OPAM switches installed by default in
 .Pa $HOME/.opam .
 They may be shared by multiple projects, just like standard OPAM switches.
-.It Em Project-local No (a/k/a Em here No coswitch)
+.It Em Here
 One per project, located in
 .Pa <projroot>/.obazl.d/opam .
 Each

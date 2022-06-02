@@ -214,15 +214,16 @@ EXPORT int opam_main(int argc, char *argv[], int oswitch) // bool here)
         for (int i = optind; i < argc; i++) {
             if (argv[i] != NULL) {
                 if (verbose)
-                    printf("here switch: installing: %s\n", argv[i]);
+                    printf("refreshing shared coswitch '%s'\n",
+                           argv[i]);
                 opam_xdg_refresh(argv[i]);
                 ct++;
             }
         }
-        if (ct == 0) {/* no args */
-            // refresh current OPAM switch
-            opam_xdg_refresh(NULL);
-        }
+        /* if (ct == 0) {/\* no args *\/ */
+        /*     // refresh current OPAM switch */
+        /*     opam_xdg_refresh(NULL); */
+        /* } */
         /* int index; */
         /* char *coswitch = NULL; */
         /* for (index = optind; index < argc; index++) { */
@@ -405,20 +406,36 @@ EXPORT int opam_main(int argc, char *argv[], int oswitch) // bool here)
     else if (oswitch==HERE && strncmp(basename(argv[0]), "set", 3) == 0) {
         opam_coswitch_set("here");
     }
+    else if (oswitch==LOCL && strncmp(basename(argv[0]), "set", 3) == 0) {
+        //FIXME: verify no args passed
+        opam_local_coswitch_set();
+    }
     else if (oswitch==XDG && strncmp(basename(argv[0]), "set", 3) == 0) {
         int index;
+        int ct = 0;
         char *coswitch = NULL;
         for (index = optind; index < argc; index++) {
             coswitch = strdup(argv[index]);
+            ct++;
+        }
+        if (ct == 0) {
+            fprintf(stderr,
+                    RED "ERROR: " CRESET "One arg required: switch name\n");
+            exit(EXIT_FAILURE); //FIXME
+        }
+        if (ct > 1) {
+            fprintf(stderr,
+                    RED "ERROR: " CRESET "Only one arg allowed: %d\n", ct);
+            exit(EXIT_FAILURE); //FIXME
         }
         if (coswitch != NULL) {
             printf("set coswitch: %s\n", coswitch);
             opam_coswitch_set(coswitch);
             free(coswitch);
-        } else {
-            /* should not happen */
-            printf("set opam_switch: %s\n", coswitch);
-            opam_coswitch_set(opam_switch);
+        /* } else { */
+        /*     /\* should not happen *\/ */
+        /*     printf("set opam_switch: %s\n", coswitch); */
+        /*     opam_coswitch_set(opam_switch); */
         }
     }
     else if (oswitch==HERE && strncmp(basename(argv[0]), "test", 3) == 0) {

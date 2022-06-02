@@ -8,7 +8,6 @@ int main(int argc, char *argv[])
 #if defined(DEBUG_PROFILE)
     printf("local:refresh.main\n");
 #endif
-    bool verbose = false;
     char *opts = "hdDvV";
     int opt;
 

@@ -102,8 +102,8 @@ EXPORT void xdg_configure(void)
 EXPORT void opam_xdg_refresh(char *_opam_switch_name)
 {
     if (verbose) {
-        log_info("opam_config_xdg -s %s", _opam_switch_name);
-        printf("opam_config_xdg -s %s\n", _opam_switch_name);
+        log_info("CMD: opam_xdg_refresh -s %s", _opam_switch_name);
+        printf("CMD: opam_xdg_refresh -s %s\n", _opam_switch_name);
     }
 
     opam_config_init();
@@ -222,7 +222,7 @@ EXPORT void opam_xdg_refresh(char *_opam_switch_name)
         log_info("opam_switch_pfx: %s", utstring_body(opam_switch_pfx));
         log_info("opam_switch_bin: %s", utstring_body(opam_switch_bin));
         log_info("opam_switch_lib: %s", utstring_body(opam_switch_lib));
-        log_info("bzl_switch_pfx: %s", utstring_body(bzl_switch_pfx));
+        log_info("coswitch_pfx: %s", utstring_body(bzl_switch_pfx));
 
         printf("opam_switch_root: %s\n", utstring_body(opam_switch_root));
         printf("opam_switch_name: %s\n", utstring_body(opam_switch_name));
@@ -391,5 +391,8 @@ EXPORT void opam_xdg_refresh(char *_opam_switch_name)
     fclose(bootstrap_FILE);
 
     /* _free_skipped_pkg_list(); */
+
+    opam_coswitch_set(_opam_switch_name);
+
 }
 
