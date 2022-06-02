@@ -1,6 +1,13 @@
 # OBazl tools_opam
 Tools & rules for using OPAM with OBazl
 
+See also:
+
+* [rules_ocaml](https://obazl.github.io/rules_ocaml/)
+* [docs_obazl](https://obazl.github.io/docs_obazl/)
+* [demos_obazl](https://github.com/obazl/demos_obazl)
+* [tools_obazl](https://github.com/obazl/tools_obazl)
+
 ## manpages
 
 You can open them by file path:
