@@ -24,6 +24,7 @@ exports_files([  ## globbing won't work with @
     "@opam_local_clean.1",
     "@opam_local_export.1",
     "@opam_local_import.1",
+    "@opam_local_init.1",
     "@opam_local_list.1",
     "@opam_local_refresh.1",
     "@opam_local_set.1",

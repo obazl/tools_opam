@@ -10,51 +10,42 @@
 #include "log.h"
 #include "opam_local_export.h"
 
-EXPORT void opam_local_export(char *manifest)
+/* export local OPAM switch to .obazl.d/opam/local/opam.manifest */
+EXPORT void opam_local_export(void)
 {
-    log_debug("opam_local_export: %s", manifest);
-
-    UT_string *manifest_name;
-    utstring_new(manifest_name);
-    if (manifest) {
-        utstring_printf(manifest_name, "%s", manifest);
-    } else {
-        /* char *workspace = get_workspace_name(); */
-        /* printf("wsn: '%s'\n", workspace); */
-        /* utstring_printf(manifest_name, "%s.opam.manifest", workspace); */
-        utstring_printf(manifest_name, "%s", LOCAL_SWITCH_MANIFEST);
-    }
-
-    char *exe;
-    int result;
+    log_debug("opam_local_export");
 
     if (access(LOCAL_SWITCH_DIR, F_OK) != 0) {
         //FIXME: print error msg
-        log_error("OPAM local '" LOCAL_SWITCH_DIR "' not found.");
+        log_error("OPAM local dir '" LOCAL_SWITCH_DIR "' not found.");
         printf("OPAM local dir '" LOCAL_SWITCH_DIR "' not found.\n");
         exit(EXIT_FAILURE);
     }
+
+    mkdir_r(LOCAL_COSWITCH_ROOT);
+
+    char *exe;
+    int result;
 
     exe = "opam";
     char *argv[] = {
         "opam", "switch", "export",
         "--cli=2.1",
-        utstring_body(manifest_name),
+        LOCAL_SWITCH_MANIFEST,
         /* opam_cmds_verbose? "--verbose": "", */
         /* opam_cmds_debug? "--debug": "", */
         NULL
     };
-    utstring_body(manifest_name);
-    /* if (verbose) */
-    /*     printf("Exporting %s\n", utstring_body(manifest_name)); */
+
+    if (verbose)
+        printf("Exporting %s\n", LOCAL_SWITCH_MANIFEST);
+
     int argc = (sizeof(argv) / sizeof(argv[0])) - 1;
     result = spawn_cmd(exe, argc, argv);
     if (result != 0) {
-        fprintf(stderr, "FAIL: spawn_cmd(opam var --root .opam --switch _local)\n");
+        log_error("FAIL: local export\n");
+        fprintf(stderr, "FAIL: local export\n");
         exit(EXIT_FAILURE);
-        /* } else { */
-        /*     printf("export result: %s\n", result); */
     }
-// chmod(LOCAL_COSWITCH_ROOT "/local.compiler", S_IRUSR|S_IRGRP|S_IROTH);
 }
 

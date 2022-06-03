@@ -80,7 +80,7 @@ EXPORT int opam_main(int argc, char *argv[], int oswitch) // bool here)
     char *manifest = NULL;
     char *package = NULL;
 
-    char *opts = "c:dDfhom:p:r:s:vV";
+    char *opts = "c:dDfhom:p:r:s:vVx";
     int opt;
     while ((opt = getopt(argc, argv, opts)) != -1) {
         switch (opt) {
@@ -127,6 +127,10 @@ EXPORT int opam_main(int argc, char *argv[], int oswitch) // bool here)
         case 'v':
             verbose = true;
             break;
+        case 'x':
+            expunge = true;
+            break;
+
             /* -h should have been handled by cmd handlers */
             /* case 'h': */
         /*     print_usage(argv[0]); */
@@ -171,6 +175,10 @@ EXPORT int opam_main(int argc, char *argv[], int oswitch) // bool here)
         opam_here_clean();
     }
     else if (oswitch==LOCL && strncmp(basename(argv[0]), "clean", 5) == 0) {
+        if (expunge)
+            printf("Expunging\n");
+        else
+            printf("Cleaning\n");
         opam_local_clean();
     }
     else if (oswitch==HERE && strncmp(basename(argv[0]), "clone", 5) == 0) {
@@ -287,7 +295,7 @@ EXPORT int opam_main(int argc, char *argv[], int oswitch) // bool here)
         opam_here_export(manifest);
     }
     else if (oswitch==LOCL && strncmp(basename(argv[0]), "export", 6) == 0) {
-        opam_local_export(manifest);
+        opam_local_export();
     }
     else if (oswitch==HERE && strncmp(basename(argv[0]), "import", 6) == 0) {
         opam_import(manifest);
@@ -325,6 +333,19 @@ EXPORT int opam_main(int argc, char *argv[], int oswitch) // bool here)
         result = opam_here_opam_init(force, compiler_version, opam_switch);
         /* if (result == 0) */
             /* print_ignore_msg(); */
+    }
+    else if (oswitch==LOCL && strncmp(basename(argv[0]), "init", 4) == 0) {
+        //FIXME: verify at most one arg
+        int index;
+        for (int i = optind; i < argc; i++) {
+            if (argv[i] != NULL) {
+                if (verbose)
+                    printf("here switch: installing: %s\n", argv[i]);
+                opam_local_init(argv[i]);
+                return EXIT_SUCCESS;
+            }
+        }
+        opam_local_init(NULL);
     }
     else if (oswitch==HERE && strncmp(basename(argv[0]), "reinit", 4) == 0) {
         if (compiler_version && opam_switch) {

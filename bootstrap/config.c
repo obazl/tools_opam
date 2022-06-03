@@ -30,6 +30,7 @@
 bool debug;
 bool dry_run;
 bool verbose;
+bool expunge; /* for @opam//foo:clean */
 
 FILE *log_fp;
 /* const char *logfile = OBAZL_OPAM_ROOT "/update.log"; */

@@ -23,10 +23,8 @@ void opam_local_clean(void) {
         printf("opam_local_clean\n");
     opam_local_clean_coswitch();
 
-    return;
-
-    opam_local_clean_switch();
-
+    if (expunge)
+        opam_local_clean_switch();
 }
 
 void opam_local_clean_switch(void) {
@@ -52,18 +50,42 @@ void opam_local_clean_coswitch(void) {
     if (verbose)
         printf("opam_local_clean_coswitch\n");
 
+    /*
+      delete .obazl.d/opam/local subdirs, retaining
+      BOOTSTRAP.bzl, BUILD.bazel, opam.manifest
+      (BOOTSTRAP.bzl will be overwritten with null bootstrap function)
+     */
+
     char *exe = "rm";
-    char *init_argv[] = {
+    char *argv[] = {
         "rm",
         opam_cmds_verbose? "-vdRf" : "-dRf",
-        LOCAL_COSWITCH_ROOT,
+        LOCAL_COSWITCH_ROOT "/lib",
         NULL
     };
 
-    int argc = (sizeof(init_argv) / sizeof(init_argv[0])) - 1;
-    int result = spawn_cmd_with_stdout(exe, argc, init_argv);
+    int argc = (sizeof(argv) / sizeof(argv[0])) - 1;
+    int result = spawn_cmd_with_stdout(exe, argc, argv);
     if (result != 0) {
-        fprintf(stderr, "FAIL: run_cmd(opam var --root .opam --switch _local)\n");
+        log_error("ERROR: rm " LOCAL_COSWITCH_ROOT "/lib\n");
+        fprintf(stderr, RED "ERROR: " CRESET "rm %s\n", argv[2]);
+        exit(EXIT_FAILURE);
+    }
+
+    argv[2] = LOCAL_COSWITCH_ROOT "/ocaml";
+    result = spawn_cmd_with_stdout(exe, argc, argv);
+    if (result != 0) {
+        log_error("ERROR: rm " LOCAL_COSWITCH_ROOT "/lib\n");
+        fprintf(stderr, RED "ERROR: " CRESET "rm %s\n", argv[2]);
+        exit(EXIT_FAILURE);
+    }
+
+    argv[2] = LOCAL_COSWITCH_ROOT "/stublibs";
+    result = spawn_cmd_with_stdout(exe, argc, argv);
+    if (result != 0) {
+        log_error("ERROR: rm " LOCAL_COSWITCH_ROOT "/lib\n");
+        fprintf(stderr, RED "ERROR: " CRESET "rm %s\n", argv[2]);
+        exit(EXIT_FAILURE);
     }
 
     // write null ./COSWITCH.bzl
@@ -88,7 +110,7 @@ void opam_local_clean_coswitch(void) {
     fprintf(bootstrap_FILE, "    )\n");
     fclose(bootstrap_FILE);
 
-    // write null .obazl.d/opam/local/BOOTSTRAP.bzl
+    // write null bootstrap fn to .obazl.d/opam/local/BOOTSTRAP.bzl
     mkdir_r(LOCAL_COSWITCH_ROOT);
     utstring_renew(bootstrap_filename);
     utstring_printf(bootstrap_filename,

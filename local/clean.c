@@ -5,7 +5,7 @@
 /* @opam//local:clean */
 int main(int argc, char *argv[])
 {
-    char *opts = "hdDvV";
+    char *opts = "xhdDvV";      /* -x == expunge switch too */
     int opt;
 
     while ((opt = getopt(argc, argv, opts)) != -1) {

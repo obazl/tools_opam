@@ -2,7 +2,7 @@
 
 #include "bootstrap.h"
 
-/* @opam//here:init -- pkg */
+/* @opam//local:init -- pkg */
 int main(int argc, char *argv[])
 {
     bool verbose = false;
@@ -20,14 +20,18 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
             break;
         case 'h':
-            display_manpage("man1", "@opam_here_opam_init.1");
+            display_manpage("man1", "@opam_local_init.1");
             exit(EXIT_SUCCESS);
             break;
         default:
             break;
         }
     }
+    if (argc < 2) {
+        display_manpage("man1", "@opam_local_init.1");
+        return 0;
+    }
 
     optind = 1;
-    return opam_main(argc, argv, true);
+    return opam_main(argc, argv, LOCL);
 }

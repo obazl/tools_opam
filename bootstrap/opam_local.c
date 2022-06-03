@@ -14,7 +14,7 @@
 #if INTERFACE
 #define LOCAL_OPAM_ROOT ".opam" //FIXME: rename OPAM_HERE_ROOT
 #define LOCAL_SWITCH_DIR "./_opam"
-#define LOCAL_SWITCH_MANIFEST OBAZL_ROOT "/opam/local.manifest"
+#define LOCAL_SWITCH_MANIFEST OBAZL_ROOT "/opam/local/opam.manifest"
 #define LOCAL_COSWITCH_ROOT OBAZL_ROOT "/opam/local"
 #define LOCAL_COMPILER "/local.compiler"
 #define LOCAL_COMPILER_FILE LOCAL_COSWITCH_ROOT LOCAL_COMPILER
