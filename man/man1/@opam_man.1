@@ -1,0 +1,23 @@
+.Dd June 3, 2022
+.Dt @OPAM-MAN 1
+.Os OBazl User Manual
+.Sh NAME
+.Nm @opam//man
+.Nd Display tools_opam manpage.
+.Sh SYNOPSIS
+.Sy @opam//man
+.Op Ar --
+.Op Ar page
+.Bl -tag -width -indent
+.It Fl h
+Display this help screen.
+.El
+.Sh DESCRIPTION
+Display tools_opam manpage in terminal.
+.Sh EXAMPLES
+.Bd -literal -offset indent
+.Ic $ bazel run @opam//man -- @opam_local
+.Ed
+.Sh SEE ALSO
+.Sh AUTHORS
+.An Gregg Reynolds

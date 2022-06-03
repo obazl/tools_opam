@@ -307,16 +307,14 @@ EXPORT void opam_local_coswitch_set(void) {
         exit(EXIT_FAILURE);
     }
 
-
     fprintf(coswitch_FILE, "# generated file - DO NOT EDIT\n");
-    fprintf(coswitch_FILE, "# local switch\n");
-
+    fprintf(coswitch_FILE, "# coswitch: local\n\n");
     fprintf(coswitch_FILE, "def register():\n");
     fprintf(coswitch_FILE, "    native.new_local_repository(\n");
-    fprintf(coswitch_FILE, "    name       = \"coswitch\",\n");
-    fprintf(coswitch_FILE, "    path       = \"%s\",\n",
+    fprintf(coswitch_FILE, "        name       = \"coswitch\",\n");
+    fprintf(coswitch_FILE, "        path       = \"%s\",\n",
             LOCAL_COSWITCH_ROOT);
-    fprintf(coswitch_FILE, "    build_file_content = \"#\"\n");
+    fprintf(coswitch_FILE, "        build_file_content = \"#\"\n");
     fprintf(coswitch_FILE, "    )");
 
     fclose(coswitch_FILE);

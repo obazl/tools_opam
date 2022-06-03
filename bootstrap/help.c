@@ -20,7 +20,7 @@ EXPORT void display_manpage(char *section, char *manpage) {
     utstring_new(pagesrc);
     utstring_printf(pagesrc,
                     /* "%s/man/%s/%s", */
-                    "%s/external/opam/man/%s/%s",
+                    "%s/external/opam/man/%s/@opam_%s.1",
                     runfiles_root,
                     section,
                     manpage);

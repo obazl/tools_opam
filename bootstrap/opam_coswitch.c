@@ -168,14 +168,17 @@ EXPORT void opam_coswitch_set(char *coswitch) {
         }
         utstring_free(cmd);
 
-        fprintf(coswitch_FILE, "# generated file - DO NOT EDIT\n");
-        fprintf(coswitch_FILE, "# switch name: %s\txdg: %s\n",
-                coswitch, utstring_body(xdg_coswitch_root));
-        fprintf(coswitch_FILE, "#   compiler version: %s\n",
-                compiler_version);
-        if (compiler_variants != NULL)
-            fprintf(coswitch_FILE, "#   ocaml-variants:   %s\n\n",
-                    compiler_variants);
+        fprintf(coswitch_FILE, "# generated file - DO NOT EDIT - DO NOT SAVE TO VERSION CONTROL\n");
+        fprintf(coswitch_FILE, "# coswitch: shared switch %s\n\n",
+                coswitch);
+
+        /* fprintf(coswitch_FILE, "# switch name: %s\txdg: %s\n", */
+        /*         coswitch, utstring_body(xdg_coswitch_root)); */
+        /* fprintf(coswitch_FILE, "#   compiler version: %s\n", */
+        /*         compiler_version); */
+        /* if (compiler_variants != NULL) */
+        /*     fprintf(coswitch_FILE, "#   ocaml-variants:   %s\n\n", */
+        /*             compiler_variants); */
 
         fprintf(coswitch_FILE, "def register():\n");
         fprintf(coswitch_FILE, "    native.new_local_repository(\n");
@@ -183,7 +186,7 @@ EXPORT void opam_coswitch_set(char *coswitch) {
         fprintf(coswitch_FILE, "    path       = \"%s/%s\",\n",
                 utstring_body(xdg_coswitch_root), coswitch);
         fprintf(coswitch_FILE, "    build_file_content = \"#\"\n");
-        fprintf(coswitch_FILE, "    )");
+        fprintf(coswitch_FILE, "    )\n");
 
         fclose(coswitch_FILE);
         chmod(utstring_body(coswitch_file), S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);

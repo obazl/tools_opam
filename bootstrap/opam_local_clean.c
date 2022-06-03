@@ -88,29 +88,10 @@ void opam_local_clean_coswitch(void) {
         exit(EXIT_FAILURE);
     }
 
-    // write null ./COSWITCH.bzl
+    opam_local_coswitch_set();
     UT_string *bootstrap_filename = NULL;
-    utstring_new(bootstrap_filename);
-    utstring_printf(bootstrap_filename,
-                    "%s", "COSWITCH.bzl");
-    if (verbose)
-        fprintf(stdout, "Writing null %s\n", utstring_body(bootstrap_filename));
-    bootstrap_FILE = fopen(utstring_body(bootstrap_filename), "w");
-    if (bootstrap_FILE == NULL) {
-        perror(utstring_body(bootstrap_filename));
-        exit(EXIT_FAILURE);
-    }
-    fprintf(bootstrap_FILE, "# generated file - DO NOT EDIT\n");
-    fprintf(bootstrap_FILE, "def register():\n");
-    fprintf(bootstrap_FILE, "    native.new_local_repository(\n");
-    fprintf(bootstrap_FILE, "        name       = \"coswitch\",\n");
-    fprintf(bootstrap_FILE, "        path       = \".obazl.d/opam/local\",\n");
-    fprintf(bootstrap_FILE, "        build_file_content = \"#\",\n");
-    fprintf(bootstrap_FILE, "        workspace_file_content = \"#\"\n");
-    fprintf(bootstrap_FILE, "    )\n");
-    fclose(bootstrap_FILE);
 
-    // write null bootstrap fn to .obazl.d/opam/local/BOOTSTRAP.bzl
+    // write default bootstrap fn to .obazl.d/opam/local/BOOTSTRAP.bzl
     mkdir_r(LOCAL_COSWITCH_ROOT);
     utstring_renew(bootstrap_filename);
     utstring_printf(bootstrap_filename,
@@ -125,6 +106,8 @@ void opam_local_clean_coswitch(void) {
         exit(EXIT_FAILURE);
     }
     fprintf(bootstrap_FILE, "# generated file - DO NOT EDIT\n");
+    fprintf(bootstrap_FILE, "# default bootstrap function does nothing;\n");
+    fprintf(bootstrap_FILE, "# will be overwritten by @opam//local:refresh or @opam//shared:refresh\n");
     fprintf(bootstrap_FILE, "def bootstrap():\n");
     fprintf(bootstrap_FILE, "    True\n");
     fclose(bootstrap_FILE);

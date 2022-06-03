@@ -8,7 +8,20 @@
 .Sy @opam//local:import
 .Op Fl h
 .Sh DESCRIPTION
-Imports OPAM local-switch.
+Imports OPAM local-switch from
+.Pa .obazl.d/opam/local/manifest.
+.Pp
+To generate
+.Pa .obazl.d/opam/local/manifest ,
+run
+.Bd -literal -offset indent
+.Ic $ bazel run @opam//local:export .
+.Ed
+.Pp
+To import from a different file, or from multiple files, use the Starlark rule
+.Sy opam_import
+defined in
+.Pa @opam//local:BUILD.bzl .
 .Sh OPTIONS
 .Bl -tag -width -indent
 .It Fl V
@@ -21,11 +34,7 @@ Verbose output
 Display this help screen.
 .El
 .Sh SEE ALSO
-.Xr @opam//local:list
+.Xr @opam//local
 .Xr @opam//local:export
-.Xr @opam//local/opam:init
-.Xr @opam//local/opam:install
-.Xr @opam//local/opam:remove
-.Xr local
 .Sh AUTHORS
 .An Gregg Reynolds

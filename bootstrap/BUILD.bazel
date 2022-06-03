@@ -162,6 +162,7 @@ cc_library(
         "//man/man1:@opam_local_list.1",
         "//man/man1:@opam_local_refresh.1",
         "//man/man1:@opam_local_set.1",
+        "//man/man1:@opam_man.1",
     ],
     defines = select({
         # ":ast-dump-enabled": ["DEBUG_DUMP"],
