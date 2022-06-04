@@ -143,6 +143,7 @@ void _emit_ocaml_toolchain_defn(FILE *ostream, char *switch_name)
     fprintf(ostream, "    ocamlopt_opt = \"@ocaml//bin:ocamlopt.opt\",\n");
     fprintf(ostream, "    ocamllex     = \"@ocaml//bin:ocamllex\",\n");
     fprintf(ostream, "    ocamlyacc    = \"@ocaml//bin:ocamlyacc\",\n");
+    fprintf(ostream, "    stublibs     = \"@stublibs//:stublibs\",\n");
     fprintf(ostream, "    linkmode     = \"dynamic\"\n");
     fprintf(ostream, ")\n");
 }
@@ -245,26 +246,26 @@ void _symlink_ocaml_stdlib(char *tgtdir)
     closedir(d);
 }
 
-void emit_ocaml_stdlib_pkg(char *switch_name)
-{
-    if (debug)
-        log_debug("emit_ocaml_stdlib_pkg");
+/* void emit_ocaml_stdlib_pkg(char *switch_name) */
+/* { */
+/*     if (debug) */
+/*         log_debug("emit_ocaml_stdlib_pkg"); */
 
-    UT_string *ocaml_file;
-    utstring_new(ocaml_file);
-    utstring_concat(ocaml_file, bzl_switch_pfx);
-    utstring_printf(ocaml_file, "/lib/ocaml");
-    mkdir_r(utstring_body(ocaml_file));
+/*     UT_string *ocaml_file; */
+/*     utstring_new(ocaml_file); */
+/*     utstring_concat(ocaml_file, bzl_switch_pfx); */
+/*     utstring_printf(ocaml_file, "/lib/ocaml"); */
+/*     mkdir_r(utstring_body(ocaml_file)); */
 
-    _symlink_ocaml_stdlib(utstring_body(ocaml_file));
+/*     _symlink_ocaml_stdlib(utstring_body(ocaml_file)); */
 
-    utstring_printf(ocaml_file, "/BUILD.bazel");
+/*     utstring_printf(ocaml_file, "/BUILD.bazel"); */
 
-    _copy_buildfile("ocaml_stdlib.BUILD", ocaml_file);
-    /* _symlink_buildfile("ocaml_stdlib.BUILD", ocaml_file); */
+/*     _copy_buildfile("ocaml_stdlib.BUILD", ocaml_file); */
+/*     /\* _symlink_buildfile("ocaml_stdlib.BUILD", ocaml_file); *\/ */
 
-    utstring_free(ocaml_file);
-}
+/*     utstring_free(ocaml_file); */
+/* } */
 
 /* **************************************************************** */
 void _emit_ocaml_stublibs_symlinks(char *_dir)
@@ -363,20 +364,19 @@ void _emit_stublibs_symlinks(char *_dir)
     UT_string *dst_dir;
     utstring_new(dst_dir);
     utstring_concat(dst_dir, bzl_switch_pfx);
-    utstring_printf(dst_dir, "%s", _dir); // "/ocaml/stublibs");
+    utstring_printf(dst_dir, "%s", "/lib/stublibs");
     mkdir_r(utstring_body(dst_dir));
 
     UT_string *src_dir; // relative to opam_switch_lib
     utstring_new(src_dir);
     utstring_printf(src_dir,
                     "%s%s",
-                    /* "%s/ocaml/stublibs", */
                     utstring_body(opam_switch_lib),
-                    _dir);
+                    "/stublibs"); // _dir);
 
     log_debug("src_dir: %s\n", utstring_body(src_dir));
     log_debug("dst_dir: %s\n", utstring_body(dst_dir));
-    
+
     UT_string *src;
     utstring_new(src);
     UT_string *dst;
@@ -476,19 +476,19 @@ void emit_ocaml_stublibs(char *switch_name)
     fclose(ostream);
 
     _emit_ocaml_stublibs_symlinks("/ocaml/stublibs");
+}
 
-    /* **************************************************************** */
-    /* for stublibs we need both /ocaml/stublibs and /stublibs */
-    /* first WORKSPACE.bazel */
-    utstring_renew(ocaml_file);
+void emit_lib_stublibs(char *switch_name)
+{
+    UT_string *ocaml_file;
+    utstring_new(ocaml_file);
     utstring_concat(ocaml_file, bzl_switch_pfx);
-    utstring_printf(ocaml_file, "/stublibs");
+    utstring_printf(ocaml_file, "/lib/stublibs");
     mkdir_r(utstring_body(ocaml_file));
 
     utstring_printf(ocaml_file, "/WORKSPACE.bazel");
 
-    /* printf("writing ws file: %s\n", utstring_body(ocaml_file)); */
-
+    FILE *ostream = fopen(utstring_body(ocaml_file), "w");
     ostream = fopen(utstring_body(ocaml_file), "w");
     if (ostream == NULL) {
         log_error("fopen: %s: %s", strerror(errno),
@@ -505,7 +505,7 @@ void emit_ocaml_stublibs(char *switch_name)
     /* now BUILD.bazel */
     utstring_renew(ocaml_file);
     utstring_concat(ocaml_file, bzl_switch_pfx);
-    utstring_printf(ocaml_file, "/stublibs");
+    utstring_printf(ocaml_file, "/lib/stublibs");
     mkdir_r(utstring_body(ocaml_file));
     utstring_printf(ocaml_file, "/BUILD.bazel");
 
@@ -528,7 +528,7 @@ void emit_ocaml_stublibs(char *switch_name)
     fclose(ostream);
     utstring_free(ocaml_file);
     /* **************************************************************** */
-    _emit_stublibs_symlinks("/stublibs");
+    _emit_stublibs_symlinks("/lib/stublibs");
 }
 
 void emit_ocaml_toolchain_buildfile(char *switch_name)
@@ -1497,7 +1497,7 @@ void emit_ocaml_bootstrap(char *opam_switch, FILE *bootstrap_FILE)
     fprintf(bootstrap_FILE, "        path       = ");
     fprintf(bootstrap_FILE, "\"%s/%s\",\n",
             utstring_body(bzl_switch_pfx),
-            "stublibs");
+            "lib/stublibs");
     fprintf(bootstrap_FILE, "    )\n\n");
 
 }
@@ -1546,6 +1546,7 @@ void emit_ocaml_workspace(char *switch_name, FILE *bootstrap_FILE)
     /* emit_ocaml_stdlib_pkg(switch_name); */
 
     emit_ocaml_stublibs(switch_name);
+    emit_lib_stublibs(switch_name);
 
     emit_ocaml_compiler_libs_pkg(switch_name);
 
