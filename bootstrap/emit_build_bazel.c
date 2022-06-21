@@ -6,7 +6,7 @@
 #include <stdio.h>
 #endif
 
-#ifdef LINUX
+#ifdef __linux__
 #include <linux/limits.h>
 #else
 #include <limits.h>

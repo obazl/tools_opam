@@ -5,7 +5,7 @@
 #include <fts.h>
 #endif
 #if INTERFACE
-#ifdef LINUX
+#ifdef __linux__
 #include <linux/limits.h>
 #include <sys/types.h>
 #include <sys/wait.h>

@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 #if INTERFACE
-#ifdef LINUX
+#ifdef __linux__
 #include <linux/limits.h>
 #else
 #include <limits.h>

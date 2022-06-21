@@ -4,7 +4,7 @@
 // re2c $INPUT -o $OUTPUT -i
 #include <assert.h>
 #include <errno.h>
-#ifdef LINUX
+#ifdef __linux__
 #include <linux/limits.h>
 #else
 #include <limits.h>

@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <libgen.h>
-#ifdef LINUX
+#ifdef __linux__
 #include <linux/limits.h>
 #else
 #include <limits.h>             /* PATH_MAX */
