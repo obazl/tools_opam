@@ -110,7 +110,10 @@ cc_library(
         "utarray.h",
         "uthash.h",
         "utstring.h",
-    ],
+    ] + select({
+        "//bzl/host:linux": ["strlcpy.c"],
+        "//conditions:default":   []
+    }),
     hdrs = [
         "bootstrap.h",
         "utarray.h",
@@ -165,6 +168,9 @@ cc_library(
         "//man/man1:@opam_man.1",
     ],
     defines = select({
+        "//bzl/host:linux": ["_XOPEN_SOURCE=500"],
+        "//conditions:default":   []
+    }) + select({
         # ":ast-dump-enabled": ["DEBUG_DUMP"],
         ":yydebug-enabled": ["DEBUG_DUMP"],
         "//conditions:default":   []

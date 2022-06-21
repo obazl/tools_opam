@@ -56,15 +56,22 @@ EXPORT char *mkdir_r_impl(char *base, char *path)
 {
     log_debug("entering mkdir_r_impl base: '%s', path: '%s'\n", base, path);
 
-    char *buf_dirname[PATH_MAX];
-    char *buf_basename[PATH_MAX];
+    char *buf_dirname;   // [PATH_MAX];
+    char *buf_basename;  //[PATH_MAX];
 
     if ( access(base, F_OK) < 0 ) {
         /* base does not exist, recur to start at existing seg */
         log_debug("mkdir_r recurring to create base"); // : %s, path: %s",
                   /* dirname_r(base, buf_dirname), basename_r(base, buf_basename)); */
-        mkdir_r_impl(dirname_r(base, (char*)buf_dirname),
-                     basename_r(base, (char*)buf_basename));
+        int blen = strnlen(base, PATH_MAX) + 1;
+        buf_dirname = malloc(blen);
+        strlcpy(buf_dirname, base, blen);
+        buf_basename = malloc(blen);
+        strlcpy(buf_basename, base, blen);
+        mkdir_r_impl(dirname((char*)buf_dirname),
+                     basename((char*)buf_basename));
+        /* mkdir_r_impl(dirname_r(base, (char*)buf_dirname), */
+        /*              basename_r(base, (char*)buf_basename)); */
     }
     /* now base should exist */
     if ( access(base, F_OK) < 0 ) {

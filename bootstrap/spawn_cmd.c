@@ -12,6 +12,8 @@
 #if INTERFACE
 #ifdef LINUX                    /* FIXME */
 #include <linux/limits.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #else // FIXME: macos test
 #include <limits.h>
 #endif
