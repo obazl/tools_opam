@@ -5,9 +5,9 @@
 #include <stdio.h>
 #endif
 
-#ifdef LINUX                    /* FIXME */
+#ifdef LINUX
 #include <linux/limits.h>
-#else // FIXME: macos test
+#else
 #include <limits.h>
 #endif
 #include <string.h>

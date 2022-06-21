@@ -2,9 +2,9 @@
 // re2c $INPUT -o $OUTPUT -i
 #include <assert.h>
 #include <errno.h>
-#ifdef LINUX                    /* FIXME */
+#ifdef LINUX
 #include <linux/limits.h>
-#else // FIXME: macos test
+#else
 #include <limits.h>
 #endif
 #include <stdio.h>

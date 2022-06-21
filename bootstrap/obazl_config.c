@@ -1,9 +1,9 @@
 #include <ctype.h>
 #include <errno.h>
 #include <libgen.h>
-#ifdef LINUX                    /* FIXME */
+#ifdef LINUX
 #include <linux/limits.h>
-#else // FIXME: macos test
+#else
 #include <limits.h>             /* PATH_MAX */
 #endif
 #include <pwd.h>

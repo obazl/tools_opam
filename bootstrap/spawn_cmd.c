@@ -10,11 +10,11 @@
 #include <unistd.h>
 
 #if INTERFACE
-#ifdef LINUX                    /* FIXME */
+#ifdef LINUX
 #include <linux/limits.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#else // FIXME: macos test
+#else
 #include <limits.h>
 #endif
 #endif
@@ -206,7 +206,9 @@ int spawn_cmd(char *executable, int argc, char *argv[])
                 // terminated due to receipt of a signal
                 log_error("WIFSIGNALED(rc)");
                 log_error("WTERMSIG: %d", WTERMSIG(rc));
+#ifdef WCOREDUMP
                 log_error("WCOREDUMP?: %d", WCOREDUMP(rc));
+#endif
                 posix_spawn_file_actions_destroy(&action);
                 return -1;
             } else if (WIFSTOPPED(rc)) {

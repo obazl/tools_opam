@@ -4,6 +4,16 @@
 #if INTERFACE
 #include <fts.h>
 #endif
+#if INTERFACE
+#ifdef LINUX
+#include <linux/limits.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#else
+#include <limits.h>
+#endif
+#endif
+
 #include <spawn.h>
 #include <stdio.h>
 #include <stdlib.h>

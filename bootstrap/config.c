@@ -1,9 +1,9 @@
 #include <ctype.h>
 #include <errno.h>
 #include <libgen.h>
-#ifdef LINUX                    /* FIXME */
+#ifdef LINUX
 #include <linux/limits.h>
-#else // FIXME: macos test
+#else
 #include <limits.h>             /* PATH_MAX */
 #endif
 #include <pwd.h>
@@ -166,31 +166,31 @@ EXPORT int inih_handler(void* config, const char* section, const char* name, con
     return 1;
 }
 
-void log_fn(log_Event *evt)
-{
-    /* DO NOT USE! It seems to corrupt data somehow... */
-    /* happens when we use basename on evt->file */
+/* void log_fn(log_Event *evt) */
+/* { */
+/*     /\* DO NOT USE! It seems to corrupt data somehow... *\/ */
+/*     /\* happens when we use basename on evt->file *\/ */
 
-    /* typedef struct { */
-    /*   va_list ap; */
-    /*   const char *fmt; */
-    /*   const char *file; */
-    /*   struct tm *time; */
-    /*   void *udata; */
-    /*   int line; */
-    /*   int level; */
-    /* } log_Event; */
+/*     /\* typedef struct { *\/ */
+/*     /\*   va_list ap; *\/ */
+/*     /\*   const char *fmt; *\/ */
+/*     /\*   const char *file; *\/ */
+/*     /\*   struct tm *time; *\/ */
+/*     /\*   void *udata; *\/ */
+/*     /\*   int line; *\/ */
+/*     /\*   int level; *\/ */
+/*     /\* } log_Event; *\/ */
 
-    static char fname_buffer[MAXPATHLEN];
-    memset(log_buf, '0', 512);
-    /* DO NOT use allocating basename, it corrupts something... */
-    basename_r((char*)evt->file, fname_buffer);
-    snprintf(log_buf, 512, "%d %s:%d ",
-            evt->level, (char*)&fname_buffer, evt->line);
-    fprintf(log_fp, "%s", log_buf);
-    vsprintf(log_buf, evt->fmt, evt->ap);
-    fprintf(log_fp, "%s\n", log_buf);
-}
+/*     static char fname_buffer[MAXPATHLEN]; */
+/*     memset(log_buf, '0', 512); */
+/*     /\* DO NOT use allocating basename, it corrupts something... *\/ */
+/*     basename_r((char*)evt->file, fname_buffer); */
+/*     snprintf(log_buf, 512, "%d %s:%d ", */
+/*             evt->level, (char*)&fname_buffer, evt->line); */
+/*     fprintf(log_fp, "%s", log_buf); */
+/*     vsprintf(log_buf, evt->fmt, evt->ap); */
+/*     fprintf(log_fp, "%s\n", log_buf); */
+/* } */
 
 UT_string *logfile;
 EXPORT void config_logging(UT_string *_logfile)

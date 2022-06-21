@@ -3,9 +3,9 @@
 #include <libgen.h>
 
 #if INTERFACE
-#ifdef LINUX                    /* FIXME */
+#ifdef LINUX
 #include <linux/limits.h>
-#else // FIXME: macos test
+#else
 #include <limits.h>
 #endif
 #endif
