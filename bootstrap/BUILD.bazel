@@ -503,6 +503,62 @@ genrule(
 
 ################################################################
 
+# STRLCPY_LOC = select({
+#         "//bzl/host:linux": " strlcpy.c) \\",
+#         "//conditions:default":   ""
+# })
+
+CMD_HDR = "\n".join([
+    "SRC1=$(location config.c)",
+    "SRCDIR1=`dirname $$SRC1`;",
+])
+
+MAC_FILES = " ".join([
+    "$(location :makeheaders)",
+    "$(location config.c)",
+    "$(location driver.c)",
+    "$(location frontend.c)",
+    "$(location emit_build_bazel.c)",
+    "$(location emit_ocaml_repo.c)",
+    "$(location help.c)",
+    "$(location meta_entries.c)",
+    "$(location meta_flags.c)",
+    "$(location meta_fs.c)",
+    "$(location meta_packages.c)",
+    "$(location meta_properties.c)",
+    "$(location meta_settings.c)",
+    "$(location meta_values.c)",
+    "$(location meta_lexis.c)",
+    "$(location meta_syntaxis.c)",
+    "$(location obazl_config.c)",
+    "$(location opam.c)",
+    "$(location opam_config.c)",
+    "$(location opam_config_here.c)",
+    "$(location opam_config_xdg.c)",
+    "$(location opam_coswitch.c)",
+    "$(location opam_deps.c)",
+    "$(location opam_here.c)",
+    "$(location opam_import.c)",
+    "$(location opam_here_create.c)",
+    "$(location opam_here_export.c)",
+    "$(location opam_here_opam_init.c)",
+    "$(location opam_here_opam_install.c)",
+    "$(location opam_init_prompts.c)",
+    "$(location opam_init_xdg.c)",
+    "$(location opam_local.c)",
+    "$(location opam_local_clean.c)",
+    "$(location opam_local_export.c)",
+    "$(location opam_local_import.c)",
+    "$(location opam_local_init.c)",
+    "$(location opam_local_refresh.c)",
+    "$(location opam_status.c)",
+    "$(location opam_xdg_list.c)",
+    "$(location run_cmd.c)",
+    "$(location spawn_cmd.c)",
+    "$(location utils.c)",
+    "$(location ansi_colors.h)",
+])
+
 ########
 genrule(
     name = "mkhdrs",
@@ -548,8 +604,11 @@ genrule(
         "run_cmd.c",
         "spawn_cmd.c",
         "utils.c",
-        "ansi_colors.h"
-    ],
+        "ansi_colors.h",
+    ] + select({
+        "//bzl/host:linux": ["strlcpy.c"],
+        "//conditions:default":   []
+    }),
     outs = [
         "config.h",
         "driver.h",
@@ -593,54 +652,10 @@ genrule(
         "spawn_cmd.h",
         "utils.h",
     ],
-    cmd = "\n".join([
-        "SRC1=$(location config.c)",
-        "SRCDIR1=`dirname $$SRC1`",
-        "$(location :makeheaders) \\",
-        "    $(location config.c) \\",
-        "    $(location driver.c) \\",
-        "    $(location frontend.c) \\",
-        "    $(location emit_build_bazel.c) \\",
-        "    $(location emit_ocaml_repo.c) \\",
-        "    $(location help.c) \\",
-        "    $(location meta_entries.c) \\",
-        "    $(location meta_flags.c) \\",
-        "    $(location meta_fs.c) \\",
-        "    $(location meta_packages.c) \\",
-        "    $(location meta_properties.c) \\",
-        "    $(location meta_settings.c) \\",
-        "    $(location meta_values.c) \\",
-        "    $(location meta_lexis.c) \\",
-        "    $(location meta_syntaxis.c) \\",
-        "    $(location obazl_config.c) \\",
-        "    $(location opam.c) \\",
-        "    $(location opam_config.c) \\",
-        "    $(location opam_config_here.c) \\",
-        "    $(location opam_config_xdg.c) \\",
-        "    $(location opam_coswitch.c) \\",
-        "    $(location opam_deps.c) \\",
-        "    $(location opam_here.c) \\",
-        "    $(location opam_import.c) \\",
-        "    $(location opam_here_create.c) \\",
-        "    $(location opam_here_export.c) \\",
-        "    $(location opam_here_opam_init.c) \\",
-        "    $(location opam_here_opam_install.c) \\",
-        "    $(location opam_init_prompts.c) \\",
-        "    $(location opam_init_xdg.c) \\",
-        "    $(location opam_local.c) \\",
-        "    $(location opam_local_clean.c) \\",
-        "    $(location opam_local_export.c) \\",
-        "    $(location opam_local_import.c) \\",
-        "    $(location opam_local_init.c) \\",
-        "    $(location opam_local_refresh.c) \\",
-        "    $(location opam_status.c) \\",
-        "    $(location opam_xdg_list.c) \\",
-        "    $(location run_cmd.c) \\",
-        "    $(location spawn_cmd.c) \\",
-        "    $(location utils.c) \\",
-        "    $(location ansi_colors.h)",
-        "cp $${SRCDIR1}/*.h $(@D)",
-    ]),
+    cmd = CMD_HDR + MAC_FILES + select({
+        "//bzl/host:linux": "$(location strlcpy.c);",
+        "//conditions:default": ";"
+    }) + "cp $${SRCDIR1}/*.h $(@D)",
     tools = [":makeheaders"],
     visibility = ["//visibility:public"]
 )
