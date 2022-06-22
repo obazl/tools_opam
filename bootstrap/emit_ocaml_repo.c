@@ -135,7 +135,7 @@ void _emit_ocaml_toolchain_defn(FILE *ostream, char *switch_name)
 {
     fprintf(ostream, "\n");
     fprintf(ostream, "#### toolchain definitions ####\n");
-    fprintf(ostream, "ocaml_toolchain(\n");
+    fprintf(ostream, "ocaml_toolchain_model(\n");
     fprintf(ostream, "    name         = \"opam_toolchain\",\n");
     fprintf(ostream, "    ocamlc       = \"@ocaml//bin:ocamlc\",\n");
     fprintf(ostream, "    ocamlc_opt   = \"@ocaml//bin:ocamlc.opt\",\n");
