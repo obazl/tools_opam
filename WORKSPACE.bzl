@@ -2,8 +2,6 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
-load("//toolchain:BUILD.bzl", "opam_toolchain")
-
 ################################################################
 def opam_fetch_repos():
 
@@ -139,13 +137,3 @@ filegroup(name = "hdrs", srcs = ["ini.h"], visibility = ["//visibility:public"])
 #         path = "ocaml/threads",
 #         build_file = "@opam//opam/_templates:ocaml.threads.REPO"
 #     )
-
-################################################################
-def opam_configure():
-
-    opam_fetch_repos()
-
-    # install_kernel_libs()
-
-    # opam_toolchain configures @ocaml.toolchain
-    opam_toolchain()
