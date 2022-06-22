@@ -15,25 +15,19 @@ def opam_fetch_repos():
     )
 
     # maybe(
-    #     git_repository,
-    #     name = "obazl_tools_obazl",
-    #     remote = "https://github.com/obazl/tools_obazl",
-    #     branch = "dev",
-    # )
-
-    # maybe(
     #     http_archive,
     #     name = "rules_foreign_cc",
-    #     strip_prefix = "rules_foreign_cc-0.6.0",
-    #     url = "https://github.com/bazelbuild/rules_foreign_cc/archive/0.6.0.tar.gz",
+    #     sha256 = "1df78c7d7eed2dc21b8b325a2853c31933a81e7b780f9a59a5d078be9008b13a",
+    #     strip_prefix = "rules_foreign_cc-0.7.0",
+    #     url = "https://github.com/bazelbuild/rules_foreign_cc/archive/0.7.0.tar.gz",
     # )
 
     maybe(
         http_archive,
         name = "rules_foreign_cc",
-        sha256 = "1df78c7d7eed2dc21b8b325a2853c31933a81e7b780f9a59a5d078be9008b13a",
-        strip_prefix = "rules_foreign_cc-0.7.0",
-        url = "https://github.com/bazelbuild/rules_foreign_cc/archive/0.7.0.tar.gz",
+        sha256 = "6041f1374ff32ba711564374ad8e007aef77f71561a7ce784123b9b4b88614fc",
+        strip_prefix = "rules_foreign_cc-0.8.0",
+        url = "https://github.com/bazelbuild/rules_foreign_cc/archive/0.8.0.tar.gz",
     )
 
     maybe(
@@ -67,6 +61,13 @@ filegroup(name = "hdrs", srcs = ["ini.h"], visibility = ["//visibility:public"])
         strip_prefix = "inih-cb55f57d87ae840bd0f65dbe6bd22fa021a873a7",
         sha256 = "26d05999033eef9e3abca2d4dbf3dc2e4a24335df51231b6faa093be06bb19d7"
     )
+
+    # maybe(
+    #     git_repository,
+    #     name = "obazl_tools_obazl",
+    #     remote = "https://github.com/obazl/tools_obazl",
+    #     branch = "dev",
+    # )
 
     # maybe(
     #     new_git_repository,
