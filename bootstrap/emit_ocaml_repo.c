@@ -151,7 +151,7 @@ void _emit_ocaml_toolchain_defn(FILE *ostream, char *switch_name)
 void _emit_ocaml_toolchain_bindings(FILE *ostream, char *switch_name)
 {
     fprintf(ostream,
-    "load(\"@rules_ocaml//toolchain:rules.bzl\", \"ocaml_toolchain\")\n");
+    "load(\"@rules_ocaml//toolchain:model.bzl\", \"ocaml_toolchain_model\")\n");
 
     fprintf(ostream, "\n");
     fprintf(ostream, "## toolchain bindings (to be passed to 'register_toolchains' function)\n");
@@ -162,7 +162,8 @@ void _emit_ocaml_toolchain_bindings(FILE *ostream, char *switch_name)
     /* fprintf(ostream, "    name                   = \"opam.%s_macos\",\n", switch_name); */
     fprintf(ostream, "    name                   = \"ocaml_macos\",\n");
     fprintf(ostream, "    visibility             = [\"//visibility:public\"],\n");
-    fprintf(ostream, "    toolchain_type         = \"@rules_ocaml//ocaml:toolchain\",\n");
+    // was: @rules_ocaml//ocaml:toolchain
+    fprintf(ostream, "    toolchain_type         = \"@rules_ocaml//toolchain:type\",\n");
     // # == toolchain_definition
     fprintf(ostream, "    toolchain              = \":opam_toolchain\",\n");
     fprintf(ostream, "    exec_compatible_with   = [\n");
@@ -182,7 +183,7 @@ void _emit_ocaml_toolchain_bindings(FILE *ostream, char *switch_name)
     /* fprintf(ostream, "    name                   = \"opam.%s_linux\",\n", switch_name); */
     fprintf(ostream, "    name                   = \"ocaml_linux\",\n");
     fprintf(ostream, "    visibility             = [\"//visibility:public\"],\n");
-    fprintf(ostream, "    toolchain_type         = \"@rules_ocaml//ocaml:toolchain\",\n");
+    fprintf(ostream, "    toolchain_type         = \"@rules_ocaml//toolchain:type\",\n");
     // # == toolchain_definition
     fprintf(ostream, "    toolchain              = \":opam_toolchain\",\n");
     fprintf(ostream, "    exec_compatible_with   = [\n");
