@@ -1175,7 +1175,7 @@ void emit_bazel_deps_attribute(FILE* ostream, int level,
 
         for (int j = 0; j < obzl_meta_values_count(vals); j++) {
             dep_name = obzl_meta_values_nth(vals, j);
-            log_info("property val[%d]: '%s'", j, *dep_name);
+            /* log_info("property val[%d]: '%s'", j, *dep_name); */
 
             char *s = (char*)*dep_name;
 
@@ -1922,7 +1922,9 @@ void emit_workspace_file(char *repo_name)
         exit(EXIT_FAILURE);
     }
 
-    fprintf(ostream, "workspace( name = \"%s\" )\n", repo_name);
+    fprintf(ostream, "workspace( name = \"%s\" )"
+            "    # generated file - DO NOT EDIT\n",
+            repo_name);
 
     fclose(ostream);
 }
@@ -2189,6 +2191,8 @@ EXPORT void emit_build_bazel(char *_repo,
             log_trace("emit_special_case_rule:TRUE %s", _pkg->name);
             return;
         }
+
+    fprintf(ostream, "## generated file - DO NOT EDIT\n");
 
     fprintf(ostream, "## original: %s\n\n", obzl_meta_package_src(_pkg));
 

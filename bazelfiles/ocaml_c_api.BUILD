@@ -1,3 +1,5 @@
+# generated file - DO NOT EDIT
+
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(

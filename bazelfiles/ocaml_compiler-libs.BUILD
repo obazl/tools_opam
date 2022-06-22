@@ -1,3 +1,5 @@
+# generated file - DO NOT EDIT
+
 load("@rules_ocaml//build:rules.bzl", "ocaml_import")
 
 exports_files([

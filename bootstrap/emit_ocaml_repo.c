@@ -468,6 +468,7 @@ void emit_ocaml_stublibs(char *switch_name)
         /* perror(utstring_body(ocaml_file)); */
         exit(EXIT_FAILURE);
     }
+    fprintf(ostream, "# generated file - DO NOT EDIT\n");
     /* fprintf(ostream, "exports_files(glob([\"**\"]))\n"); */
     fprintf(ostream, "filegroup(\n");
     fprintf(ostream, "    name = \"stublibs\",\n");
@@ -499,7 +500,8 @@ void emit_lib_stublibs(char *switch_name)
         /* perror(utstring_body(ocaml_file)); */
         exit(EXIT_FAILURE);
     }
-    fprintf(ostream, "workspace( name = \"stublibs\" )\n");
+    fprintf(ostream, "workspace( name = \"stublibs\" )"
+            "    # generated file - DO NOT EDIT\n");
     fclose(ostream);
 
     /* now BUILD.bazel */
@@ -519,6 +521,7 @@ void emit_lib_stublibs(char *switch_name)
         /* perror(utstring_body(ocaml_file)); */
         exit(EXIT_FAILURE);
     }
+    fprintf(ostream, "# generated file - DO NOT EDIT\n\n");
     /* fprintf(ostream, "exports_files(glob([\"**\"]))\n"); */
     fprintf(ostream, "filegroup(\n");
     fprintf(ostream, "    name = \"stublibs\",\n");
@@ -549,6 +552,7 @@ void emit_ocaml_toolchain_buildfile(char *switch_name)
         exit(EXIT_FAILURE);
     }
 
+    fprintf(ostream, "# generated file - DO NOT EDIT\n\n");
     _emit_ocaml_toolchain_bindings(ostream, switch_name);
     _emit_ocaml_toolchain_defn(ostream, switch_name);
 
@@ -572,6 +576,7 @@ void emit_ocaml_toolchain_buildfile(char *switch_name)
         /* perror(utstring_body(ocaml_file)); */
         exit(EXIT_FAILURE);
     }
+    fprintf(ostream, "# generated file - DO NOT EDIT\n");
     fprintf(ostream, "exports_files(glob([\"**\"]))\n");
     fclose(ostream);
     utstring_free(ocaml_file);
@@ -611,7 +616,8 @@ void _copy_buildfile(char *buildfile, UT_string *to_file) {
     }
 }
 
-void _symlink_buildfile(char *buildfile, UT_string *to_file) {
+void _symlink_buildfile(char *buildfile, UT_string *to_file)
+{
     UT_string *src;
     utstring_new(src);
     utstring_printf(src,
@@ -1534,7 +1540,9 @@ void emit_ocaml_workspace(char *switch_name, FILE *bootstrap_FILE)
         /* perror(utstring_body(ocaml_file)); */
         exit(EXIT_FAILURE);
     }
-    fprintf(ostream, "workspace( name = \"ocaml\" )\n");
+    fprintf(ostream, "workspace( name = \"ocaml\" )"
+            "    # generated file - DO NOT EDIT\n");
+
     fclose(ostream);
 
     utstring_renew(ocaml_file);
