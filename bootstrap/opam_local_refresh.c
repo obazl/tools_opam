@@ -247,10 +247,25 @@ EXPORT void opam_local_refresh(void) // char *_opam_switch_name)
     fclose(opam_resolver);
 
     fprintf(bootstrap_FILE,
-    "    native.register_toolchains(\"@ocaml//toolchains:ocaml_macos\")\n");
+    "    native.register_toolchains(\"@ocaml//toolchains:opam_n_opt\")\n");
     fprintf(bootstrap_FILE,
-    "    native.register_toolchains(\"@ocaml//toolchains:ocaml_linux\")\n");
+    "    native.register_toolchains(\"@ocaml//toolchains:opam_bc_opt\")\n");
+    fprintf(bootstrap_FILE,
+    "    native.register_toolchains(\"@ocaml//toolchains:opam_n_nopt\")\n");
+    fprintf(bootstrap_FILE,
+    "    native.register_toolchains(\"@ocaml//toolchains:opam_bc_nopt\")\n");
 
+    /* fprintf(bootstrap_FILE, */
+    /* "    native.register_toolchains(\"@ocaml//toolchains:nopam_n_n\")\n"); */
+    /* fprintf(bootstrap_FILE, */
+    /* "    native.register_toolchains(\"@ocaml//toolchains:nopam_bc_n\")\n"); */
+    /* fprintf(bootstrap_FILE, */
+    /* "    native.register_toolchains(\"@ocaml//toolchains:nopam_n_bc\")\n"); */
+    /* fprintf(bootstrap_FILE, */
+    /* "    native.register_toolchains(\"@ocaml//toolchains:nopam_bc_bc\")\n"); */
+
+    fprintf(bootstrap_FILE,
+    "    native.register_toolchains(\"@ocaml//toolchains:default_n_opt\")\n");
 
     fclose(bootstrap_FILE);
 

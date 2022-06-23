@@ -833,6 +833,15 @@ Note that "archive" should only be used for archive files that are intended to b
                          "archive",
                          _pkg);
 
+    fprintf(ostream, "    cmi  = glob([\"*.cmi\"]),\n");
+    fprintf(ostream, "    cmti = glob([\"*.cmti\"]),\n");
+    fprintf(ostream, "    cmo  = glob([\"*.cmo\"]),\n");
+    fprintf(ostream, "    cmx  = glob([\"*.cmx\"]),\n");
+    fprintf(ostream, "    cmxa = glob([\"*.cmxa\"]),\n");
+    fprintf(ostream, "    cma  = glob([\"*.cma\"]),\n");
+    fprintf(ostream, "    cmxs = glob([\"*.cmxs\"]),\n");
+    fprintf(ostream, "    srcs = glob([\"*.ml\", \"*.mli\"]),\n");
+
     fprintf(ostream, "    all = glob([\"*.cmx\", \"*.cmi\", \"*.a\", \"*.so\"]),\n");
     emit_bazel_deps_attribute(ostream, 1, host_repo, "lib", _pkg_name, _entries);
 

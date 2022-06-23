@@ -1,0 +1,18 @@
+# this package contains the bytecode emitters
+
+platform(name = "bc",  # ocamlc
+         constraint_values = ["@platforms//os:macos",
+                              "@platforms//cpu:x86_64",
+                              "@opam//tc:opam",
+                              "@opam//tc:unoptimized",
+                              "@opam//tc/emitter:bytecode"],
+         visibility=["//visibility:public"])
+
+platform(name = "opt",   # ocamlc.opt
+         constraint_values = ["@platforms//os:macos",
+                              "@platforms//cpu:x86_64",
+                              "@opam//tc:opam",
+                              "@opam//tc:optimized",
+                              "@opam//tc/emitter:bytecode"],
+         visibility=["//visibility:public"])
+

@@ -131,12 +131,23 @@ void _emit_toolchain_bin_symlinks(void) // UT_string *dst_dir, UT_string *src_di
     closedir(srcd);
 }
 
-void _emit_ocaml_toolchain_defn(FILE *ostream, char *switch_name)
+// arg 1 true: bytecode emitter
+// arg 2 true: optimized binary;
+// last arg true: emit "default" rule
+void _emit_ocaml_toolchain_adapter(FILE *ostream,
+                                   bool bc, bool opt, bool fallback)
 {
-    fprintf(ostream, "\n");
-    fprintf(ostream, "#### toolchain definitions ####\n");
-    fprintf(ostream, "ocaml_toolchain_model(\n");
-    fprintf(ostream, "    name         = \"opam_toolchain\",\n");
+    char *pfx    = fallback? "default" : "opam";
+    char *emitter = fallback? "n" : bc? "bc" : "n";
+    char *optstr  = fallback? "opt" : opt? "opt" : "nopt";
+
+    fprintf(ostream, "ocaml_toolchain_adapter(\n");
+    fprintf(ostream, "    name         = \"_%s_%s_%s\",\n",
+            pfx, emitter, optstr);
+    fprintf(ostream, "    compiler     = \"@ocaml//bin:%s%s\",\n",
+            bc?  "ocamlc" : "ocamlopt",
+            fallback? ".opt" : opt? ".opt" : "");
+
     fprintf(ostream, "    ocamlc       = \"@ocaml//bin:ocamlc\",\n");
     fprintf(ostream, "    ocamlc_opt   = \"@ocaml//bin:ocamlc.opt\",\n");
     fprintf(ostream, "    ocamlopt     = \"@ocaml//bin:ocamlopt\",\n");
@@ -148,24 +159,55 @@ void _emit_ocaml_toolchain_defn(FILE *ostream, char *switch_name)
     fprintf(ostream, ")\n");
 }
 
-void _emit_ocaml_toolchain_bindings(FILE *ostream, char *switch_name)
+/*
+  opt: compile mode optimized; bc: bytecode emitter
+ */
+void _emit_ocaml_toolchain_binding(FILE *ostream,
+                                   bool bc, bool opt, bool fallback)
+{
+    char *pfx    = fallback? "default" : "opam";
+    char *emitter = fallback? "n" : bc? "bc" : "n";
+    char *optstr  = fallback? "opt" : opt? "opt" : "nopt";
+
+    fprintf(ostream, "##########\n");
+    fprintf(ostream, "toolchain(\n");
+    fprintf(ostream, "    name           = \"%s_%s_%s\",\n",
+            pfx, emitter, optstr);
+    fprintf(ostream, "    toolchain      = \"_%s_%s_%s\",\n",
+            pfx, emitter, optstr);
+    fprintf(ostream, "    toolchain_type = \"@rules_ocaml//toolchain:type\",\n");
+    /* fprintf(ostream, "    exec_compatible_with   = [\n"); */
+    /* fprintf(ostream, "        \"@platforms//os:macos\",\n"); */
+    /* fprintf(ostream, "    ],\n"); */
+    fprintf(ostream, "    target_compatible_with = [\n");
+    fprintf(ostream, "        \"@platforms//os:macos\",\n");
+    fprintf(ostream, "        \"@platforms//cpu:x86_64\",\n");
+    fprintf(ostream, "        \"@opam//tc:opam\",\n");
+    fprintf(ostream, "        \"@opam//tc:%s\",\n",
+            fallback? "optimized" : opt? "optimized" : "unoptimized");
+    fprintf(ostream, "        \"@opam//tc/emitter:%s\",\n",
+            bc? "bytecode" : "native");
+    fprintf(ostream, "    ],\n");
+    fprintf(ostream, "    visibility             = [\"//visibility:public\"],\n");
+    fprintf(ostream, ")\n");
+
+    fprintf(ostream, "\n");
+}
+
+void X_emit_ocaml_toolchain_bindings(FILE *ostream, char *switch_name)
 {
     fprintf(ostream,
-    "load(\"@rules_ocaml//toolchain:model.bzl\", \"ocaml_toolchain_model\")\n");
+    "load(\"@rules_ocaml//toolchain:adapter.bzl\", \"ocaml_toolchain_adapter\")\n");
 
     fprintf(ostream, "\n");
     fprintf(ostream, "## toolchain bindings (to be passed to 'register_toolchains' function)\n");
     fprintf(ostream, "\n");
     fprintf(ostream, "##########\n");
-    // ## == toolchain_binding (of defn to type-tag)
     fprintf(ostream, "toolchain(\n");
-    /* fprintf(ostream, "    name                   = \"opam.%s_macos\",\n", switch_name); */
-    fprintf(ostream, "    name                   = \"ocaml_macos\",\n");
-    fprintf(ostream, "    visibility             = [\"//visibility:public\"],\n");
+    fprintf(ostream, "    name           = \"opam_n_n\",\n");
+    fprintf(ostream, "    toolchain      = \"_opam_n_n\",\n");
+    fprintf(ostream, "    toolchain_type = \"@rules_ocaml//toolchain:type\",\n");
     // was: @rules_ocaml//ocaml:toolchain
-    fprintf(ostream, "    toolchain_type         = \"@rules_ocaml//toolchain:type\",\n");
-    // # == toolchain_definition
-    fprintf(ostream, "    toolchain              = \":opam_toolchain\",\n");
     fprintf(ostream, "    exec_compatible_with   = [\n");
     fprintf(ostream, "        \"@platforms//os:macos\",\n");
         /* ## we could define a toolchain for 32-bit macos, but we do not */
@@ -174,6 +216,7 @@ void _emit_ocaml_toolchain_bindings(FILE *ostream, char *switch_name)
     fprintf(ostream, "    target_compatible_with = [\n");
     fprintf(ostream, "        \"@platforms//os:macos\",\n");
     fprintf(ostream, "    ],\n");
+    fprintf(ostream, "    visibility             = [\"//visibility:public\"],\n");
     fprintf(ostream, ")\n");
 
     fprintf(ostream, "\n");
@@ -554,8 +597,33 @@ void emit_ocaml_toolchain_buildfile(char *switch_name)
     }
 
     fprintf(ostream, "# generated file - DO NOT EDIT\n\n");
-    _emit_ocaml_toolchain_bindings(ostream, switch_name);
-    _emit_ocaml_toolchain_defn(ostream, switch_name);
+    fprintf(ostream,
+    "load(\"@rules_ocaml//toolchain:adapter.bzl\", \"ocaml_toolchain_adapter\")\n");
+
+    fprintf(ostream, "\n");
+    fprintf(ostream, "## toolchain bindings (to be passed to 'register_toolchains' function)\n");
+    fprintf(ostream, "\n");
+
+    /* _emit_ocaml_toolchain_bindings(ostream, switch_name); */
+    // arg 1 true: bytecode emitter
+    // arg 2 true: optimized binary;
+    // last arg true: emit "default" rule
+    _emit_ocaml_toolchain_binding(ostream, false,  true, false); // n_n
+    _emit_ocaml_toolchain_binding(ostream, true,  true,  false); // bc_n
+    _emit_ocaml_toolchain_binding(ostream, true, false,  false); // bc_bc
+    _emit_ocaml_toolchain_binding(ostream, false, false, false); // n_bc
+    _emit_ocaml_toolchain_binding(ostream, false, false, true);  // default
+
+    // now the ocaml_toolchain_adapters
+    fprintf(ostream, "\n");
+    fprintf(ostream, "####################################\n");
+    fprintf(ostream, "    #### toolchain adapters ####\n");
+
+    _emit_ocaml_toolchain_adapter(ostream, false, true,  false); // n_n
+    _emit_ocaml_toolchain_adapter(ostream, true,  true,  false); // bc_n
+    _emit_ocaml_toolchain_adapter(ostream, true,  false, false); // bc_bc
+    _emit_ocaml_toolchain_adapter(ostream, false, false, false); // n_bc
+    _emit_ocaml_toolchain_adapter(ostream, false, false, true); //default
 
     fclose(ostream);
     utstring_free(ocaml_file);

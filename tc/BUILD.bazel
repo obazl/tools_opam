@@ -1,0 +1,14 @@
+package(default_visibility = ["//visibility:public"])
+
+# toolchain (only opam)
+constraint_setting(name = "tc", visibility=["@opam//tc:__subpackages__"])
+constraint_value(name = "opam", constraint_setting = ":tc")
+
+# compile mode of tools
+constraint_setting(name = "optimization")
+constraint_value(name = "optimized",
+                 constraint_setting = ":optimization")
+
+constraint_value(name = "unoptimized",
+                 constraint_setting = ":optimization")
+
