@@ -165,7 +165,8 @@ void _emit_ocaml_toolchain_adapter(FILE *ostream,
   opt: compile mode optimized; bc: bytecode emitter
  */
 void _emit_ocaml_toolchain_binding(FILE *ostream,
-                                   bool bc, bool opt, bool fallback)
+                                   bool macos, bool bc, bool opt,
+                                   bool fallback)
 {
     char *pfx    = fallback? "default" : "opam";
     char *emitter = fallback? "n" : bc? "bc" : "n";
@@ -173,13 +174,14 @@ void _emit_ocaml_toolchain_binding(FILE *ostream,
 
     fprintf(ostream, "##########\n");
     fprintf(ostream, "toolchain(\n");
-    fprintf(ostream, "    name           = \"%s_%s_%s\",\n",
-            pfx, emitter, optstr);
+    fprintf(ostream, "    name           = \"%s_%s_%s_%s\",\n",
+            macos? "macos" : "linux", pfx, emitter, optstr);
     fprintf(ostream, "    toolchain      = \"_%s_%s_%s\",\n",
             pfx, emitter, optstr);
     fprintf(ostream, "    toolchain_type = \"@rules_ocaml//toolchain:type\",\n");
     fprintf(ostream, "    exec_compatible_with = [\n");
-    fprintf(ostream, "        \"@platforms//os:macos\",\n");
+    fprintf(ostream, "        \"@platforms//os:%s\",\n",
+            macos? "macos" : "linux");
     fprintf(ostream, "        \"@platforms//cpu:x86_64\",\n");
     fprintf(ostream, "        \"@opam//tc:opam\",\n");
     fprintf(ostream, "        \"@opam//tc:%s\",\n",
@@ -202,21 +204,23 @@ void _emit_ocaml_toolchain_binding(FILE *ostream,
     fprintf(ostream, "\n");
 }
 
-void _emit_ocaml_default_toolchain_binding(FILE *ostream)
+void _emit_ocaml_default_toolchain_binding(FILE *ostream, bool macos)
 {
     fprintf(ostream, "##########\n");
     fprintf(ostream, "toolchain(\n");
-    fprintf(ostream, "    name           = \"default\",\n");
+    fprintf(ostream, "    name           = \"default_%s\",\n",
+            macos? "macos" : "linux");
     fprintf(ostream, "    toolchain      = \"_opam_n_opt\",\n");
     fprintf(ostream, "    toolchain_type = \"@rules_ocaml//toolchain:type\",\n");
     fprintf(ostream, "    exec_compatible_with = [\n");
-    fprintf(ostream, "        \"@platforms//os:macos\",\n");
+    fprintf(ostream, "        \"@platforms//os:%s\",\n",
+            macos? "macos" : "linux");
     fprintf(ostream, "        \"@platforms//cpu:x86_64\",\n");
     fprintf(ostream, "    ],\n");
-    fprintf(ostream, "    target_compatible_with = [\n");
-    fprintf(ostream, "        \"@platforms//os:macos\",\n");
-    fprintf(ostream, "        \"@platforms//cpu:x86_64\",\n");
-    fprintf(ostream, "    ],\n");
+    /* fprintf(ostream, "    target_compatible_with = [\n"); */
+    /* fprintf(ostream, "        \"@platforms//os:macos\",\n"); */
+    /* fprintf(ostream, "        \"@platforms//cpu:x86_64\",\n"); */
+    /* fprintf(ostream, "    ],\n"); */
     fprintf(ostream, "    visibility             = [\"//visibility:public\"],\n");
     fprintf(ostream, ")\n");
 
@@ -634,14 +638,24 @@ void emit_ocaml_toolchain_buildfile(char *switch_name)
     fprintf(ostream, "\n");
 
     /* _emit_ocaml_toolchain_bindings(ostream, switch_name); */
-    // arg 1 true: bytecode emitter
-    // arg 2 true: optimized binary;
+    // arg 1 true: macos, false: linux
+    // arg 2 true: bytecode emitter
+    // arg 3 true: optimized binary;
     // last arg true: emit "default" rule
-    _emit_ocaml_toolchain_binding(ostream, false,  true, false); // n_n
-    _emit_ocaml_toolchain_binding(ostream, true,  true,  false); // bc_n
-    _emit_ocaml_toolchain_binding(ostream, true, false,  false); // bc_bc
-    _emit_ocaml_toolchain_binding(ostream, false, false, false); // n_bc
-    _emit_ocaml_default_toolchain_binding(ostream);
+    // mac
+    _emit_ocaml_toolchain_binding(ostream, true, false,  true, false); // n_n
+    _emit_ocaml_toolchain_binding(ostream, true, true,  true,  false); // bc_n
+    _emit_ocaml_toolchain_binding(ostream, true, true, false,  false); // bc_bc
+    _emit_ocaml_toolchain_binding(ostream, true, false, false, false); // n_bc
+    _emit_ocaml_default_toolchain_binding(ostream, true);
+    // linux
+    _emit_ocaml_toolchain_binding(ostream, false, false,  true, false); // n_n
+    _emit_ocaml_toolchain_binding(ostream, false, true,  true,  false); // bc_n
+    _emit_ocaml_toolchain_binding(ostream, false, true, false,  false); // bc_bc
+    _emit_ocaml_toolchain_binding(ostream, false, false, false, false); // n_bc
+    _emit_ocaml_default_toolchain_binding(ostream, false);
+
+
 
     // now the ocaml_toolchain_adapters
     fprintf(ostream, "\n");

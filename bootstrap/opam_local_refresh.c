@@ -247,25 +247,26 @@ EXPORT void opam_local_refresh(void) // char *_opam_switch_name)
     /* fclose(opam_resolver); */
 
     fprintf(bootstrap_FILE,
-    "    native.register_toolchains(\"@ocaml//toolchains:opam_n_opt\")\n");
+    "    native.register_toolchains(\"@ocaml//toolchains:macos_opam_n_opt\")\n");
     fprintf(bootstrap_FILE,
-    "    native.register_toolchains(\"@ocaml//toolchains:opam_bc_opt\")\n");
+    "    native.register_toolchains(\"@ocaml//toolchains:macos_opam_bc_opt\")\n");
     fprintf(bootstrap_FILE,
-    "    native.register_toolchains(\"@ocaml//toolchains:opam_n_nopt\")\n");
+    "    native.register_toolchains(\"@ocaml//toolchains:macos_opam_n_nopt\")\n");
     fprintf(bootstrap_FILE,
-    "    native.register_toolchains(\"@ocaml//toolchains:opam_bc_nopt\")\n");
-
-    /* fprintf(bootstrap_FILE, */
-    /* "    native.register_toolchains(\"@ocaml//toolchains:nopam_n_n\")\n"); */
-    /* fprintf(bootstrap_FILE, */
-    /* "    native.register_toolchains(\"@ocaml//toolchains:nopam_bc_n\")\n"); */
-    /* fprintf(bootstrap_FILE, */
-    /* "    native.register_toolchains(\"@ocaml//toolchains:nopam_n_bc\")\n"); */
-    /* fprintf(bootstrap_FILE, */
-    /* "    native.register_toolchains(\"@ocaml//toolchains:nopam_bc_bc\")\n"); */
+    "    native.register_toolchains(\"@ocaml//toolchains:macos_opam_bc_nopt\")\n");
+    fprintf(bootstrap_FILE,
+    "    native.register_toolchains(\"@ocaml//toolchains:default_macos\")\n");
 
     fprintf(bootstrap_FILE,
-    "    native.register_toolchains(\"@ocaml//toolchains:default\")\n");
+    "    native.register_toolchains(\"@ocaml//toolchains:linux_opam_n_opt\")\n");
+    fprintf(bootstrap_FILE,
+    "    native.register_toolchains(\"@ocaml//toolchains:linux_opam_bc_opt\")\n");
+    fprintf(bootstrap_FILE,
+    "    native.register_toolchains(\"@ocaml//toolchains:linux_opam_n_nopt\")\n");
+    fprintf(bootstrap_FILE,
+    "    native.register_toolchains(\"@ocaml//toolchains:linux_opam_bc_nopt\")\n");
+    fprintf(bootstrap_FILE,
+    "    native.register_toolchains(\"@ocaml//toolchains:default_linux\")\n");
 
     fclose(bootstrap_FILE);
 
