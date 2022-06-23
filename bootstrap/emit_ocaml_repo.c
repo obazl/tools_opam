@@ -187,15 +187,15 @@ void _emit_ocaml_toolchain_binding(FILE *ostream,
     fprintf(ostream, "        \"@opam//tc/emitter:%s\",\n",
             bc? "bytecode" : "native");
     fprintf(ostream, "    ],\n");
-    fprintf(ostream, "    target_compatible_with = [\n");
-    fprintf(ostream, "        \"@platforms//os:macos\",\n");
-    fprintf(ostream, "        \"@platforms//cpu:x86_64\",\n");
-    fprintf(ostream, "        \"@opam//tc:opam\",\n");
-    fprintf(ostream, "        \"@opam//tc:%s\",\n",
-            fallback? "optimized" : opt? "optimized" : "unoptimized");
-    fprintf(ostream, "        \"@opam//tc/emitter:%s\",\n",
-            bc? "bytecode" : "native");
-    fprintf(ostream, "    ],\n");
+    /* fprintf(ostream, "    target_compatible_with = [\n"); */
+    /* fprintf(ostream, "        \"@platforms//os:macos\",\n"); */
+    /* fprintf(ostream, "        \"@platforms//cpu:x86_64\",\n"); */
+    /* fprintf(ostream, "        \"@opam//tc:opam\",\n"); */
+    /* fprintf(ostream, "        \"@opam//tc:%s\",\n", */
+    /*         fallback? "optimized" : opt? "optimized" : "unoptimized"); */
+    /* fprintf(ostream, "        \"@opam//tc/emitter:%s\",\n", */
+    /*         bc? "bytecode" : "native"); */
+    /* fprintf(ostream, "    ],\n"); */
     fprintf(ostream, "    visibility             = [\"//visibility:public\"],\n");
     fprintf(ostream, ")\n");
 

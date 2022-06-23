@@ -1,15 +1,13 @@
 # this package native-code emitters
 
 platform(name = "n",  # ocamlopt
-         constraint_values = ["@platforms//os:macos",
-                              "@platforms//cpu:x86_64",
-                              "@opam//tc:opam",
+         parents = ["@local_config_platform//:host"],
+         constraint_values = ["@opam//tc:opam",
                               "@opam//tc:unoptimized",
                               "@opam//tc/emitter:native"])
 
 platform(name = "opt",  # ocamlopt.opt
-         constraint_values = ["@platforms//os:macos",
-                              "@platforms//cpu:x86_64",
-                              "@opam//tc:opam",
+         parents = ["@local_config_platform//:host"],
+         constraint_values = ["@opam//tc:opam",
                               "@opam//tc:optimized",
                               "@opam//tc/emitter:native"])
