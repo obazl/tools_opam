@@ -244,7 +244,7 @@ EXPORT void opam_local_refresh(void) // char *_opam_switch_name)
     /* utstring_free(build_bazel_file); */
 
     /* fprintf(opam_resolver, ")\n"); */
-    fclose(opam_resolver);
+    /* fclose(opam_resolver); */
 
     fprintf(bootstrap_FILE,
     "    native.register_toolchains(\"@ocaml//toolchains:opam_n_opt\")\n");
@@ -265,7 +265,7 @@ EXPORT void opam_local_refresh(void) // char *_opam_switch_name)
     /* "    native.register_toolchains(\"@ocaml//toolchains:nopam_bc_bc\")\n"); */
 
     fprintf(bootstrap_FILE,
-    "    native.register_toolchains(\"@ocaml//toolchains:default_n_opt\")\n");
+    "    native.register_toolchains(\"@ocaml//toolchains:default\")\n");
 
     fclose(bootstrap_FILE);
 
