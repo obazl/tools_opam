@@ -821,23 +821,23 @@ Note that "archive" should only be used for archive files that are intended to b
                          /* _filedeps_path, */
                          _entries, "description", "doc");
 
-    emit_bazel_attribute(ostream, 1,
-                         /* _repo, // host_repo, */
-                         /* _pkg_path, */
-                         _pkg_prefix,
-                         _pkg_name,
-                         /* for constructing import label: */
-                         _filedeps_path,
-                         /* _subpkg_dir, */
-                         _entries,
-                         "archive",
-                         _pkg);
+    /* emit_bazel_attribute(ostream, 1, */
+    /*                      /\* _repo, // host_repo, *\/ */
+    /*                      /\* _pkg_path, *\/ */
+    /*                      _pkg_prefix, */
+    /*                      _pkg_name, */
+    /*                      /\* for constructing import label: *\/ */
+    /*                      _filedeps_path, */
+    /*                      /\* _subpkg_dir, *\/ */
+    /*                      _entries, */
+    /*                      "archive", */
+    /*                      _pkg); */
 
     fprintf(ostream, "    cmi  = glob([\"*.cmi\"]),\n");
     fprintf(ostream, "    cmti = glob([\"*.cmti\"]),\n");
     fprintf(ostream, "    cmo  = glob([\"*.cmo\"]),\n");
-    fprintf(ostream, "    cmx  = glob([\"*.cmx\"]),\n");
-    fprintf(ostream, "    cmxa = glob([\"*.cmxa\"]),\n");
+    fprintf(ostream, "    cmx  = glob([\"*.cmx\", \"*.o\"]),\n");
+    fprintf(ostream, "    cmxa = glob([\"*.cmxa\", \"*.a\"]),\n");
     fprintf(ostream, "    cma  = glob([\"*.cma\"]),\n");
     fprintf(ostream, "    cmxs = glob([\"*.cmxs\"]),\n");
     fprintf(ostream, "    srcs = glob([\"*.ml\", \"*.mli\"]),\n");
@@ -872,16 +872,26 @@ void emit_bazel_plugin_rule(FILE* ostream, int level,
     /* log_debug("PDUMPP %s", _pkg_name); */
     /* dump_entries(0, _entries); */
 
-    emit_bazel_attribute(ostream, 1,
-                         /* _repo, */
-                         /* _pkg_path, */
-                         _pkg_prefix,
-                         _pkg_name,
-                         _filedeps_path,
-                         /* _subpkg_dir, */
-                         _entries,
-                         "plugin", //);
-                         _pkg);
+    /* emit_bazel_attribute(ostream, 1, */
+    /*                      /\* _repo, *\/ */
+    /*                      /\* _pkg_path, *\/ */
+    /*                      _pkg_prefix, */
+    /*                      _pkg_name, */
+    /*                      _filedeps_path, */
+    /*                      /\* _subpkg_dir, *\/ */
+    /*                      _entries, */
+    /*                      "plugin", //); */
+    /*                      _pkg); */
+
+    fprintf(ostream, "    cmi  = glob([\"*.cmi\"]),\n");
+    fprintf(ostream, "    cmti = glob([\"*.cmti\"]),\n");
+    fprintf(ostream, "    cmo  = glob([\"*.cmo\"]),\n");
+    fprintf(ostream, "    cmx  = glob([\"*.cmx\", \"*.o\"]),\n");
+    fprintf(ostream, "    cmxa = glob([\"*.cmxa\", \"*.a\"]),\n");
+    fprintf(ostream, "    cma  = glob([\"*.cma\"]),\n");
+    fprintf(ostream, "    cmxs = glob([\"*.cmxs\"]),\n");
+    fprintf(ostream, "    srcs = glob([\"*.ml\", \"*.mli\"]),\n");
+
     emit_bazel_deps_attribute(ostream, 1, host_repo, "lib", _pkg_name, _entries);
     fprintf(ostream, "    visibility = [\"//visibility:public\"]\n");
     fprintf(ostream, ")\n");

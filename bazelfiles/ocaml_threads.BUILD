@@ -5,13 +5,21 @@ load("@rules_ocaml//build:rules.bzl", "ocaml_import")
 ocaml_import(
     name = "threads",
     version = "[distributed with OCaml]",
-    archive = select({
-        "@rules_ocaml//build/mode:bytecode": [":threads.cma"],
-        "@rules_ocaml//build/mode:native"  : [
-            ":threads.cmxa",
-            ":threads.a"
-        ],
-     }),
+    cmi  = glob(["*.cmi"]),
+    cmti = glob(["*.cmti"]),
+    cmo  = glob(["*.cmo"]),
+    cmx  = glob(["*.cmx", "*.o"]),
+    cmxa = glob(["*.cmxa", "*.a"]),
+    cma  = glob(["*.cma"]),
+    cmxs = glob(["*.cmxs"]),
+    srcs = glob(["*.ml", "*.mli"]),
+    # archive = select({
+    #     "@rules_ocaml//build/mode:bytecode": [":threads.cma"],
+    #     "@rules_ocaml//build/mode:native"  : [
+    #         ":threads.cmxa",
+    #         ":threads.a"
+    #     ],
+    #  }),
     all = glob(["*.cm*", "*.o", "*.a"]),
     deps = [
         ## "@unix//:unix"
