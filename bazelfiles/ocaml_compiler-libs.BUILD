@@ -2,6 +2,57 @@
 
 load("@rules_ocaml//build:rules.bzl", "ocaml_import")
 
+ocaml_import(
+    name = "bytecomp",
+    doc = """Common compiler routines""",
+    cmi  = glob(["*.cmi"]),
+    cmti = glob(["*.cmti"]),
+    cmo  = glob(["*.cmo"]),
+    cmx  = glob(["*.cmx"]),
+    ofiles = glob(["*.o"]),
+    cmxa = glob(["ocamlbytecomp.cmxa"]),
+    arfiles = glob(["ocamlbytecomp.a"]),
+    cma  = glob(["ocamlbytecomp.cma"]),
+    cmxs = glob(["*.cmxs"]),
+    srcs = glob(["*.ml", "*.mli"]),
+    all = glob(["*"]),
+    visibility = ["//visibility:public"]
+)
+
+ocaml_import(
+    name = "common",
+    doc = """Common compiler routines""",
+    cmi  = glob(["*.cmi"]),
+    cmti = glob(["*.cmti"]),
+    cmo  = glob(["*.cmo"]),
+    cmx  = glob(["*.cmx"]),
+    ofiles = glob(["*.o"]),
+    cmxa = glob(["ocamlcommon.cmxa"]),
+    arfiles = glob(["ocamlcommon.a"]),
+    cma  = glob(["ocamlcommon.cma"]),
+    cmxs = glob(["*.cmxs"]),
+    srcs = glob(["*.ml", "*.mli"]),
+    all = glob(["*"]),
+    visibility = ["//visibility:public"]
+)
+
+ocaml_import(
+    name = "optcomp",
+    doc = """optcomp compiler routines""",
+    cmi  = glob(["*.cmi"]),
+    cmti = glob(["*.cmti"]),
+    cmo  = glob(["*.cmo"]),
+    cmx  = glob(["*.cmx"]),
+    ofiles = glob(["*.o"]),
+    cmxa = glob(["ocamloptcomp.cmxa"]),
+    arfiles = glob(["ocamloptcomp.a"]),
+    cma  = glob(["ocamloptcomp.cma"]),
+    cmxs = glob(["*.cmxs"]),
+    srcs = glob(["*.ml", "*.mli"]),
+    all = glob(["*"]),
+    visibility = ["//visibility:public"]
+)
+
 exports_files([
     "ocamlcommon.cma",
     "ocamlcommon.cmxa",

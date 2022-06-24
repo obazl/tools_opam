@@ -836,8 +836,10 @@ Note that "archive" should only be used for archive files that are intended to b
     fprintf(ostream, "    cmi  = glob([\"*.cmi\"]),\n");
     fprintf(ostream, "    cmti = glob([\"*.cmti\"]),\n");
     fprintf(ostream, "    cmo  = glob([\"*.cmo\"]),\n");
-    fprintf(ostream, "    cmx  = glob([\"*.cmx\", \"*.o\"]),\n");
-    fprintf(ostream, "    cmxa = glob([\"*.cmxa\", \"*.a\"]),\n");
+    fprintf(ostream, "    cmx  = glob([\"*.cmx\"]),\n");
+    fprintf(ostream, "    ofiles  = glob([\"*.o\"]),\n");
+    fprintf(ostream, "    cmxa = glob([\"*.cmxa\"]),\n");
+    fprintf(ostream, "    arfiles = glob([\"*.a\"]),\n");
     fprintf(ostream, "    cma  = glob([\"*.cma\"]),\n");
     fprintf(ostream, "    cmxs = glob([\"*.cmxs\"]),\n");
     fprintf(ostream, "    srcs = glob([\"*.ml\", \"*.mli\"]),\n");
@@ -886,8 +888,10 @@ void emit_bazel_plugin_rule(FILE* ostream, int level,
     fprintf(ostream, "    cmi  = glob([\"*.cmi\"]),\n");
     fprintf(ostream, "    cmti = glob([\"*.cmti\"]),\n");
     fprintf(ostream, "    cmo  = glob([\"*.cmo\"]),\n");
-    fprintf(ostream, "    cmx  = glob([\"*.cmx\", \"*.o\"]),\n");
+    fprintf(ostream, "    cmx  = glob([\"*.cmx\"]),\n");
+    fprintf(ostream, "    ofiles  = glob([\"*.o\"]),\n");
     fprintf(ostream, "    cmxa = glob([\"*.cmxa\", \"*.a\"]),\n");
+    fprintf(ostream, "    arfiles = glob([\"*.a\"]),\n");
     fprintf(ostream, "    cma  = glob([\"*.cma\"]),\n");
     fprintf(ostream, "    cmxs = glob([\"*.cmxs\"]),\n");
     fprintf(ostream, "    srcs = glob([\"*.ml\", \"*.mli\"]),\n");
