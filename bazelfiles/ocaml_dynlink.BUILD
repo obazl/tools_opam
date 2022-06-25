@@ -3,26 +3,19 @@
 load("@rules_ocaml//build:rules.bzl", "ocaml_import")
 
 ocaml_import(
-    name = "dynlink",
-    version = "[distributed with OCaml]",
-    cmi  = glob(["*.cmi"]),
-    cmti = glob(["*.cmti"]),
-    cmo  = glob(["*.cmo"]),
-    cmx  = glob(["*.cmx"]),
-    ofiles = glob(["*.o"]),
-    cmxa = glob(["*.cmxa"]),
-    arfiles = glob(["*.a"]),
-    cma  = glob(["*.cma"]),
-    cmxs = glob(["*.cmxs"]),
-    srcs = glob(["*.ml", "*.mli"]),
-    # archive = select({
-    #     "@rules_ocaml//build/mode:bytecode": [":dynlink.cma"],
-    #     "@rules_ocaml//build/mode:native"  : [
-    #         ":dynlink.cmxa",
-    #         ":dynlink.a"
-    #     ],
-    #  }),
-    all = glob(["dyn*.*"]),
+    name       = "dynlink",
+    version    = "[distributed with OCaml]",
+    cma        = "dynlink.cma",
+    cmxa       = "dynlink.cmxa",
+    cmi        = glob(["*.cmi"]),
+    cmo        = glob(["*.cmo"]),
+    cmx        = glob(["*.cmx"]),
+    ofiles     = glob(["*.o"]),
+    afiles     = glob(["*.a"]),
+    cmt        = glob(["*.cmt"]),
+    cmti       = glob(["*.cmti"]),
+    srcs       = glob(["*.ml", "*.mli"]),
+    all        = glob(["dyn*.*"]),
     visibility = ["//visibility:public"],
 );
 

@@ -528,7 +528,7 @@ void emit_bazel_attribute(FILE* ostream,
         if (flags == NULL)
             utstring_printf(condition_name, "//conditions:default");
         else
-            has_conditions = obzl_meta_flags_to_select_condition(flags, condition_name);
+            has_conditions = obzl_meta_flags_to_selection_label(flags, condition_name);
 
         if (!has_conditions) {
             goto next;          /* continue does not seem to exit loop */
@@ -721,6 +721,595 @@ void emit_bazel_attribute(FILE* ostream,
         fprintf(ostream, "%*s],\n", level*spfactor, sp);
 }
 
+void emit_bazel_archive_attr(FILE* ostream,
+                             int level, /* indentation control */
+                             /* char *_repo, */
+                             /* char *_pkg_path, */
+                             char *_pkg_prefix,
+                             char *_pkg_name,
+                             /* for constructing import label: */
+                             char *_filedeps_path, /* _lib */
+                             /* char *_subpkg_dir, */
+                             obzl_meta_entries *_entries,
+                             char *property, /* = 'archive' or 'plugin' */
+                             obzl_meta_package *_pkg)
+{
+    log_debug("EMIT_BAZEL_ARCHIVE_ATTR _pkg_name: '%s'; prop: '%s'; filedeps path: '%s'",
+              _pkg_name, property, _filedeps_path);
+    log_debug("  pkg_prefix: %s", _pkg_prefix);
+
+    static UT_string *archive_srcfile; // FIXME: dealloc?
+
+    if (debug)
+        log_debug("## _filedeps_path: '%s'\n", _filedeps_path);
+
+    struct obzl_meta_property *deps_prop = obzl_meta_entries_property(_entries, property);
+    if ( deps_prop == NULL ) {
+        log_warn("Prop '%s' not found: %s.", property); //, pkg_name);
+        return;
+    }
+
+    obzl_meta_settings *settings = obzl_meta_property_settings(deps_prop);
+
+    int settings_ct = obzl_meta_settings_count(settings);
+    log_info("settings count: %d", settings_ct);
+    if (settings_ct == 0) {
+        log_info("No settings for %s", obzl_meta_property_name(deps_prop));
+        return;
+    }
+
+    /* dealing with OP_UDATE.
+       e.g. ppx_sexp_conv has three settings:
+       requires(ppx_driver) = "ppx_sexp_conv.expander ppxlib"
+       requires(-ppx_driver) = "ppx_sexp_conv.runtime-lib"
+       ppx(-ppx_driver,-custom_ppx) += "ppx_deriving"
+
+       the 3rd must combine the 2nd because the op on the last is '+='
+       condition: no_ppx_driver: ppx_sexp_conv.runtime-lib
+       condition: no_ppx_driver_no_custom_ppx: ppx_sexp_conv.runtime-lib, ppx_deriving
+       if op == UPDATE then for each flag, search flaglist for match and add vals if found
+     */
+
+    /* NB: 'property' will be 'archive' or 'plugin' (?) */
+    /* if (settings_ct > 1) { */
+    /*     fprintf(ostream, "%*s%s = select({\n", level*spfactor, sp, property); */
+    /* } else { */
+    /*     fprintf(ostream, "%*s%s = [\n", level*spfactor, sp, property); */
+    /* } */
+
+    UT_string *cmtag;  /* cma or cmxa */
+    utstring_new(cmtag);
+
+    obzl_meta_setting *setting = NULL;
+
+    obzl_meta_values *vals;
+    obzl_meta_value *archive_name = NULL;
+
+    for (int i = 0; i < settings_ct; i++) {
+        setting = obzl_meta_settings_nth(settings, i);
+        /* log_debug("setting[%d]", i+1); */
+        /* dump_setting(0, setting); */
+
+        obzl_meta_flags *flags = obzl_meta_setting_flags(setting);
+
+        /* skip any setting with deprecated flag, e.g. 'vm' */
+        if (obzl_meta_flags_deprecated(flags)) {
+            /* log_debug("OMIT attribute with DEPRECATED flag"); */
+            continue;
+        }
+
+        if (flags != NULL) register_flags(flags);
+
+        /* if (g_ppx_pkg) {        /\* set by opam_bootstrap.handle_lib_meta *\/ */
+        /* } */
+
+        bool has_conditions = false;
+        if (flags == NULL)
+            utstring_printf(cmtag, "//conditions:default");
+        else
+            /* updates cmtag */
+            has_conditions = obzl_meta_flags_to_cmtag(flags, cmtag);
+
+        if (!has_conditions) {
+            goto next;          /* continue does not seem to exit loop */
+        }
+
+        /* char *condition_comment = obzl_meta_flags_to_comment(flags); */
+        /* log_debug("condition_comment: %s", condition_comment); */
+
+        /* FIXME: multiple settings means multiple flags; decide how
+           to handle for deps */
+
+        if (settings_ct > 1) {
+            fprintf(ostream, "%*s%s", level*spfactor, sp,
+                    utstring_body(cmtag));
+        }
+
+        /* now we handle UPDATE settings */
+        vals = resolve_setting_values(setting, flags, settings);
+        log_debug("setting values:");
+        /* dump_values(0, vals); */
+
+        /* now we construct a bazel label for each value */
+        UT_string *label;
+        utstring_new(label);
+
+        for (int j = 0; j < obzl_meta_values_count(vals); j++) {
+            archive_name = obzl_meta_values_nth(vals, j);
+            log_info("prop[%d] '%s' == '%s'",
+                     j, property, (char*)*archive_name);
+            utstring_clear(label);
+            /* utstring_printf(label, "//:%s", _filedeps_path); /\* e.g. _lib *\/ */
+            /* log_debug("21 _filedeps_path: %s", _filedeps_path); */
+            /* log_debug("22 _pkg_prefix: %d: %s", _pkg_prefix == NULL, _pkg_prefix); */
+            /* int rc; */
+            /* if (_filedeps_path == NULL) */
+            /*     rc = 1; */
+            /* else */
+            /*     rc = strncmp("ocaml", _filedeps_path, 5); */
+
+            /* /\* emit 'archive' attr targets *\/ */
+            /* if (rc == 0)    /\* i.e. 'ocaml', 'ocaml/ocamldoc' *\/ */
+            /*      /\* special cases: unix, dynlink, etc. *\/ */
+            /*     if (strlen(_filedeps_path) == 5) { */
+            /*         utstring_printf(label, "@%s//lib:%s", */
+            /*                         _filedeps_path, *archive_name); */
+            /*     } else { */
+            /*         rc = strncmp("ocaml-compiler-libs", _filedeps_path, 19); */
+            /*         if (rc == 0) */
+            /*             /\* utstring_printf(label, "ZZZZ@%s:%s", *\/ */
+            /*             /\*                 _filedeps_path, *archive_name); *\/ */
+            /*             utstring_printf(label, ":%s", */
+            /*                             *archive_name); */
+            /*         else { */
+            /*             utstring_printf(label, ":%s", */
+            /*                             *archive_name); */
+            /*             utstring_printf(label, "ERROR@%s:%s", */
+            /*                             _filedeps_path, *archive_name); */
+
+            /*             /\* ocaml-syntax-shims, ocamlbuild, etc. *\/ */
+            /*         } */
+            /*     } */
+            /* else { */
+                /* we're constructing archive attribute labels
+                   _pkg_name is the name of the import target, not the arch
+                */
+                if (_pkg_prefix == NULL) {
+                    utstring_printf(label,
+                                    "%s",
+                                    /* "@%s//:%s", // filedeps path: %s", */
+                                    /* /\* _pkg_name, *\/ */
+                                    /* _filedeps_path, */
+                                    *archive_name);
+                } else {
+                    char *start = strchr(_pkg_prefix, '/');
+                    int repo_len = start - (char*)_pkg_prefix;
+                    if (start == NULL) {
+                        utstring_printf(label,
+                                        "%s",
+                                        /* "@%.*s//%s:%s", // || PKG_pfx: %s", */
+                                        /* repo_len, */
+                                        /* _pkg_prefix, */
+                                        /* _pkg_name, */
+                                        *archive_name);
+                                        /* _pkg_prefix); */
+                    } else {
+                        start++;
+                        utstring_printf(label,
+                                        "%s",
+                                        /* "@%.*s//%s/%s:%s", */
+                                        /* repo_len, */
+                                        /* _pkg_prefix, */
+                                        /* (char*)start, */
+                                        /* _pkg_name, */
+                                        *archive_name);
+                                        /* _pkg_prefix); */
+                    }
+
+                        /* fprintf(ostream, "%*s\"@%.*s//%s\",\n", */
+                        /*         (1+level)*spfactor, sp, */
+                        /*         repo_len, */
+                        /*         *v, */
+                        /*         start+1); */
+
+                }
+                /* char *s = (char*)_filedeps_path; */
+                /* char *tmp; */
+                /* while(s) { */
+                /*     tmp = strchr(s, '/'); */
+                /*     if (tmp == NULL) break; */
+                /*     *tmp = '.'; */
+                /*     s = tmp; */
+                /* } */
+                /* char *start = strrchr(_filedeps_path, '.'); */
+
+                /* if (start == NULL) */
+                /*     utstring_printf(label, */
+                /*                     "X@%s//:%s", */
+                /*                     _filedeps_path, *archive_name); */
+                /* else { */
+                /*     *start++ = '\0'; // split on '.' */
+                /*     utstring_printf(label, */
+                /*                     "Y@%s//%s:%s", */
+                /*                     _filedeps_path, */
+                /*                     start, */
+                /*                     *archive_name); */
+                /* } */
+            /* } */
+
+            /* utstring_printf(label, "@rules_ocaml//cfg/:%s/%s", */
+            /*                 _filedeps_path, *archive_name); */
+            /* log_debug("label 2: %s", utstring_body(label)); */
+
+            // FIXME: verify existence using access()?
+                int indent = 3;
+                if (strncmp(utstring_body(cmtag), "cmxa", 4) == 0)
+                    indent--;
+            if (settings_ct > 1) {
+                    fprintf(ostream, "%*s = \"%s\",\n",
+                                        /* "@%.*s//%s/%s:%s", */
+                            indent, sp, utstring_body(label));
+            } else {
+                    fprintf(ostream, "%*s = \"%s\",\n",
+                            indent, sp, utstring_body(label));
+            }
+
+            /* if v is .cmxa, then add .a too? */
+            /* int cmxapos = utstring_findR(label, -1, "cmxa", 4); */
+            /* if (cmxapos > 0) { */
+            /*     char *cmxa_a = strdup(utstring_body(label)); */
+            /*     cmxa_a[utstring_len(label) - 4] = 'a'; */
+            /*     cmxa_a[utstring_len(label) - 3] = '\0'; */
+
+            /*     // stdlib-shims is a special case, with empty */
+            /*     // stdlib_shims.cmxa and missing stdlib_shims.a; see */
+            /*     // https://github.com/ocaml/ocaml/pull/9011 */
+            /*     // so we need to test existence */
+            /*     utstring_renew(archive_srcfile); */
+            /*     // drop leading ':' from basename */
+            /*     char * bn = basename(cmxa_a); */
+
+            /*     /\* utstring_printf(archive_srcfile, "%s/%s", *\/ */
+            /*     /\*                 _pkg->path, bn); *\/ */
+
+            /*     /\* if (access(utstring_body(archive_srcfile), F_OK) == 0) *\/ */
+            /*     /\*     fprintf(ostream, "            \"%s\",\n", cmxa_a); *\/ */
+            /*     /\* else *\/ */
+            /*     /\*     if (debug) { *\/ */
+            /*     /\*         log_debug("## missing %s\n", *\/ */
+            /*     /\*                   utstring_body(archive_srcfile)); *\/ */
+            /*     /\*     } *\/ */
+            /* } */
+            /* if (flags != NULL) /\* skip mt, mt_vm, mt_posix *\/ */
+            /*     fprintf(ostream, "%s", "        ],\n"); */
+        }
+        utstring_free(label);
+        /* if (settings_ct > 1) { */
+        /*     /\* fprintf(ostream, "\n"); // , (1+level)*spfactor, sp); *\/ */
+        /*     fprintf(ostream, "%*s],\n", (1+level)*spfactor, sp); */
+        /* } */
+        /* free(condition_comment); */
+    next:
+        ;
+    }
+    /* utstring_free(cmtag); */
+    /* if (settings_ct > 1) */
+    /*     fprintf(ostream, "%*s}),\n", level*spfactor, sp); */
+    /* else */
+    /*     fprintf(ostream, "%*s],\n", level*spfactor, sp); */
+}
+
+void emit_bazel_cmxs_attr(FILE* ostream,
+                          int level, /* indentation control */
+                          /* char *_repo, */
+                          /* char *_pkg_path, */
+                          char *_pkg_prefix,
+                          char *_pkg_name,
+                          /* for constructing import label: */
+                          char *_filedeps_path, /* _lib */
+                          /* char *_subpkg_dir, */
+                          obzl_meta_entries *_entries,
+                          char *property, /* = 'archive' or 'plugin' */
+                          obzl_meta_package *_pkg)
+{
+    log_debug("EMIT_BAZEL_CMXS_ATTR _pkg_name: '%s'; prop: '%s'; filedeps path: '%s'",
+              _pkg_name, property, _filedeps_path);
+    log_debug("  pkg_prefix: %s", _pkg_prefix);
+
+    static UT_string *archive_srcfile; // FIXME: dealloc?
+
+    /* obzl_meta_property *_prop = obzl_meta_entries_property(_entries,property); */
+    /* if (strncmp(_pkg_name, "ppx_sexp_conv", 13) == 0) { */
+    /*     char *_prop_name = obzl_meta_property_name(_prop); */
+    /*     char *_prop_val = obzl_meta_property_value(_prop); */
+
+    /*     log_debug("prop: '%s' == '%s'", */
+    /*               _prop_name, _prop_val); */
+    /*     log_debug("DUMP_PROP"); */
+    /*     dump_property(0, _prop); */
+    /* } */
+
+    /* log_debug("    _pkg_path: %s", _pkg_path); */
+    /*
+      NOTE: archive/plugin location is relative to the 'directory' property!
+      which may be empty, even for subpackages (e.g. opam-lib subpackages)
+     */
+
+    /* char *directory = NULL; */
+    /* bool stdlib = false; */
+    /* struct obzl_meta_property *directory_prop = obzl_meta_entries_property(_entries, "directory"); */
+    /* log_debug("DIRECTORY: %s", directory); */
+    /* log_debug(" PROP: %s", property); */
+
+    if (debug)
+        log_debug("## _filedeps_path: '%s'\n", _filedeps_path);
+
+    struct obzl_meta_property *deps_prop = obzl_meta_entries_property(_entries, property);
+    if ( deps_prop == NULL ) {
+        log_warn("Prop '%s' not found: %s.", property); //, pkg_name);
+        return;
+    }
+
+    obzl_meta_settings *settings = obzl_meta_property_settings(deps_prop);
+
+    int settings_ct = obzl_meta_settings_count(settings);
+    log_info("settings count: %d", settings_ct);
+    if (settings_ct == 0) {
+        log_info("No settings for %s", obzl_meta_property_name(deps_prop));
+        return;
+    }
+
+    /* dealing with OP_UDATE.
+       e.g. ppx_sexp_conv has three settings:
+       requires(ppx_driver) = "ppx_sexp_conv.expander ppxlib"
+       requires(-ppx_driver) = "ppx_sexp_conv.runtime-lib"
+       ppx(-ppx_driver,-custom_ppx) += "ppx_deriving"
+
+       the 3rd must combine the 2nd because the op on the last is '+='
+       condition: no_ppx_driver: ppx_sexp_conv.runtime-lib
+       condition: no_ppx_driver_no_custom_ppx: ppx_sexp_conv.runtime-lib, ppx_deriving
+       if op == UPDATE then for each flag, search flaglist for match and add vals if found
+     */
+
+    /* NB: 'property' will be 'archive' or 'plugin' (?) */
+    /* if (settings_ct > 1) { */
+    /*     fprintf(ostream, "%*s%s = select({\n", level*spfactor, sp, property); */
+    /* } else { */
+    /*     fprintf(ostream, "%*s%s = [\n", level*spfactor, sp, property); */
+    /* } */
+
+    fprintf(ostream, "%*scmxs", level*spfactor, sp);
+
+    UT_string *cmtag;  /* i.e. flag */
+    utstring_new(cmtag);
+
+    obzl_meta_setting *setting = NULL;
+
+    obzl_meta_values *vals;
+    obzl_meta_value *archive_name = NULL;
+
+    for (int i = 0; i < settings_ct; i++) {
+        setting = obzl_meta_settings_nth(settings, i);
+        /* log_debug("setting[%d]", i+1); */
+        /* dump_setting(0, setting); */
+
+        obzl_meta_flags *flags = obzl_meta_setting_flags(setting);
+
+        /* skip any setting with deprecated flag, e.g. 'vm' */
+        if (obzl_meta_flags_deprecated(flags)) {
+            /* log_debug("OMIT attribute with DEPRECATED flag"); */
+            continue;
+        }
+
+        if (flags != NULL) register_flags(flags);
+
+        /* if (g_ppx_pkg) {        /\* set by opam_bootstrap.handle_lib_meta *\/ */
+        /* } */
+
+        bool has_conditions = false;
+        if (flags == NULL)
+            utstring_printf(cmtag, "//conditions:default");
+        else
+            has_conditions = obzl_meta_flags_to_cmtag(flags, cmtag);
+            /* has_conditions = obzl_meta_flags_to_selection_label(flags, cmtag); */
+
+        if (!has_conditions) {
+            goto next;          /* continue does not seem to exit loop */
+        }
+
+        /* char *condition_comment = obzl_meta_flags_to_comment(flags); */
+        /* log_debug("condition_comment: %s", condition_comment); */
+
+        /* FIXME: multiple settings means multiple flags; decide how
+           to handle for deps */
+        // construct a select expression on the flags
+        /* if (settings_ct > 1) { */
+        /*     fprintf(ostream, "        \"%s\"%-4s", */
+        /*             utstring_body(cmtag), ": [\n"); */
+        /*     /\* condition_comment, /\\* FIXME: name the condition *\\/ *\/ */
+        /* } */
+
+        /* now we handle UPDATE settings */
+        vals = resolve_setting_values(setting, flags, settings);
+        log_debug("setting values:");
+        /* dump_values(0, vals); */
+
+        /* now we construct a bazel label for each value */
+        UT_string *label;
+        utstring_new(label);
+
+        for (int j = 0; j < obzl_meta_values_count(vals); j++) {
+            archive_name = obzl_meta_values_nth(vals, j);
+            log_info("prop[%d] '%s' == '%s'",
+                     j, property, (char*)*archive_name);
+
+            /* char *s = (char*)*v; */
+            /* while (*s) { */
+            /*     /\* printf("s: %s\n", s); *\/ */
+            /*     if(s[0] == '.') { */
+            /*         /\* log_info("Hit"); *\/ */
+            /*         s[0] = '/'; */
+            /*     } */
+            /*     s++; */
+            /* } */
+            utstring_clear(label);
+            /* utstring_printf(label, "//:%s", _filedeps_path); /\* e.g. _lib *\/ */
+            /* log_debug("21 _filedeps_path: %s", _filedeps_path); */
+            /* log_debug("22 _pkg_prefix: %d: %s", _pkg_prefix == NULL, _pkg_prefix); */
+            /* int rc; */
+            /* if (_filedeps_path == NULL) */
+            /*     rc = 1; */
+            /* else */
+            /*     rc = strncmp("ocaml", _filedeps_path, 5); */
+
+            /* /\* emit 'archive' attr targets *\/ */
+            /* if (rc == 0)    /\* i.e. 'ocaml', 'ocaml/ocamldoc' *\/ */
+            /*      /\* special cases: unix, dynlink, etc. *\/ */
+            /*     if (strlen(_filedeps_path) == 5) { */
+            /*         utstring_printf(label, "@%s//lib:%s", */
+            /*                         _filedeps_path, *archive_name); */
+            /*     } else { */
+            /*         rc = strncmp("ocaml-compiler-libs", _filedeps_path, 19); */
+            /*         if (rc == 0) */
+            /*             /\* utstring_printf(label, "ZZZZ@%s:%s", *\/ */
+            /*             /\*                 _filedeps_path, *archive_name); *\/ */
+            /*             utstring_printf(label, ":%s", */
+            /*                             *archive_name); */
+            /*         else { */
+            /*             utstring_printf(label, ":%s", */
+            /*                             *archive_name); */
+            /*             utstring_printf(label, "ERROR@%s:%s", */
+            /*                             _filedeps_path, *archive_name); */
+
+            /*             /\* ocaml-syntax-shims, ocamlbuild, etc. *\/ */
+            /*         } */
+            /*     } */
+            /* else { */
+                /* we're constructing archive attribute labels
+                   _pkg_name is the name of the import target, not the arch
+                */
+                if (_pkg_prefix == NULL) {
+                    utstring_printf(label,
+                                    "%s",
+                                    /* "@%s//:%s", // filedeps path: %s", */
+                                    /* /\* _pkg_name, *\/ */
+                                    /* _filedeps_path, */
+                                    *archive_name);
+                } else {
+                    char *start = strchr(_pkg_prefix, '/');
+                    int repo_len = start - (char*)_pkg_prefix;
+                    if (start == NULL) {
+                        utstring_printf(label,
+                                        "%s",
+                                        /* "@%.*s//%s:%s", // || PKG_pfx: %s", */
+                                        /* repo_len, */
+                                        /* _pkg_prefix, */
+                                        /* _pkg_name, */
+                                        *archive_name);
+                                        /* _pkg_prefix); */
+                    } else {
+                        start++;
+                        utstring_printf(label,
+                                        "%s",
+                                        /* "@%.*s//%s/%s:%s", // || PKG_pfx: %s", */
+                                        /* repo_len, */
+                                        /* _pkg_prefix, */
+                                        /* (char*)start, */
+                                        /* _pkg_name, */
+                                        *archive_name);
+                                        /* _pkg_prefix); */
+                    }
+
+                        /* fprintf(ostream, "%*s\"@%.*s//%s\",\n", */
+                        /*         (1+level)*spfactor, sp, */
+                        /*         repo_len, */
+                        /*         *v, */
+                        /*         start+1); */
+
+                }
+                /* char *s = (char*)_filedeps_path; */
+                /* char *tmp; */
+                /* while(s) { */
+                /*     tmp = strchr(s, '/'); */
+                /*     if (tmp == NULL) break; */
+                /*     *tmp = '.'; */
+                /*     s = tmp; */
+                /* } */
+                /* char *start = strrchr(_filedeps_path, '.'); */
+
+                /* if (start == NULL) */
+                /*     utstring_printf(label, */
+                /*                     "X@%s//:%s", */
+                /*                     _filedeps_path, *archive_name); */
+                /* else { */
+                /*     *start++ = '\0'; // split on '.' */
+                /*     utstring_printf(label, */
+                /*                     "Y@%s//%s:%s", */
+                /*                     _filedeps_path, */
+                /*                     start, */
+                /*                     *archive_name); */
+                /* } */
+            /* } */
+
+            /* utstring_printf(label, "@rules_ocaml//cfg/:%s/%s", */
+            /*                 _filedeps_path, *archive_name); */
+            /* log_debug("label 2: %s", utstring_body(label)); */
+
+            // FIXME: verify existence using access()?
+                if (strncmp(utstring_body(cmtag), "cmxa", 4) == 0) {
+                    fprintf(ostream, " = \"%s\",\n", utstring_body(label));
+                }
+            /* if (settings_ct > 1) { */
+            /*         fprintf(ostream, "AA\"%s\",\n", utstring_body(label)); */
+            /* } else { */
+            /*         fprintf(ostream, "BB\"%s\",\n", utstring_body(label)); */
+            /* } */
+
+            /* if v is .cmxa, then add .a too? */
+            /* int cmxapos = utstring_findR(label, -1, "cmxa", 4); */
+            /* if (cmxapos > 0) { */
+            /*     char *cmxa_a = strdup(utstring_body(label)); */
+            /*     cmxa_a[utstring_len(label) - 4] = 'a'; */
+            /*     cmxa_a[utstring_len(label) - 3] = '\0'; */
+
+            /*     // stdlib-shims is a special case, with empty */
+            /*     // stdlib_shims.cmxa and missing stdlib_shims.a; see */
+            /*     // https://github.com/ocaml/ocaml/pull/9011 */
+            /*     // so we need to test existence */
+            /*     utstring_renew(archive_srcfile); */
+            /*     // drop leading ':' from basename */
+            /*     char * bn = basename(cmxa_a); */
+
+            /*     /\* utstring_printf(archive_srcfile, "%s/%s", *\/ */
+            /*     /\*                 _pkg->path, bn); *\/ */
+
+            /*     /\* if (access(utstring_body(archive_srcfile), F_OK) == 0) *\/ */
+            /*     /\*     fprintf(ostream, "            \"%s\",\n", cmxa_a); *\/ */
+            /*     /\* else *\/ */
+            /*     /\*     if (debug) { *\/ */
+            /*     /\*         log_debug("## missing %s\n", *\/ */
+            /*     /\*                   utstring_body(archive_srcfile)); *\/ */
+            /*     /\*     } *\/ */
+            /* } */
+            /* if (flags != NULL) /\* skip mt, mt_vm, mt_posix *\/ */
+            /*     fprintf(ostream, "%s", "        ],\n"); */
+        }
+        utstring_free(label);
+        /* if (settings_ct > 1) { */
+        /*     /\* fprintf(ostream, "\n"); // , (1+level)*spfactor, sp); *\/ */
+        /*     fprintf(ostream, "%*s],\n", (1+level)*spfactor, sp); */
+        /* } */
+        /* free(condition_comment); */
+    next:
+        ;
+    }
+    utstring_free(cmtag);
+    /* if (settings_ct > 1) */
+    /*     fprintf(ostream, "%*s}),\n", level*spfactor, sp); */
+    /* else */
+    /*     fprintf(ostream, "%*s],\n", level*spfactor, sp); */
+}
+
 /*
   FIXME: version, description really apply to whole pkg; put them in comments, not rule attributes
  */
@@ -833,16 +1422,30 @@ Note that "archive" should only be used for archive files that are intended to b
     /*                      "archive", */
     /*                      _pkg); */
 
-    fprintf(ostream, "    cmi  = glob([\"*.cmi\"]),\n");
-    fprintf(ostream, "    cmti = glob([\"*.cmti\"]),\n");
-    fprintf(ostream, "    cmo  = glob([\"*.cmo\"]),\n");
-    fprintf(ostream, "    cmx  = glob([\"*.cmx\"]),\n");
-    fprintf(ostream, "    ofiles  = glob([\"*.o\"]),\n");
-    fprintf(ostream, "    cmxa = glob([\"*.cmxa\"]),\n");
-    fprintf(ostream, "    arfiles = glob([\"*.a\"]),\n");
-    fprintf(ostream, "    cma  = glob([\"*.cma\"]),\n");
-    fprintf(ostream, "    cmxs = glob([\"*.cmxs\"]),\n");
-    fprintf(ostream, "    srcs = glob([\"*.ml\", \"*.mli\"]),\n");
+    emit_bazel_archive_attr(ostream, 1,
+                            /* _repo, // host_repo, */
+                            /* _pkg_path, */
+                            _pkg_prefix,
+                            _pkg_name,
+                            /* for constructing import label: */
+                            _filedeps_path,
+                            /* _subpkg_dir, */
+                            _entries,
+                            "archive",
+                            _pkg);
+    /* fprintf(ostream, "    cmxa = glob([\"*.cmxa\"]),\n"); */
+    /* fprintf(ostream, "    cma  = glob([\"*.cma\"]),\n"); */
+
+    /* fprintf(ostream, "    cmxs   = glob([\"*.cmxs\"]),\n"); */
+
+    fprintf(ostream, "    cmi    = glob([\"*.cmi\"]),\n");
+    fprintf(ostream, "    cmo    = glob([\"*.cmo\"]),\n");
+    fprintf(ostream, "    cmx    = glob([\"*.cmx\"]),\n");
+    fprintf(ostream, "    ofiles = glob([\"*.o\"]),\n");
+    fprintf(ostream, "    afiles = glob([\"*.a\"]),\n");
+    fprintf(ostream, "    cmt    = glob([\"*.cmt\"]),\n");
+    fprintf(ostream, "    cmti   = glob([\"*.cmti\"]),\n");
+    fprintf(ostream, "    srcs   = glob([\"*.ml\", \"*.mli\"]),\n");
 
     fprintf(ostream, "    all = glob([\"*.cmx\", \"*.cmi\", \"*.a\", \"*.so\"]),\n");
     emit_bazel_deps_attribute(ostream, 1, host_repo, "lib", _pkg_name, _entries);
@@ -885,16 +1488,42 @@ void emit_bazel_plugin_rule(FILE* ostream, int level,
     /*                      "plugin", //); */
     /*                      _pkg); */
 
-    fprintf(ostream, "    cmi  = glob([\"*.cmi\"]),\n");
-    fprintf(ostream, "    cmti = glob([\"*.cmti\"]),\n");
-    fprintf(ostream, "    cmo  = glob([\"*.cmo\"]),\n");
-    fprintf(ostream, "    cmx  = glob([\"*.cmx\"]),\n");
-    fprintf(ostream, "    ofiles  = glob([\"*.o\"]),\n");
-    fprintf(ostream, "    cmxa = glob([\"*.cmxa\", \"*.a\"]),\n");
-    fprintf(ostream, "    arfiles = glob([\"*.a\"]),\n");
-    fprintf(ostream, "    cma  = glob([\"*.cma\"]),\n");
-    fprintf(ostream, "    cmxs = glob([\"*.cmxs\"]),\n");
-    fprintf(ostream, "    srcs = glob([\"*.ml\", \"*.mli\"]),\n");
+    /* emit_bazel_archive_attr(ostream, 1, */
+    /*                         /\* _repo, // host_repo, *\/ */
+    /*                         /\* _pkg_path, *\/ */
+    /*                         _pkg_prefix, */
+    /*                         _pkg_name, */
+    /*                         /\* for constructing import label: *\/ */
+    /*                         _filedeps_path, */
+    /*                         /\* _subpkg_dir, *\/ */
+    /*                         _entries, */
+    /*                         "plugin", */
+    /*                         _pkg); */
+    /* fprintf(ostream, "    cmxa = glob([\"*.cmxa\", \"*.a\"]),\n"); */
+    /* fprintf(ostream, "    cma  = glob([\"*.cma\"]),\n"); */
+
+    emit_bazel_cmxs_attr(ostream, 1,
+                            /* _repo, // host_repo, */
+                            /* _pkg_path, */
+                            _pkg_prefix,
+                            _pkg_name,
+                            /* for constructing import label: */
+                            _filedeps_path,
+                            /* _subpkg_dir, */
+                            _entries,
+                            "plugin",
+                            _pkg);
+
+    /* fprintf(ostream, "    cmxs = glob([\"*.cmxs\"]),\n"); */
+
+    /* fprintf(ostream, "    cmi    = glob([\"*.cmi\"]),\n"); */
+    /* fprintf(ostream, "    cmo    = glob([\"*.cmo\"]),\n"); */
+    /* fprintf(ostream, "    cmx    = glob([\"*.cmx\"]),\n"); */
+    /* fprintf(ostream, "    ofiles = glob([\"*.o\"]),\n"); */
+    /* fprintf(ostream, "    afiles = glob([\"*.a\"]),\n"); */
+    /* fprintf(ostream, "    cmt    = glob([\"*.cmt\"]),\n"); */
+    /* fprintf(ostream, "    cmti   = glob([\"*.cmti\"]),\n"); */
+    /* fprintf(ostream, "    srcs   = glob([\"*.ml\", \"*.mli\"]),\n"); */
 
     emit_bazel_deps_attribute(ostream, 1, host_repo, "lib", _pkg_name, _entries);
     fprintf(ostream, "    visibility = [\"//visibility:public\"]\n");
@@ -1165,7 +1794,7 @@ void emit_bazel_deps_attribute(FILE* ostream, int level,
         if (flags == NULL)
             utstring_printf(condition_name, "//conditions:default");
         else
-            has_conditions = obzl_meta_flags_to_select_condition(flags, condition_name);
+            has_conditions = obzl_meta_flags_to_selection_label(flags, condition_name);
 
         char *condition_comment = obzl_meta_flags_to_comment(flags);
         /* log_debug("condition_comment: %s", condition_comment); */
@@ -1422,7 +2051,7 @@ void emit_bazel_ppx_codeps(FILE* ostream, int level,
         if (flags == NULL)
             utstring_printf(condition_name, "//conditions:default");
         else
-            has_conditions = obzl_meta_flags_to_select_condition(flags, condition_name);
+            has_conditions = obzl_meta_flags_to_selection_label(flags, condition_name);
 
         char *condition_comment = obzl_meta_flags_to_comment(flags);
         /* log_debug("condition_comment: %s", condition_comment); */
@@ -1753,7 +2382,7 @@ void emit_bazel_error_target(FILE* ostream, int level,
 /*         if (flags == NULL) */
 /*             utstring_printf(condition_name, "//conditions:default"); */
 /*         else */
-/*             has_conditions = obzl_meta_flags_to_select_condition(flags, condition_name); */
+/*             has_conditions = obzl_meta_flags_to_selection_label(flags, condition_name); */
 
 /*         char *condition_comment = obzl_meta_flags_to_comment(flags); */
 /*         /\* log_debug("condition_comment: %s", condition_comment); *\/ */

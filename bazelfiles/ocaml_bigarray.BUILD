@@ -3,47 +3,28 @@
 load("@rules_ocaml//build:rules.bzl", "ocaml_import")
 
 ocaml_import(
-    name = "bigarray",
-    version = "[distributed with OCaml]",
-    cmi  = glob(["*.cmi"]),
-    cmti = glob(["*.cmti"]),
-    cmt = glob(["*.cmt"]),
-    cmo  = glob(["*.cmo"]),
-    cmx  = glob(["*.cmx"]),
-    ofiles = glob(["*.o"]),
-    cmxa = glob(["*.cmxa"]),
-    arfiles = glob(["*.a"]),
-    cma  = glob(["*.cma"]),
-    cmxs = glob(["*.cmxs"]),
-    srcs = glob(["*.ml", "*.mli"]),
-    # archive = select({
-    #     "@rules_ocaml//build/mode:bytecode": [":bigarray.cma"],
-    #     "@rules_ocaml//build/mode:native"  : [
-    #         ":bigarray.cmxa",
-    #         ":bigarray.a"
-    #     ],
-    #  }),
-    all = glob(["bigarray.*"]),
-    deps = ["@ocaml//unix"],
+    name       = "bigarray",
+    version    = "[distributed with OCaml]",
+    cma        = "bigarray.cma",
+    cmxa       = "bigarray.cmxa",
+    cmi        = glob(["*.cmi"]),
+    cmo        = glob(["*.cmo"]),
+    cmx        = glob(["*.cmx"]),
+    ofiles     = glob(["*.o"]),
+    afiles     = glob(["*.a"]),
+    cmt        = glob(["*.cmt"]),
+    cmti       = glob(["*.cmti"]),
+    srcs       = glob(["*.ml", "*.mli"]),
+    all        = glob(["bigarray.*"]),
+
+    deps       = ["@ocaml//unix"],
     visibility = ["//visibility:public"],
 )
 
 ocaml_import(
     name = "plugin",
     version = "[distributed with OCaml]",
-    cmi  = glob(["*.cmi"]),
-    cmti = glob(["*.cmti"]),
-    cmo  = glob(["*.cmo"]),
-    cmx  = glob(["*.cmx"]),
-    cmxa = glob(["*.cmxa"]),
-    cma  = glob(["*.cma"]),
-    cmxs = glob(["*.cmxs"]),
-    srcs = glob(["*.ml", "*.mli"]),
-    # archive = select({
-    #     "@rules_ocaml//build/mode:bytecode": [":bigarray.cma"],
-    #     "@rules_ocaml//build/mode:native"  : [":bigarray.cmxs"],
-    #  }),
-    all = glob(["bigarray.*"]),
+    cmxs       = "bigarray.cmxs",
     deps = ["@ocaml//unix"],
     visibility = ["//visibility:public"],
 );

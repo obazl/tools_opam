@@ -4,6 +4,7 @@ platform(name = "bc",  # ocamlc
          parents = ["@local_config_platform//:host"],
          constraint_values = ["@opam//tc:opam",
                               "@opam//tc:unoptimized",
+                              # "@ocaml//platform:bytecode",
                               "@opam//tc/emitter:bytecode"],
          visibility=["//visibility:public"])
 

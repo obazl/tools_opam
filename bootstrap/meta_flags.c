@@ -261,7 +261,7 @@ char *obzl_meta_flags_to_comment(obzl_meta_flags *flags)
       rc: false
   flag ppx_driver is ignored
  */
-bool obzl_meta_flags_to_select_condition(obzl_meta_flags *flags,
+bool obzl_meta_flags_to_selection_label(obzl_meta_flags *flags,
                                          UT_string *_cname)
 {
 #ifdef DEBUG_FLAGS
@@ -342,6 +342,144 @@ bool obzl_meta_flags_to_select_condition(obzl_meta_flags *flags,
                         if (strncmp(a_flag->s, "native", 6) == 0) {
                             if (saw_ppx_driver>0) {
                                 utstring_printf(_cname, "@rules_ocaml//build/mode:native");
+                                return true;
+                            }
+                        }
+                        if (strncmp(a_flag->s, "custom_ppx", 10) == 0) {
+                            if ( !a_flag->polarity ) {
+                                utstring_printf(_cname, "custom_ppx_disabled");
+                                /* utstring_printf(_cname, "//conditions:default"); */
+                                return true;
+                            } else {
+                                /* empirically, only '-custom_ppx' ever occurs */
+                                log_error("Unexpected positive flag 'custom_ppx'");
+                            }
+                        }
+
+                        /* ignore thread-related flags */
+                        /* this handles mt, mt_posix, mt_vm; we assume no
+                           other flags start with "mt" */
+                        if (strncmp(a_flag->s, "mt", 2) == 0) return false;
+
+                        if (i - saw_ppx_driver > 0) mystrcat(config_name, "_");
+                        log_debug("%*s%s (polarity: %d)", delta+indent, sp, a_flag->s, a_flag->polarity);
+                        if ( !a_flag->polarity ) /* '-' prefix */
+                            if (saw_ppx_driver == 0)
+                                mystrcat(config_name, "no_");
+                        mystrcat(config_name, a_flag->s);
+                    }
+
+                    /* some packages use plugin and toploop flags in
+                       the archive property. we treat these as
+                       targets, not selectables */
+                    if (strncmp(a_flag->s, "plugin", 6) == 0) return false;
+                    if (strncmp(a_flag->s, "toploop", 8) == 0) return false;
+
+
+                    /* register compound flags, so we can generate config_setting rules */
+                    /* struct config_setting *a_condition; */
+                    /* utstring_printf(_cname, "@rules_ocaml//cfg/cfg:%s", config_name); */
+                    /* HASH_FIND_STR(the_config_settings, config_name, a_condition);  /\* already in the hash? *\/ */
+                    /* if (a_condition == NULL) { */
+                    /*     a_condition = calloc(sizeof(struct config_setting), 1); */
+                    /*     strncpy(a_condition->name, config_name, 128); */
+                    /*     strncpy(a_condition->label, utstring_body(_cname), 128); */
+                    /*     a_condition->flags = flags; */
+                    /*     HASH_ADD_STR(the_config_settings, name, a_condition); */
+                    /* } */
+                    /* printf("_cname: %s\n", _cname); */
+                    return true; // _cname;
+                }
+            }
+        } else {
+            /* printf("%*sflags none: 0\n", indent, sp); */
+            /* log_debug("%*sflags: none", indent, sp); */
+            return false; // _cname;
+        }
+    }
+}
+
+bool obzl_meta_flags_to_cmtag(obzl_meta_flags *flags,
+                              UT_string *_cname)
+{
+#ifdef DEBUG_FLAGS
+    log_trace("%*sobzl_meta_flags_to_cmtag", indent, sp);
+#endif
+    /* char *buf = (char*)calloc(512, 1); */
+    /* UT_string *buf; */
+    /* utstring_new(buf); */
+    utstring_clear(_cname);
+
+    struct obzl_meta_flag *a_flag;
+
+    if (flags == NULL) {
+        return false;
+    } else {
+        if ( flags->list ) {
+            if (utarray_len(flags->list) == 0) {
+                /* printf("%*sflags ct: 0\n", indent, sp); */
+                return false;
+            } else {
+                if (utarray_len(flags->list) == 1) {
+                    a_flag = obzl_meta_flags_nth(flags, 0);
+                    if (strncmp(a_flag->s, "byte", 4) == 0) {
+                        utstring_printf(_cname, "cma");
+                        return true; // _cname;
+                    }
+                    if (strncmp(a_flag->s, "native", 6) == 0) {
+                        utstring_printf(_cname, "cmxa");
+                        return true; // _cname;
+                    }
+                    if (strncmp(a_flag->s, "ppx_driver", 10) == 0) {
+                        /* we do not treat 'ppx_driver' as a flag?? */
+                        /* for no_ppx_driver target -ppx_driver is default */
+                        if ( !a_flag->polarity ) /* '-' prefix */
+                            utstring_printf(_cname, "//conditions:default");
+                     /* utstring_printf(_cname, ":ppx_driver_disabled"); */
+                        else
+                            utstring_printf(_cname, ":ppx_driver_enabled");
+                        /* utstring_printf(_cname, "//conditions:default"); */
+                        /* utstring_printf(_cname, ":custom_ppx_enabled"); */
+                        return true;
+                    }
+
+                    /* ignore thread-related flags */
+                    /* this handles mt, mt_posix, mt_vm; we assume no
+                       other flags start with "mt" */
+                    if (strncmp(a_flag->s, "mt", 2) == 0) return false;
+
+                    /* FIXME: rename? @rules_ocaml//cfg/cfg is cli build settings */
+                    /* for selecting plugin, mode */
+                    /* utstring_printf(_cname, "%s", "@rules_ocaml//cfg/cfg:"); */
+                    /* if ( !a_flag->polarity ) /\* '-' prefix *\/ */
+                    /*     utstring_printf(_cname, "no_"); */
+                    /* utstring_printf(_cname, "%s", a_flag->s); */
+
+                    return true; // _cname;
+                } else {
+                    /* compound condition */
+                    int ct = utarray_len(flags->list); // obzl_meta_flags_count(flags);
+                    log_trace("%*sflags ct: %d", indent, sp, ct);
+                    char config_name[128];
+                    config_name[0] = '\0';
+                    struct obzl_meta_flag *a_flag = NULL;
+                    int saw_ppx_driver = 0;
+                    for (int i=0; i < ct; i++) {
+                        a_flag = obzl_meta_flags_nth(flags, i);
+                        if (strncmp(a_flag->s, "ppx_driver", 10) == 0) {
+                            /* we do not treat 'ppx_driver' as a flag */
+                            saw_ppx_driver++;
+                            continue;
+                        }
+                        if (strncmp(a_flag->s, "byte", 4) == 0) {
+                            if (saw_ppx_driver>0) {
+                                utstring_printf(_cname, "cma");
+                                return true;
+                            }
+                        }
+                        if (strncmp(a_flag->s, "native", 6) == 0) {
+                            if (saw_ppx_driver>0) {
+                                utstring_printf(_cname, "cmxa");
                                 return true;
                             }
                         }

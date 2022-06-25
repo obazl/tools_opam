@@ -3,29 +3,19 @@
 load("@rules_ocaml//build:rules.bzl", "ocaml_import")
 
 ocaml_import(
-    name = "threads",
-    version = "[distributed with OCaml]",
-    cmi  = glob(["*.cmi"]),
-    cmti = glob(["*.cmti"]),
-    cmo  = glob(["*.cmo"]),
-    cmx  = glob(["*.cmx"]),
-    ofiles = glob(["*.o"]),
-    cmxa = glob(["*.cmxa"]),
-    arfiles = glob(["*.a"]),
-    cma  = glob(["*.cma"]),
-    cmxs = glob(["*.cmxs"]),
-    srcs = glob(["*.ml", "*.mli"]),
-    # archive = select({
-    #     "@rules_ocaml//build/mode:bytecode": [":threads.cma"],
-    #     "@rules_ocaml//build/mode:native"  : [
-    #         ":threads.cmxa",
-    #         ":threads.a"
-    #     ],
-    #  }),
-    all = glob(["*.cm*", "*.o", "*.a"]),
-    deps = [
-        ## "@unix//:unix"
-        "//unix"
-    ],
+    name       = "threads",
+    version    = "[distributed with OCaml]",
+    cma        = "threads.cma",
+    cmxa       = "threads.cmxa",
+    cmi        = glob(["*.cmi"]),
+    cmo        = glob(["*.cmo"]),
+    cmx        = glob(["*.cmx"]),
+    ofiles     = glob(["*.o"]),
+    afiles     = glob(["*.a"]),
+    cmt        = glob(["*.cmt"]),
+    cmti       = glob(["*.cmti"]),
+    srcs       = glob(["*.ml", "*.mli"]),
+    all        = glob(["*.cm*", "*.o", "*.a"]),
+    deps       = ["@ocaml//:unix"],
     visibility = ["//visibility:public"],
 );
