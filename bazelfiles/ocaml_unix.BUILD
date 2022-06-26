@@ -5,8 +5,8 @@ load("@rules_ocaml//build:rules.bzl", "ocaml_import")
 ocaml_import(
     name       = "unix",
     version    = "[distributed with OCaml]",
-    cma        = "unix.cma",
-    cmxa       = "unix.cmxa",
+    cma        = ["unix.cma"],
+    cmxa       = ["unix.cmxa"],
     cmi        = glob(["*.cmi"]),
     cmo        = glob(["*.cmo"]),
     cmx        = glob(["*.cmx"]),
@@ -22,6 +22,6 @@ ocaml_import(
 ocaml_import(
     name       = "plugin",
     version    = "[distributed with OCaml]",
-    cmxs       = "unix.cmxs",
+    cmxs       = ["unix.cmxs"],
     visibility = ["//visibility:public"],
 );

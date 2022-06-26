@@ -6,8 +6,8 @@ ocaml_import(
     name       = "str",
     version    = """[distributed with Ocaml]""",
     doc        = """Regular expressions and string processing""",
-    cma        = "str.cma",
-    cmxa       = "str.cmxa",
+    cma        = ["str.cma"],
+    cmxa       = ["str.cmxa"],
     cmi        = glob(["*.cmi"]),
     cmo        = glob(["*.cmo"]),
     cmx        = glob(["*.cmx"]),
@@ -22,6 +22,6 @@ ocaml_import(
 
 ocaml_import(
     name       = "plugin",
-    cmxs       = glob(["*.cmxs"]),
+    cmxs       = ["str.cmxs"],
     visibility = ["//visibility:public"]
 )

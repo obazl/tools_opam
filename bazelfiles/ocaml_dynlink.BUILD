@@ -5,8 +5,8 @@ load("@rules_ocaml//build:rules.bzl", "ocaml_import")
 ocaml_import(
     name       = "dynlink",
     version    = "[distributed with OCaml]",
-    cma        = "dynlink.cma",
-    cmxa       = "dynlink.cmxa",
+    cma        = ["dynlink.cma"],
+    cmxa       = ["dynlink.cmxa"],
     cmi        = glob(["*.cmi"]),
     cmo        = glob(["*.cmo"]),
     cmx        = glob(["*.cmx"]),

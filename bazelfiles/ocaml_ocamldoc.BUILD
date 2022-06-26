@@ -5,8 +5,8 @@ load("@rules_ocaml//build:rules.bzl", "ocaml_import")
 ocaml_import(
     name       = "ocamldoc",
     version    = "[distributed with OCaml]",
-    cma        = "odoc_info.cma",
-    cmxa       = "odoc_info.cmxa",
+    cma        = ["odoc_info.cma"],
+    cmxa       = ["odoc_info.cmxa"],
     cmi        = glob(["*.cmi"]),
     cmo        = glob(["*.cmo"]),
     cmx        = glob(["*.cmx"]),

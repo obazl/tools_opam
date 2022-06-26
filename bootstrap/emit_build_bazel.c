@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <dirent.h>
+#include <fnmatch.h>
 #include <libgen.h>
 
 #if EXPORT_INTERFACE
@@ -721,6 +722,102 @@ void emit_bazel_attribute(FILE* ostream,
         fprintf(ostream, "%*s],\n", level*spfactor, sp);
 }
 
+void emit_bazel_cc_imports(FILE* ostream,
+                           int level, /* indentation control */
+                           char *_pkg_prefix,
+                           char *_pkg_name,
+                           char *_filedeps_path, /* _lib */
+                           obzl_meta_entries *_entries,
+                           obzl_meta_package *_pkg)
+{
+    printf("emit_bazel_cc_imports\n");
+    char *dname = dirname(utstring_body(build_bazel_file));
+    printf("dir: %s\n", dname);
+
+    errno = 0;
+    DIR *d = opendir(dname);
+    if (d == NULL) {
+        fprintf(stderr,
+                "ERROR: bad opendir: %s\n", strerror(errno));
+        return;
+    }
+
+    bool wrote_loader = false;
+
+    /* RASH ASSUMPTION: only one stublib per directory */
+    struct dirent *direntry;
+    while ((direntry = readdir(d)) != NULL) {
+        if ((direntry->d_type==DT_REG)
+            || (direntry->d_type==DT_LNK)) {
+            if (fnmatch("*stubs.a", direntry->d_name, FNM_CASEFOLD) == 0) {
+                /* printf("FOUND STUBLIB: %s\n", direntry->d_name); */
+
+                fprintf(ostream, "cc_import(\n");
+                fprintf(ostream, "    name            = \"_%s\",\n",
+                        direntry->d_name);
+                fprintf(ostream, "    static_library = \"%s\",\n",
+                        direntry->d_name);
+                fprintf(ostream, ")\n");
+            } else {
+                if (fnmatch("*stubs.so", direntry->d_name, FNM_CASEFOLD) == 0) {
+                    printf("FOUND SO LIB: %s\n", direntry->d_name);
+            }
+                /* printf("skipping %s\n", direntry->d_name); */
+            }
+        }
+    }
+    closedir(d);
+}
+
+void emit_bazel_stublibs_attr(FILE* ostream,
+                              int level, /* indentation control */
+                              char *_pkg_prefix,
+                              char *_pkg_name,
+                              char *_filedeps_path, /* _lib */
+                              obzl_meta_entries *_entries,
+                              obzl_meta_package *_pkg)
+{
+    printf("emit_bazel_stublibs_attr\n");
+    char *dname = dirname(utstring_body(build_bazel_file));
+    printf("dir: %s\n", dname);
+
+    errno = 0;
+    DIR *d = opendir(dname);
+    if (d == NULL) {
+        fprintf(stderr,
+                "ERROR: bad opendir: %s\n", strerror(errno));
+        return;
+    }
+
+    bool wrote_loader = false;
+
+    /* RASH ASSUMPTION: only one stublib per directory */
+    struct dirent *direntry;
+    while ((direntry = readdir(d)) != NULL) {
+        if ((direntry->d_type==DT_REG)
+            || (direntry->d_type==DT_LNK)) {
+            if (fnmatch("*stubs.a", direntry->d_name, FNM_CASEFOLD) == 0) {
+
+                fprintf(ostream, "%*sstublibs   = [\":_%s\"],\n",
+                        level*spfactor, sp, direntry->d_name);
+
+                /* fprintf(ostream, "cc_import(\n"); */
+                /* fprintf(ostream, "    name    = \"%s_stubs\",\n", */
+                /*         _pkg_name); */
+                /* fprintf(ostream, "    archive = \"%s\",\n", */
+                /*         direntry->d_name); */
+                /* fprintf(ostream, ")\n"); */
+            } else {
+                if (fnmatch("*stubs.so", direntry->d_name, FNM_CASEFOLD) == 0) {
+                    printf("FOUND SO LIB: %s\n", direntry->d_name);
+            }
+                /* printf("skipping %s\n", direntry->d_name); */
+            }
+        }
+    }
+    closedir(d);
+}
+
 void emit_bazel_archive_attr(FILE* ostream,
                              int level, /* indentation control */
                              /* char *_repo, */
@@ -757,26 +854,6 @@ void emit_bazel_archive_attr(FILE* ostream,
         log_info("No settings for %s", obzl_meta_property_name(deps_prop));
         return;
     }
-
-    /* dealing with OP_UDATE.
-       e.g. ppx_sexp_conv has three settings:
-       requires(ppx_driver) = "ppx_sexp_conv.expander ppxlib"
-       requires(-ppx_driver) = "ppx_sexp_conv.runtime-lib"
-       ppx(-ppx_driver,-custom_ppx) += "ppx_deriving"
-
-       the 3rd must combine the 2nd because the op on the last is '+='
-       condition: no_ppx_driver: ppx_sexp_conv.runtime-lib
-       condition: no_ppx_driver_no_custom_ppx: ppx_sexp_conv.runtime-lib, ppx_deriving
-       if op == UPDATE then for each flag, search flaglist for match and add vals if found
-     */
-
-    /* NB: 'property' will be 'archive' or 'plugin' (?) */
-    /* if (settings_ct > 1) { */
-    /*     fprintf(ostream, "%*s%s = select({\n", level*spfactor, sp, property); */
-    /* } else { */
-    /*     fprintf(ostream, "%*s%s = [\n", level*spfactor, sp, property); */
-    /* } */
-
     UT_string *cmtag;  /* cma or cmxa */
     utstring_new(cmtag);
 
@@ -813,13 +890,6 @@ void emit_bazel_archive_attr(FILE* ostream,
         if (!has_conditions) {
             goto next;          /* continue does not seem to exit loop */
         }
-
-        /* char *condition_comment = obzl_meta_flags_to_comment(flags); */
-        /* log_debug("condition_comment: %s", condition_comment); */
-
-        /* FIXME: multiple settings means multiple flags; decide how
-           to handle for deps */
-
         if (settings_ct > 1) {
             fprintf(ostream, "%*s%s", level*spfactor, sp,
                     utstring_body(cmtag));
@@ -839,164 +909,62 @@ void emit_bazel_archive_attr(FILE* ostream,
             log_info("prop[%d] '%s' == '%s'",
                      j, property, (char*)*archive_name);
             utstring_clear(label);
-            /* utstring_printf(label, "//:%s", _filedeps_path); /\* e.g. _lib *\/ */
-            /* log_debug("21 _filedeps_path: %s", _filedeps_path); */
-            /* log_debug("22 _pkg_prefix: %d: %s", _pkg_prefix == NULL, _pkg_prefix); */
-            /* int rc; */
-            /* if (_filedeps_path == NULL) */
-            /*     rc = 1; */
-            /* else */
-            /*     rc = strncmp("ocaml", _filedeps_path, 5); */
-
-            /* /\* emit 'archive' attr targets *\/ */
-            /* if (rc == 0)    /\* i.e. 'ocaml', 'ocaml/ocamldoc' *\/ */
-            /*      /\* special cases: unix, dynlink, etc. *\/ */
-            /*     if (strlen(_filedeps_path) == 5) { */
-            /*         utstring_printf(label, "@%s//lib:%s", */
-            /*                         _filedeps_path, *archive_name); */
-            /*     } else { */
-            /*         rc = strncmp("ocaml-compiler-libs", _filedeps_path, 19); */
-            /*         if (rc == 0) */
-            /*             /\* utstring_printf(label, "ZZZZ@%s:%s", *\/ */
-            /*             /\*                 _filedeps_path, *archive_name); *\/ */
-            /*             utstring_printf(label, ":%s", */
-            /*                             *archive_name); */
-            /*         else { */
-            /*             utstring_printf(label, ":%s", */
-            /*                             *archive_name); */
-            /*             utstring_printf(label, "ERROR@%s:%s", */
-            /*                             _filedeps_path, *archive_name); */
-
-            /*             /\* ocaml-syntax-shims, ocamlbuild, etc. *\/ */
-            /*         } */
-            /*     } */
-            /* else { */
-                /* we're constructing archive attribute labels
-                   _pkg_name is the name of the import target, not the arch
-                */
-                if (_pkg_prefix == NULL) {
+            if (_pkg_prefix == NULL) {
+                utstring_printf(label,
+                                "%s",
+                                /* "@%s//:%s", // filedeps path: %s", */
+                                /* /\* _pkg_name, *\/ */
+                                /* _filedeps_path, */
+                                *archive_name);
+            } else {
+                char *start = strchr(_pkg_prefix, '/');
+                int repo_len = start - (char*)_pkg_prefix;
+                if (start == NULL) {
                     utstring_printf(label,
                                     "%s",
-                                    /* "@%s//:%s", // filedeps path: %s", */
-                                    /* /\* _pkg_name, *\/ */
-                                    /* _filedeps_path, */
+                                    /* "@%.*s//%s:%s", // || PKG_pfx: %s", */
+                                    /* repo_len, */
+                                    /* _pkg_prefix, */
+                                    /* _pkg_name, */
                                     *archive_name);
+                    /* _pkg_prefix); */
                 } else {
-                    char *start = strchr(_pkg_prefix, '/');
-                    int repo_len = start - (char*)_pkg_prefix;
-                    if (start == NULL) {
-                        utstring_printf(label,
-                                        "%s",
-                                        /* "@%.*s//%s:%s", // || PKG_pfx: %s", */
-                                        /* repo_len, */
-                                        /* _pkg_prefix, */
-                                        /* _pkg_name, */
-                                        *archive_name);
-                                        /* _pkg_prefix); */
-                    } else {
-                        start++;
-                        utstring_printf(label,
-                                        "%s",
-                                        /* "@%.*s//%s/%s:%s", */
-                                        /* repo_len, */
-                                        /* _pkg_prefix, */
-                                        /* (char*)start, */
-                                        /* _pkg_name, */
-                                        *archive_name);
-                                        /* _pkg_prefix); */
-                    }
-
-                        /* fprintf(ostream, "%*s\"@%.*s//%s\",\n", */
-                        /*         (1+level)*spfactor, sp, */
-                        /*         repo_len, */
-                        /*         *v, */
-                        /*         start+1); */
-
+                    start++;
+                    utstring_printf(label,
+                                    "%s",
+                                    /* "@%.*s//%s/%s:%s", */
+                                    /* repo_len, */
+                                    /* _pkg_prefix, */
+                                    /* (char*)start, */
+                                    /* _pkg_name, */
+                                    *archive_name);
+                    /* _pkg_prefix); */
                 }
-                /* char *s = (char*)_filedeps_path; */
-                /* char *tmp; */
-                /* while(s) { */
-                /*     tmp = strchr(s, '/'); */
-                /*     if (tmp == NULL) break; */
-                /*     *tmp = '.'; */
-                /*     s = tmp; */
-                /* } */
-                /* char *start = strrchr(_filedeps_path, '.'); */
 
-                /* if (start == NULL) */
-                /*     utstring_printf(label, */
-                /*                     "X@%s//:%s", */
-                /*                     _filedeps_path, *archive_name); */
-                /* else { */
-                /*     *start++ = '\0'; // split on '.' */
-                /*     utstring_printf(label, */
-                /*                     "Y@%s//%s:%s", */
-                /*                     _filedeps_path, */
-                /*                     start, */
-                /*                     *archive_name); */
-                /* } */
-            /* } */
+                /* fprintf(ostream, "%*s\"@%.*s//%s\",\n", */
+                /*         (1+level)*spfactor, sp, */
+                /*         repo_len, */
+                /*         *v, */
+                /*         start+1); */
 
-            /* utstring_printf(label, "@rules_ocaml//cfg/:%s/%s", */
-            /*                 _filedeps_path, *archive_name); */
-            /* log_debug("label 2: %s", utstring_body(label)); */
-
+            }
             // FIXME: verify existence using access()?
-                int indent = 3;
-                if (strncmp(utstring_body(cmtag), "cmxa", 4) == 0)
-                    indent--;
+            int indent = 3;
+            if (strncmp(utstring_body(cmtag), "cmxa", 4) == 0)
+                indent--;
             if (settings_ct > 1) {
-                    fprintf(ostream, "%*s = \"%s\",\n",
+                    fprintf(ostream, "%*s = [\"%s\"],\n",
                                         /* "@%.*s//%s/%s:%s", */
                             indent, sp, utstring_body(label));
             } else {
-                    fprintf(ostream, "%*s = \"%s\",\n",
+                    fprintf(ostream, "%*s = [\"%s\"],\n",
                             indent, sp, utstring_body(label));
             }
-
-            /* if v is .cmxa, then add .a too? */
-            /* int cmxapos = utstring_findR(label, -1, "cmxa", 4); */
-            /* if (cmxapos > 0) { */
-            /*     char *cmxa_a = strdup(utstring_body(label)); */
-            /*     cmxa_a[utstring_len(label) - 4] = 'a'; */
-            /*     cmxa_a[utstring_len(label) - 3] = '\0'; */
-
-            /*     // stdlib-shims is a special case, with empty */
-            /*     // stdlib_shims.cmxa and missing stdlib_shims.a; see */
-            /*     // https://github.com/ocaml/ocaml/pull/9011 */
-            /*     // so we need to test existence */
-            /*     utstring_renew(archive_srcfile); */
-            /*     // drop leading ':' from basename */
-            /*     char * bn = basename(cmxa_a); */
-
-            /*     /\* utstring_printf(archive_srcfile, "%s/%s", *\/ */
-            /*     /\*                 _pkg->path, bn); *\/ */
-
-            /*     /\* if (access(utstring_body(archive_srcfile), F_OK) == 0) *\/ */
-            /*     /\*     fprintf(ostream, "            \"%s\",\n", cmxa_a); *\/ */
-            /*     /\* else *\/ */
-            /*     /\*     if (debug) { *\/ */
-            /*     /\*         log_debug("## missing %s\n", *\/ */
-            /*     /\*                   utstring_body(archive_srcfile)); *\/ */
-            /*     /\*     } *\/ */
-            /* } */
-            /* if (flags != NULL) /\* skip mt, mt_vm, mt_posix *\/ */
-            /*     fprintf(ostream, "%s", "        ],\n"); */
         }
         utstring_free(label);
-        /* if (settings_ct > 1) { */
-        /*     /\* fprintf(ostream, "\n"); // , (1+level)*spfactor, sp); *\/ */
-        /*     fprintf(ostream, "%*s],\n", (1+level)*spfactor, sp); */
-        /* } */
-        /* free(condition_comment); */
     next:
         ;
     }
-    /* utstring_free(cmtag); */
-    /* if (settings_ct > 1) */
-    /*     fprintf(ostream, "%*s}),\n", level*spfactor, sp); */
-    /* else */
-    /*     fprintf(ostream, "%*s],\n", level*spfactor, sp); */
 }
 
 void emit_bazel_cmxs_attr(FILE* ostream,
@@ -1257,57 +1225,14 @@ void emit_bazel_cmxs_attr(FILE* ostream,
 
             // FIXME: verify existence using access()?
                 if (strncmp(utstring_body(cmtag), "cmxa", 4) == 0) {
-                    fprintf(ostream, " = \"%s\",\n", utstring_body(label));
+                    fprintf(ostream, " = [\"%s\"],\n", utstring_body(label));
                 }
-            /* if (settings_ct > 1) { */
-            /*         fprintf(ostream, "AA\"%s\",\n", utstring_body(label)); */
-            /* } else { */
-            /*         fprintf(ostream, "BB\"%s\",\n", utstring_body(label)); */
-            /* } */
-
-            /* if v is .cmxa, then add .a too? */
-            /* int cmxapos = utstring_findR(label, -1, "cmxa", 4); */
-            /* if (cmxapos > 0) { */
-            /*     char *cmxa_a = strdup(utstring_body(label)); */
-            /*     cmxa_a[utstring_len(label) - 4] = 'a'; */
-            /*     cmxa_a[utstring_len(label) - 3] = '\0'; */
-
-            /*     // stdlib-shims is a special case, with empty */
-            /*     // stdlib_shims.cmxa and missing stdlib_shims.a; see */
-            /*     // https://github.com/ocaml/ocaml/pull/9011 */
-            /*     // so we need to test existence */
-            /*     utstring_renew(archive_srcfile); */
-            /*     // drop leading ':' from basename */
-            /*     char * bn = basename(cmxa_a); */
-
-            /*     /\* utstring_printf(archive_srcfile, "%s/%s", *\/ */
-            /*     /\*                 _pkg->path, bn); *\/ */
-
-            /*     /\* if (access(utstring_body(archive_srcfile), F_OK) == 0) *\/ */
-            /*     /\*     fprintf(ostream, "            \"%s\",\n", cmxa_a); *\/ */
-            /*     /\* else *\/ */
-            /*     /\*     if (debug) { *\/ */
-            /*     /\*         log_debug("## missing %s\n", *\/ */
-            /*     /\*                   utstring_body(archive_srcfile)); *\/ */
-            /*     /\*     } *\/ */
-            /* } */
-            /* if (flags != NULL) /\* skip mt, mt_vm, mt_posix *\/ */
-            /*     fprintf(ostream, "%s", "        ],\n"); */
         }
         utstring_free(label);
-        /* if (settings_ct > 1) { */
-        /*     /\* fprintf(ostream, "\n"); // , (1+level)*spfactor, sp); *\/ */
-        /*     fprintf(ostream, "%*s],\n", (1+level)*spfactor, sp); */
-        /* } */
-        /* free(condition_comment); */
     next:
         ;
     }
     utstring_free(cmtag);
-    /* if (settings_ct > 1) */
-    /*     fprintf(ostream, "%*s}),\n", level*spfactor, sp); */
-    /* else */
-    /*     fprintf(ostream, "%*s],\n", level*spfactor, sp); */
 }
 
 /*
@@ -1410,18 +1335,6 @@ Note that "archive" should only be used for archive files that are intended to b
                          /* _filedeps_path, */
                          _entries, "description", "doc");
 
-    /* emit_bazel_attribute(ostream, 1, */
-    /*                      /\* _repo, // host_repo, *\/ */
-    /*                      /\* _pkg_path, *\/ */
-    /*                      _pkg_prefix, */
-    /*                      _pkg_name, */
-    /*                      /\* for constructing import label: *\/ */
-    /*                      _filedeps_path, */
-    /*                      /\* _subpkg_dir, *\/ */
-    /*                      _entries, */
-    /*                      "archive", */
-    /*                      _pkg); */
-
     emit_bazel_archive_attr(ostream, 1,
                             /* _repo, // host_repo, */
                             /* _pkg_path, */
@@ -1433,21 +1346,26 @@ Note that "archive" should only be used for archive files that are intended to b
                             _entries,
                             "archive",
                             _pkg);
-    /* fprintf(ostream, "    cmxa = glob([\"*.cmxa\"]),\n"); */
-    /* fprintf(ostream, "    cma  = glob([\"*.cma\"]),\n"); */
 
-    /* fprintf(ostream, "    cmxs   = glob([\"*.cmxs\"]),\n"); */
+    fprintf(ostream, "    cmi      = glob([\"*.cmi\"]),\n");
+    fprintf(ostream, "    cmo      = glob([\"*.cmo\"]),\n");
+    fprintf(ostream, "    cmx      = glob([\"*.cmx\"]),\n");
+    fprintf(ostream, "    ofiles   = glob([\"*.o\"]),\n");
+    fprintf(ostream, "    afiles   = glob([\"*.a\"], exclude=[\"*_stubs.a\"]),\n");
+    fprintf(ostream, "    cmt      = glob([\"*.cmt\"]),\n");
+    fprintf(ostream, "    cmti     = glob([\"*.cmti\"]),\n");
+    /* fprintf(ostream, "    cclibs   = glob([\"*_stubs.a\"]),\n"); */
+    fprintf(ostream, "    vmlibs   = glob([\"dll*.so\"]),\n");
+    fprintf(ostream, "    srcs     = glob([\"*.ml\", \"*.mli\"]),\n");
 
-    fprintf(ostream, "    cmi    = glob([\"*.cmi\"]),\n");
-    fprintf(ostream, "    cmo    = glob([\"*.cmo\"]),\n");
-    fprintf(ostream, "    cmx    = glob([\"*.cmx\"]),\n");
-    fprintf(ostream, "    ofiles = glob([\"*.o\"]),\n");
-    fprintf(ostream, "    afiles = glob([\"*.a\"]),\n");
-    fprintf(ostream, "    cmt    = glob([\"*.cmt\"]),\n");
-    fprintf(ostream, "    cmti   = glob([\"*.cmti\"]),\n");
-    fprintf(ostream, "    srcs   = glob([\"*.ml\", \"*.mli\"]),\n");
+    emit_bazel_stublibs_attr(ostream, 1,
+                             _pkg_prefix,
+                             _pkg_name,
+                             _filedeps_path,
+                             _entries,
+                             _pkg);
 
-    fprintf(ostream, "    all = glob([\"*.cmx\", \"*.cmi\", \"*.a\", \"*.so\"]),\n");
+    /* fprintf(ostream, "    all      = glob([\"*.\"]),\n"); */
     emit_bazel_deps_attribute(ostream, 1, host_repo, "lib", _pkg_name, _entries);
 
     emit_bazel_ppx_codeps(ostream, 1, host_repo, _pkg_name, "lib", _entries);
@@ -2582,8 +2500,8 @@ void emit_workspace_file(char *repo_name)
 }
 
 void emit_pkg_symlinks(UT_string *dst_dir,
-                   UT_string *src_dir,
-                   char *pkg_name)
+                       UT_string *src_dir,
+                       char *pkg_name)
 {
     if (debug)
         log_debug("emit_symlinks for pkg: %s", pkg_name);
@@ -2812,6 +2730,14 @@ EXPORT void emit_build_bazel(char *_repo,
 
     rc = access(utstring_body(build_bazel_file), F_OK);
 
+    /* **************************************************************** */
+    // now links
+    if (_pkg->entries != NULL) {
+        emit_pkg_symlinks(bazel_pkg_root,
+                          new_filedeps_path,
+                          pkg_name);
+    }
+
     /* if (rc < 0) { */
     /*     log_info("EMITTING: %s", utstring_body(build_bazel_file)); */
     /* } else { */
@@ -2886,6 +2812,13 @@ EXPORT void emit_build_bazel(char *_repo,
     /*     log_debug("BASE dump:"); */
     /*     dump_package(0, _pkg); */
     /* } */
+
+    emit_bazel_cc_imports(ostream, 1,
+                          _pkg_prefix,
+                          pkg_name,
+                          _filedeps_path,
+                          entries,
+                          _pkg);
 
     obzl_meta_entry *e = NULL;
     if (_pkg->entries == NULL) {
@@ -3014,9 +2947,9 @@ EXPORT void emit_build_bazel(char *_repo,
 
     // now links
     if (_pkg->entries != NULL) {
-        emit_pkg_symlinks(bazel_pkg_root,
-                          new_filedeps_path,
-                          pkg_name);
+        /* emit_pkg_symlinks(bazel_pkg_root, */
+        /*                   new_filedeps_path, */
+        /*                   pkg_name); */
 
         /* char new_pkg_path[PATH_MAX]; */
         /* new_pkg_path[0] = '\0'; */

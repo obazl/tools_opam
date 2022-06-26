@@ -156,7 +156,7 @@ void _emit_ocaml_toolchain_adapter(FILE *ostream,
     fprintf(ostream, "    ocamlopt_opt = \"@ocaml//bin:ocamlopt.opt\",\n");
     fprintf(ostream, "    ocamllex     = \"@ocaml//bin:ocamllex\",\n");
     fprintf(ostream, "    ocamlyacc    = \"@ocaml//bin:ocamlyacc\",\n");
-    fprintf(ostream, "    stublibs     = \"@stublibs//:stublibs\",\n");
+    fprintf(ostream, "    vmlibs       = \"@stublibs//:stublibs\",\n");
     fprintf(ostream, "    linkmode     = \"dynamic\"\n");
     fprintf(ostream, ")\n");
 }

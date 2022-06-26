@@ -5,8 +5,8 @@ load("@rules_ocaml//build:rules.bzl", "ocaml_import")
 ocaml_import(
     name       = "bigarray",
     version    = "[distributed with OCaml]",
-    cma        = "bigarray.cma",
-    cmxa       = "bigarray.cmxa",
+    cma        = ["bigarray.cma"],
+    cmxa       = ["bigarray.cmxa"],
     cmi        = glob(["*.cmi"]),
     cmo        = glob(["*.cmo"]),
     cmx        = glob(["*.cmx"]),
@@ -22,9 +22,9 @@ ocaml_import(
 )
 
 ocaml_import(
-    name = "plugin",
-    version = "[distributed with OCaml]",
-    cmxs       = "bigarray.cmxs",
-    deps = ["@ocaml//unix"],
+    name       = "plugin",
+    version    = "[distributed with OCaml]",
+    cmxs       = ["bigarray.cmxs"],
+    deps       = ["@ocaml//unix"],
     visibility = ["//visibility:public"],
 );

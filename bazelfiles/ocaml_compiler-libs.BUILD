@@ -5,8 +5,8 @@ load("@rules_ocaml//build:rules.bzl", "ocaml_import")
 ocaml_import(
     name       = "common",
     doc        = """Common compiler routines""",
-    cma        = "ocamlcommon.cma",
-    cmxa       = "ocamlcommon.cmxa",
+    cma        = ["ocamlcommon.cma"],
+    cmxa       = ["ocamlcommon.cmxa"],
     cmi        = glob(["*.cmi"]),
     cmo        = glob(["*.cmo"]),
     cmx        = glob(["*.cmx"]),
@@ -22,9 +22,8 @@ ocaml_import(
 ocaml_import(
     name       = "bytecomp",
     doc        = """Common compiler routines""",
-    cma        = "ocamlbytecomp.cma",
-    cmxa       = "ocamlbytecomp.cmxa",
-    cmxs       = "ocamlbytecomp.cmxs",
+    cma        = ["ocamlbytecomp.cma"],
+    cmxa       = ["ocamlbytecomp.cmxa"],
     cmi        = glob(["*.cmi"]),
     cmo        = glob(["*.cmo"]),
     cmx        = glob(["*.cmx"]),
@@ -40,8 +39,8 @@ ocaml_import(
 ocaml_import(
     name       = "optcomp",
     doc        = """optcomp compiler routines""",
-    cma        = "ocamloptcomp.cma",
-    cmxa       = "ocamloptcomp.cmxa",
+    cma        = ["ocamloptcomp.cma"],
+    cmxa       = ["ocamloptcomp.cmxa"],
     cmi        = glob(["*.cmi"]),
     cmo        = glob(["*.cmo"]),
     cmx        = glob(["*.cmx"]),
@@ -51,6 +50,23 @@ ocaml_import(
     cmti       = glob(["*.cmti"]),
     srcs       = glob(["*.ml", "*.mli"]),
     all        = glob(["*"]),
+    visibility = ["//visibility:public"]
+)
+
+ocaml_import(
+    name = "toplevel",
+    doc = """Toplevel interactions""",
+    cma  = ["ocamltoplevel.cma"],
+    cmxa = ["ocamltoplevel.cmxa"],
+    cmi  = glob(["*.cmi"]),
+    cmo  = glob(["*.cmo"]),
+    cmx  = glob(["*.cmx"]),
+    ofiles = glob(["*.o"]),
+    afiles = glob(["*.a"]),
+    cmti = glob(["*.cmti"]),
+    srcs = glob(["*.ml", "*.mli"]),
+    all = glob(["*.cmx", "*.cmi"]),
+    deps = [":bytecomp"],
     visibility = ["//visibility:public"]
 )
 

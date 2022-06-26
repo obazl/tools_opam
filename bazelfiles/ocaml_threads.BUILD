@@ -5,8 +5,8 @@ load("@rules_ocaml//build:rules.bzl", "ocaml_import")
 ocaml_import(
     name       = "threads",
     version    = "[distributed with OCaml]",
-    cma        = "threads.cma",
-    cmxa       = "threads.cmxa",
+    cma        = ["threads.cma"],
+    cmxa       = ["threads.cmxa"],
     cmi        = glob(["*.cmi"]),
     cmo        = glob(["*.cmo"]),
     cmx        = glob(["*.cmx"]),
