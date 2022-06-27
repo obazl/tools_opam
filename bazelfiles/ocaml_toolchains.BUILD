@@ -169,7 +169,7 @@ toolchain(
         "@opam//tc:opam",
     ],
     target_compatible_with = [
-        "@platforms//os:macos",
+        "@platforms//os:linux",
         "@platforms//cpu:x86_64",
         "@opam//tc:opam",
     ],
@@ -191,7 +191,7 @@ toolchain(
         "@opam//tc:opam",
     ],
     target_compatible_with = [
-        "@platforms//os:macos",
+        "@platforms//os:linux",
         "@platforms//cpu:x86_64",
         "@opam//tc:opam",
     ],
@@ -213,7 +213,7 @@ toolchain(
         "@opam//tc:opam",
     ],
     target_compatible_with = [
-        "@platforms//os:macos",
+        "@platforms//os:linux",
         "@platforms//cpu:x86_64",
         "@opam//tc:opam",
     ],
@@ -235,7 +235,7 @@ toolchain(
         "@opam//tc:opam",
     ],
     target_compatible_with = [
-        "@platforms//os:macos",
+        "@platforms//os:linux",
         "@platforms//cpu:x86_64",
         "@opam//tc:opam",
     ],
@@ -252,7 +252,7 @@ toolchain(
         "@platforms//cpu:x86_64",
     ],
     target_compatible_with = [
-        "@platforms//os:macos",
+        "@platforms//os:linux",
         "@platforms//cpu:x86_64",
     ],
     visibility             = ["//visibility:public"],
