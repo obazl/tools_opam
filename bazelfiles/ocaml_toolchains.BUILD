@@ -6,11 +6,26 @@ load("@rules_ocaml//toolchain:adapter.bzl", "ocaml_toolchain_adapter")
 
 ##########
 toolchain(
+    name           = "default_macos",
+    toolchain      = "_opam_native_native",
+    toolchain_type = "@rules_ocaml//toolchain:type",
+    exec_compatible_with = [
+        "@platforms//os:macos",
+        "@platforms//cpu:x86_64",
+    ],
+    target_compatible_with = [
+        "@platforms//os:macos",
+        "@platforms//cpu:x86_64",
+    ],
+    visibility             = ["//visibility:public"],
+)
+
+##########
+toolchain(
     name           = "macos_opam_native_native",
     toolchain      = "_opam_native_native",
     toolchain_type = "@rules_ocaml//toolchain:type",
     target_settings = [
-        # "@ocaml//host:nc_nc"
         "@ocaml//host/build:nc",
         "@ocaml//host/target:nc",
     ],
@@ -18,13 +33,11 @@ toolchain(
         "@platforms//os:macos",
         "@platforms//cpu:x86_64",
         "@opam//tc:opam",
-        # "@ocaml//host/build:nativecode",
     ],
     target_compatible_with = [
         "@platforms//os:macos",
         "@platforms//cpu:x86_64",
         "@opam//tc:opam",
-        # "@ocaml//host/target:nativecode",
     ],
     visibility             = ["//visibility:public"],
 )
@@ -35,7 +48,6 @@ toolchain(
     toolchain      = "_opam_native_vm",
     toolchain_type = "@rules_ocaml//toolchain:type",
     target_settings = [
-        # "@ocaml//host:nc_bc"
         "@ocaml//host/build:nc",
         "@ocaml//host/target:bc",
     ],
@@ -80,7 +92,6 @@ toolchain(
     toolchain      = "_opam_vm_vm",
     toolchain_type = "@rules_ocaml//toolchain:type",
     target_settings = [
-        # "@ocaml//host:bc_bc"
         "@ocaml//host/build:bc",
         "@ocaml//host/target:bc",
     ],
@@ -125,7 +136,6 @@ toolchain(
     toolchain      = "_opam_vm_native",
     toolchain_type = "@rules_ocaml//toolchain:type",
     target_settings = [
-        # "@ocaml//host:bc_nc"
         "@ocaml//host/build:bc",
         "@ocaml//host/target:nc",
     ],
@@ -146,11 +156,15 @@ toolchain(
 
 ##########
 toolchain(
-    name           = "default_macos",
+    name           = "linux_opam_native_native",
     toolchain      = "_opam_native_native",
     toolchain_type = "@rules_ocaml//toolchain:type",
+    target_settings = [
+        "@ocaml//host/build:nc",
+        "@ocaml//host/target:nc",
+    ],
     exec_compatible_with = [
-        "@platforms//os:macos",
+        "@platforms//os:linux",
         "@platforms//cpu:x86_64",
         "@opam//tc:opam",
     ],
@@ -162,101 +176,87 @@ toolchain(
     visibility             = ["//visibility:public"],
 )
 
-# ##########
-# toolchain(
-#     name           = "linux_opam_vm_native",
-#     toolchain      = "_opam_vm_native",
-#     toolchain_type = "@rules_ocaml//toolchain:type",
-#     exec_compatible_with = [
-#         "@platforms//os:linux",
-#         "@platforms//cpu:x86_64",
-#         "@opam//tc:opam",
-#         "@ocaml//host/build:bytecode",
-#     ],
-#     target_compatible_with = [
-#         "@platforms//os:macos",
-#         "@platforms//cpu:x86_64",
-#         "@opam//tc:opam",
-#         "@ocaml//host/target:nativecode",
-#     ],
-#     visibility             = ["//visibility:public"],
-# )
+##########
+toolchain(
+    name           = "linux_opam_native_vm",
+    toolchain      = "_opam_native_vm",
+    toolchain_type = "@rules_ocaml//toolchain:type",
+    target_settings = [
+        "@ocaml//host/build:nc",
+        "@ocaml//host/target:bc",
+    ],
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+        "@opam//tc:opam",
+    ],
+    target_compatible_with = [
+        "@platforms//os:macos",
+        "@platforms//cpu:x86_64",
+        "@opam//tc:opam",
+    ],
+    visibility             = ["//visibility:public"],
+)
 
-# ##########
-# toolchain(
-#     name           = "linux_opam_native_native",
-#     toolchain      = "_opam_native_native",
-#     toolchain_type = "@rules_ocaml//toolchain:type",
-#     exec_compatible_with = [
-#         "@platforms//os:linux",
-#         "@platforms//cpu:x86_64",
-#         "@opam//tc:opam",
-#         "@ocaml//host/build:nativecode",
-#     ],
-#     target_compatible_with = [
-#         "@platforms//os:macos",
-#         "@platforms//cpu:x86_64",
-#         "@opam//tc:opam",
-#         "@ocaml//host/target:nativecode",
-#     ],
-#     visibility             = ["//visibility:public"],
-# )
+##########
+toolchain(
+    name           = "linux_opam_vm_vm",
+    toolchain      = "_opam_vm_vm",
+    toolchain_type = "@rules_ocaml//toolchain:type",
+    target_settings = [
+        "@ocaml//host/build:bc",
+        "@ocaml//host/target:bc",
+    ],
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+        "@opam//tc:opam",
+    ],
+    target_compatible_with = [
+        "@platforms//os:macos",
+        "@platforms//cpu:x86_64",
+        "@opam//tc:opam",
+    ],
+    visibility             = ["//visibility:public"],
+)
 
-# ##########
-# toolchain(
-#     name           = "linux_opam_native_vm",
-#     toolchain      = "_opam_native_vm",
-#     toolchain_type = "@rules_ocaml//toolchain:type",
-#     exec_compatible_with = [
-#         "@platforms//os:linux",
-#         "@platforms//cpu:x86_64",
-#         "@opam//tc:opam",
-#         "@ocaml//host/build:nativecode",
-#     ],
-#     target_compatible_with = [
-#         "@platforms//os:macos",
-#         "@platforms//cpu:x86_64",
-#         "@opam//tc:opam",
-#         "@ocaml//host/target:bytecode",
-#     ],
-#     visibility             = ["//visibility:public"],
-# )
+##########
+toolchain(
+    name           = "linux_opam_vm_native",
+    toolchain      = "_opam_vm_native",
+    toolchain_type = "@rules_ocaml//toolchain:type",
+    target_settings = [
+        "@ocaml//host/build:bc",
+        "@ocaml//host/target:nc",
+    ],
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+        "@opam//tc:opam",
+    ],
+    target_compatible_with = [
+        "@platforms//os:macos",
+        "@platforms//cpu:x86_64",
+        "@opam//tc:opam",
+    ],
+    visibility             = ["//visibility:public"],
+)
 
-# ##########
-# toolchain(
-#     name           = "linux_opam_vm_vm",
-#     toolchain      = "_opam_vm_vm",
-#     toolchain_type = "@rules_ocaml//toolchain:type",
-#     exec_compatible_with = [
-#         "@platforms//os:linux",
-#         "@platforms//cpu:x86_64",
-#         "@opam//tc:opam",
-#         "@ocaml//host/build:bytecode",
-#     ],
-#     target_compatible_with = [
-#         "@platforms//os:macos",
-#         "@platforms//cpu:x86_64",
-#         "@opam//tc:opam",
-#         "@ocaml//host/target:bytecode",
-#     ],
-#     visibility             = ["//visibility:public"],
-# )
-
-# ##########
-# toolchain(
-#     name           = "default_linux",
-#     toolchain      = "_opam_native_native",
-#     toolchain_type = "@rules_ocaml//toolchain:type",
-#     exec_compatible_with = [
-#         "@platforms//os:linux",
-#         "@platforms//cpu:x86_64",
-#     ],
-#     target_compatible_with = [
-#         "@platforms//os:macos",
-#         "@platforms//cpu:x86_64",
-#     ],
-#     visibility             = ["//visibility:public"],
-# )
+##########
+toolchain(
+    name           = "default_linux",
+    toolchain      = "_opam_native_native",
+    toolchain_type = "@rules_ocaml//toolchain:type",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    target_compatible_with = [
+        "@platforms//os:macos",
+        "@platforms//cpu:x86_64",
+    ],
+    visibility             = ["//visibility:public"],
+)
 
 
 ####################################
