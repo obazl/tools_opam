@@ -730,9 +730,9 @@ void emit_bazel_cc_imports(FILE* ostream,
                            obzl_meta_entries *_entries,
                            obzl_meta_package *_pkg)
 {
-    printf("emit_bazel_cc_imports\n");
+    /* printf("emit_bazel_cc_imports\n"); */
     char *dname = dirname(utstring_body(build_bazel_file));
-    printf("dir: %s\n", dname);
+    /* printf("dir: %s\n", dname); */
 
     errno = 0;
     DIR *d = opendir(dname);
@@ -777,9 +777,9 @@ void emit_bazel_stublibs_attr(FILE* ostream,
                               obzl_meta_entries *_entries,
                               obzl_meta_package *_pkg)
 {
-    printf("emit_bazel_stublibs_attr\n");
+    /* printf("emit_bazel_stublibs_attr\n"); */
     char *dname = dirname(utstring_body(build_bazel_file));
-    printf("dir: %s\n", dname);
+    /* printf("dir: %s\n", dname); */
 
     errno = 0;
     DIR *d = opendir(dname);

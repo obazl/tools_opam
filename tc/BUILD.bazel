@@ -1,14 +1,37 @@
 package(default_visibility = ["//visibility:public"])
 
-# toolchain (only opam)
-constraint_setting(name = "tc", visibility=["@opam//tc:__subpackages__"])
+constraint_setting(name = "tc")
 constraint_value(name = "opam", constraint_setting = ":tc")
 
-# compile mode of tools
-constraint_setting(name = "optimization")
-constraint_value(name = "optimized",
-                 constraint_setting = ":optimization")
+platform(name = "nc",
+         # parents = ["@ocaml//host/build:native"],
+         parents = ["@local_config_platform//:host"],
+         constraint_values = [":opam"])
 
-constraint_value(name = "unoptimized",
-                 constraint_setting = ":optimization")
+platform(name = "bc",
+         # parents = ["@ocaml//host/build:vm"],
+         parents = ["@local_config_platform//:host"],
+         constraint_values = [":opam"])
+
+
+# # compile mode of tools
+# constraint_setting(name = "optimization")
+# constraint_value(name = "optimized",
+#                  constraint_setting = ":optimization")
+
+# constraint_value(name = "unoptimized",
+#                  constraint_setting = ":optimization")
+
+# ################################################################
+# platform(name = "vm",
+#          parents = ["@local_config_platform//:host"],
+#          constraint_values = ["@opam//tc:opam",
+#                               "@ocaml//platform:vm"],
+#          visibility=["//visibility:public"])
+
+# platform(name = "native",
+#          parents = ["@local_config_platform//:host"],
+#          constraint_values = ["@opam//tc:opam",
+#                               "@ocaml//platform:native"],
+#          visibility=["//visibility:public"])
 

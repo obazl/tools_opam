@@ -42,9 +42,9 @@ FILE *_open_buildfile(UT_string *ocaml_file) {
     return ostream;
 }
 
-void _emit_toolchain_bin_symlinks(void) // UT_string *dst_dir, UT_string *src_dir)
+void _emit_ocaml_bin_symlinks(void) // UT_string *dst_dir, UT_string *src_dir)
 {
-    log_debug("_emit_toolchain_bin_symlinks");
+    log_debug("_emit_ocaml_bin_symlinks");
 
     UT_string *dst_dir;
     utstring_new(dst_dir);
@@ -131,73 +131,112 @@ void _emit_toolchain_bin_symlinks(void) // UT_string *dst_dir, UT_string *src_di
     closedir(srcd);
 }
 
-// arg 1 true: bytecode emitter
-// arg 2 true: optimized binary;
 // last arg true: emit "default" rule
+// compiler names: 'ocaml<target>.<host>'
+// other toolnames: '<toolname>.<host>'
 void _emit_ocaml_toolchain_adapter(FILE *ostream,
-                                   bool bc, bool opt, bool fallback)
+                                   bool _host,   // true: native
+                                   bool _target, // true: native
+                                   bool _fallback) // default, native
 {
-    char *pfx    = fallback? "default" : "opam";
-    char *emitter = fallback? "n" : bc? "bc" : "n";
-    char *optstr  = fallback? "opt" : opt? "opt" : "nopt";
+    char *pfx    = _fallback? "default" : "opam";
+    char *tgt    = _fallback? "nc" : _target? "nc" : "bc";
+    char *hst    = _fallback? "nc" : _host?   "nc" : "bc";
+    char *target = _fallback? "native" : _target? "native" : "vm";
+    char *host   = _fallback? "native" : _host?   "native" : "vm";
+
+    char *ext    = _fallback? "opt" : _host? "opt" : "byte";
 
     fprintf(ostream, "ocaml_toolchain_adapter(\n");
-    fprintf(ostream, "    name         = \"_%s_%s_%s\",\n",
-            pfx, emitter, optstr);
-    fprintf(ostream, "    compiler     = \"@ocaml//bin:%s%s\",\n",
-            bc?  "ocamlc" : "ocamlopt",
-            fallback? ".opt" : opt? ".opt" : "");
-    fprintf(ostream, "    emitting     = \"%s\",\n",
-            bc?  "bytecode" : "native");
+    fprintf(ostream,
+            "    name                   = \"_%s_%s_%s\",\n",
+            pfx, host, target); //TODO: switch to pfx_host_tgt
+    fprintf(ostream,
+            "    host                   = \"%s\",\n", host);
+    fprintf(ostream,
+            "    target                 = \"%s\",\n", target);
+
+    fprintf(ostream,
+            "    repl                   = \"@ocaml//bin:ocaml\",\n");
+
+    fprintf(ostream,
+            "    compiler               = \"@ocaml//bin:%s.%s\",\n",
+            _target?  "ocamlopt" : "ocamlc", ext);
+    fprintf(ostream,
+            "    profiling_compiler     = \"@ocaml//bin:%s.%s\",\n",
+            _target?  "ocamloptp" : "ocamlcp", ext);
+
+    /* ocamllex comes in 2 flavors: one for each host platform. */
+    fprintf(ostream,
+            "    ocamllex               = \"@ocaml//bin:ocamllex.%s\",\n",
+            ext);
+    /* ocamlyacc comes in one flavor, nc_nc */
+    fprintf(ostream,
+            "    ocamlyacc              = \"@ocaml//bin:ocamlyacc\",\n");
+    fprintf(ostream,
+            "    linkmode               = \"dynamic\",\n");
+
+    fprintf(ostream,
+            "    vmruntime              = \"@ocaml//bin:ocamlrun\",\n");
+    fprintf(ostream,
+            "    vmruntime_debug        = \"@ocaml//bin:ocamlrund\",\n");
+    fprintf(ostream,
+            "    vmruntime_instrumented = \"@ocaml//bin:ocamlruni\",\n");
+    fprintf(ostream,
+            "    vmlibs             = \"@stublibs//:stublibs\",\n");
+
+    fprintf(ostream, "    ## DEPRECATED - to be removed:\n");
 
     fprintf(ostream, "    ocamlc       = \"@ocaml//bin:ocamlc\",\n");
     fprintf(ostream, "    ocamlc_opt   = \"@ocaml//bin:ocamlc.opt\",\n");
     fprintf(ostream, "    ocamlopt     = \"@ocaml//bin:ocamlopt\",\n");
-    fprintf(ostream, "    ocamlopt_opt = \"@ocaml//bin:ocamlopt.opt\",\n");
-    fprintf(ostream, "    ocamllex     = \"@ocaml//bin:ocamllex\",\n");
-    fprintf(ostream, "    ocamlyacc    = \"@ocaml//bin:ocamlyacc\",\n");
-    fprintf(ostream, "    vmlibs       = \"@stublibs//:stublibs\",\n");
-    fprintf(ostream, "    linkmode     = \"dynamic\"\n");
-    fprintf(ostream, ")\n");
+    fprintf(ostream, "    ocamlopt_opt = \"@ocaml//bin:ocamlopt.opt\"\n");
+    fprintf(ostream, ")\n\n");
 }
 
 /*
   opt: compile mode optimized; bc: bytecode emitter
  */
+/* void _emit_ocaml_toolchain_binding(FILE *ostream, */
+/*                                    bool macos, bool bc, bool opt, */
+/*                                    bool fallback) */
+/* { */
+/*     char *pfx    = fallback? "default" : "opam"; */
+/*     char *emitter = fallback? "n" : bc? "bc" : "n"; */
+/*     char *optstr  = fallback? "opt" : opt? "opt" : "nopt"; */
+
 void _emit_ocaml_toolchain_binding(FILE *ostream,
-                                   bool macos, bool bc, bool opt,
-                                   bool fallback)
+                                   bool _macos,
+                                   bool _host,   // true: native
+                                   bool _target, // true: native
+                                   bool _fallback) // default, native
 {
-    char *pfx    = fallback? "default" : "opam";
-    char *emitter = fallback? "n" : bc? "bc" : "n";
-    char *optstr  = fallback? "opt" : opt? "opt" : "nopt";
+    char *pfx    = _fallback? "default" : "opam";
+    char *hst    = _fallback? "nc" : _host?   "nc" : "bc";
+    char *tgt    = _fallback? "nc" : _target? "nc" : "bc";
+    char *host   = _fallback? "native" : _host?   "native" : "vm";
+    char *target = _fallback? "native" : _target? "native" : "vm";
 
     fprintf(ostream, "##########\n");
     fprintf(ostream, "toolchain(\n");
     fprintf(ostream, "    name           = \"%s_%s_%s_%s\",\n",
-            macos? "macos" : "linux", pfx, emitter, optstr);
+            _macos? "macos" : "linux", pfx, host, target);
     fprintf(ostream, "    toolchain      = \"_%s_%s_%s\",\n",
-            pfx, emitter, optstr);
+            pfx, host, target);
     fprintf(ostream, "    toolchain_type = \"@rules_ocaml//toolchain:type\",\n");
     fprintf(ostream, "    exec_compatible_with = [\n");
     fprintf(ostream, "        \"@platforms//os:%s\",\n",
-            macos? "macos" : "linux");
+            _macos? "macos" : "linux");
     fprintf(ostream, "        \"@platforms//cpu:x86_64\",\n");
     fprintf(ostream, "        \"@opam//tc:opam\",\n");
-    fprintf(ostream, "        \"@opam//tc:%s\",\n",
-            fallback? "optimized" : opt? "optimized" : "unoptimized");
-    fprintf(ostream, "        \"@opam//tc/emitter:%s\",\n",
-            bc? "bytecode" : "native");
+    fprintf(ostream, "        \"@ocaml//platform:%s\",\n", host);
     fprintf(ostream, "    ],\n");
-    /* fprintf(ostream, "    target_compatible_with = [\n"); */
-    /* fprintf(ostream, "        \"@platforms//os:macos\",\n"); */
-    /* fprintf(ostream, "        \"@platforms//cpu:x86_64\",\n"); */
-    /* fprintf(ostream, "        \"@opam//tc:opam\",\n"); */
-    /* fprintf(ostream, "        \"@opam//tc:%s\",\n", */
-    /*         fallback? "optimized" : opt? "optimized" : "unoptimized"); */
-    /* fprintf(ostream, "        \"@opam//tc/emitter:%s\",\n", */
-    /*         bc? "bytecode" : "native"); */
-    /* fprintf(ostream, "    ],\n"); */
+    fprintf(ostream, "    target_compatible_with = [\n");
+    fprintf(ostream, "        \"@platforms//os:macos\",\n");
+    fprintf(ostream, "        \"@platforms//cpu:x86_64\",\n");
+    fprintf(ostream, "        \"@opam//tc:opam\",\n");
+    fprintf(ostream, "        \"@ocaml//platform:%s\",\n", target);
+    fprintf(ostream, "    ],\n");
     fprintf(ostream, "    visibility             = [\"//visibility:public\"],\n");
     fprintf(ostream, ")\n");
 
@@ -210,65 +249,21 @@ void _emit_ocaml_default_toolchain_binding(FILE *ostream, bool macos)
     fprintf(ostream, "toolchain(\n");
     fprintf(ostream, "    name           = \"default_%s\",\n",
             macos? "macos" : "linux");
-    fprintf(ostream, "    toolchain      = \"_opam_n_opt\",\n");
+    fprintf(ostream, "    toolchain      = \"_opam_native_native\",\n");
     fprintf(ostream, "    toolchain_type = \"@rules_ocaml//toolchain:type\",\n");
     fprintf(ostream, "    exec_compatible_with = [\n");
     fprintf(ostream, "        \"@platforms//os:%s\",\n",
             macos? "macos" : "linux");
     fprintf(ostream, "        \"@platforms//cpu:x86_64\",\n");
     fprintf(ostream, "    ],\n");
-    /* fprintf(ostream, "    target_compatible_with = [\n"); */
-    /* fprintf(ostream, "        \"@platforms//os:macos\",\n"); */
-    /* fprintf(ostream, "        \"@platforms//cpu:x86_64\",\n"); */
-    /* fprintf(ostream, "    ],\n"); */
-    fprintf(ostream, "    visibility             = [\"//visibility:public\"],\n");
-    fprintf(ostream, ")\n");
-
-    fprintf(ostream, "\n");
-}
-
-void X_emit_ocaml_toolchain_bindings(FILE *ostream, char *switch_name)
-{
-    fprintf(ostream,
-    "load(\"@rules_ocaml//toolchain:adapter.bzl\", \"ocaml_toolchain_adapter\")\n");
-
-    fprintf(ostream, "\n");
-    fprintf(ostream, "## toolchain bindings (to be passed to 'register_toolchains' function)\n");
-    fprintf(ostream, "\n");
-    fprintf(ostream, "##########\n");
-    fprintf(ostream, "toolchain(\n");
-    fprintf(ostream, "    name           = \"opam_n_n\",\n");
-    fprintf(ostream, "    toolchain      = \"_opam_n_n\",\n");
-    fprintf(ostream, "    toolchain_type = \"@rules_ocaml//toolchain:type\",\n");
-    // was: @rules_ocaml//ocaml:toolchain
-    fprintf(ostream, "    exec_compatible_with   = [\n");
-    fprintf(ostream, "        \"@platforms//os:macos\",\n");
-        /* ## we could define a toolchain for 32-bit macos, but we do not */
-        /* ## expect that will ever be needed. */
-    fprintf(ostream, "    ],\n");
     fprintf(ostream, "    target_compatible_with = [\n");
     fprintf(ostream, "        \"@platforms//os:macos\",\n");
+    fprintf(ostream, "        \"@platforms//cpu:x86_64\",\n");
     fprintf(ostream, "    ],\n");
     fprintf(ostream, "    visibility             = [\"//visibility:public\"],\n");
     fprintf(ostream, ")\n");
 
     fprintf(ostream, "\n");
-    fprintf(ostream, "##########\n");
-    // ## == toolchain_binding (of defn to type-tag)
-    fprintf(ostream, "toolchain(\n");
-    /* fprintf(ostream, "    name                   = \"opam.%s_linux\",\n", switch_name); */
-    fprintf(ostream, "    name                   = \"ocaml_linux\",\n");
-    fprintf(ostream, "    visibility             = [\"//visibility:public\"],\n");
-    fprintf(ostream, "    toolchain_type         = \"@rules_ocaml//toolchain:type\",\n");
-    // # == toolchain_definition
-    fprintf(ostream, "    toolchain              = \":opam_toolchain\",\n");
-    fprintf(ostream, "    exec_compatible_with   = [\n");
-    fprintf(ostream, "        \"@platforms//os:linux\",\n");
-    fprintf(ostream, "    ],\n");
-    fprintf(ostream, "    target_compatible_with = [\n");
-    fprintf(ostream, "        \"@platforms//os:linux\",\n");
-    fprintf(ostream, "    ],\n");
-    fprintf(ostream, ")\n");
 }
 
 void _symlink_ocaml_stdlib(char *tgtdir)
@@ -611,20 +606,50 @@ void emit_lib_stublibs(char *switch_name)
     _emit_stublibs_symlinks("/lib/stublibs");
 }
 
-void emit_ocaml_platform_buildfile(char *switch_name)
+void emit_ocaml_platform_buildfiles(void)
 {
-    log_debug("emit_ocaml_platform_buildfile\n");
+    log_debug("emit_ocaml_platform_buildfiles\n");
     UT_string *ocaml_file;
+
     utstring_new(ocaml_file);
     utstring_concat(ocaml_file, bzl_switch_pfx);
-    utstring_printf(ocaml_file, "/ocaml/platform");
+    utstring_printf(ocaml_file, "/ocaml/hosts/bazel");
     mkdir_r(utstring_body(ocaml_file));
     utstring_printf(ocaml_file, "/BUILD.bazel");
-    _copy_buildfile("ocaml_platform.BUILD", ocaml_file);
+    _copy_buildfile("hosts/bazel.BUILD", ocaml_file);
+
+    utstring_renew(ocaml_file);
+    utstring_concat(ocaml_file, bzl_switch_pfx);
+    utstring_printf(ocaml_file, "/ocaml/hosts/build");
+    mkdir_r(utstring_body(ocaml_file));
+    utstring_printf(ocaml_file, "/BUILD.bazel");
+    _copy_buildfile("hosts/build.BUILD", ocaml_file);
+
+    utstring_renew(ocaml_file);
+    utstring_concat(ocaml_file, bzl_switch_pfx);
+    utstring_printf(ocaml_file, "/ocaml/hosts/target");
+    mkdir_r(utstring_body(ocaml_file));
+    utstring_printf(ocaml_file, "/BUILD.bazel");
+    _copy_buildfile("hosts/target.BUILD", ocaml_file);
+
     utstring_free(ocaml_file);
 }
 
-void emit_ocaml_toolchain_buildfile(char *switch_name)
+void emit_ocaml_toolchain_buildfile(void)
+{
+    log_debug("emit_ocaml_toolchain_buildfile\n");
+    UT_string *ocaml_file;
+    utstring_new(ocaml_file);
+    utstring_concat(ocaml_file, bzl_switch_pfx);
+    utstring_printf(ocaml_file, "/ocaml/toolchains");
+    mkdir_r(utstring_body(ocaml_file));
+    utstring_printf(ocaml_file, "/BUILD.bazel");
+    _copy_buildfile("ocaml_toolchains.BUILD", ocaml_file);
+    utstring_free(ocaml_file);
+}
+
+//DEPRECATED
+void write_ocaml_toolchain_buildfile(char *switch_name)
 {
     log_debug("emit_ocaml_toolchain_buildfile\n");
     UT_string *ocaml_file;
@@ -668,8 +693,6 @@ void emit_ocaml_toolchain_buildfile(char *switch_name)
     _emit_ocaml_toolchain_binding(ostream, false, false, false, false); // n_bc
     _emit_ocaml_default_toolchain_binding(ostream, false);
 
-
-
     // now the ocaml_toolchain_adapters
     fprintf(ostream, "\n");
     fprintf(ostream, "####################################\n");
@@ -707,7 +730,37 @@ void emit_ocaml_toolchain_buildfile(char *switch_name)
     utstring_free(ocaml_file);
 
     /* **************************************************************** */
-    _emit_toolchain_bin_symlinks();
+    _emit_ocaml_bin_symlinks();
+}
+
+void emit_ocaml_bin_dir(void)
+{
+    log_debug("emit_ocaml_bin_dir\n");
+    UT_string *ocaml_file;
+    utstring_new(ocaml_file);
+    utstring_concat(ocaml_file, bzl_switch_pfx);
+    utstring_printf(ocaml_file, "/ocaml/bin");
+    mkdir_r(utstring_body(ocaml_file));
+    utstring_printf(ocaml_file, "/BUILD.bazel");
+
+    FILE *ostream;
+    ostream = fopen(utstring_body(ocaml_file), "w");
+    if (ostream == NULL) {
+        log_error("fopen: %s: %s", strerror(errno),
+                  utstring_body(ocaml_file));
+        fprintf(stderr, "fopen: %s: %s", strerror(errno),
+                utstring_body(ocaml_file));
+        fprintf(stderr, "exiting\n");
+        /* perror(utstring_body(ocaml_file)); */
+        exit(EXIT_FAILURE);
+    }
+    fprintf(ostream, "# generated file - DO NOT EDIT\n");
+    fprintf(ostream, "exports_files(glob([\"**\"]))\n");
+    fclose(ostream);
+    utstring_free(ocaml_file);
+
+    /* **************************************************************** */
+    _emit_ocaml_bin_symlinks();
 }
 
 void _copy_buildfile(char *buildfile, UT_string *to_file) {
@@ -1674,8 +1727,9 @@ void emit_ocaml_workspace(char *switch_name, FILE *bootstrap_FILE)
     utstring_concat(ocaml_file, bzl_switch_pfx);
     utstring_printf(ocaml_file, "/ocaml");
 
-    emit_ocaml_platform_buildfile(switch_name);
-    emit_ocaml_toolchain_buildfile(switch_name);
+    emit_ocaml_platform_buildfiles();
+    emit_ocaml_bin_dir();
+    emit_ocaml_toolchain_buildfile();
 
     /* emit_ocaml_stdlib_pkg(switch_name); */
 
