@@ -613,24 +613,24 @@ void emit_ocaml_platform_buildfiles(void)
 
     utstring_new(ocaml_file);
     utstring_concat(ocaml_file, bzl_switch_pfx);
-    utstring_printf(ocaml_file, "/ocaml/hosts/bazel");
+    utstring_printf(ocaml_file, "/ocaml/host/bazel");
     mkdir_r(utstring_body(ocaml_file));
     utstring_printf(ocaml_file, "/BUILD.bazel");
-    _copy_buildfile("hosts/bazel.BUILD", ocaml_file);
+    _copy_buildfile("host/bazel.BUILD", ocaml_file);
 
     utstring_renew(ocaml_file);
     utstring_concat(ocaml_file, bzl_switch_pfx);
-    utstring_printf(ocaml_file, "/ocaml/hosts/build");
+    utstring_printf(ocaml_file, "/ocaml/host/build");
     mkdir_r(utstring_body(ocaml_file));
     utstring_printf(ocaml_file, "/BUILD.bazel");
-    _copy_buildfile("hosts/build.BUILD", ocaml_file);
+    _copy_buildfile("host/build.BUILD", ocaml_file);
 
     utstring_renew(ocaml_file);
     utstring_concat(ocaml_file, bzl_switch_pfx);
-    utstring_printf(ocaml_file, "/ocaml/hosts/target");
+    utstring_printf(ocaml_file, "/ocaml/host/target");
     mkdir_r(utstring_body(ocaml_file));
     utstring_printf(ocaml_file, "/BUILD.bazel");
-    _copy_buildfile("hosts/target.BUILD", ocaml_file);
+    _copy_buildfile("host/target.BUILD", ocaml_file);
 
     utstring_free(ocaml_file);
 }
