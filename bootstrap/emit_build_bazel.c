@@ -749,7 +749,7 @@ void emit_bazel_cc_imports(FILE* ostream,
     while ((direntry = readdir(d)) != NULL) {
         if ((direntry->d_type==DT_REG)
             || (direntry->d_type==DT_LNK)) {
-            if (fnmatch("*stubs.a", direntry->d_name, FNM_CASEFOLD) == 0) {
+            if (fnmatch("*stubs.a", direntry->d_name, 0) == 0) {
                 /* printf("FOUND STUBLIB: %s\n", direntry->d_name); */
 
                 fprintf(ostream, "cc_import(\n");
@@ -759,7 +759,7 @@ void emit_bazel_cc_imports(FILE* ostream,
                         direntry->d_name);
                 fprintf(ostream, ")\n");
             } else {
-                if (fnmatch("*stubs.so", direntry->d_name, FNM_CASEFOLD) == 0) {
+                if (fnmatch("*stubs.so", direntry->d_name, 0) == 0) {
                     printf("FOUND SO LIB: %s\n", direntry->d_name);
             }
                 /* printf("skipping %s\n", direntry->d_name); */
@@ -796,7 +796,7 @@ void emit_bazel_stublibs_attr(FILE* ostream,
     while ((direntry = readdir(d)) != NULL) {
         if ((direntry->d_type==DT_REG)
             || (direntry->d_type==DT_LNK)) {
-            if (fnmatch("*stubs.a", direntry->d_name, FNM_CASEFOLD) == 0) {
+            if (fnmatch("*stubs.a", direntry->d_name, 0) == 0) {
 
                 fprintf(ostream, "%*sstublibs   = [\":_%s\"],\n",
                         level*spfactor, sp, direntry->d_name);
@@ -808,7 +808,7 @@ void emit_bazel_stublibs_attr(FILE* ostream,
                 /*         direntry->d_name); */
                 /* fprintf(ostream, ")\n"); */
             } else {
-                if (fnmatch("*stubs.so", direntry->d_name, FNM_CASEFOLD) == 0) {
+                if (fnmatch("*stubs.so", direntry->d_name, 0) == 0) {
                     printf("FOUND SO LIB: %s\n", direntry->d_name);
             }
                 /* printf("skipping %s\n", direntry->d_name); */
