@@ -798,7 +798,7 @@ void emit_bazel_stublibs_attr(FILE* ostream,
             || (direntry->d_type==DT_LNK)) {
             if (fnmatch("*stubs.a", direntry->d_name, 0) == 0) {
 
-                fprintf(ostream, "%*sstublibs   = [\":_%s\"],\n",
+                fprintf(ostream, "%*scc_deps   = [\":_%s\"],\n",
                         level*spfactor, sp, direntry->d_name);
 
                 /* fprintf(ostream, "cc_import(\n"); */
