@@ -780,12 +780,13 @@ void emit_bazel_stublibs_attr(FILE* ostream,
 {
     static UT_string *dname;
     utstring_new(dname);
-    utstring_concat(dname, build_bazel_file);
-    utstring_printf(dname, "/%s", _filedeps_path);
+    utstring_concat(dname, bazel_pkg_root);
+    /* utstring_printf(dname, "/%s", _filedeps_path); */
     /* char *dname = dirname(utstring_body(build_bazel_file)); */
     log_debug("emit_bazel_stublibs_attr: %s", utstring_body(dname));
     printf("emit_bazel_stublibs_attr: %s\n", utstring_body(dname));
 
+    log_debug("bazel_pkg_root: %s\n", utstring_body(bazel_pkg_root));
     log_debug("_pkg_prefix: %s\n", _pkg_prefix);
     log_debug("_pkg_name: %s\n", _pkg_name);
     log_debug("_filedeps_path: %s\n", _filedeps_path);
