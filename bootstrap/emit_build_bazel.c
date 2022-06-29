@@ -437,7 +437,7 @@ void emit_bazel_attribute(FILE* ostream,
               _pkg_name, property, _filedeps_path);
     log_debug("  pkg_prefix: %s", _pkg_prefix);
 
-    static UT_string *archive_srcfile; // FIXME: dealloc?
+    /* static UT_string *archive_srcfile; // FIXME: dealloc? */
 
     /* obzl_meta_property *_prop = obzl_meta_entries_property(_entries,property); */
     /* if (strncmp(_pkg_name, "ppx_sexp_conv", 13) == 0) { */
@@ -743,7 +743,7 @@ void emit_bazel_cc_imports(FILE* ostream,
         return;
     }
 
-    bool wrote_loader = false;
+    /* bool wrote_loader = false; */
 
     /* RASH ASSUMPTION: only one stublib per directory */
     struct dirent *direntry;
@@ -799,7 +799,7 @@ void emit_bazel_stublibs_attr(FILE* ostream,
         return;
     }
 
-    bool wrote_loader = false;
+    /* bool wrote_loader = false; */
 
     /* RASH ASSUMPTION: only one stublib per directory */
     struct dirent *direntry;
@@ -844,7 +844,7 @@ void emit_bazel_archive_attr(FILE* ostream,
               _pkg_name, property, _filedeps_path);
     log_debug("  pkg_prefix: %s", _pkg_prefix);
 
-    static UT_string *archive_srcfile; // FIXME: dealloc?
+    /* static UT_string *archive_srcfile; // FIXME: dealloc? */
 
     if (debug)
         log_debug("## _filedeps_path: '%s'\n", _filedeps_path);
@@ -927,7 +927,7 @@ void emit_bazel_archive_attr(FILE* ostream,
                                 *archive_name);
             } else {
                 char *start = strchr(_pkg_prefix, '/');
-                int repo_len = start - (char*)_pkg_prefix;
+                /* int repo_len = start - (char*)_pkg_prefix; */
                 if (start == NULL) {
                     utstring_printf(label,
                                     "%s",
@@ -993,7 +993,7 @@ void emit_bazel_cmxs_attr(FILE* ostream,
               _pkg_name, property, _filedeps_path);
     log_debug("  pkg_prefix: %s", _pkg_prefix);
 
-    static UT_string *archive_srcfile; // FIXME: dealloc?
+    /* static UT_string *archive_srcfile; // FIXME: dealloc? */
 
     /* obzl_meta_property *_prop = obzl_meta_entries_property(_entries,property); */
     /* if (strncmp(_pkg_name, "ppx_sexp_conv", 13) == 0) { */
@@ -1174,7 +1174,7 @@ void emit_bazel_cmxs_attr(FILE* ostream,
                                     *archive_name);
                 } else {
                     char *start = strchr(_pkg_prefix, '/');
-                    int repo_len = start - (char*)_pkg_prefix;
+                    /* int repo_len = start - (char*)_pkg_prefix; */
                     if (start == NULL) {
                         utstring_printf(label,
                                         "%s",
@@ -1707,10 +1707,10 @@ void emit_bazel_deps_attribute(FILE* ostream, int level,
         /* log_debug("setting %d", i+1); */
 
         obzl_meta_flags *flags = obzl_meta_setting_flags(setting);
-        int flags_ct = 0;
+        /* int flags_ct; // = 0; */
         if (flags != NULL) {
             register_flags(flags);
-            flags_ct = obzl_meta_flags_count(flags);
+            /* flags_ct = obzl_meta_flags_count(flags); */
         }
 
         if (obzl_meta_flags_has_flag(flags, "ppx_driver", false)) {
@@ -1964,10 +1964,10 @@ void emit_bazel_ppx_codeps(FILE* ostream, int level,
         /* log_debug("setting %d", i+1); */
 
         obzl_meta_flags *flags = obzl_meta_setting_flags(setting);
-        int flags_ct = 0;
+        /* int flags_ct; // = 0; */
         if (flags != NULL) {
             register_flags(flags);
-            flags_ct = obzl_meta_flags_count(flags);
+            /* flags_ct = obzl_meta_flags_count(flags); */
         }
 
         if (obzl_meta_flags_has_flag(flags, "ppx_driver", false)) {
@@ -2051,7 +2051,7 @@ void emit_bazel_ppx_codeps(FILE* ostream, int level,
                     /* fprintf(ostream, "%*s\"@%.*s//:%s\",\n", */
                     fprintf(ostream, "%*s\"@%.*s\",\n",
                             (1+level)*spfactor, sp,
-                            repo_len, *v, *v);
+                            repo_len, *v);
                     }
                 } else {
                     if (special_case_multiseg_dep(ostream, v, delim1))
