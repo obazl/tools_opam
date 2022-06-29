@@ -1,0 +1,11 @@
+platform(name = "nc",
+         parents = ["@local_config_platform//:host"],
+         constraint_values = [
+             "@ocaml//host/target:native",
+         ])
+
+platform(name = "bc",
+         parents = ["@local_config_platform//:host"],
+         constraint_values = [
+             "@ocaml//host/target:vm",
+         ])
