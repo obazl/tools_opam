@@ -730,8 +730,9 @@ void emit_bazel_cc_imports(FILE* ostream,
                            obzl_meta_entries *_entries,
                            obzl_meta_package *_pkg)
 {
-    /* printf("emit_bazel_cc_imports\n"); */
     char *dname = dirname(utstring_body(build_bazel_file));
+    log_debug("emit_bazel_cc_imports: %s", dname);
+    printf("emit_bazel_cc_imports: %s\n", dname);
     /* printf("dir: %s\n", dname); */
 
     errno = 0;
@@ -777,12 +778,21 @@ void emit_bazel_stublibs_attr(FILE* ostream,
                               obzl_meta_entries *_entries,
                               obzl_meta_package *_pkg)
 {
-    /* printf("emit_bazel_stublibs_attr\n"); */
-    char *dname = dirname(utstring_body(build_bazel_file));
-    /* printf("dir: %s\n", dname); */
+    static UT_string *dname;
+    utstring_new(dname);
+    utstring_concat(dname, build_bazel_file);
+    utstring_printf(dname, "/%s", _filedeps_path);
+    /* char *dname = dirname(utstring_body(build_bazel_file)); */
+    log_debug("emit_bazel_stublibs_attr: %s", utstring_body(dname));
+    printf("emit_bazel_stublibs_attr: %s\n", utstring_body(dname));
+
+    log_debug("_pkg_prefix: %s\n", _pkg_prefix);
+    log_debug("_pkg_name: %s\n", _pkg_name);
+    log_debug("_filedeps_path: %s\n", _filedeps_path);
+
 
     errno = 0;
-    DIR *d = opendir(dname);
+    DIR *d = opendir(utstring_body(dname));
     if (d == NULL) {
         fprintf(stderr,
                 "ERROR: bad opendir: %s\n", strerror(errno));
@@ -796,7 +806,9 @@ void emit_bazel_stublibs_attr(FILE* ostream,
     while ((direntry = readdir(d)) != NULL) {
         if ((direntry->d_type==DT_REG)
             || (direntry->d_type==DT_LNK)) {
+	  fprintf(stdout, "matching %s/%s\n", utstring_body(dname), direntry->d_name);
             if (fnmatch("*stubs.a", direntry->d_name, 0) == 0) {
+	      fprintf(stdout, "FOUND STUBLIB: %s\n", direntry->d_name);
 
                 fprintf(ostream, "%*scc_deps   = [\":_%s\"],\n",
                         level*spfactor, sp, direntry->d_name);
@@ -2826,6 +2838,7 @@ EXPORT void emit_build_bazel(char *_repo,
     } else {
         for (int i = 0; i < obzl_meta_entries_count(_pkg->entries); i++) {
             e = obzl_meta_entries_nth(_pkg->entries, i);
+	    fprintf(stdout, "Processing %s\n", _pkg->name);
 
             /* if (strncmp(_pkg->name, "ppx_fixed_literal", 17) == 0) */
             /*     log_debug("PPX_FIXED_LITERAL, entry %d, name: %s, type %d", */
