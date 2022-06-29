@@ -3,10 +3,37 @@ package(default_visibility = ["//visibility:public"])
 constraint_setting(name = "tc")
 constraint_value(name = "opam", constraint_setting = ":tc")
 
+config_setting(
+    name = "nc_host",
+    values = { "host_platform": "@opam//tc:bc" }
+)
+
+config_setting(
+    name = "nc_target",
+    values = { "platforms": "@opam//tc:nc" }
+)
+
 platform(name = "nc",
          # parents = ["@ocaml//host/build:native"],
          parents = ["@local_config_platform//:host"],
-         constraint_values = [":opam"])
+         constraint_values = [
+             ":opam",
+             "@ocaml//host/build:nativecode",
+             "@ocaml//host/target:nativecode"
+         ])
+         # ] + select({
+         #     # "@ocaml//host/build:nc": [
+         #     ":nc_host": [
+         #         "@ocaml//host/build:nativecode"
+         #     ],
+         #     # "@ocaml//host/target:nc": [
+         #     ":nc_target": [
+         #         "@ocaml//host/target:nativecode"
+         #     ],
+         #     "//conditions:default": [
+         #         # "@ocaml//host/build:nativecode"
+         #     ]
+         # }))
 
 platform(name = "bc",
          # parents = ["@ocaml//host/build:vm"],

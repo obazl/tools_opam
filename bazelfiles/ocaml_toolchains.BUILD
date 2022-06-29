@@ -7,7 +7,7 @@ load("@rules_ocaml//toolchain:adapter.bzl", "ocaml_toolchain_adapter")
 ##########
 toolchain(
     name           = "default_macos",
-    toolchain      = "_opam_native_native",
+    toolchain      = "_opam_macos_default",
     toolchain_type = "@rules_ocaml//toolchain:type",
     exec_compatible_with = [
         "@platforms//os:macos",
@@ -25,19 +25,15 @@ toolchain(
     name           = "macos_opam_native_native",
     toolchain      = "_opam_native_native",
     toolchain_type = "@rules_ocaml//toolchain:type",
-    target_settings = [
-        "@ocaml//host/build:nc",
-        "@ocaml//host/target:nc",
-    ],
     exec_compatible_with = [
         "@platforms//os:macos",
         "@platforms//cpu:x86_64",
-        "@opam//tc:opam",
+        "@ocaml//host/build:native",
     ],
     target_compatible_with = [
         "@platforms//os:macos",
         "@platforms//cpu:x86_64",
-        "@opam//tc:opam",
+        "@ocaml//host/target:native",
     ],
     visibility             = ["//visibility:public"],
 )
@@ -47,41 +43,15 @@ toolchain(
     name           = "macos_opam_native_vm",
     toolchain      = "_opam_native_vm",
     toolchain_type = "@rules_ocaml//toolchain:type",
-    target_settings = [
-        "@ocaml//host/build:nc",
-        "@ocaml//host/target:bc",
-    ],
     exec_compatible_with = [
         "@platforms//os:macos",
         "@platforms//cpu:x86_64",
-        "@opam//tc:opam",
+        "@ocaml//host/build:native",
     ],
     target_compatible_with = [
         "@platforms//os:macos",
         "@platforms//cpu:x86_64",
-        "@opam//tc:opam",
-    ],
-    visibility             = ["//visibility:public"],
-)
-
-##########
-toolchain(
-    name           = "macos_opam_x_vm",
-    toolchain      = "_opam_native_x_vm",
-    toolchain_type = "@rules_ocaml//toolchain:type",
-    target_settings = [
-        "@ocaml//host/build:nc",
-        "@ocaml//host/target:bc",
-    ],
-    exec_compatible_with = [
-        "@platforms//os:macos",
-        "@platforms//cpu:x86_64",
-        "@opam//tc:opam",
-    ],
-    target_compatible_with = [
-        "@platforms//os:macos",
-        "@platforms//cpu:x86_64",
-        "@opam//tc:opam",
+        "@ocaml//host/target:vm",
     ],
     visibility             = ["//visibility:public"],
 )
@@ -91,41 +61,43 @@ toolchain(
     name           = "macos_opam_vm_vm",
     toolchain      = "_opam_vm_vm",
     toolchain_type = "@rules_ocaml//toolchain:type",
-    target_settings = [
-        "@ocaml//host/build:bc",
-        "@ocaml//host/target:bc",
-    ],
     exec_compatible_with = [
         "@platforms//os:macos",
         "@platforms//cpu:x86_64",
-        "@opam//tc:opam",
+        "@ocaml//host/build:vm",
     ],
     target_compatible_with = [
         "@platforms//os:macos",
         "@platforms//cpu:x86_64",
-        # "@opam//tc:opam",
+        "@ocaml//host/target:vm",
     ],
     visibility             = ["//visibility:public"],
 )
 
 ##########
 toolchain(
-    name           = "macos_opam_vm_x_vm",
-    toolchain      = "_opam_vm_x_vm",
+    ## unspecified --host_platform
+    name           = "macos_opam_x_vm",
+    toolchain      = "_opam_x_vm",
     toolchain_type = "@rules_ocaml//toolchain:type",
-    target_settings = [
-        # "@ocaml//host/build:bc",
-        "@ocaml//host/target:bc",
-    ],
-    exec_compatible_with = [
-        "@platforms//os:macos",
-        "@platforms//cpu:x86_64",
-        # "@opam//tc:opam",
-    ],
     target_compatible_with = [
         "@platforms//os:macos",
         "@platforms//cpu:x86_64",
-        # "@opam//tc:opam",
+        "@ocaml//host/target:vm",
+    ],
+    visibility             = ["//visibility:public"],
+)
+
+##########
+toolchain(
+    ## unspecified --platforms (target host)
+    name           = "macos_opam_vm_x",
+    toolchain      = "_opam_vm_x",
+    toolchain_type = "@rules_ocaml//toolchain:type",
+    exec_compatible_with = [
+        "@platforms//os:macos",
+        "@platforms//cpu:x86_64",
+        "@ocaml//host/build:vm",
     ],
     visibility             = ["//visibility:public"],
 )
@@ -135,21 +107,15 @@ toolchain(
     name           = "macos_opam_vm_native",
     toolchain      = "_opam_vm_native",
     toolchain_type = "@rules_ocaml//toolchain:type",
-    target_settings = [
-        "@ocaml//host/build:bc",
-        "@ocaml//host/target:nc",
-    ],
     exec_compatible_with = [
         "@platforms//os:macos",
         "@platforms//cpu:x86_64",
-        "@opam//tc:opam",
-        # "@ocaml//host/build:bytecode",
+        "@ocaml//host/build:vm",
     ],
     target_compatible_with = [
         "@platforms//os:macos",
         "@platforms//cpu:x86_64",
-        "@opam//tc:opam",
-        # "@ocaml//host/target:nativecode",
+        "@ocaml//host/target:native",
     ],
     visibility             = ["//visibility:public"],
 )
@@ -159,19 +125,13 @@ toolchain(
     name           = "linux_opam_native_native",
     toolchain      = "_opam_native_native",
     toolchain_type = "@rules_ocaml//toolchain:type",
-    target_settings = [
-        "@ocaml//host/build:nc",
-        "@ocaml//host/target:nc",
-    ],
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
-        "@opam//tc:opam",
     ],
     target_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
-        "@opam//tc:opam",
     ],
     visibility             = ["//visibility:public"],
 )
@@ -181,19 +141,13 @@ toolchain(
     name           = "linux_opam_native_vm",
     toolchain      = "_opam_native_vm",
     toolchain_type = "@rules_ocaml//toolchain:type",
-    target_settings = [
-        "@ocaml//host/build:nc",
-        "@ocaml//host/target:bc",
-    ],
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
-        "@opam//tc:opam",
     ],
     target_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
-        "@opam//tc:opam",
     ],
     visibility             = ["//visibility:public"],
 )
@@ -203,19 +157,13 @@ toolchain(
     name           = "linux_opam_vm_vm",
     toolchain      = "_opam_vm_vm",
     toolchain_type = "@rules_ocaml//toolchain:type",
-    target_settings = [
-        "@ocaml//host/build:bc",
-        "@ocaml//host/target:bc",
-    ],
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
-        "@opam//tc:opam",
     ],
     target_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
-        "@opam//tc:opam",
     ],
     visibility             = ["//visibility:public"],
 )
@@ -225,19 +173,13 @@ toolchain(
     name           = "linux_opam_vm_native",
     toolchain      = "_opam_vm_native",
     toolchain_type = "@rules_ocaml//toolchain:type",
-    target_settings = [
-        "@ocaml//host/build:bc",
-        "@ocaml//host/target:nc",
-    ],
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
-        "@opam//tc:opam",
     ],
     target_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
-        "@opam//tc:opam",
     ],
     visibility             = ["//visibility:public"],
 )
@@ -274,12 +216,7 @@ ocaml_toolchain_adapter(
     vmruntime              = "@ocaml//bin:ocamlrun",
     vmruntime_debug        = "@ocaml//bin:ocamlrund",
     vmruntime_instrumented = "@ocaml//bin:ocamlruni",
-    vmlibs             = "@stublibs//:stublibs",
-    ## DEPRECATED - to be removed:
-    ocamlc       = "@ocaml//bin:ocamlc",
-    ocamlc_opt   = "@ocaml//bin:ocamlc.opt",
-    ocamlopt     = "@ocaml//bin:ocamlopt",
-    ocamlopt_opt = "@ocaml//bin:ocamlopt.opt"
+    vmlibs                 = "@stublibs//:stublibs",
 )
 
 ocaml_toolchain_adapter(
@@ -295,12 +232,7 @@ ocaml_toolchain_adapter(
     vmruntime              = "@ocaml//bin:ocamlrun",
     vmruntime_debug        = "@ocaml//bin:ocamlrund",
     vmruntime_instrumented = "@ocaml//bin:ocamlruni",
-    vmlibs             = "@stublibs//:stublibs",
-    ## DEPRECATED - to be removed:
-    ocamlc       = "@ocaml//bin:ocamlc",
-    ocamlc_opt   = "@ocaml//bin:ocamlc.opt",
-    ocamlopt     = "@ocaml//bin:ocamlopt",
-    ocamlopt_opt = "@ocaml//bin:ocamlopt.opt"
+    vmlibs                 = "@stublibs//:stublibs",
 )
 
 ocaml_toolchain_adapter(
@@ -316,33 +248,7 @@ ocaml_toolchain_adapter(
     vmruntime              = "@ocaml//bin:ocamlrun",
     vmruntime_debug        = "@ocaml//bin:ocamlrund",
     vmruntime_instrumented = "@ocaml//bin:ocamlruni",
-    vmlibs             = "@stublibs//:stublibs",
-    ## DEPRECATED - to be removed:
-    ocamlc       = "@ocaml//bin:ocamlc",
-    ocamlc_opt   = "@ocaml//bin:ocamlc.opt",
-    ocamlopt     = "@ocaml//bin:ocamlopt",
-    ocamlopt_opt = "@ocaml//bin:ocamlopt.opt"
-)
-
-ocaml_toolchain_adapter(
-    name                   = "_opam_native_x_vm",
-    host                   = "native",
-    target                 = "vm",
-    repl                   = "@ocaml//bin:ocaml",
-    compiler               = "@ocaml//bin:ocamlc.opt",
-    profiling_compiler     = "@ocaml//bin:ocamlcp.opt",
-    ocamllex               = "@ocaml//bin:ocamllex.opt",
-    ocamlyacc              = "@ocaml//bin:ocamlyacc",
-    linkmode               = "dynamic",
-    vmruntime              = "@ocaml//bin:ocamlrun",
-    vmruntime_debug        = "@ocaml//bin:ocamlrund",
-    vmruntime_instrumented = "@ocaml//bin:ocamlruni",
-    vmlibs             = "@stublibs//:stublibs",
-    ## DEPRECATED - to be removed:
-    ocamlc       = "@ocaml//bin:ocamlc",
-    ocamlc_opt   = "@ocaml//bin:ocamlc.opt",
-    ocamlopt     = "@ocaml//bin:ocamlopt",
-    ocamlopt_opt = "@ocaml//bin:ocamlopt.opt"
+    vmlibs                 = "@stublibs//:stublibs",
 )
 
 ocaml_toolchain_adapter(
@@ -358,32 +264,55 @@ ocaml_toolchain_adapter(
     vmruntime              = "@ocaml//bin:ocamlrun",
     vmruntime_debug        = "@ocaml//bin:ocamlrund",
     vmruntime_instrumented = "@ocaml//bin:ocamlruni",
-    vmlibs             = "@stublibs//:stublibs",
-    ## DEPRECATED - to be removed:
-    ocamlc       = "@ocaml//bin:ocamlc",
-    ocamlc_opt   = "@ocaml//bin:ocamlc.opt",
-    ocamlopt     = "@ocaml//bin:ocamlopt",
-    ocamlopt_opt = "@ocaml//bin:ocamlopt.opt"
+    vmlibs                 = "@stublibs//:stublibs",
 )
 
 ocaml_toolchain_adapter(
-    name                   = "_opam_vm_x_vm",
-    host                   = "vm",
+    ## unspecified host defaults to native
+    name                   = "_opam_x_vm",
+    host                   = "native",
     target                 = "vm",
     repl                   = "@ocaml//bin:ocaml",
-    compiler               = "@ocaml//bin:ocamlc.byte",
-    profiling_compiler     = "@ocaml//bin:ocamlcp.byte",
+    compiler               = "@ocaml//bin:ocamlc.opt",
+    profiling_compiler     = "@ocaml//bin:ocamlcp.opt",
+    ocamllex               = "@ocaml//bin:ocamllex.opt",
+    ocamlyacc              = "@ocaml//bin:ocamlyacc",
+    linkmode               = "dynamic",
+    vmruntime              = "@ocaml//bin:ocamlrun",
+    vmruntime_debug        = "@ocaml//bin:ocamlrund",
+    vmruntime_instrumented = "@ocaml//bin:ocamlruni",
+    vmlibs                 = "@stublibs//:stublibs",
+)
+
+ocaml_toolchain_adapter(
+    name                   = "_opam_vm_x",
+    host                   = "vm",
+    target                 = "native",
+    repl                   = "@ocaml//bin:ocaml",
+    compiler               = "@ocaml//bin:ocamlopt.byte",
+    profiling_compiler     = "@ocaml//bin:ocamloptp.byte",
     ocamllex               = "@ocaml//bin:ocamllex.byte",
     ocamlyacc              = "@ocaml//bin:ocamlyacc",
     linkmode               = "dynamic",
     vmruntime              = "@ocaml//bin:ocamlrun",
     vmruntime_debug        = "@ocaml//bin:ocamlrund",
     vmruntime_instrumented = "@ocaml//bin:ocamlruni",
-    vmlibs             = "@stublibs//:stublibs",
-    ## DEPRECATED - to be removed:
-    ocamlc       = "@ocaml//bin:ocamlc",
-    ocamlc_opt   = "@ocaml//bin:ocamlc.opt",
-    ocamlopt     = "@ocaml//bin:ocamlopt",
-    ocamlopt_opt = "@ocaml//bin:ocamlopt.opt"
+    vmlibs                 = "@stublibs//:stublibs",
+)
+
+ocaml_toolchain_adapter(
+    name                   = "_opam_macos_default",
+    host                   = "native",
+    target                 = "native",
+    repl                   = "@ocaml//bin:ocaml",
+    compiler               = "@ocaml//bin:ocamlopt.opt",
+    profiling_compiler     = "@ocaml//bin:ocamloptp.opt",
+    ocamllex               = "@ocaml//bin:ocamllex.opt",
+    ocamlyacc              = "@ocaml//bin:ocamlyacc",
+    linkmode               = "dynamic",
+    vmruntime              = "@ocaml//bin:ocamlrun",
+    vmruntime_debug        = "@ocaml//bin:ocamlrund",
+    vmruntime_instrumented = "@ocaml//bin:ocamlruni",
+    vmlibs                 = "@stublibs//:stublibs",
 )
 
