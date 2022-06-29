@@ -352,7 +352,7 @@ void emit_bazel_hdr(FILE* ostream)
 //, int level, char *repo, char *pkg_prefix, obzl_meta_package *_pkg)
 {
     fprintf(ostream,
-            "load(\"@rules_ocaml//build:rules.bzl\", \"ocaml_import\")\n");
+            "load(\"@opam//build:rules.bzl\", \"opam_import\")\n\n");
 }
 
 obzl_meta_values *resolve_setting_values(obzl_meta_setting *_setting,
@@ -1332,7 +1332,7 @@ Note that "archive" should only be used for archive files that are intended to b
     /* write scheme opam-resolver table */
     //FIXME: for here-switch only
     /* write_opam_resolver(_pkg_prefix, _pkg_name, _entries); */
-    fprintf(ostream, "\nocaml_import(\n");
+    fprintf(ostream, "\nopam_import(\n");
     fprintf(ostream, "    name = \"%s\",\n", _pkg_name); /* default target provides archive */
 
     emit_bazel_metadatum(ostream, 1,
@@ -1399,7 +1399,7 @@ void emit_bazel_plugin_rule(FILE* ostream, int level,
     //FIXME: for here-switch only
     /* write_opam_resolver(_pkg_prefix, _pkg_name, _entries); */
 
-    fprintf(ostream, "\nocaml_import(\n");
+    fprintf(ostream, "\nopam_import(\n");
     fprintf(ostream, "    name = \"plugin\",\n");
     /* log_debug("PDUMPP %s", _pkg_name); */
     /* dump_entries(0, _entries); */
@@ -2191,7 +2191,7 @@ void emit_bazel_deps_target(FILE* ostream, int level,
     write_opam_resolver(_pkg_prefix, _pkg_name, _entries);
     */
 
-    fprintf(ostream, "\nocaml_import(\n");
+    fprintf(ostream, "\nopam_import(\n");
     fprintf(ostream, "    name = \"%s\",\n", _pkg_name);
     emit_bazel_metadatum(ostream, 1,
                          _repo,
@@ -2219,7 +2219,7 @@ void emit_bazel_error_target(FILE* ostream, int level,
                                obzl_meta_entries *_entries)
 {
     log_debug("ERROR TARGET: %s", _pkg_name);
-    fprintf(ostream, "\nocaml_import( # error\n");
+    fprintf(ostream, "\nopam_import( # error\n");
     fprintf(ostream, "    name = \"%s\",\n", _pkg_name);
     emit_bazel_metadatum(ostream, 1,
                          _repo,
@@ -2847,7 +2847,7 @@ EXPORT void emit_build_bazel(char *_repo,
               and if this is the case, generate separate import targets
               for them. Unlike findlib we do not use flags to select the
               files we want; instead we expose everything using
-              ocaml_import targets.
+              opam_import targets.
             */
 
             if (e->type == OMP_PROPERTY) {
