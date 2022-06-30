@@ -1,8 +1,8 @@
 # generated file - DO NOT EDIT
 
-load("@rules_ocaml//build:rules.bzl", "ocaml_import")
+load("@opam//build:rules.bzl", "opam_import")
 
-ocaml_import(
+opam_import(
     name       = "ocamldoc",
     version    = "[distributed with OCaml]",
     cma        = ["odoc_info.cma"],

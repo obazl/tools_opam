@@ -1,6 +1,6 @@
-# load("@rules_ocaml//build:rules.bzl", "ocaml_import")
+# load("@opam//build:rules.bzl", "opam_import")
 
-# ocaml_import(
+# opam_import(
 #     name = "native-toplevel",
 #     doc = """Toplevel interactions""",
 #     cmi  = glob(["*.cmi"]),

@@ -83,10 +83,10 @@ def _opam_import_impl(ctx):
     #     print("  TC.TARGET: %s" % tc.target)
     #     print("  TC.COMPILER: %s" % tc.compiler.basename)
 
-    if tc.target == "native":
-        struct_extensions = ["cmxa", "cmx"]
-    else:
-        struct_extensions = ["cma", "cmo"]
+    # if tc.target == "vm":
+    #     struct_extensions = ["cma", "cmo"]
+    # else:
+    #     struct_extensions = ["cmxa", "cmx"]
 
     ################################################################
                    ####    DEPENDENCIES    ####
@@ -135,7 +135,13 @@ def _opam_import_impl(ctx):
     cc_deps_secondary           = []  ## provider list?
 
     sigs_primary.extend(ctx.files.cmi)
-    if tc.target == "native":
+    if tc.target == "vm":
+        archives_primary.extend(ctx.files.cma)
+        if (len(ctx.files.cma) > 0):
+            astructs_primary.extend(ctx.files.cmo)
+        else:
+            structs_primary.extend(ctx.files.cmo)
+    else:
         if hasattr(ctx.attr, "cmxa"):
             archives_primary.extend(ctx.files.cmxa)
             if (len(ctx.files.cmxa) > 0):
@@ -145,12 +151,6 @@ def _opam_import_impl(ctx):
 
         ofiles_primary.extend(ctx.files.ofiles)
         afiles_primary.extend(ctx.files.afiles)
-    else:
-        archives_primary.extend(ctx.files.cma)
-        if (len(ctx.files.cma) > 0):
-            astructs_primary.extend(ctx.files.cmo)
-        else:
-            structs_primary.extend(ctx.files.cmo)
 
     # cclibs_primary.extend(ctx.files.cc_deps)
     cc_deps_primary.extend(ctx.files.cc_deps)

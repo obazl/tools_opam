@@ -1,8 +1,8 @@
 # generated file - DO NOT EDIT
 
-load("@rules_ocaml//build:rules.bzl", "ocaml_import")
+load("@opam//build:rules.bzl", "opam_import")
 
-ocaml_import(
+opam_import(
     name       = "common",
     doc        = """Common compiler routines""",
     cma        = ["ocamlcommon.cma"],
@@ -19,7 +19,7 @@ ocaml_import(
     visibility = ["//visibility:public"]
 )
 
-ocaml_import(
+opam_import(
     name       = "bytecomp",
     doc        = """Common compiler routines""",
     cma        = ["ocamlbytecomp.cma"],
@@ -36,7 +36,7 @@ ocaml_import(
     visibility = ["//visibility:public"]
 )
 
-ocaml_import(
+opam_import(
     name       = "optcomp",
     doc        = """optcomp compiler routines""",
     cma        = ["ocamloptcomp.cma"],
@@ -53,7 +53,7 @@ ocaml_import(
     visibility = ["//visibility:public"]
 )
 
-ocaml_import(
+opam_import(
     name = "toplevel",
     doc = """Toplevel interactions""",
     cma  = ["ocamltoplevel.cma"],

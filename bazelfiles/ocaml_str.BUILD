@@ -1,8 +1,8 @@
 # generated file - DO NOT EDIT
 
-load("@rules_ocaml//build:rules.bzl", "ocaml_import")
+load("@opam//build:rules.bzl", "opam_import")
 
-ocaml_import(
+opam_import(
     name       = "str",
     version    = """[distributed with Ocaml]""",
     doc        = """Regular expressions and string processing""",
@@ -20,7 +20,7 @@ ocaml_import(
     visibility = ["//visibility:public"]
 )
 
-ocaml_import(
+opam_import(
     name       = "plugin",
     cmxs       = ["str.cmxs"],
     visibility = ["//visibility:public"]

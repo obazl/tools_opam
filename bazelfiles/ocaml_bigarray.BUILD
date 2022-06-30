@@ -1,8 +1,8 @@
 # generated file - DO NOT EDIT
 
-load("@rules_ocaml//build:rules.bzl", "ocaml_import")
+load("@opam//build:rules.bzl", "opam_import")
 
-ocaml_import(
+opam_import(
     name       = "bigarray",
     version    = "[distributed with OCaml]",
     cma        = ["bigarray.cma"],
@@ -21,7 +21,7 @@ ocaml_import(
     visibility = ["//visibility:public"],
 )
 
-ocaml_import(
+opam_import(
     name       = "plugin",
     version    = "[distributed with OCaml]",
     cmxs       = ["bigarray.cmxs"],

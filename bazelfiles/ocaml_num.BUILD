@@ -1,8 +1,8 @@
 # generated file - DO NOT EDIT
 
-load("@rules_ocaml//build:rules.bzl", "ocaml_import")
+load("@opam//build:rules.bzl", "opam_import")
 
-ocaml_import(
+opam_import(
     name       = "core",
     version    = "[distributed with OCaml]",
     cma        = ["nums.cma"],
@@ -19,7 +19,7 @@ ocaml_import(
     visibility = ["//visibility:public"],
 )
 
-ocaml_import(
+opam_import(
     name       = "plugin",
     version    = "[distributed with OCaml]",
     cmxs       = ["nums.cmxs"],
