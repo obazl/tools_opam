@@ -22,8 +22,18 @@
 #include "log.h"
 #include "opam_local_refresh.h"
 
-int errnum;
+/* extern int errnum; */
 /* bool local_opam; */
+
+char *toolchains[] = {
+    "@ocaml//toolchain/binding_constraints/linux:linux_x86_64",
+    "@ocaml//toolchain/binding_constraints/macos:macos_x86_64",
+    /* "@ocaml//toolchain/binding_constraints/macos:macos_x86_64__linux_x86_64", */
+    "@ocaml//toolchain/binding_constraints/macos:fake_macos_x86_64__linux_x86_64",
+
+    "" /* do not remove terminating null */
+};
+char **tc;
 
 void _xopam_set_vars(void)
 {
@@ -246,27 +256,31 @@ EXPORT void opam_local_refresh(void) // char *_opam_switch_name)
     /* fprintf(opam_resolver, ")\n"); */
     /* fclose(opam_resolver); */
 
-    fprintf(bootstrap_FILE,
-    "    native.register_toolchains(\"@ocaml//toolchains:macos_opam_native_native\")\n");
-    fprintf(bootstrap_FILE,
-    "    native.register_toolchains(\"@ocaml//toolchains:macos_opam_native_vm\")\n");
-    fprintf(bootstrap_FILE,
-    "    native.register_toolchains(\"@ocaml//toolchains:macos_opam_vm_vm\")\n");
-    fprintf(bootstrap_FILE,
-    "    native.register_toolchains(\"@ocaml//toolchains:macos_opam_vm_native\")\n");
-    fprintf(bootstrap_FILE,
-    "    native.register_toolchains(\"@ocaml//toolchains:default_macos\")\n");
+    tc = toolchains;
+    while (*tc != "") {
+        fprintf(bootstrap_FILE,
+                "    native.register_toolchains(\"%s\")\n",
+                *tc++);
+    }
+    /* fprintf(bootstrap_FILE, */
+    /* "    native.register_toolchains(\"@ocaml//toolchains:macos_opam_native_vm\")\n"); */
+    /* fprintf(bootstrap_FILE, */
+    /* "    native.register_toolchains(\"@ocaml//toolchains:macos_opam_vm_vm\")\n"); */
+    /* fprintf(bootstrap_FILE, */
+    /* "    native.register_toolchains(\"@ocaml//toolchains:macos_opam_vm_native\")\n"); */
+    /* fprintf(bootstrap_FILE, */
+    /* "    native.register_toolchains(\"@ocaml//toolchains:default_macos\")\n"); */
 
-    fprintf(bootstrap_FILE,
-    "    native.register_toolchains(\"@ocaml//toolchains:linux_opam_native_native\")\n");
-    fprintf(bootstrap_FILE,
-    "    native.register_toolchains(\"@ocaml//toolchains:linux_opam_native_vm\")\n");
-    fprintf(bootstrap_FILE,
-    "    native.register_toolchains(\"@ocaml//toolchains:linux_opam_vm_vm\")\n");
-    fprintf(bootstrap_FILE,
-    "    native.register_toolchains(\"@ocaml//toolchains:linux_opam_vm_native\")\n");
-    fprintf(bootstrap_FILE,
-    "    native.register_toolchains(\"@ocaml//toolchains:default_linux\")\n");
+    /* fprintf(bootstrap_FILE, */
+    /* "    native.register_toolchains(\"@ocaml//toolchains:linux_opam_native_native\")\n"); */
+    /* fprintf(bootstrap_FILE, */
+    /* "    native.register_toolchains(\"@ocaml//toolchains:linux_opam_native_vm\")\n"); */
+    /* fprintf(bootstrap_FILE, */
+    /* "    native.register_toolchains(\"@ocaml//toolchains:linux_opam_vm_vm\")\n"); */
+    /* fprintf(bootstrap_FILE, */
+    /* "    native.register_toolchains(\"@ocaml//toolchains:linux_opam_vm_native\")\n"); */
+    /* fprintf(bootstrap_FILE, */
+    /* "    native.register_toolchains(\"@ocaml//toolchains:default_linux\")\n"); */
 
     fclose(bootstrap_FILE);
 

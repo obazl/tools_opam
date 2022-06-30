@@ -22,7 +22,7 @@
 #include "log.h"
 #include "opam_config_xdg.h"
 
-int errnum;
+extern int errnum;
 /* bool local_opam; */
 
 #if INTERFACE

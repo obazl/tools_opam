@@ -22,7 +22,7 @@
 #include "log.h"
 #include "opam_config_here.h"
 
-int errnum;
+extern int errnum;
 /* bool local_opam; */
 
 void _opam_set_vars(void)
@@ -187,8 +187,8 @@ EXPORT void opam_here_refresh(void) // char *_opam_switch_name)
     }
 
     fprintf(bootstrap_FILE, "# generated file - DO NOT EDIT\n");
-    fprintf(bootstrap_FILE, "# coswitch: here\n",
-            compiler_version);
+    fprintf(bootstrap_FILE, "# coswitch: here\n");
+            /* compiler_version); */
     fprintf(bootstrap_FILE, "#   compiler version: %s\n",
             compiler_version);
     if (compiler_variants != NULL) {

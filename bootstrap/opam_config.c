@@ -95,44 +95,44 @@ char *get_compiler_version(char *opam_switch) {
     utstring_free(cmd);
 }
 
-static void dump_pipe(int filedes)
-{
-    log_trace("dump_pipe");
-    ssize_t read_ct;
-    char buf[1];
+/* static void dump_pipe(int filedes) */
+/* { */
+/*     log_trace("dump_pipe"); */
+/*     ssize_t read_ct; */
+/*     char buf[1]; */
 
-    char xbuf[4096];
-    read_ct = read(filedes, xbuf, 4096);
-    /* log_trace("XXXX: %s", xbuf); */
-    /* log_debug("xbuf[1]: %x", xbuf[5]); */
-    if (strncmp(xbuf,
-                "\033[31m" // RED
-                "[ERROR]"
-                CRESET    // \033[0m
-                " Variable ocaml-variants:version not found",
-                41) == 0) {
-        log_debug("ocaml-variants:version NOT FOUND");
-        return;
-    }
-    /* return; */
+/*     char xbuf[4096]; */
+/*     read_ct = read(filedes, xbuf, 4096); */
+/*     /\* log_trace("XXXX: %s", xbuf); *\/ */
+/*     /\* log_debug("xbuf[1]: %x", xbuf[5]); *\/ */
+/*     if (strncmp(xbuf, */
+/*                 "\033[31m" // RED */
+/*                 "[ERROR]" */
+/*                 CRESET    // \033[0m */
+/*                 " Variable ocaml-variants:version not found", */
+/*                 41) == 0) { */
+/*         log_debug("ocaml-variants:version NOT FOUND"); */
+/*         return; */
+/*     } */
+/*     /\* return; *\/ */
 
-    log_trace("pipe output:");
-    for (;;)
-    {
-        read_ct = read(filedes, buf, sizeof(buf));
-        /* printf("read_ct: %d\n", read_ct); */
-        if (read_ct > 0)
-        {
-            printf("%c", buf[0]);
-        }
-        else
-        {
-            break;
-        }
-    }
-    printf("\"\"\"\n");
-    log_trace("pipe end");
-}
+/*     log_trace("pipe output:"); */
+/*     for (;;) */
+/*     { */
+/*         read_ct = read(filedes, buf, sizeof(buf)); */
+/*         /\* printf("read_ct: %d\n", read_ct); *\/ */
+/*         if (read_ct > 0) */
+/*         { */
+/*             printf("%c", buf[0]); */
+/*         } */
+/*         else */
+/*         { */
+/*             break; */
+/*         } */
+/*     } */
+/*     printf("\"\"\"\n"); */
+/*     log_trace("pipe end"); */
+/* } */
 
 int handle_errors(char *buf) {
     /* for (int i=0; i<10; i++) */
@@ -291,13 +291,17 @@ char *get_compiler_variants(char *opam_switch) {
                 close(stderr_pipe[1]);
                 /* log_debug("stderr_pipe[0]:"); */
                 /* dump_pipe(stderr_pipe[0]); */
-                ssize_t read_ct = read(stderr_pipe[0], buf, 4096);
+
+                /* ssize_t read_ct = */
+                read(stderr_pipe[0], buf, 4096);
                 if (handle_errors(buf) == 0) {
                     /* printf("NO ERRORS\n"); */
                     close(stdout_pipe[1]);
                     /* log_debug("stdout_pipe[0]:"); */
                     /* dump_pipe(stdout_pipe[0]); */
-                    ssize_t read_ct = read(stdout_pipe[0], buf, 4096);
+
+                    /* ssize_t read_ct = */
+                    read(stdout_pipe[0], buf, 4096);
                     if (verbose || dry_run) {
                         printf("    => ");
                         printf(CMDCLR "%s" CRESET "\n", buf);

@@ -74,7 +74,7 @@ int get_next_meta_token(struct meta_lexer_s *lexer, union meta_token *mtok)
     /* const char *txt1, *txt2; */
 
     /* mtags */
-    int f1, f2;                 /* flags */
+    /* int f1, f2; */                /* flags */
     /* int dep1, dep2; */
     /* const char *vtok1, *vtok2; */
 
@@ -755,8 +755,8 @@ yy40:
 	}
 yy42:
 	s1 = yyt1;
-	f1 = yyt4;
-	f2 = yyt5;
+	/* f1 = yyt4; */
+	/* f2 = yyt5; */
 	s2 = yyt2;
 #line 131 "bootstrap/meta_lexis.re"
 	{

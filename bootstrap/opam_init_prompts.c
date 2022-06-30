@@ -15,7 +15,7 @@ bool prompt_use_current_switch(char *current_switch,
                                char *compiler_variants)
 {
     bool use_current = false;
-    char ok[2];
+    /* char ok[2]; */
     fprintf(stdout,
             "Current OPAM switch name is "
             RED "'%s'" CRESET ", configured with:\n",

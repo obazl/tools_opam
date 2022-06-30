@@ -21,7 +21,7 @@
 #include "log.h"
 #include "driver.h"
 
-int errnum;
+extern int errnum;
 /* bool local_opam; */
 
 bool g_ppx_pkg;

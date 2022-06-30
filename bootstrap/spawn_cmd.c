@@ -28,7 +28,7 @@
 #include "log.h"
 #include "spawn_cmd.h"
 
-int errnum;
+extern int errnum;
 /* bool local_opam; */
 
 /* UT_array *opam_packages; */

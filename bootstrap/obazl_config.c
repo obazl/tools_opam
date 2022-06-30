@@ -27,8 +27,8 @@
 
 #include "obazl_config.h"
 
-bool debug;
-bool verbose;
+/* bool debug; */
+/* bool verbose; */
 
 /* FILE *log_fp; */
 /* const char *logfile = "./.opam.d/update.log"; */
@@ -68,12 +68,12 @@ bool verbose;
 
 char *obazl_root = OBAZL_ROOT;
 
-UT_string *exec_root;
-UT_string *runfiles_root;
-UT_string *proj_root;
-UT_string *obazl_d;
+/* UT_string *exec_root; */
+/* UT_string *runfiles_root; */
+/* UT_string *proj_root; */
+/* UT_string *obazl_d; */
 
-UT_string *runtime_data_dir;
+/* UT_string *runtime_data_dir; */
 
 /* bool ini_error = false; */
 UT_string *obazl_ini_path;
@@ -128,7 +128,7 @@ EXPORT void obazl_configure(char *_exec_root, char *cmd)
     /* else */
     /*     printf("NOT FOUND: bazel-out/volatile.txt\n"); */
 
-    char *subcmd = basename(cmd);
+    /* char *subcmd = basename(cmd); */
 
     utstring_new(exec_root);
     utstring_printf(exec_root, "%s", _exec_root);
@@ -150,9 +150,8 @@ EXPORT void obazl_configure(char *_exec_root, char *cmd)
     }
 #endif
 
-    char *_wd = getenv("BUILD_WORKING_DIRECTORY");
-
 #if defined(DEBUG_TRACE)
+    char *_wd = getenv("BUILD_WORKING_DIRECTORY");
     if (_wd == NULL) {
         log_debug("BUILD_WORKING_DIRECTORY: null");
     } else {

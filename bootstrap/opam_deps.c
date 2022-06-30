@@ -27,85 +27,85 @@
 #include "log.h"
 #include "opam_deps.h"
 
-LOCAL int run_codept(char *codept_args_file, /* input */
-                     char *codept_deps_file) /* output */
-{
-    printf("running codept from %s\n", getcwd(NULL, 0));
+/* LOCAL int run_codept(char *codept_args_file, /\* input *\/ */
+/*                      char *codept_deps_file) /\* output *\/ */
+/* { */
+/*     printf("running codept from %s\n", getcwd(NULL, 0)); */
 
-    if (access(codept_args_file, R_OK) != 0) {
-        printf("codept.args file inaccessible\n");
-        return -1;
-    }
+/*     if (access(codept_args_file, R_OK) != 0) { */
+/*         printf("codept.args file inaccessible\n"); */
+/*         return -1; */
+/*     } */
 
-    int rc;
+/*     int rc; */
 
-    /* tell posix_spawn to redirect stdout/stderr */
-    /* FIXME: write stderr to log instead of dev/null? */
-    int DEVNULL_FILENO = open("/dev/null", O_WRONLY);
-    posix_spawn_file_actions_t action;
-    posix_spawn_file_actions_init(&action);
+/*     /\* tell posix_spawn to redirect stdout/stderr *\/ */
+/*     /\* FIXME: write stderr to log instead of dev/null? *\/ */
+/*     int DEVNULL_FILENO = open("/dev/null", O_WRONLY); */
+/*     posix_spawn_file_actions_t action; */
+/*     posix_spawn_file_actions_init(&action); */
 
-    /* stdout > codept_deps_file */
-    if ((rc = posix_spawn_file_actions_addopen
-         (&action, STDOUT_FILENO, codept_deps_file,
-          O_WRONLY | O_CREAT | O_TRUNC,
-          S_IRUSR | S_IWUSR | S_IRGRP ))) {
-        perror("posix_spawn_file_actions_adddopen");
-        posix_spawn_file_actions_destroy(&action);
-        return rc;
-    }
-    /* fi */
-    /* stderr > /dev/null */
-    if ((rc = posix_spawn_file_actions_adddup2(&action,
-                                              DEVNULL_FILENO,
-                                               STDERR_FILENO))) {
-        perror("posix_spawn_file_actions_adddup2");
-        posix_spawn_file_actions_destroy(&action);
-        return rc;
-    }
+/*     /\* stdout > codept_deps_file *\/ */
+/*     if ((rc = posix_spawn_file_actions_addopen */
+/*          (&action, STDOUT_FILENO, codept_deps_file, */
+/*           O_WRONLY | O_CREAT | O_TRUNC, */
+/*           S_IRUSR | S_IWUSR | S_IRGRP ))) { */
+/*         perror("posix_spawn_file_actions_adddopen"); */
+/*         posix_spawn_file_actions_destroy(&action); */
+/*         return rc; */
+/*     } */
+/*     /\* fi *\/ */
+/*     /\* stderr > /dev/null *\/ */
+/*     if ((rc = posix_spawn_file_actions_adddup2(&action, */
+/*                                               DEVNULL_FILENO, */
+/*                                                STDERR_FILENO))) { */
+/*         perror("posix_spawn_file_actions_adddup2"); */
+/*         posix_spawn_file_actions_destroy(&action); */
+/*         return rc; */
+/*     } */
 
-    char *exe = "codept";
-    char *argv[] = {
-        "codept",
-        "-sexp",
-        "-k",
-        "-args", codept_args_file,
-        NULL};
+/*     char *exe = "codept"; */
+/*     char *argv[] = { */
+/*         "codept", */
+/*         "-sexp", */
+/*         "-k", */
+/*         "-args", codept_args_file, */
+/*         NULL}; */
 
-    /* echo command first */
-    int argc = (sizeof(argv) / sizeof(argv[0])) - 1;
-    printf("obazl: ");
-    for (int i =0; i < argc; i++) {
-        printf("%s ", (char*)argv[i]);
-    }
-    printf("\n");
+/*     /\* echo command first *\/ */
+/*     int argc = (sizeof(argv) / sizeof(argv[0])) - 1; */
+/*     printf("obazl: "); */
+/*     for (int i =0; i < argc; i++) { */
+/*         printf("%s ", (char*)argv[i]); */
+/*     } */
+/*     printf("\n"); */
 
-    extern char **environ;
-    pid_t pid;
-    rc = posix_spawn(&pid, exe, &action, NULL, argv, environ);
+/*     extern char **environ; */
+/*     pid_t pid; */
+/*     rc = posix_spawn(&pid, exe, &action, NULL, argv, environ); */
 
-    if (rc == 0) {
-        /* log_debug("posix_spawn child pid: %i\n", pid); */
-        if (waitpid(pid, &rc, 0) != -1) {
-            if ( !WIFEXITED(rc) ) {
-                // signaled or stopped
-                log_error("codept rc: %d", rc);
-            } else {
-                // normal termination
-            }
-        } else {
-            perror("codept waitpid");
-            log_error("run_codept posix_spawn");
-        }
-        posix_spawn_file_actions_destroy(&action);
-        return 0;
-    } else {
-        /* does not set errno */
-        log_fatal("run_codept posix_spawn error rc: %d, %s", rc, strerror(rc));
-        posix_spawn_file_actions_destroy(&action);
-        return rc;
-    }
-}
+/*     if (rc == 0) { */
+/*         /\* log_debug("posix_spawn child pid: %i\n", pid); *\/ */
+/*         if (waitpid(pid, &rc, 0) != -1) { */
+/*             if ( !WIFEXITED(rc) ) { */
+/*                 // signaled or stopped */
+/*                 log_error("codept rc: %d", rc); */
+/*             } else { */
+/*                 // normal termination */
+/*             } */
+/*         } else { */
+/*             perror("codept waitpid"); */
+/*             log_error("run_codept posix_spawn"); */
+/*         } */
+/*         posix_spawn_file_actions_destroy(&action); */
+/*         return 0; */
+/*     } else { */
+/*         /\* does not set errno *\/ */
+/*         log_fatal("run_codept posix_spawn error rc: %d, %s", rc, strerror(rc)); */
+/*         posix_spawn_file_actions_destroy(&action); */
+/*         return rc; */
+/*     } */
+/* } */
 
 UT_array  *segs;
 UT_string *group_tag;
@@ -159,7 +159,7 @@ void emit_codept_group_tag(FILE *out, FTSENT *ftsentry)
     // easiest: post-process args file to remove lines terminating []
     int ct = utarray_len(segs);
     if (ct > 0) {
-        char **p = NULL;
+        /* char **p = NULL; */
         for (int i = ct-1; i >= 0 ; i--) {
             fprintf(out, "%s", *(char**)utarray_eltptr(segs, i));
             if (i > 0) fprintf(out, ".");
@@ -204,7 +204,7 @@ EXPORT void emit_codept_args(FILE *out, FTS *tree)
 {
     printf("emit_codept_args\n");
     FTSENT *ftsentry     = NULL;
-    FTSENT *rootentry = fts_read(tree);
+    /* FTSENT *rootentry = fts_read(tree); */
 
     /* FTSENT *wss = fts_children(tree, FTS_NAMEONLY); */
     /* while (wss) { */
@@ -312,7 +312,7 @@ EXPORT void opam_crawl(FTS *tree)
 {
     FTSENT *ftsentry     = NULL;
 
-    FTSENT *rootentry = fts_read(tree);
+    /* FTSENT *rootentry = fts_read(tree); */
 
     char *dot;
     if (NULL != tree) {
@@ -392,7 +392,7 @@ void opam_deps(char *_root)
     printf("cwd: %s\n", getcwd(NULL, 0));
 
     FTS* tree = NULL;
-    FTSENT *ftsentry     = NULL;
+    /* FTSENT *ftsentry     = NULL; */
 
     char * root;
 

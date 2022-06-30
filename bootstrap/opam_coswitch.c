@@ -22,7 +22,7 @@
 #include "log.h"
 #include "opam_coswitch.h"
 
-int errnum;
+extern int errnum;
 /* bool local_opam; */
 
 EXPORT void opam_coswitch_remove(char *coswitch) {
@@ -224,17 +224,20 @@ EXPORT void opam_coswitch_show(void) {
         }
     }
     char buf[1024] = {0};
-    int len = 0;
+    /* int len = 0; */
     char *result;
 
     for (int i=0; i<4; i++) {
+        errno = 0;
         result = fgets(buf, 1024, coswitch_FILE);
         if (result == NULL) {
             log_error("fgets fail on %s, err: %s\n", coswitch_FILE);
-            fprintf(stderr, "ERROR: fgets fail on %s, err: %s\n", coswitch_FILE);
+            fprintf(stderr, "ERROR: fgets fail on %s, err: %s\n",
+                    utstring_body(coswitch_file),
+                    strerror(errno));
             exit(EXIT_FAILURE);
         }
-        printf(buf);
+        printf("%s\n", (char*)buf);
     }
 
     fclose(coswitch_FILE);

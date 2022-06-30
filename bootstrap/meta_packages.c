@@ -49,7 +49,7 @@ EXPORT int obzl_meta_package_subpkg_count(obzl_meta_package *_pkg)
 {
     /* obzl_meta_entries *entries = _pkg->entries; */
     obzl_meta_entry *e = NULL;
-    obzl_meta_package *subpkg = NULL;
+    /* obzl_meta_package *subpkg = NULL; */
 
     int pkg_ct = 0;
 
@@ -57,7 +57,7 @@ EXPORT int obzl_meta_package_subpkg_count(obzl_meta_package *_pkg)
         e = obzl_meta_entries_nth(_pkg->entries, i);
         if (e->type == OMP_PACKAGE) {
             pkg_ct++;
-            subpkg = e->package;
+            /* subpkg = e->package; */
             pkg_ct += obzl_meta_package_subpkg_count(e->package);
         }
     }

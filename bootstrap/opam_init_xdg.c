@@ -23,7 +23,7 @@ EXPORT int opam_init_xdg(bool force, char *_compiler_version, char *_opam_switch
     log_debug("opam_init_xdg");
     /* log_debug("  force: %d, switch: %s", force, _compiler_version); */
 
-    bool replace = false;
+    /* bool replace = false; */
 
     char *compiler_version;
     if (_compiler_version != NULL) {
@@ -42,7 +42,7 @@ EXPORT int opam_init_xdg(bool force, char *_compiler_version, char *_opam_switch
 
     }
     else if (_opam_switch != NULL) {
-        UT_string *cmd;
+        /* UT_string *cmd; */
         /* utstring_new(cmd); */
         /* utstring_printf(cmd, "opam exec --switch %s -- ocamlc --version", */
         /*                 _opam_switch); */
@@ -172,13 +172,12 @@ EXPORT int opam_init_xdg(bool force, char *_compiler_version, char *_opam_switch
 /* ********************* */
 LOCAL int _opam_init(void)
 {
-    char *exe;
+    char *exe = "opam";
     int result;
 
     if (verbose)
         log_info("initializing opam root at: .opam");
 
-    exe = "opam";
     char *init_argv[] = {
         "opam", "init",
         "--cli=2.1",
@@ -207,7 +206,7 @@ LOCAL int _opam_create_switch(char *compiler_version)
     /* utstring_new(desc); */
     /* utstring_printf(desc, "'here-switch for workspace %s'", ws_name); */
 
-    char *exe;
+    char *exe = "opam";
     int result;
 
     if (verbose)

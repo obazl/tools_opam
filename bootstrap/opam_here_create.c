@@ -210,7 +210,7 @@ int _describe_here_installation()
 
     UT_string *cmd;
     utstring_new(cmd);
-    bool replace = false;
+    /* bool replace = false; */
 
     utstring_printf(cmd, "%s", "opam switch --root .opam show");
     char *here_switch = run_cmd(utstring_body(cmd), false);
@@ -291,6 +291,7 @@ int _describe_here_installation()
     /*     utstring_free(cmd); */
     /*     return -1; */
     /* } */
+    return 0;
 }
 
 /* opam "here dir switch" is created by 'opam switch .'
@@ -313,7 +314,7 @@ int _describe_here_dir_switch()
 
     UT_string *cmd;
     utstring_new(cmd);
-    bool replace = false;
+    /* bool replace = false; */
 
     utstring_printf(cmd, "%s", "opam switch show");
     char *here_switch = run_cmd(utstring_body(cmd), false);
@@ -336,4 +337,5 @@ int _describe_here_dir_switch()
 
     printf("\n");
     printf("To recreate, first run @opam//here:expunge\n");
+    return 0;
 }

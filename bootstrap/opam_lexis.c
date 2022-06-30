@@ -90,11 +90,11 @@ void opam_lexer_free(opam_lexer_s *lexer)
 }
 
 /* static void mtag(const char *t) */
-static void mtag(int t)
-{
-    /* fprintf(stderr, "mtag ctor idx: %d, s: %.22s\n", opam_curr_tag, t); */
-    /* deps[opam_curr_tag++] = t; */
-}
+/* static void mtag(int t) */
+/* { */
+/*     /\* fprintf(stderr, "mtag ctor idx: %d, s: %.22s\n", opam_curr_tag, t); *\/ */
+/*     /\* deps[opam_curr_tag++] = t; *\/ */
+/* } */
 
 
 /* static void print_tags() { */
@@ -154,7 +154,7 @@ int get_next_opam_token(struct opam_lexer_s *lexer, union opam_token_u *otok)
     /* const char *txt1, *txt2; */
 
     /* mtags */
-    int f1, f2;                 /* flags */
+    /* int f1, f2; */                /* flags */
     /* int dep1, dep2; */
     /* const char *vtok1, *vtok2; */
 

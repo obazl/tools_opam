@@ -25,7 +25,7 @@
 #include "log.h"
 #include "opam.h"
 
-int errnum;
+extern int errnum;
 bool opam_cmds_debug;
 bool opam_cmds_verbose;
 

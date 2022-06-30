@@ -26,7 +26,7 @@
 #include "log.h"
 #include "run_cmd.h"
 
-int errnum;
+extern int errnum;
 /* bool local_opam; */
 
 /* UT_array *opam_packages; */

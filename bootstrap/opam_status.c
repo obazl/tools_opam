@@ -75,8 +75,8 @@ EXPORT void opam_here_switch_list(void)
         char *exe = "opam";
         int result;
 
-        char *compiler_version = get_compiler_version(NULL);
-        fprintf(stdout, "compiler version:\t" BLU "%s" CRESET "\n");
+        /* char *compiler_version = get_compiler_version(NULL); */
+        /* fprintf(stdout, "compiler version:\t" BLU "%s" CRESET "\n"); */
 
         /* fflush(stdout); */
         /* char *compiler_version_argv[] = { */

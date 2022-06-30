@@ -27,7 +27,7 @@ EXPORT int opam_here_reinit(bool force, char *_compiler_version, char *_opam_swi
     UT_string *cmd;
     utstring_new(cmd);
 
-    bool replace = false;
+    /* bool replace = false; */
 
     if (access(HERE_OPAM_ROOT, F_OK) != 0) {
 #if defined(DEBUG_TRACE)
@@ -43,7 +43,7 @@ EXPORT int opam_here_reinit(bool force, char *_compiler_version, char *_opam_swi
         /* FIXME: tell user to run @opam//here:expunge first? */
         /* check .obazl.d/opam/here.compiler for version */
         char *compiler_version = read_here_compiler_file();
-        bool use_here_compiler = true;
+        /* bool use_here_compiler = true; */
         if (compiler_version != NULL) {
             /* if (verbose) { */
             /*     printf("removing " HERE_OPAM_ROOT "\n"); */
@@ -147,15 +147,18 @@ EXPORT int opam_here_reinit(bool force, char *_compiler_version, char *_opam_swi
 
             free(compiler_version);
 
-            if (access(HERE_COSWITCH_ROOT "/here.packages", R_OK) == 0)
-                if ( !dry_run )
+            if (access(HERE_COSWITCH_ROOT "/here.packages", R_OK) == 0) {
+                if ( !dry_run ) {
                     opam_import(NULL);
-                else
+                } else {
                     if (verbose)
                         printf("here.packages not found\n");
+                }
+            }
             return 0;
         }
     }
+    return 0;
 }
 
 EXPORT int opam_here_opam_init(bool force, char *_compiler_version, char *_opam_switch)

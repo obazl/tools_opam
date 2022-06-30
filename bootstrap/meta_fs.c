@@ -33,8 +33,8 @@
 #include "meta_fs.h"
 
 /* LOCAL int verbosity = 0; */
-int errnum;
-int rc;
+extern int errnum;
+extern int rc;
 
 #if INTERFACE
 typedef int (*file_handler)(char *rootdir,
@@ -108,7 +108,7 @@ EXPORT char *mkdir_r_impl(char *base, char *path)
                 perror(work);
                 fprintf(stderr, "Value of errno: %d\n", errnum);
                 fprintf(stderr, "mkdir error %s\n", strerror( errnum ));
-                free(work);
+                /* free(work); */
                 exit(EXIT_FAILURE);
             }
         }
@@ -141,7 +141,7 @@ EXPORT char *mkdir_r_impl(char *base, char *path)
                     fprintf(stderr, "mkdir failure");
                     perror(work);
                     free(so_far);
-                    free(work);
+                    /* free(work); */
                     exit(EXIT_FAILURE);
                 }
             }
