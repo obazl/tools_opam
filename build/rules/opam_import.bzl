@@ -17,14 +17,14 @@ load("@rules_ocaml//ocaml/_debug:colors.bzl",
 
 #####################################################
 def _ppx_codeps_transition_impl(settings, attr):
-    print("{color}opam_import._ppx_codeps_transition{reset}".format(
-        color=CCDER, reset = CCRESET
-    ))
+    # print("{color}opam_import._ppx_codeps_transition{reset}".format(
+    #     color=CCDER, reset = CCRESET
+    # ))
 
-    print("host_platform: %s" % settings["//command_line_option:host_platform"])
-    print("platforms: %s" % settings["//command_line_option:platforms"])
-    print("build-host: %s" % settings["@rules_ocaml//cfg/toolchain:build-host"])
-    print("target-host: %s" % settings["@rules_ocaml//cfg/toolchain:target-host"])
+    # print("host_platform: %s" % settings["//command_line_option:host_platform"])
+    # print("platforms: %s" % settings["//command_line_option:platforms"])
+    # print("build-host: %s" % settings["@rules_ocaml//cfg/toolchain:build-host"])
+    # print("target-host: %s" % settings["@rules_ocaml//cfg/toolchain:target-host"])
 
     return {
         # "@rules_ocaml//cfg/toolchain:build-host": "foo",
@@ -75,13 +75,13 @@ def _opam_import_impl(ctx):
         ]
 
     tc = ctx.toolchains["@rules_ocaml//toolchain:type"]
-    if debug_tc:
-        print("BUILD TGT: {color}{lbl}{reset}".format(
-            color=CCRED, reset=CCRESET, lbl=ctx.label))
-        print("  TC.NAME: %s" % tc.name)
-        print("  TC.HOST: %s" % tc.host)
-        print("  TC.TARGET: %s" % tc.target)
-        print("  TC.COMPILER: %s" % tc.compiler.basename)
+    # if debug_tc:
+    #     print("BUILD TGT: {color}{lbl}{reset}".format(
+    #         color=CCRED, reset=CCRESET, lbl=ctx.label))
+    #     print("  TC.NAME: %s" % tc.name)
+    #     print("  TC.HOST: %s" % tc.host)
+    #     print("  TC.TARGET: %s" % tc.target)
+    #     print("  TC.COMPILER: %s" % tc.compiler.basename)
 
     if tc.target == "native":
         struct_extensions = ["cmxa", "cmx"]
@@ -506,11 +506,11 @@ opam_import = rule(
         ppx_codeps = attr.label_list(
             allow_files = True,
             providers = [[OcamlImportMarker]],
-            cfg = _ppx_codeps_transition,
+            # cfg = _ppx_codeps_transition,
         ),
-        _allowlist_function_transition = attr.label(
-            default = "@bazel_tools//tools/allowlists/function_transition_allowlist"
-        ),
+        # _allowlist_function_transition = attr.label(
+        #     default = "@bazel_tools//tools/allowlists/function_transition_allowlist"
+        # ),
 
         version = attr.string(),
         opam_version = attr.string(),
