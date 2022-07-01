@@ -26,10 +26,11 @@
 /* bool local_opam; */
 
 char *toolchains[] = {
-    "@ocaml//toolchain/binding_constraints/linux:linux_x86_64",
-    "@ocaml//toolchain/binding_constraints/macos:macos_x86_64",
-    /* "@ocaml//toolchain/binding_constraints/macos:macos_x86_64__linux_x86_64", */
-    "@ocaml//toolchain/binding_constraints/macos:fake_macos_x86_64__linux_x86_64",
+    "@ocaml//toolchain/selectors/macos:macos_x86_64",
+    "@ocaml//toolchain/selectors/macos:macos_x86_64__vm",
+
+    "@ocaml//toolchain/selectors/macos:fake_macos_x86_64__linux_x86_64",
+    "@ocaml//toolchain/selectors/linux:linux_x86_64",
 
     "" /* do not remove terminating null */
 };

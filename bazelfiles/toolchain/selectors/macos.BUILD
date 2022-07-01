@@ -7,16 +7,15 @@ toolchain(
     name           = "macos_x86_64",
     toolchain      = "@ocaml//toolchain/adapters/macos:x86_64",
     toolchain_type = "@rules_ocaml//toolchain:type",
-    exec_compatible_with = [
-        "@platforms//os:macos",
-        "@platforms//cpu:x86_64",
-        # "@ocaml//host/build:native",
-    ],
-    target_compatible_with = [
-        "@platforms//os:macos",
-        "@platforms//cpu:x86_64",
-        # "@ocaml//host/target:native",
-    ],
+    # exec_compatible_with = [
+    #     "@platforms//os:macos",
+    #     "@platforms//cpu:x86_64",
+    #     "@ocaml//toolchain/platform_constraints/target:local",
+    #  ],
+    # target_compatible_with = [
+    #     "@platforms//os:macos",
+    #     "@platforms//cpu:x86_64",
+    #  ],
     visibility             = ["//visibility:public"],
 )
 
@@ -28,12 +27,11 @@ toolchain(
     exec_compatible_with = [
         "@platforms//os:macos",
         "@platforms//cpu:x86_64",
-        # "@ocaml//host/build:native",
-    ],
+     ],
     target_compatible_with = [
         "@platforms//os:macos",
         "@platforms//cpu:x86_64",
-        # "@ocaml//host/target:native",
+        # "@ocaml//toolchain/adapters/macos:x86_64__macos_arm"
     ],
     visibility             = ["//visibility:public"],
 )
@@ -59,35 +57,19 @@ toolchain(
     visibility             = ["//visibility:public"],
 )
 
-# toolchain(
-#     name           = "fake_cc_toolchain",
-#     toolchain      =
-#     toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
-#     exec_compatible_with = [
-#         "@platforms//os:macos",
-#         "@platforms//cpu:x86_64",
-#     ],
-#     target_compatible_with = [
-#         "@platforms//os:linux",
-#         "@platforms//cpu:x86_64",
-#     ],
-#     visibility             = ["//visibility:public"],
-# )
-
 ##########
 toolchain(
-    name           = "macos_native_vm",
-    toolchain      = "_native_vm",
+    name           = "macos_x86_64__vm",
+    toolchain      = "@ocaml//toolchain/adapters/macos:x86_64__vm",
     toolchain_type = "@rules_ocaml//toolchain:type",
     exec_compatible_with = [
         "@platforms//os:macos",
         "@platforms//cpu:x86_64",
-        "@ocaml//host/build:native",
     ],
     target_compatible_with = [
-        "@platforms//os:macos",
-        "@platforms//cpu:x86_64",
-        "@ocaml//host/target:vm",
+        # "@platforms//os:macos",
+        # "@platforms//cpu:x86_64",
+        "@ocaml//toolchain/platform_constraints/target:vm",
     ],
     visibility             = ["//visibility:public"],
 )

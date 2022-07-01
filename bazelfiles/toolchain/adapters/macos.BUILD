@@ -37,22 +37,6 @@ ocaml_toolchain_adapter(
 )
 
 ocaml_toolchain_adapter(
-    name                   = "_macos_default",
-    host                   = "x86_64",
-    target                 = "x86_64",
-    repl                   = "@ocaml//bin:ocaml",
-    compiler               = "@ocaml//bin:ocamlopt.opt",
-    profiling_compiler     = "@ocaml//bin:ocamloptp.opt",
-    ocamllex               = "@ocaml//bin:ocamllex.opt",
-    ocamlyacc              = "@ocaml//bin:ocamlyacc",
-    linkmode               = "dynamic",
-    vmruntime              = "@ocaml//bin:ocamlrun",
-    vmruntime_debug        = "@ocaml//bin:ocamlrund",
-    vmruntime_instrumented = "@ocaml//bin:ocamlruni",
-    vmlibs                 = "@stublibs//:stublibs",
-)
-
-ocaml_toolchain_adapter(
     name                   = "_vm__native",
     host                   = "vm",
     target                 = "x86_64",
@@ -68,25 +52,9 @@ ocaml_toolchain_adapter(
     vmlibs                 = "@stublibs//:stublibs",
 )
 
-# ocaml_toolchain_adapter(
-#     name                   = "_native__native",
-#     host                   = "native",
-#     target                 = "native",
-#     repl                   = "@ocaml//bin:ocaml",
-#     compiler               = "@ocaml//bin:ocamlopt.opt",
-#     profiling_compiler     = "@ocaml//bin:ocamloptp.opt",
-#     ocamllex               = "@ocaml//bin:ocamllex.opt",
-#     ocamlyacc              = "@ocaml//bin:ocamlyacc",
-#     linkmode               = "dynamic",
-#     vmruntime              = "@ocaml//bin:ocamlrun",
-#     vmruntime_debug        = "@ocaml//bin:ocamlrund",
-#     vmruntime_instrumented = "@ocaml//bin:ocamlruni",
-#     vmlibs                 = "@stublibs//:stublibs",
-# )
-
 ocaml_toolchain_adapter(
-    name                   = "_x86_64__vm",
-    host                   = "native",
+    name                   = "x86_64__vm",
+    host                   = "x86_64",
     target                 = "vm",
     repl                   = "@ocaml//bin:ocaml",
     compiler               = "@ocaml//bin:ocamlc.opt",
