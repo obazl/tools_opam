@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
 #if defined(DEBUG_PROFILE)
     printf("local:refresh.main\n");
 #endif
-    char *opts = "hdDvV";
+    char *opts = "chdDvV";
     int opt;
 
     while ((opt = getopt(argc, argv, opts)) != -1) {

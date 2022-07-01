@@ -26,15 +26,19 @@
 /* bool local_opam; */
 
 char *toolchains[] = {
-    "@ocaml//toolchain/selectors/macos:macos_x86_64",
-    "@ocaml//toolchain/selectors/macos:macos_x86_64__vm",
-    "@ocaml//toolchain/selectors/macos:fake_macos_x86_64__linux_x86_64",
+    /* ORDER MATTERS! Bazel evaluates top down */
+    "@ocaml//toolchain/selectors/local:bcbc",
+    "@ocaml//toolchain/selectors/local:bcnc",
+    "@ocaml//toolchain/selectors/local:sysvm",
+    "@ocaml//toolchain/selectors/local:ncnc",
 
-    "@ocaml//toolchain/selectors/linux:linux_x86_64",
-    "@ocaml//toolchain/selectors/macos:linux_x86_64__vm",
-    "@ocaml//toolchain/selectors/macos:vm__vm",
-    "@ocaml//toolchain/selectors/macos:vm__linux_x86_64",
-    "@ocaml//toolchain/selectors/macos:fake_linux_x86_64__macos_x86_64",
+    "@ocaml//toolchain/selectors/macos/x86_64:vm",
+    "@ocaml//toolchain/selectors/macos/x86_64:macos_x86_64",
+    "@ocaml//toolchain/selectors/macos/x86_64:linux_x86_64",
+
+    "@ocaml//toolchain/selectors/linux/x86_64:vm",
+    "@ocaml//toolchain/selectors/linux/x86_64:linux_x86_64",
+    "@ocaml//toolchain/selectors/linux/x86_64:macos_x86_64",
 
     "" /* do not remove terminating null */
 };
@@ -129,6 +133,13 @@ void _xopam_set_vars(void)
 EXPORT void opam_local_refresh(void) // char *_opam_switch_name)
 {
     log_info("opam_local_refresh entry"); // -s %s", _opam_switch_name);
+
+    if (clean)
+        opam_local_clean();
+
+    if (verbose)
+        printf("opam_local_refresh\n");
+
 
     if (access(LOCAL_SWITCH_DIR, F_OK) != 0) {
         //FIXME: print error msg

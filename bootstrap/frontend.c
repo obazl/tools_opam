@@ -79,7 +79,7 @@ EXPORT int opam_main(int argc, char *argv[], int oswitch) // bool here)
     /* char *deps_root = NULL; */
     char *manifest = NULL;
 
-    char *opts = "c:dDfhom:s:vVx";
+    char *opts = "cdDfhom:s:vVx";
     int opt;
     while ((opt = getopt(argc, argv, opts)) != -1) {
         switch (opt) {
@@ -92,7 +92,8 @@ EXPORT int opam_main(int argc, char *argv[], int oswitch) // bool here)
             exit(EXIT_FAILURE);
             break;
         case 'c':
-            compiler_version = strndup(optarg, PATH_MAX);
+            /* compiler_version = strndup(optarg, PATH_MAX); */
+            clean = true;
             break;
         case 'd':
             debug = true;

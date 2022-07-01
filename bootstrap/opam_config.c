@@ -38,6 +38,8 @@ FILE *bootstrap_FILE;
 #include "utstring.h"
 #endif
 
+bool clean = false;
+
 UT_string *opam_switch_root;
 UT_string *opam_switch_name;
 UT_string *opam_switch_pfx;

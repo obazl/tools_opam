@@ -1,14 +1,11 @@
-platform(name = "local",
+platform(name = "nc",
          parents = ["@local_config_platform//:host"],
-         # constraint_values = [
-         #     "@ocaml//host/target:native",
-         # ]
          )
 
-platform(name = "vm",
+platform(name = "bc",
          parents = ["@local_config_platform//:host"],
          constraint_values = [
-             "@ocaml//toolchain/platform_constraints/target:vm",
+             "@ocaml//host/target:vm",
          ])
 
 platform(name = "macos_x86_64",
