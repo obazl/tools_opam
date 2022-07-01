@@ -25,20 +25,25 @@
 /* extern int errnum; */
 /* bool local_opam; */
 
+/* Toolchain registration - ORDER MATTERS!
+   See Toolchain Resolution at
+  https://docs.bazel.build/versions/5.1.0/toolchains.html#toolchain-resolution
+  "Available platforms and toolchains are tracked as ordered lists for determinism, with preference given to earlier items in the list."
+*/
 char *toolchains[] = {
-    /* ORDER MATTERS! Bazel evaluates top down */
     "@ocaml//toolchain/selectors/local:bcbc",
     "@ocaml//toolchain/selectors/local:bcnc",
     "@ocaml//toolchain/selectors/local:sysvm",
     "@ocaml//toolchain/selectors/local:ncnc",
 
-    "@ocaml//toolchain/selectors/macos/x86_64:vm",
-    "@ocaml//toolchain/selectors/macos/x86_64:macos_x86_64",
-    "@ocaml//toolchain/selectors/macos/x86_64:linux_x86_64",
+    /* later, for cross-compilers: */
+    /* "@ocaml//toolchain/selectors/macos/x86_64:vm", */
+    /* "@ocaml//toolchain/selectors/macos/x86_64:macos_x86_64", */
+    /* "@ocaml//toolchain/selectors/macos/x86_64:linux_x86_64", */
 
-    "@ocaml//toolchain/selectors/linux/x86_64:vm",
-    "@ocaml//toolchain/selectors/linux/x86_64:linux_x86_64",
-    "@ocaml//toolchain/selectors/linux/x86_64:macos_x86_64",
+    /* "@ocaml//toolchain/selectors/linux/x86_64:vm", */
+    /* "@ocaml//toolchain/selectors/linux/x86_64:linux_x86_64", */
+    /* "@ocaml//toolchain/selectors/linux/x86_64:macos_x86_64", */
 
     "" /* do not remove terminating null */
 };
