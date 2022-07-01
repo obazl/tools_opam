@@ -76,8 +76,8 @@ toolchain(
 
 ##########
 toolchain(
-    name           = "macos_vm_vm",
-    toolchain      = "_vm_vm",
+    name           = "macos_vm__vm",
+    toolchain      = "@ocaml//toolchain/adapters/macos:vm__vm",
     toolchain_type = "@rules_ocaml//toolchain:type",
     exec_compatible_with = [
         "@platforms//os:macos",

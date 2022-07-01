@@ -28,9 +28,13 @@
 char *toolchains[] = {
     "@ocaml//toolchain/selectors/macos:macos_x86_64",
     "@ocaml//toolchain/selectors/macos:macos_x86_64__vm",
-
     "@ocaml//toolchain/selectors/macos:fake_macos_x86_64__linux_x86_64",
+
     "@ocaml//toolchain/selectors/linux:linux_x86_64",
+    "@ocaml//toolchain/selectors/macos:linux_x86_64__vm",
+    "@ocaml//toolchain/selectors/macos:vm__vm",
+    "@ocaml//toolchain/selectors/macos:vm__linux_x86_64",
+    "@ocaml//toolchain/selectors/macos:fake_linux_x86_64__macos_x86_64",
 
     "" /* do not remove terminating null */
 };
