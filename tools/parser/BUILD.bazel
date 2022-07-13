@@ -1,5 +1,5 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
-load("@rules_foreign_cc//tools/build_defs:configure.bzl", "configure_make")
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "configure_make")
 
 ## re2c lemon tutorial: https://github.com/tokuhirom/re2c-lemon-tutorial
 
@@ -11,7 +11,7 @@ cc_binary(
 
 configure_make(
     name = "re2c",
-    binaries = ["re2c"],
+    out_binaries = ["re2c"],
     # static_libraries = [
     #     "libre2c.a",
     # ],
@@ -22,7 +22,7 @@ configure_make(
     autoreconf = True,
     autoreconf_options = ["-i", "-W", "all"],
     configure_in_place = True,
-    configure_env_vars = select({
+    env = select({
         "//bzl/host:macos": {
             "AR": "",
         },
@@ -46,11 +46,11 @@ PATCH = "0"
 
 configure_make(
     name = "ck",
-    # binaries = ["re2c"],
-    static_libraries = [
+    # out_binaries = ["re2c"],
+    out_static_libs = [
         "libck.a",
     ],
-    shared_libraries = [
+    out_shared_libs= [
         "libck.dylib",
         "libck.{major}.dylib".format(major=MAJOR),
         "libck.{major}.{minor}.{patch}.dylib".format(
@@ -78,4 +78,3 @@ configure_make(
     lib_source = "@ck//:all",
     visibility = ["//visibility:public"],
 )
-
