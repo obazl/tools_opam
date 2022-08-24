@@ -6,16 +6,6 @@ package(default_visibility = ["//visibility:public"])
 
 constraint_setting(name = "bazel")
 
-constraint_value(name = "nativecode",   constraint_setting = ":bazel")
+constraint_value(name = "sys",   constraint_setting = ":bazel")
 
-constraint_value(name = "bytecode", constraint_setting = ":bazel")
-
-config_setting(
-    name = "bc",
-    values = { "host_platform": "@opam//tc:bc" }
-)
-
-config_setting(
-    name = "nc",
-    values = { "host_platform": "@opam//tc:nc" }
-)
+constraint_value(name = "vm", constraint_setting = ":bazel")

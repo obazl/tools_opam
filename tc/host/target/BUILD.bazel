@@ -1,8 +1,10 @@
-platform(name = "nc",
+platform(name = "sys",
          parents = ["@local_config_platform//:host"],
-         )
+         constraint_values = [
+             "@ocaml//host/target:sys",
+         ])
 
-platform(name = "bc",
+platform(name = "vm",
          parents = ["@local_config_platform//:host"],
          constraint_values = [
              "@ocaml//host/target:vm",

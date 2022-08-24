@@ -1,11 +1,11 @@
-platform(name = "nc",
+platform(name = "sys",
          parents = ["@local_config_platform//:host"],
-         # constraint_values = [
-         #     "@ocaml//host/build:native",
-         # ]
+         constraint_values = [
+             "@ocaml//host/build:sys",
+         ]
          )
 
-platform(name = "bc",
+platform(name = "vm",
          parents = ["@local_config_platform//:host"],
          constraint_values = [
              "@ocaml//host/build:vm",

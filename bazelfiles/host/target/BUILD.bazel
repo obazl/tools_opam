@@ -6,6 +6,6 @@ package(default_visibility = ["//visibility:public"])
 
 constraint_setting(name = "target")
 
-constraint_value(name = "nc",   constraint_setting = ":target")
+constraint_value(name = "sys",   constraint_setting = ":target")
 
 constraint_value(name = "vm", constraint_setting = ":target")
