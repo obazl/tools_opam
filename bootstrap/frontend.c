@@ -125,6 +125,8 @@ EXPORT int opam_main(int argc, char *argv[], int oswitch) // bool here)
             opam_cmds_verbose = true;
             break;
         case 'v':
+            verbosity++;
+            printf("arg: -v, level: %d\n", verbosity);
             verbose = true;
             break;
         case 'x':
