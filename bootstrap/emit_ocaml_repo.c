@@ -1757,7 +1757,7 @@ void emit_ocaml_bootstrap(char *opam_switch, FILE *bootstrap_FILE)
 void emit_ocaml_workspace(char *switch_name, FILE *bootstrap_FILE)
 {
     if (debug)
-        log_debug("emit_ocaml_repo");
+        log_debug("emit_ocaml_workspace");
     /* printf("emit_ocaml_repo, bzl_switch_pfx: %s\n", */
     /*        utstring_body(bzl_switch_pfx)); */
 

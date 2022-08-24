@@ -30,6 +30,7 @@
 bool debug;
 bool dry_run;
 bool verbose;
+int verbosity = 0;
 bool expunge; /* for @opam//foo:clean */
 
 FILE *log_fp;
