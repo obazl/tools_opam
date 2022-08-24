@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
             break;
         case 'h':
             /* _print_usage(); */
-            display_manpage("man1", "@coswitch_refresh");
+            display_manpage("man1", "shared_refresh");
             exit(EXIT_SUCCESS);
             break;
         default:
@@ -27,7 +27,8 @@ int main(int argc, char *argv[])
         }
     }
     if (argc < 2) {
-        display_manpage("man1", "coswitch_refresh");
+        display_manpage("man1", "shared_refresh");
+        return 0;
     }
 
     optind = 1;

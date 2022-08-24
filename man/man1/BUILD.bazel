@@ -2,7 +2,6 @@ exports_files([  ## globbing won't work with @
     "@opam.1",
     "@opam_coswitch.1",
     "@opam_coswitch_list.1",
-    "@opam_coswitch_refresh.1",
     "@opam_coswitch_remove.1",
     "@opam_coswitch_set.1",
     "@opam_here.1",
@@ -29,4 +28,5 @@ exports_files([  ## globbing won't work with @
     "@opam_local_refresh.1",
     "@opam_local_set.1",
     "@opam_man.1",
+    "@opam_shared_refresh.1",
 ])

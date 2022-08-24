@@ -68,10 +68,10 @@ EXPORT void opam_coswitch_set(char *coswitch) {
     if (debug)
         printf("opam_coswitch_set: '%s'\n", coswitch);
 
-    if (strncmp(coswitch, "here", 4) == 0) {
-        write_here_coswitch_file();
-        return;
-    }
+    /* if (strncmp(coswitch, "here", 4) == 0) { */
+    /*     write_here_coswitch_file(); */
+    /*     return; */
+    /* } */
 
     if (access(utstring_body(xdg_coswitch_root), F_OK) != 0) {
         log_info("XDG coswitch root '%s' not found.\n",

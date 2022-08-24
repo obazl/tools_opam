@@ -215,33 +215,22 @@ EXPORT int opam_main(int argc, char *argv[], int oswitch) // bool here)
         opam_local_refresh(); // compiler_version);
     }
     else if (oswitch==XDG && strncmp(basename(argv[0]), "refresh", 7) == 0) {
-        /* xdg_configure();        /\* config dir vars *\/ */
-        int ct = 0;
-        for (int i = optind; i < argc; i++) {
-            if (argv[i] != NULL) {
-                if (verbose)
-                    printf("refreshing shared coswitch '%s'\n",
-                           argv[i]);
-                opam_xdg_refresh(argv[i]);
-                ct++;
+        if (optind > argc) {
+            int ct = 0;
+            for (int i = optind; i < argc; i++) {
+                if (argv[i] != NULL) {
+                    if (verbose)
+                        printf("refreshing shared coswitch '%s'\n", argv[i]);
+                    opam_xdg_refresh(argv[i]);
+                    break;
+                }
             }
+        } else {
+            // use current OPAM switch
+            if (verbose)
+                printf("refreshing shared coswitch with current switch'\n");
+            opam_xdg_refresh(NULL);
         }
-        /* if (ct == 0) {/\* no args *\/ */
-        /*     // refresh current OPAM switch */
-        /*     opam_xdg_refresh(NULL); */
-        /* } */
-        /* int index; */
-        /* char *coswitch = NULL; */
-        /* for (index = optind; index < argc; index++) { */
-        /*     coswitch = strdup(argv[index]); */
-        /* } */
-        /* printf("coswitch: %s\n", coswitch); */
-        /* if (coswitch != NULL) { */
-        /*     opam_xdg_refresh(coswitch); */
-        /*     free(coswitch); */
-        /* } else { */
-        /*     opam_xdg_refresh(opam_switch); */
-        /* } */
     }
     /* else if (oswitch && strncmp(basename(argv[0]), "ingest", 6) == 0) { */
     /*     if (compiler_version && opam_switch) { */
