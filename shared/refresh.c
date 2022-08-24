@@ -5,7 +5,7 @@
 /* @opam//shared:refresh */
 int main(int argc, char *argv[])
 {
-    char *opts = "hvVdD";
+    char *opts = "hvVdDt";
     int opt;
     while ((opt = getopt(argc, argv, opts)) != -1) {
         switch (opt) {
