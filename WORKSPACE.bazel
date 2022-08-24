@@ -3,27 +3,6 @@ workspace(name = "opam")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-## to use the llvm toolchain (https://github.com/grailbio/bazel-toolchain):
-BAZEL_TOOLCHAIN_TAG = "0.7.2"
-BAZEL_TOOLCHAIN_SHA = "f7aa8e59c9d3cafde6edb372d9bd25fb4ee7293ab20b916d867cd0baaa642529"
-
-http_archive(
-    name = "com_grail_bazel_toolchain",
-    sha256 = BAZEL_TOOLCHAIN_SHA,
-    strip_prefix = "bazel-toolchain-{tag}".format(tag = BAZEL_TOOLCHAIN_TAG),
-    canonical_id = BAZEL_TOOLCHAIN_TAG,
-    url = "https://github.com/grailbio/bazel-toolchain/archive/{tag}.tar.gz".format(tag = BAZEL_TOOLCHAIN_TAG),
-)
-load("@com_grail_bazel_toolchain//toolchain:deps.bzl",
-     "bazel_toolchain_dependencies")
-bazel_toolchain_dependencies()
-load("@com_grail_bazel_toolchain//toolchain:rules.bzl", "llvm_toolchain")
-llvm_toolchain(name = "llvm_toolchain", llvm_version = "14.0.0")
-load("@llvm_toolchain//:toolchains.bzl", "llvm_register_toolchains")
-llvm_register_toolchains()
-
-## end llvm ##
-
 http_archive(
     name = "bazel_skylib",
     urls = [
@@ -35,11 +14,19 @@ http_archive(
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 bazel_skylib_workspace()
 
-git_repository(
+################################################################
+http_archive(
     name = "rules_ocaml",
-    remote = "https://github.com/obazl/rules_ocaml",
-    branch = "main",
+    url = "https://github.com/obazl/rules_ocaml/archive/2c981ba4e8b7b590d04f8fedf328d824a407be1b.zip",
+    sha256 = "1f4fe9e432c9d361f80e99c64a8687c9f1738c37c18800cfc552ae8d7b7c7b08",
+    strip_prefix = "rules_ocaml-2c981ba4e8b7b590d04f8fedf328d824a407be1b"
 )
+
+# git_repository(
+#     name = "rules_ocaml",
+#     remote = "https://github.com/obazl/rules_ocaml",
+#     branch = "main",
+# )
 load("@rules_ocaml//:WORKSPACE.bzl", "ocaml_configure")
 ocaml_configure()
 
@@ -74,4 +61,27 @@ rules_foreign_cc_dependencies(
 
 ## NB: really means "register toolchain _bindings_"
 # register_toolchains("//:ocaml_macos")
+
+################################################################
+# ## to use the llvm toolchain (https://github.com/grailbio/bazel-toolchain):
+# BAZEL_TOOLCHAIN_TAG = "0.7.2"
+# BAZEL_TOOLCHAIN_SHA = "f7aa8e59c9d3cafde6edb372d9bd25fb4ee7293ab20b916d867cd0baaa642529"
+
+# http_archive(
+#     name = "com_grail_bazel_toolchain",
+#     sha256 = BAZEL_TOOLCHAIN_SHA,
+#     strip_prefix = "bazel-toolchain-{tag}".format(tag = BAZEL_TOOLCHAIN_TAG),
+#     canonical_id = BAZEL_TOOLCHAIN_TAG,
+#     url = "https://github.com/grailbio/bazel-toolchain/archive/{tag}.tar.gz".format(tag = BAZEL_TOOLCHAIN_TAG),
+# )
+# load("@com_grail_bazel_toolchain//toolchain:deps.bzl",
+#      "bazel_toolchain_dependencies")
+# bazel_toolchain_dependencies()
+# load("@com_grail_bazel_toolchain//toolchain:rules.bzl", "llvm_toolchain")
+# llvm_toolchain(name = "llvm_toolchain", llvm_version = "14.0.0")
+# load("@llvm_toolchain//:toolchains.bzl", "llvm_register_toolchains")
+# llvm_register_toolchains()
+
+## end llvm ##
+################################################################
 
