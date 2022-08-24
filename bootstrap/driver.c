@@ -383,6 +383,8 @@ int handle_lib_meta(char *switch_lib,
     log_debug("  switch_lib: %s; obazl_opam_root: %s; pkgdir: %s; metafile: %s",
               switch_lib, obazl_opam_root, pkgdir, metafile);
 
+    fflush(bootstrap_FILE);
+
     char buf[PATH_MAX];
     buf[0] = '\0';
     mystrcat(buf, switch_lib);
@@ -438,7 +440,9 @@ int handle_lib_meta(char *switch_lib,
 
         /* emit_new_local_pkg_repo(bootstrap_FILE, /\* _pkg_prefix, *\/ */
         /*                         pkg); */
+        fflush(bootstrap_FILE);
         emit_local_repo_decl(bootstrap_FILE, pkg);
+        fflush(bootstrap_FILE);
 
         UT_string *imports_path;
         utstring_new(imports_path);
@@ -447,12 +451,14 @@ int handle_lib_meta(char *switch_lib,
                         obzl_meta_package_name(pkg));
         log_debug("emitting buildfile for pkg: %s", pkg->name);
         /* dump_package(0, pkg); */
+        fflush(bootstrap_FILE);
         emit_build_bazel(host_repo,
                          obazl_opam_root,      /* _repo_root: "." or "./tmp/opam" */
                          NULL, // "buildfiles",        /* _pkg_prefix */
                          utstring_body(imports_path),
                         /* "",      /\* pkg-path *\/ */
                          pkg);
+        fflush(bootstrap_FILE);
         log_debug("emittED buildfile for pkg: %s", pkg->name);
     }
     return 0;

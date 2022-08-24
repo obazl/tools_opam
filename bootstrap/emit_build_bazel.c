@@ -294,6 +294,7 @@ void emit_local_repo_decl(FILE *bootstrap_FILE,
 
     char *pkg_name = _pkg->name; // obzl_meta_package_name(_pkg);
 
+    fflush(bootstrap_FILE);
     fprintf(bootstrap_FILE, "    native.local_repository(\n");
     fprintf(bootstrap_FILE, "        name       = ");
 
@@ -345,6 +346,7 @@ void emit_local_repo_decl(FILE *bootstrap_FILE,
     /* } */
     /* **************************************************************** */
     fprintf(bootstrap_FILE, "    )\n\n");
+    fflush(bootstrap_FILE);
 }
 
 /* **************************************************************** */
