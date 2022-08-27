@@ -832,7 +832,7 @@ void _copy_buildfile(char *buildfile, UT_string *to_file) {
     UT_string *src;
     utstring_new(src);
     utstring_printf(src,
-                    "%s/external/opam/bazelfiles/%s",
+                    "%s/external/opam/templates/%s",
                     utstring_body(runfiles_root),
                     buildfile);
     int rc = access(utstring_body(src), F_OK);
@@ -864,7 +864,7 @@ void _symlink_buildfile(char *buildfile, UT_string *to_file)
     UT_string *src;
     utstring_new(src);
     utstring_printf(src,
-                    "%s/external/opam/bazelfiles/%s",
+                    "%s/external/opam/templates/%s",
                     utstring_body(runfiles_root),
                     buildfile);
     int rc = access(utstring_body(src), F_OK);
