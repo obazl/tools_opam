@@ -74,7 +74,7 @@ def _opam_import_impl(ctx):
             OcamlImportMarker()
         ]
 
-    tc = ctx.toolchains["@rules_ocaml//toolchain:type"]
+    tc = ctx.toolchains["@rules_ocaml//toolchain/type:std"]
     # if debug_tc:
     #     print("BUILD TGT: {color}{lbl}{reset}".format(
     #         color=CCRED, reset=CCRESET, lbl=ctx.label))
@@ -519,5 +519,5 @@ opam_import = rule(
     ),
     provides = [OcamlImportMarker],
     executable = False,
-    toolchains = ["@rules_ocaml//toolchain:type"],
+    toolchains = ["@rules_ocaml//toolchain/type:std"],
 )

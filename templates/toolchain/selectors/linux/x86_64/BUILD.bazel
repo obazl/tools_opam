@@ -9,7 +9,7 @@ exports_files(glob(["*.bazel"]))
 toolchain(
     name           = "vm",
     toolchain      = "@ocaml//toolchain/adapters/linux/x86_64:vm",
-    toolchain_type = "@rules_ocaml//toolchain:type",
+    toolchain_type = "@rules_ocaml//toolchain/type:std",
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
@@ -24,7 +24,7 @@ toolchain(
 toolchain(
     name           = "linux_x86_64",
     toolchain      = "@ocaml//toolchain/adapters/linux/x86_64:linux_x86_64",
-    toolchain_type = "@rules_ocaml//toolchain:type",
+    toolchain_type = "@rules_ocaml//toolchain/type:std",
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
@@ -46,7 +46,7 @@ toolchain(
     name           = "macos_x86_64",
     toolchain      =
     "@ocaml//toolchain/adapters/linux/x86_64:macos_x86_64",
-    toolchain_type = "@rules_ocaml//toolchain:type",
+    toolchain_type = "@rules_ocaml//toolchain/type:std",
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",

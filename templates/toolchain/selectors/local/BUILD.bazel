@@ -6,7 +6,7 @@ exports_files(glob(["*.bazel"]))
 toolchain(
     name           = "ncnc",
     toolchain      = "@ocaml//toolchain/adapters/local:ncnc",
-    toolchain_type = "@rules_ocaml//toolchain:type",
+    toolchain_type = "@rules_ocaml//toolchain/type:std",
     visibility     = ["//visibility:public"],
 )
 
@@ -14,7 +14,7 @@ toolchain(
 toolchain(
     name           = "sysvm",
     toolchain      = "@ocaml//toolchain/adapters/local:sysvm",
-    toolchain_type = "@rules_ocaml//toolchain:type",
+    toolchain_type = "@rules_ocaml//toolchain/type:std",
     target_compatible_with = [
         "@ocaml//host/target:vm",
     ],
@@ -25,7 +25,7 @@ toolchain(
 toolchain(
     name           = "bcbc",
     toolchain      = "@ocaml//toolchain/adapters/local:bcbc",
-    toolchain_type = "@rules_ocaml//toolchain:type",
+    toolchain_type = "@rules_ocaml//toolchain/type:std",
     exec_compatible_with = [
         "@ocaml//host/build:vm",
     ],
@@ -39,7 +39,7 @@ toolchain(
 toolchain(
     name           = "bcnc",
     toolchain      = "@ocaml//toolchain/adapters/local:bcnc",
-    toolchain_type = "@rules_ocaml//toolchain:type",
+    toolchain_type = "@rules_ocaml//toolchain/type:std",
     exec_compatible_with = [
         "@ocaml//host/build:vm",
     ],

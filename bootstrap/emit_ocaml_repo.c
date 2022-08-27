@@ -214,7 +214,7 @@ void _emit_ocaml_bin_symlinks(void) // UT_string *dst_dir, UT_string *src_dir)
 /*             _macos? "macos" : "linux", pfx, host, target); */
 /*     fprintf(ostream, "    toolchain      = \"_%s_%s_%s\",\n", */
 /*             pfx, host, target); */
-/*     fprintf(ostream, "    toolchain_type = \"@rules_ocaml//toolchain:type\",\n"); */
+/*     fprintf(ostream, "    toolchain_type = \"@rules_ocaml//toolchain/type:std\",\n"); */
 /*     fprintf(ostream, "    exec_compatible_with = [\n"); */
 /*     fprintf(ostream, "        \"@platforms//os:%s\",\n", */
 /*             _macos? "macos" : "linux"); */
@@ -242,7 +242,7 @@ void _emit_ocaml_bin_symlinks(void) // UT_string *dst_dir, UT_string *src_dir)
 /*     fprintf(ostream, "    name           = \"default_%s\",\n", */
 /*             macos? "macos" : "linux"); */
 /*     fprintf(ostream, "    toolchain      = \"_opam_native_native\",\n"); */
-/*     fprintf(ostream, "    toolchain_type = \"@rules_ocaml//toolchain:type\",\n"); */
+/*     fprintf(ostream, "    toolchain_type = \"@rules_ocaml//toolchain/type:std\",\n"); */
 /*     fprintf(ostream, "    exec_compatible_with = [\n"); */
 /*     fprintf(ostream, "        \"@platforms//os:%s\",\n", */
 /*             macos? "macos" : "linux"); */
