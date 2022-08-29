@@ -661,6 +661,14 @@ void emit_ocaml_platform_buildfiles(void)
     utstring_printf(ocaml_file, "/BUILD.bazel");
     _copy_buildfile("toolchain/selectors/linux/arm/BUILD.bazel", ocaml_file);
 
+    /* toolchain options */
+    utstring_new(ocaml_file);
+    utstring_concat(ocaml_file, bzl_switch_pfx);
+    utstring_printf(ocaml_file, "/ocaml/toolchain/profiles");
+    mkdir_r(utstring_body(ocaml_file));
+    utstring_printf(ocaml_file, "/BUILD.bazel");
+    _copy_buildfile("toolchain/profiles/BUILD.bazel", ocaml_file);
+
     /* toolchain adapters */
     utstring_new(ocaml_file);
     utstring_concat(ocaml_file, bzl_switch_pfx);

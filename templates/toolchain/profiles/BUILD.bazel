@@ -1,0 +1,183 @@
+# generated file - DO NOT EDIT
+
+exports_files(["BUILD.bazel"])
+
+load("@rules_ocaml//toolchain:profiles.bzl",
+     "toolchain_profile_selector",
+     "ocaml_profile")
+
+# dune ocamlopt compile defaults:
+# -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs -w -49 -nopervasives -nostdlib -g
+
+# ocamlopt defaults (ocamlopt --help):
+# -w +a-4-6-7-9-27-29-30-32..42-44-45-48-50-60-66-67-68
+# -warn-error "-a+31"
+
+# ocamlc default warnings:
+# "+a-4-6-7-9-27-29-30-32..42-44-45-48-50-60-66-67-68"
+# -warn-error "-a+31"
+
+COMPILE_WARNINGS = []
+COMPILE_OPTIONS  = [
+    "-keep-locs",
+    "-noassert",
+    "-short-paths",
+    "-strict-formats",
+    "-strict-sequence"
+]
+
+LINK_WARNINGS    = [] ## "-w", "A-4-42-41-48-70"] # dune
+LINK_OPTIONS  = [
+    # "-bin-annot",               # dune
+    # "-annot",                   # dune
+    # "-no-alias-deps",           # dune
+    "-keep-locs",               # dune
+    # "-noassert",
+    # "-short-paths",
+    # "-strict-formats",
+    "-strict-sequence"          # dune
+]
+# dune exe native:
+# -bin-annot -annot -strict-sequence -keep-locs -no-alias-deps -w A-4-42-41-48-70 -g
+# dune exe vm:
+# -bin-annot -annot -strict-sequence -keep-locs -no-alias-deps -w A-4-42-41-48-70 -g
+
+ocaml_profile(
+    name         = "vm_profile",
+    compile_opts = COMPILE_OPTIONS + COMPILE_WARNINGS,
+    link_opts    = LINK_OPTIONS + LINK_WARNINGS
+)
+
+ocaml_profile(
+    name         = "vm-dbg_profile",
+    compile_opts = COMPILE_OPTIONS + COMPILE_WARNINGS + ["-g"],
+    link_opts    = LINK_OPTIONS + LINK_WARNINGS + ["-g"]
+)
+
+ocaml_profile(
+    name         = "vm-opt_profile",
+    compile_opts = COMPILE_OPTIONS + COMPILE_WARNINGS + [],
+    link_opts    = LINK_OPTIONS + LINK_WARNINGS + []
+)
+
+ocaml_profile(
+    name         = "sys_profile",
+    compile_opts = COMPILE_OPTIONS + COMPILE_WARNINGS,
+    link_opts    = LINK_OPTIONS + LINK_WARNINGS
+)
+
+ocaml_profile(
+    name         = "sys-dbg_profile",
+    compile_opts = COMPILE_OPTIONS + COMPILE_WARNINGS + ["-g"],
+    link_opts    = LINK_OPTIONS + LINK_WARNINGS + ["-g"]
+)
+
+ocaml_profile(
+    name         = "sys-opt_profile",
+    compile_opts = COMPILE_OPTIONS + COMPILE_WARNINGS + [],
+    link_opts    = LINK_OPTIONS + LINK_WARNINGS + []
+)
+
+##########
+toolchain_profile_selector(
+    name                   = "sys-fastbuild",
+    profile                = ":sys_profile",
+    # toolchain_type         = "@rules_ocaml//toolchain/type:profile",
+    target_compatible_with = ["@ocaml//host/target:sys"],
+    target_settings        = [":fastbuild_mode"],
+    # visibility             = ["//visibility:public"],
+)
+
+##########
+toolchain_profile_selector(
+    name                   = "sys-dbg",
+    profile                = ":sys-dbg_profile",
+    # toolchain_type         = "@rules_ocaml//toolchain/type:profile",
+    target_compatible_with = ["@ocaml//host/target:sys"],
+    target_settings        = [":dbg_mode"],
+    # visibility             = ["//visibility:public"],
+)
+
+##########
+toolchain_profile_selector(
+    name                   = "sys-opt",
+    profile                = ":sys-opt_profile",
+    # toolchain_type         = "@rules_ocaml//toolchain/type:profile",
+    target_compatible_with = ["@ocaml//host/target:sys"],
+    target_settings        = [":opt_mode"],
+    # visibility             = ["//visibility:public"],
+)
+
+##########
+toolchain_profile_selector(
+    name                   = "vm-fastbuild",
+    profile                = ":vm_profile",
+    # toolchain_type         = "@rules_ocaml//toolchain/type:profile",
+    target_compatible_with = ["@ocaml//host/target:vm"],
+    target_settings        = [":fastbuild_mode"],
+    # visibility             = ["//visibility:public"],
+)
+
+##########
+toolchain_profile_selector(
+    name                   = "vm-dbg",
+    profile                = ":vm-dbg_profile",
+    # toolchain_type         = "@rules_ocaml//toolchain/type:profile",
+    target_compatible_with = ["@ocaml//host/target:vm"],
+    target_settings        = [":dbg_mode"],
+    # visibility             = ["//visibility:public"],
+)
+
+##########
+toolchain_profile_selector(
+    name                   = "vm-opt",
+    profile                = ":vm-opt_profile",
+    # toolchain_type         = "@rules_ocaml//toolchain/type:profile",
+    target_compatible_with = ["@ocaml//host/target:vm"],
+    target_settings        = [":opt_mode"],
+    # visibility             = ["//visibility:public"],
+)
+
+##########
+toolchain_profile_selector(
+    name            = "default-fastbuild",
+    profile         = ":sys_profile",
+    # toolchain_type  = "@rules_ocaml//toolchain/type:profile",
+    target_settings = [":fastbuild_mode"],
+    # visibility      = ["//visibility:public"],
+)
+
+##########
+toolchain_profile_selector(
+    name            = "default-dbg",
+    profile         = ":sys-dbg_profile",
+    # toolchain_type  = "@rules_ocaml//toolchain/type:profile",
+    target_settings = [":dbg_mode"],
+    # visibility      = ["//visibility:public"],
+)
+
+##########
+toolchain_profile_selector(
+    name            = "default-opt",
+    profile         = ":sys-opt_profile",
+    # toolchain_type  = "@rules_ocaml//toolchain/type:profile",
+    target_settings = [":opt_mode"],
+    # visibility      = ["//visibility:public"],
+)
+
+################################################################
+config_setting(
+    name = "dbg_mode",
+    values = {"compilation_mode": "dbg"},
+)
+
+config_setting(
+    name = "fastbuild_mode",
+    values = {"compilation_mode": "fastbuild"},
+)
+
+config_setting(
+    name = "opt_mode",
+    values = {"compilation_mode": "opt"},
+)
+

@@ -141,6 +141,7 @@ cc_library(
         "//templates/toolchain/adapters/linux/arm:BUILD.bazel",
         "//templates/toolchain/adapters/macos/x86_64:BUILD.bazel",
         "//templates/toolchain/adapters/macos/arm:BUILD.bazel",
+        "//templates/toolchain/profiles:BUILD.bazel",
         "//templates/toolchain/selectors/local:BUILD.bazel",
         "//templates/toolchain/selectors/linux/x86_64:BUILD.bazel",
         "//templates/toolchain/selectors/linux/arm:BUILD.bazel",

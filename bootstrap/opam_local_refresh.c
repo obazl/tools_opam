@@ -36,6 +36,18 @@ char *toolchains[] = {
     "@ocaml//toolchain/selectors/local:sysvm",
     "@ocaml//toolchain/selectors/local:ncnc",
 
+    /* profiles - order matters */
+    "@ocaml//toolchain/profiles:sys-fastbuild",
+    "@ocaml//toolchain/profiles:sys-dbg",
+    "@ocaml//toolchain/profiles:sys-opt",
+    "@ocaml//toolchain/profiles:vm-fastbuild",
+    "@ocaml//toolchain/profiles:vm-dbg",
+    "@ocaml//toolchain/profiles:vm-opt",
+    /* default must come last, empty target_compatible_with */
+    "@ocaml//toolchain/profiles:default-fastbuild",
+    "@ocaml//toolchain/profiles:default-dbg",
+    "@ocaml//toolchain/profiles:default-opt",
+
     /* later, for cross-compilers: */
     /* "@ocaml//toolchain/selectors/macos/x86_64:vm", */
     /* "@ocaml//toolchain/selectors/macos/x86_64:macos_x86_64", */
