@@ -1,47 +1,48 @@
 # generated file - DO NOT EDIT
 
+load("@rules_ocaml//toolchain:adapter.bzl", "toolchain_selector")
+
 exports_files(glob(["*.bazel"]))
 
 ##########
-toolchain(
+toolchain_selector(
     name           = "ncnc",
     toolchain      = "@ocaml//toolchain/adapters/local:ncnc",
-    toolchain_type = "@rules_ocaml//toolchain/type:std",
     visibility     = ["//visibility:public"],
 )
 
 ##########
-toolchain(
-    name           = "sysvm",
-    toolchain      = "@ocaml//toolchain/adapters/local:sysvm",
-    toolchain_type = "@rules_ocaml//toolchain/type:std",
-    target_compatible_with = [
+toolchain_selector(
+    name                    = "sysvm",
+    toolchain               = "@ocaml//toolchain/adapters/local:sysvm",
+    # toolchain_type        = "@rules_ocaml//toolchain/type:std",
+    target_host_constraints = [
         "@ocaml//host/target:vm",
     ],
-    visibility     = ["//visibility:public"],
+    visibility              = ["//visibility:public"],
 )
 
 ##########
 toolchain(
-    name           = "bcbc",
-    toolchain      = "@ocaml//toolchain/adapters/local:bcbc",
-    toolchain_type = "@rules_ocaml//toolchain/type:std",
-    exec_compatible_with = [
+    name                    = "bcbc",
+    toolchain               = "@ocaml//toolchain/adapters/local:bcbc",
+    toolchain_type          = "@rules_ocaml//toolchain/type:std",
+    exec_compatible_with    = [
         "@ocaml//host/build:vm",
     ],
-    target_compatible_with = [
+    target_compatible_with  = [
         "@ocaml//host/target:vm",
     ],
-    visibility     = ["//visibility:public"],
+    visibility              = ["//visibility:public"],
 )
 
 ##########
 toolchain(
-    name           = "bcnc",
-    toolchain      = "@ocaml//toolchain/adapters/local:bcnc",
-    toolchain_type = "@rules_ocaml//toolchain/type:std",
-    exec_compatible_with = [
+    name                    = "bcnc",
+    toolchain               = "@ocaml//toolchain/adapters/local:bcnc",
+    toolchain_type          = "@rules_ocaml//toolchain/type:std",
+    exec_compatible_with    = [
         "@ocaml//host/build:vm",
     ],
-    visibility     = ["//visibility:public"],
+    visibility              = ["//visibility:public"],
 )
