@@ -19,14 +19,6 @@
 
 #include "emit_ocaml_repo.h"
 
-/* **************************************************************** */
-/* static int level = 0; */
-/* static int spfactor = 4; */
-/* static char *sp = " "; */
-
-/* static int indent = 2; */
-/* static int delta = 2; */
-
 FILE *_open_buildfile(UT_string *ocaml_file) {
     FILE *ostream = fopen(utstring_body(ocaml_file), "w");
     ostream = fopen(utstring_body(ocaml_file), "w");
@@ -131,133 +123,6 @@ void _emit_ocaml_bin_symlinks(void) // UT_string *dst_dir, UT_string *src_dir)
     closedir(srcd);
 }
 
-// last arg true: emit "default" rule
-// compiler names: 'ocaml<target>.<host>'
-// other toolnames: '<toolname>.<host>'
-/* DEPRECATED */
-/* void _emit_ocaml_toolchain_adapter(FILE *ostream, */
-/*                                    bool _host,   // true: native */
-/*                                    bool _target, // true: native */
-/*                                    bool _fallback) // default, native */
-/* { */
-/*     char *pfx    = _fallback? "default" : "opam"; */
-/*     char *tgt    = _fallback? "nc" : _target? "nc" : "bc"; */
-/*     char *hst    = _fallback? "nc" : _host?   "nc" : "bc"; */
-/*     char *target = _fallback? "native" : _target? "native" : "vm"; */
-/*     char *host   = _fallback? "native" : _host?   "native" : "vm"; */
-
-/*     char *ext    = _fallback? "opt" : _host? "opt" : "byte"; */
-
-/*     fprintf(ostream, "ocaml_toolchain_adapter(\n"); */
-/*     fprintf(ostream, */
-/*             "    name                   = \"_%s_%s_%s\",\n", */
-/*             pfx, host, target); //TODO: switch to pfx_host_tgt */
-/*     fprintf(ostream, */
-/*             "    host                   = \"%s\",\n", host); */
-/*     fprintf(ostream, */
-/*             "    target                 = \"%s\",\n", target); */
-
-/*     fprintf(ostream, */
-/*             "    repl                   = \"@ocaml//bin:ocaml\",\n"); */
-
-/*     fprintf(ostream, */
-/*             "    compiler               = \"@ocaml//bin:%s.%s\",\n", */
-/*             _target?  "ocamlopt" : "ocamlc", ext); */
-/*     fprintf(ostream, */
-/*             "    profiling_compiler     = \"@ocaml//bin:%s.%s\",\n", */
-/*             _target?  "ocamloptp" : "ocamlcp", ext); */
-
-/*     /\* ocamllex comes in 2 flavors: one for each host platform. *\/ */
-/*     fprintf(ostream, */
-/*             "    ocamllex               = \"@ocaml//bin:ocamllex.%s\",\n", */
-/*             ext); */
-/*     /\* ocamlyacc comes in one flavor, nc_nc *\/ */
-/*     fprintf(ostream, */
-/*             "    ocamlyacc              = \"@ocaml//bin:ocamlyacc\",\n"); */
-/*     fprintf(ostream, */
-/*             "    linkmode               = \"dynamic\",\n"); */
-
-/*     fprintf(ostream, */
-/*             "    vmruntime              = \"@ocaml//bin:ocamlrun\",\n"); */
-/*     fprintf(ostream, */
-/*             "    vmruntime_debug        = \"@ocaml//bin:ocamlrund\",\n"); */
-/*     fprintf(ostream, */
-/*             "    vmruntime_instrumented = \"@ocaml//bin:ocamlruni\",\n"); */
-/*     fprintf(ostream, */
-/*             "    vmlibs             = \"@stublibs//:stublibs\",\n"); */
-
-/*     fprintf(ostream, "    ## DEPRECATED - to be removed:\n"); */
-
-/*     fprintf(ostream, "    ocamlc       = \"@ocaml//bin:ocamlc\",\n"); */
-/*     fprintf(ostream, "    ocamlc_opt   = \"@ocaml//bin:ocamlc.opt\",\n"); */
-/*     fprintf(ostream, "    ocamlopt     = \"@ocaml//bin:ocamlopt\",\n"); */
-/*     fprintf(ostream, "    ocamlopt_opt = \"@ocaml//bin:ocamlopt.opt\"\n"); */
-/*     fprintf(ostream, ")\n\n"); */
-/* } */
-
-/* DEPRECATED */
-/* void _emit_ocaml_toolchain_binding(FILE *ostream, */
-/*                                    bool _macos, */
-/*                                    bool _host,   // true: native */
-/*                                    bool _target, // true: native */
-/*                                    bool _fallback) // default, native */
-/* { */
-/*     char *pfx    = _fallback? "default" : "opam"; */
-/*     char *hst    = _fallback? "nc" : _host?   "nc" : "bc"; */
-/*     char *tgt    = _fallback? "nc" : _target? "nc" : "bc"; */
-/*     char *host   = _fallback? "native" : _host?   "native" : "vm"; */
-/*     char *target = _fallback? "native" : _target? "native" : "vm"; */
-
-/*     fprintf(ostream, "##########\n"); */
-/*     fprintf(ostream, "toolchain(\n"); */
-/*     fprintf(ostream, "    name           = \"%s_%s_%s_%s\",\n", */
-/*             _macos? "macos" : "linux", pfx, host, target); */
-/*     fprintf(ostream, "    toolchain      = \"_%s_%s_%s\",\n", */
-/*             pfx, host, target); */
-/*     fprintf(ostream, "    toolchain_type = \"@rules_ocaml//toolchain/type:std\",\n"); */
-/*     fprintf(ostream, "    exec_compatible_with = [\n"); */
-/*     fprintf(ostream, "        \"@platforms//os:%s\",\n", */
-/*             _macos? "macos" : "linux"); */
-/*     fprintf(ostream, "        \"@platforms//cpu:x86_64\",\n"); */
-/*     fprintf(ostream, "        \"@opam//tc:opam\",\n"); */
-/*     fprintf(ostream, "        \"@ocaml//platform:%s\",\n", host); */
-/*     fprintf(ostream, "    ],\n"); */
-/*     fprintf(ostream, "    target_compatible_with = [\n"); */
-/*     fprintf(ostream, "        \"@platforms//os:macos\",\n"); */
-/*     fprintf(ostream, "        \"@platforms//cpu:x86_64\",\n"); */
-/*     fprintf(ostream, "        \"@opam//tc:opam\",\n"); */
-/*     fprintf(ostream, "        \"@ocaml//platform:%s\",\n", target); */
-/*     fprintf(ostream, "    ],\n"); */
-/*     fprintf(ostream, "    visibility             = [\"//visibility:public\"],\n"); */
-/*     fprintf(ostream, ")\n"); */
-
-/*     fprintf(ostream, "\n"); */
-/* } */
-
-/* DEPRECATED */
-/* void _emit_ocaml_default_toolchain_binding(FILE *ostream, bool macos) */
-/* { */
-/*     fprintf(ostream, "##########\n"); */
-/*     fprintf(ostream, "toolchain(\n"); */
-/*     fprintf(ostream, "    name           = \"default_%s\",\n", */
-/*             macos? "macos" : "linux"); */
-/*     fprintf(ostream, "    toolchain      = \"_opam_native_native\",\n"); */
-/*     fprintf(ostream, "    toolchain_type = \"@rules_ocaml//toolchain/type:std\",\n"); */
-/*     fprintf(ostream, "    exec_compatible_with = [\n"); */
-/*     fprintf(ostream, "        \"@platforms//os:%s\",\n", */
-/*             macos? "macos" : "linux"); */
-/*     fprintf(ostream, "        \"@platforms//cpu:x86_64\",\n"); */
-/*     fprintf(ostream, "    ],\n"); */
-/*     fprintf(ostream, "    target_compatible_with = [\n"); */
-/*     fprintf(ostream, "        \"@platforms//os:macos\",\n"); */
-/*     fprintf(ostream, "        \"@platforms//cpu:x86_64\",\n"); */
-/*     fprintf(ostream, "    ],\n"); */
-/*     fprintf(ostream, "    visibility             = [\"//visibility:public\"],\n"); */
-/*     fprintf(ostream, ")\n"); */
-
-/*     fprintf(ostream, "\n"); */
-/* } */
-
 void _symlink_ocaml_stdlib(char *tgtdir)
 {
     if (debug)
@@ -309,27 +174,6 @@ void _symlink_ocaml_stdlib(char *tgtdir)
     }
     closedir(d);
 }
-
-/* void emit_ocaml_stdlib_pkg(char *switch_name) */
-/* { */
-/*     if (debug) */
-/*         log_debug("emit_ocaml_stdlib_pkg"); */
-
-/*     UT_string *ocaml_file; */
-/*     utstring_new(ocaml_file); */
-/*     utstring_concat(ocaml_file, bzl_switch_pfx); */
-/*     utstring_printf(ocaml_file, "/lib/ocaml"); */
-/*     mkdir_r(utstring_body(ocaml_file)); */
-
-/*     _symlink_ocaml_stdlib(utstring_body(ocaml_file)); */
-
-/*     utstring_printf(ocaml_file, "/BUILD.bazel"); */
-
-/*     _copy_buildfile("ocaml_stdlib.BUILD", ocaml_file); */
-/*     /\* _symlink_buildfile("ocaml_stdlib.BUILD", ocaml_file); *\/ */
-
-/*     utstring_free(ocaml_file); */
-/* } */
 
 /* **************************************************************** */
 void _emit_ocaml_stublibs_symlinks(char *_dir)
@@ -721,91 +565,6 @@ void emit_ocaml_toolchain_buildfile(void)
     utstring_free(ocaml_file);
 }
 
-//DEPRECATED
-/* void write_ocaml_toolchain_buildfile(char *switch_name) */
-/* { */
-/*     log_debug("emit_ocaml_toolchain_buildfile\n"); */
-/*     UT_string *ocaml_file; */
-/*     utstring_new(ocaml_file); */
-/*     utstring_concat(ocaml_file, bzl_switch_pfx); */
-/*     utstring_printf(ocaml_file, "/ocaml/toolchains"); */
-/*     mkdir_r(utstring_body(ocaml_file)); */
-/*     utstring_printf(ocaml_file, "/BUILD.bazel"); */
-
-/*     FILE *ostream; */
-/*     ostream = fopen(utstring_body(ocaml_file), "w"); */
-/*     if (ostream == NULL) { */
-/*         fprintf(stderr, "ERROR: fopen, emit_ocaml_toolchain_buildfile\n"); */
-/*         perror(utstring_body(ocaml_file)); */
-/*         exit(EXIT_FAILURE); */
-/*     } */
-
-/*     fprintf(ostream, "# generated file - DO NOT EDIT\n\n"); */
-/*     fprintf(ostream, */
-/*     "load(\"@rules_ocaml//toolchain:adapter.bzl\", \"ocaml_toolchain_adapter\")\n"); */
-
-/*     fprintf(ostream, "\n"); */
-/*     fprintf(ostream, "## toolchain bindings (to be passed to 'register_toolchains' function)\n"); */
-/*     fprintf(ostream, "\n"); */
-
-/*     /\* _emit_ocaml_toolchain_bindings(ostream, switch_name); *\/ */
-/*     // arg 1 true: macos, false: linux */
-/*     // arg 2 true: bytecode emitter */
-/*     // arg 3 true: optimized binary; */
-/*     // last arg true: emit "default" rule */
-/*     // mac */
-/*     _emit_ocaml_toolchain_binding(ostream, true, false,  true, false); // n_n */
-/*     _emit_ocaml_toolchain_binding(ostream, true, true,  true,  false); // bc_n */
-/*     _emit_ocaml_toolchain_binding(ostream, true, true, false,  false); // bc_bc */
-/*     _emit_ocaml_toolchain_binding(ostream, true, false, false, false); // n_bc */
-/*     _emit_ocaml_default_toolchain_binding(ostream, true); */
-/*     // linux */
-/*     _emit_ocaml_toolchain_binding(ostream, false, false,  true, false); // n_n */
-/*     _emit_ocaml_toolchain_binding(ostream, false, true,  true,  false); // bc_n */
-/*     _emit_ocaml_toolchain_binding(ostream, false, true, false,  false); // bc_bc */
-/*     _emit_ocaml_toolchain_binding(ostream, false, false, false, false); // n_bc */
-/*     _emit_ocaml_default_toolchain_binding(ostream, false); */
-
-/*     // now the ocaml_toolchain_adapters */
-/*     fprintf(ostream, "\n"); */
-/*     fprintf(ostream, "####################################\n"); */
-/*     fprintf(ostream, "    #### toolchain adapters ####\n"); */
-
-/*     _emit_ocaml_toolchain_adapter(ostream, false, true,  false); // n_n */
-/*     _emit_ocaml_toolchain_adapter(ostream, true,  true,  false); // bc_n */
-/*     _emit_ocaml_toolchain_adapter(ostream, true,  false, false); // bc_bc */
-/*     _emit_ocaml_toolchain_adapter(ostream, false, false, false); // n_bc */
-/*     /\* _emit_ocaml_toolchain_adapter(ostream, false, false, true); //default *\/ */
-
-/*     fclose(ostream); */
-/*     utstring_free(ocaml_file); */
-
-/*     /\* **************************************************************** *\/ */
-/*     utstring_new(ocaml_file); */
-/*     utstring_concat(ocaml_file, bzl_switch_pfx); */
-/*     utstring_printf(ocaml_file, "/ocaml/bin"); */
-/*     mkdir_r(utstring_body(ocaml_file)); */
-/*     utstring_printf(ocaml_file, "/BUILD.bazel"); */
-
-/*     ostream = fopen(utstring_body(ocaml_file), "w"); */
-/*     if (ostream == NULL) { */
-/*         log_error("fopen: %s: %s", strerror(errno), */
-/*                   utstring_body(ocaml_file)); */
-/*         fprintf(stderr, "fopen: %s: %s", strerror(errno), */
-/*                 utstring_body(ocaml_file)); */
-/*         fprintf(stderr, "exiting\n"); */
-/*         /\* perror(utstring_body(ocaml_file)); *\/ */
-/*         exit(EXIT_FAILURE); */
-/*     } */
-/*     fprintf(ostream, "# generated file - DO NOT EDIT\n"); */
-/*     fprintf(ostream, "exports_files(glob([\"**\"]))\n"); */
-/*     fclose(ostream); */
-/*     utstring_free(ocaml_file); */
-
-/*     /\* **************************************************************** *\/ */
-/*     _emit_ocaml_bin_symlinks(); */
-/* } */
-
 void emit_ocaml_bin_dir(void)
 {
     log_debug("emit_ocaml_bin_dir\n");
@@ -983,19 +742,6 @@ void emit_ocaml_bigarray_pkg(char *switch_name)
     utstring_printf(ocaml_file, "/BUILD.bazel");
 
     _copy_buildfile("ocaml_bigarray.BUILD", ocaml_file);
-    /* _symlink_buildfile("ocaml_bigarray.BUILD", ocaml_file); */
-
-/*     FILE *ostream; */
-/*     ostream = fopen(utstring_body(ocaml_file), "w"); */
-/*     if (ostream == NULL) { */
-/*         perror(utstring_body(ocaml_file)); */
-/*         exit(EXIT_FAILURE); */
-/*     } */
-
-/* #include "ocaml_bigarray.BUILD.h" */
-/*     fprintf(ostream, "%s", bigarray_buildfile); */
-
-/*     fclose(ostream); */
     utstring_free(ocaml_file);
 }
 
@@ -1320,19 +1066,6 @@ void emit_ocaml_str_pkg(char *switch_name)
     utstring_printf(ocaml_file, "/BUILD.bazel");
 
     _copy_buildfile("ocaml_str.BUILD", ocaml_file);
-    /* _symlink_buildfile("ocaml_str.BUILD", ocaml_file); */
-
-/*     FILE *ostream; */
-/*     ostream = fopen(utstring_body(ocaml_file), "w"); */
-/*     if (ostream == NULL) { */
-/*         perror(utstring_body(ocaml_file)); */
-/*         exit(EXIT_FAILURE); */
-/*     } */
-
-/* #include "ocaml_str.BUILD.h" */
-/*     fprintf(ostream, "%s", str_buildfile); */
-
-/*     fclose(ostream); */
     utstring_free(ocaml_file);
 }
 
@@ -1832,95 +1565,4 @@ void emit_ocaml_workspace(char *switch_name, FILE *bootstrap_FILE)
     // bigarray moved to standard lib in v. 4.07, so no need to list
     // as explicit dep. but we expose it as a package anyway.
     /* emit_ocaml_bigarray_buildfile(switch_name); */
-
-    /* utstring_printf(ocaml_file, "/BUILD.bazel"); */
-
-    /* ostream = fopen(utstring_body(ocaml_file), "w"); */
-    /* if (ostream == NULL) { */
-    /*     perror(utstring_body(ocaml_file)); */
-    /*     exit(EXIT_FAILURE); */
-    /* } */
-
-    /* fprintf(ostream, */
-    /*         "load(\"@rules_ocaml//toolchain:rules.bzl\", \"ocaml_toolchain\")\n"); */
-    /* emit_bazel_hdr(ostream); */
-
-    /* fprintf(repo_rules_FILE, "        name       = "); */
-
-    /* char *_pkg_prefix = NULL; */
-    /* // ???? */
-    /* if (_pkg_prefix == NULL) */
-    /*     fprintf(repo_rules_FILE, "\"%s\",\n", pkg_name); */
-    /* else { */
-    /*     char *s = _pkg_prefix; */
-    /*     char *tmp; */
-    /*     while(s) { */
-    /*         tmp = strchr(s, '/'); */
-    /*         if (tmp == NULL) break; */
-    /*         *tmp = '.'; */
-    /*         s = tmp; */
-    /*     } */
-    /*     fprintf(repo_rules_FILE, "\"%s.%s\",\n", */
-    /*             _pkg_prefix, pkg_name); */
-    /* } */
-
-    /* /\* fprintf(repo_rules_FILE, "        environ = [\"OPAM_SWITCH_PREFIX\"],\n"); *\/ */
-
-    /* fprintf(repo_rules_FILE, "        build_file = "); */
-    /* if (_pkg_prefix == NULL) */
-    /*     fprintf(repo_rules_FILE, */
-    /*             "\"@//%s/%s:BUILD.bazel\",\n", */
-    /*             /\* buildfile_prefix, *\/ */
-    /*             utstring_body(bzl_switch_pfx), */
-    /*             pkg_name); */
-    /* else */
-    /*     fprintf(repo_rules_FILE, */
-    /*             "\"@//%s/%s/%s:BUILD.bazel\",\n", */
-    /*             /\* buildfile_prefix, *\/ */
-    /*             utstring_body(bzl_switch_pfx), */
-    /*             _pkg_prefix, pkg_name); */
-
-    /* fprintf(repo_rules_FILE, "        path       = "); */
-    /* if (_pkg_prefix == NULL) */
-    /*     fprintf(repo_rules_FILE, "\"%s\",\n", */
-    /*             /\* opam_switch_prefix, *\/ */
-    /*             pkg_name); */
-    /* else */
-    /*     fprintf(repo_rules_FILE, "\"%s/%s\",\n", */
-    /*             /\* opam_switch_prefix, *\/ */
-    /*             _pkg_prefix, pkg_name); */
-
-    /* /\* **************************************************************** *\/ */
-    /* /\*  now subpackages *\/ */
-    /* /\* **************************************************************** *\/ */
-
-    /* if ((strncmp(_pkg->name, "threads", 7) == 0) */
-    /*     && strlen(_pkg->name) == 7) { */
-    /*     ; /\* special case: skip threads subpkgs *\/ */
-    /* } else { */
-    /*     int subpkg_ct = obzl_meta_package_subpkg_count(_pkg); */
-    /*     if (subpkg_ct > 0) { */
-    /*         fprintf(repo_rules_FILE, "        subpackages = {\n"); */
-    /*         emit_new_local_subpkg_entries(repo_rules_FILE, */
-    /*                                       _pkg, */
-    /*                                       NULL, */
-    /*                                       _pkg_prefix, */
-    /*                                       _pkg->name); /\* filedeps_path *\/ */
-    /*         fprintf(repo_rules_FILE, "        }\n"); */
-    /*     } */
-    /* } */
-    /* /\* **************************************************************** *\/ */
-
-    /* fprintf(repo_rules_FILE, "    )\n\n"); */
-    /* fclose(ostream); */
-    /* utstring_free(ocaml_file); */
-
-    /* UT_string *dst_dir; */
-    /* utstring_new(dst_dir); */
-    /* utstring_concat(dst_dir, bzl_switch_pfx); */
-    /* utstring_printf(dst_dir, "/bin"); */
-
-    /* UT_string *src_dir; // relative to opam_switch_lib */
-    /* utstring_new(src_dir); */
-    /* utstring_printf(src_dir, "bin"); */
 }
