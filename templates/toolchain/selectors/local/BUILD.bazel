@@ -17,7 +17,7 @@ toolchain_selector(
     toolchain               = "@ocaml//toolchain/adapters/local:sysvm",
     # toolchain_type        = "@rules_ocaml//toolchain/type:std",
     target_host_constraints = [
-        "@ocaml//host/target:vm",
+        "@ocaml//host/target:vm?",
     ],
     visibility              = ["//visibility:public"],
 )
@@ -28,10 +28,10 @@ toolchain(
     toolchain               = "@ocaml//toolchain/adapters/local:bcbc",
     toolchain_type          = "@rules_ocaml//toolchain/type:std",
     exec_compatible_with    = [
-        "@ocaml//host/build:vm",
+        "@ocaml//host/build:vm?",
     ],
     target_compatible_with  = [
-        "@ocaml//host/target:vm",
+        "@ocaml//host/target:vm?",
     ],
     visibility              = ["//visibility:public"],
 )
@@ -42,7 +42,7 @@ toolchain(
     toolchain               = "@ocaml//toolchain/adapters/local:bcnc",
     toolchain_type          = "@rules_ocaml//toolchain/type:std",
     exec_compatible_with    = [
-        "@ocaml//host/build:vm",
+        "@ocaml//host/build:vm?",
     ],
     visibility              = ["//visibility:public"],
 )

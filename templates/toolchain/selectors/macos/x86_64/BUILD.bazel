@@ -38,8 +38,8 @@ toolchain(
 
 ##########
 # We can select this with
-# --host_platform=@opam//tc/host/build:macos_x86_64
-# --platforms=@opam//tc/host/target:linux_x86_64
+# --host_platform=@ocaml//host/build:macos_x86_64
+# --platforms=@ocaml//host/target:linux_x86_64
 # but CC toolchain selection will fail since we do not have a
 # cross-compiling cc toolchain.
 toolchain(

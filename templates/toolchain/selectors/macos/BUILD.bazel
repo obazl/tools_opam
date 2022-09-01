@@ -38,7 +38,7 @@ toolchain(
 
 ##########
 # NB: we can select this with
-# --platforms=@opam//tc/host/target:linux_x86_64 but CC toolchain
+# --platforms=@ocaml//host/target:linux_x86_64 but CC toolchain
 # selection will fail since we do not have a cross-compiling cc
 # toolchain.
 toolchain(
@@ -69,7 +69,7 @@ toolchain(
     target_compatible_with = [
         # "@platforms//os:macos",
         # "@platforms//cpu:x86_64",
-        "@ocaml//host/target:vm",
+        "@ocaml//host/target:vm?",
     ],
     visibility             = ["//visibility:public"],
 )
@@ -82,12 +82,12 @@ toolchain(
     exec_compatible_with = [
         "@platforms//os:macos",
         "@platforms//cpu:x86_64",
-        "@ocaml//host/build:vm",
+        "@ocaml//host/build:vm?",
     ],
     target_compatible_with = [
         "@platforms//os:macos",
         "@platforms//cpu:x86_64",
-        "@ocaml//host/target:vm",
+        "@ocaml//host/target:vm?",
     ],
     visibility             = ["//visibility:public"],
 )
@@ -101,7 +101,7 @@ toolchain(
     target_compatible_with = [
         "@platforms//os:macos",
         "@platforms//cpu:x86_64",
-        "@ocaml//host/target:vm",
+        "@ocaml//host/target:vm?",
     ],
     visibility             = ["//visibility:public"],
 )
@@ -115,7 +115,7 @@ toolchain(
     exec_compatible_with = [
         "@platforms//os:macos",
         "@platforms//cpu:x86_64",
-        "@ocaml//host/build:vm",
+        "@ocaml//host/build:vm?",
     ],
     visibility             = ["//visibility:public"],
 )
@@ -128,12 +128,12 @@ toolchain(
     exec_compatible_with = [
         "@platforms//os:macos",
         "@platforms//cpu:x86_64",
-        "@ocaml//host/build:vm",
+        "@ocaml//host/build:vm?",
     ],
     target_compatible_with = [
         "@platforms//os:macos",
         "@platforms//cpu:x86_64",
-        "@ocaml//host/target:native",
+        "@ocaml//host/target:sys?",
     ],
     visibility             = ["//visibility:public"],
 )
