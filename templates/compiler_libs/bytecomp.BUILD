@@ -1,5 +1,5 @@
 alias(
-    name   = "common",
+    name   = "bytecomp",
     actual = "@ocaml//compiler-libs:bytecomp",
     visibility = ["//visibility:public"]
 )
