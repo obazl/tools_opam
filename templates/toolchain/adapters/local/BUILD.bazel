@@ -6,7 +6,7 @@ load("@rules_ocaml//toolchain:adapter.bzl", "ocaml_toolchain_adapter")
 
 ########################
 ocaml_toolchain_adapter(
-    name                   = "ncnc",
+    name                   = "syssys",
     host                   = "sys",
     target                 = "sys",
     repl                   = "@ocaml//bin:ocaml",
@@ -57,7 +57,7 @@ ocaml_toolchain_adapter(
 
 ########################
 ocaml_toolchain_adapter(
-    name                   = "bcnc",
+    name                   = "vmsys",
     host                   = "vm",
     target                 = "sys",
     repl                   = "@ocaml//bin:ocaml",

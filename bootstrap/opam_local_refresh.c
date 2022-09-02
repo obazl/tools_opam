@@ -31,20 +31,19 @@
   "Available platforms and toolchains are tracked as ordered lists for determinism, with preference given to earlier items in the list."
 */
 char *toolchains[] = {
-    "@ocaml//toolchain/selectors/local:bcbc",
-    "@ocaml//toolchain/selectors/local:bcnc",
+    "@ocaml//toolchain/selectors/local:vmvm",
+    "@ocaml//toolchain/selectors/local:vmsys",
     "@ocaml//toolchain/selectors/local:sysvm",
-    "@ocaml//toolchain/selectors/local:ncnc",
-
+    "@ocaml//toolchain/selectors/local:syssys",
     /* profiles - order matters */
-    "@ocaml//toolchain/profiles:sys-fastbuild",
+    "@ocaml//toolchain/profiles:sys-dev",
     "@ocaml//toolchain/profiles:sys-dbg",
     "@ocaml//toolchain/profiles:sys-opt",
-    "@ocaml//toolchain/profiles:vm-fastbuild",
+    "@ocaml//toolchain/profiles:vm-dev",
     "@ocaml//toolchain/profiles:vm-dbg",
     "@ocaml//toolchain/profiles:vm-opt",
     /* default must come last, empty target_compatible_with */
-    "@ocaml//toolchain/profiles:default-fastbuild",
+    "@ocaml//toolchain/profiles:default-dev",
     "@ocaml//toolchain/profiles:default-dbg",
     "@ocaml//toolchain/profiles:default-opt",
 

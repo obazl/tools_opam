@@ -38,13 +38,19 @@ ocaml_toolchain_profile(
 )
 
 ocaml_toolchain_profile(
-    name         = "vm-dbg_profile",
+    name         = "vm_dev_profile",
+    compile_opts = COMPILE_OPTIONS + COMPILE_WARNINGS,
+    link_opts    = LINK_OPTIONS + LINK_WARNINGS,
+)
+
+ocaml_toolchain_profile(
+    name         = "vm_dbg_profile",
     compile_opts = COMPILE_OPTIONS + COMPILE_WARNINGS + ["-g"],
     link_opts    = LINK_OPTIONS + LINK_WARNINGS + ["-g"]
 )
 
 ocaml_toolchain_profile(
-    name         = "vm-opt_profile",
+    name         = "vm_opt_profile",
     compile_opts = COMPILE_OPTIONS + COMPILE_WARNINGS + [],
     link_opts    = LINK_OPTIONS + LINK_WARNINGS + []
 )
@@ -56,21 +62,27 @@ ocaml_toolchain_profile(
 )
 
 ocaml_toolchain_profile(
-    name         = "sys-dbg_profile",
+    name         = "sys_dev_profile",
+    compile_opts = COMPILE_OPTIONS + COMPILE_WARNINGS,
+    link_opts    = LINK_OPTIONS + LINK_WARNINGS
+)
+
+ocaml_toolchain_profile(
+    name         = "sys_dbg_profile",
     compile_opts = COMPILE_OPTIONS + COMPILE_WARNINGS + ["-g"],
     link_opts    = LINK_OPTIONS + LINK_WARNINGS + ["-g"]
 )
 
 ocaml_toolchain_profile(
-    name         = "sys-opt_profile",
+    name         = "sys_opt_profile",
     compile_opts = COMPILE_OPTIONS + COMPILE_WARNINGS + [],
     link_opts    = LINK_OPTIONS + LINK_WARNINGS + []
 )
 
 ##########
 toolchain_profile_selector(
-    name                    = "sys-fastbuild",
-    profile                 = ":sys_profile",
+    name                    = "sys-dev",
+    profile                 = ":sys_dev_profile",
     target_host_constraints = ["@ocaml//host/target:sys?"],
     constraints             = [":fastbuild_mode"],
 )
@@ -78,7 +90,7 @@ toolchain_profile_selector(
 ##########
 toolchain_profile_selector(
     name                    = "sys-dbg",
-    profile                 = ":sys-dbg_profile",
+    profile                 = ":sys_dbg_profile",
     target_host_constraints = ["@ocaml//host/target:sys?"],
     constraints             = [":dbg_mode"],
 )
@@ -86,15 +98,15 @@ toolchain_profile_selector(
 ##########
 toolchain_profile_selector(
     name                    = "sys-opt",
-    profile                 = ":sys-opt_profile",
+    profile                 = ":sys_opt_profile",
     target_host_constraints = ["@ocaml//host/target:sys?"],
     constraints             = [":opt_mode"],
 )
 
 ##########
 toolchain_profile_selector(
-    name                    = "vm-fastbuild",
-    profile                 = ":vm_profile",
+    name                    = "vm-dev",
+    profile                 = ":vm_dev_profile",
     target_host_constraints = ["@ocaml//host/target:vm?"],
     constraints             = [":fastbuild_mode"],
 )
@@ -102,7 +114,7 @@ toolchain_profile_selector(
 ##########
 toolchain_profile_selector(
     name                    = "vm-dbg",
-    profile                 = ":vm-dbg_profile",
+    profile                 = ":vm_dbg_profile",
     target_host_constraints = ["@ocaml//host/target:vm?"],
     constraints             = [":dbg_mode"],
 )
@@ -110,29 +122,29 @@ toolchain_profile_selector(
 ##########
 toolchain_profile_selector(
     name                    = "vm-opt",
-    profile                 = ":vm-opt_profile",
+    profile                 = ":vm_opt_profile",
     target_host_constraints = ["@ocaml//host/target:vm?"],
     constraints             = [":opt_mode"],
 )
 
 ##########
 toolchain_profile_selector(
-    name                        = "default-fastbuild",
-    profile                     = ":sys_profile",
+    name                        = "default-dev",
+    profile                     = ":sys_dev_profile",
     constraints                 = [":fastbuild_mode"],
 )
 
 ##########
 toolchain_profile_selector(
     name                        = "default-dbg",
-    profile                     = ":sys-dbg_profile",
+    profile                     = ":sys_dbg_profile",
     constraints                 = [":dbg_mode"],
 )
 
 ##########
 toolchain_profile_selector(
     name                        = "default-opt",
-    profile                     = ":sys-opt_profile",
+    profile                     = ":sys_opt_profile",
     constraints                 = [":opt_mode"],
 )
 

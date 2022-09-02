@@ -6,8 +6,8 @@ exports_files(glob(["*.bazel"]))
 
 ##########
 toolchain_selector(
-    name           = "ncnc",
-    toolchain      = "@ocaml//toolchain/adapters/local:ncnc",
+    name           = "syssys",
+    toolchain      = "@ocaml//toolchain/adapters/local:syssys",
     visibility     = ["//visibility:public"],
 )
 
@@ -24,8 +24,8 @@ toolchain_selector(
 
 ##########
 toolchain(
-    name                    = "bcbc",
-    toolchain               = "@ocaml//toolchain/adapters/local:bcbc",
+    name                    = "vmvm",
+    toolchain               = "@ocaml//toolchain/adapters/local:vmvm",
     toolchain_type          = "@rules_ocaml//toolchain/type:std",
     exec_compatible_with    = [
         "@ocaml//host/build:vm?",
@@ -38,8 +38,8 @@ toolchain(
 
 ##########
 toolchain(
-    name                    = "bcnc",
-    toolchain               = "@ocaml//toolchain/adapters/local:bcnc",
+    name                    = "vmsys",
+    toolchain               = "@ocaml//toolchain/adapters/local:vmsys",
     toolchain_type          = "@rules_ocaml//toolchain/type:std",
     exec_compatible_with    = [
         "@ocaml//host/build:vm?",
