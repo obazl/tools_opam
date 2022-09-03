@@ -16,6 +16,6 @@ opam_import(
     cmti       = glob(["*.cmti"]),
     srcs       = glob(["*.ml", "*.mli"]),
     all        = glob(["*.cm*", "*.o", "*.a"]),
-    deps       = ["@ocaml//:unix"],
+    deps       = ["@ocaml//unix"],
     visibility = ["//visibility:public"],
 );

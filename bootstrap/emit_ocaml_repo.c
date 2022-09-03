@@ -265,14 +265,14 @@ void _emit_ocaml_stublibs_symlinks(char *_dir)
     closedir(srcd);
 }
 
-void _emit_stublibs_symlinks(char *_dir)
+void _emit_lib_stublibs_symlinks(char *_dir)
 {
-    log_debug("_emit_stublibs_symlinks: %s", _dir);
+    log_debug("_emit_lib_stublibs_symlinks: %s", _dir);
 
     UT_string *dst_dir;
     utstring_new(dst_dir);
     utstring_concat(dst_dir, bzl_switch_pfx);
-    utstring_printf(dst_dir, "%s", "/lib/stublibs");
+    utstring_printf(dst_dir, "%s", _dir); //"/lib/stublibs");
     mkdir_r(utstring_body(dst_dir));
 
     UT_string *src_dir; // relative to opam_switch_lib
@@ -415,7 +415,7 @@ void emit_lib_stublibs(char *switch_name)
     /* now BUILD.bazel */
     utstring_renew(ocaml_file);
     utstring_concat(ocaml_file, bzl_switch_pfx);
-    utstring_printf(ocaml_file, "/lib/stublibs");
+    utstring_printf(ocaml_file, "/lib/stublibs/stublibs");
     mkdir_r(utstring_body(ocaml_file));
     utstring_printf(ocaml_file, "/BUILD.bazel");
 
@@ -439,7 +439,7 @@ void emit_lib_stublibs(char *switch_name)
     fclose(ostream);
     utstring_free(ocaml_file);
     /* **************************************************************** */
-    _emit_stublibs_symlinks("/lib/stublibs");
+    _emit_lib_stublibs_symlinks("/lib/stublibs/stublibs");
 }
 
 void emit_ocaml_platform_buildfiles(void)
