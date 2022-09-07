@@ -31,6 +31,8 @@ bool g_ppx_pkg;
 
 char *pfxdir = NULL; // ""; // buildfiles";
 
+bool emitted_bootstrapper = false;
+
 #if EXPORT_INTERFACE
 #include <stdbool.h>
 struct logging {
@@ -416,6 +418,7 @@ int handle_lib_meta(char *switch_lib,
                 log_warn("META file contains only whitespace: %s", buf);
             else
                 log_error("Error parsing %s", buf);
+        emitted_bootstrapper = false;
     } else {
         log_warn("PARSED %s", buf);
         /* dump_package(0, pkg); */
@@ -441,7 +444,9 @@ int handle_lib_meta(char *switch_lib,
         /* emit_new_local_pkg_repo(bootstrap_FILE, /\* _pkg_prefix, *\/ */
         /*                         pkg); */
         fflush(bootstrap_FILE);
-        emit_local_repo_decl(bootstrap_FILE, pkg);
+        emit_local_repo_decl(bootstrap_FILE, pkg->name);
+        emitted_bootstrapper = true;
+
         fflush(bootstrap_FILE);
 
         UT_string *imports_path;
@@ -461,5 +466,17 @@ int handle_lib_meta(char *switch_lib,
         fflush(bootstrap_FILE);
         log_debug("emittED buildfile for pkg: %s", pkg->name);
     }
+    /* free pkg?? */
+    /* dune-project file */
+    UT_string *dune_pkg_file;
+    utstring_new(dune_pkg_file);
+    utstring_printf(dune_pkg_file, "%s/%s/dune-package",
+                    switch_lib, pkgdir);
+    /* printf("\nCHECKING DUNE-PACKAGE: %s\n", utstring_body(dune_pkg_file)); */
+    if (access(utstring_body(dune_pkg_file), F_OK) == 0) {
+        /* printf("obazl dir: %s\n", obazl_opam_root); */
+        emit_opam_pkg_bindir(dune_pkg_file, switch_lib, pkgdir, obazl_opam_root, emitted_bootstrapper);
+    }
+
     return 0;
 }

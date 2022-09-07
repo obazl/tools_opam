@@ -20,6 +20,8 @@
 #endif
 #include "utstring.h"
 
+#include "s7.h"
+
 #include "log.h"
 
 #include "bootstrap.h"
@@ -79,7 +81,7 @@ EXPORT int opam_main(int argc, char *argv[], int oswitch) // bool here)
     /* char *deps_root = NULL; */
     char *manifest = NULL;
 
-    char *opts = "cdDfhom:s:vVx";
+    char *opts = "cdDfhom:s:tvVx";
     int opt;
     while ((opt = getopt(argc, argv, opts)) != -1) {
         switch (opt) {
@@ -121,6 +123,9 @@ EXPORT int opam_main(int argc, char *argv[], int oswitch) // bool here)
             printf("option s (switch): %s\n", optarg);
             opam_switch = strndup(optarg, PATH_MAX);
             break;
+        case 't':
+            trace = true;
+            break;
         case 'V':
             opam_cmds_verbose = true;
             break;
@@ -158,6 +163,9 @@ EXPORT int opam_main(int argc, char *argv[], int oswitch) // bool here)
 
     /* obazl config sets cwd and logging, must be called first */
     obazl_configure(getcwd(NULL, 0), basename(argv[0]));
+
+    printf("initializing s7\n");
+    s7 = s7_init();
 
     /* UT_string *logfile; */
     /* utstring_new(logfile); */

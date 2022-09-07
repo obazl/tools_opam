@@ -112,6 +112,9 @@ cc_library(
         "utarray.h",
         "uthash.h",
         "utstring.h",
+
+        # "s7_config.h",
+
     ] + select({
         "//bzl/host:linux": ["strlcpy.c"],
         "//conditions:default":   []
@@ -194,7 +197,11 @@ cc_library(
         "//bzl/debug/trace": ["DEBUG_TRACE"],
         "//conditions:default":   []
     }),
-    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES + ["-Iexternal/libinih"],
+    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES + [
+        "-Iexternal/libinih",
+        "-Iexternal/libs7/src",
+        "-Iexternal/libs7/src",
+    ],
     # copts = [
     #     "-std=c11",
     #     "-pedantic-errors",
@@ -223,6 +230,8 @@ cc_library(
         ":meta_syntaxis",
         ":opam_parser",
         "//external/libinih:inih",
+        "@libs7//src:s7",
+        # "@libs7//vendored/linenoise",
     ],
     visibility = ["//visibility:public"]
 )

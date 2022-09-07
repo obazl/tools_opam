@@ -28,6 +28,7 @@
 #include "config.h"
 
 bool debug;
+bool trace;
 bool dry_run;
 bool verbose;
 int verbosity = 0;
