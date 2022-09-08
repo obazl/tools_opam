@@ -31,6 +31,13 @@ def opam_fetch_repos():
     )
 
     maybe(
+        git_repository,
+        name = "libs7",
+        remote = "https://github.com/obazl/libs7",
+        branch = "dev"
+    )
+
+    maybe(
         http_archive,
         name = "opam_re2c",
         urls = [

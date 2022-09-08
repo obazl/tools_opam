@@ -27,8 +27,8 @@ http_archive(
 #     remote = "https://github.com/obazl/rules_ocaml",
 #     branch = "main",
 # )
-load("@rules_ocaml//:WORKSPACE.bzl", "ocaml_configure")
-ocaml_configure()
+# load("@rules_ocaml//:WORKSPACE.bzl", "ocaml_configure")
+# ocaml_configure()
 
 load("//:WORKSPACE.bzl", "opam_fetch_repos")
 opam_fetch_repos()
@@ -40,6 +40,9 @@ rules_foreign_cc_dependencies(
     # register_preinstalled_tools = False
     # register_built_tools=False
 )
+
+load("@libs7//:WORKSPACE.bzl", libs7_fetch_repos = "cc_fetch_repos")
+libs7_fetch_repos()
 
 ## rule documentation
 # load("@io_bazel_stardoc//:setup.bzl", "stardoc_repositories")
