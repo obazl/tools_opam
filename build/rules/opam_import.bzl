@@ -64,15 +64,16 @@ def _opam_import_impl(ctx):
     if debug: print("opam_import: %s" % ctx.label)
 
     # WARNING: some pkgs have a "dummy" target with no attribs, e.g
-    # seq, byte
+    # seq, byte; but others have only archives, e.g. @ocaml//num/core
     # print("attr hasattr cmi? %s" % hasattr(ctx.attr, "cmi"))
     # print("file hasattr cmi? %s" % hasattr(ctx.file, "cmi"))
     # print("files hasattr cmi? %s" % hasattr(ctx.files, "cmi"))
     if (len(ctx.files.cmi) < 1):
-        if debug: print("Skipping dummy target: %s" % ctx.label)
-        return [
-            OcamlImportMarker()
-        ]
+        if not ctx.files.cma:
+            if debug: print("Skipping dummy target: %s" % ctx.label)
+            return [
+                OcamlImportMarker()
+            ]
 
     tc = ctx.toolchains["@rules_ocaml//toolchain/type:std"]
     # if debug_tc:
@@ -158,7 +159,8 @@ def _opam_import_impl(ctx):
     cmts_primary.extend(ctx.files.cmti)
     cmts_primary.extend(ctx.files.cmt)
 
-    paths_primary.append(ctx.files.cmi[0].dirname)
+    if len(ctx.files.cmi) > 0:
+        paths_primary.append(ctx.files.cmi[0].dirname)
 
     if debug_primary_deps:
         print("PRIMARY DEPS for %s" % ctx.label)
