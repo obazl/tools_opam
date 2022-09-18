@@ -66,6 +66,9 @@
 #define OBAZL_ROOT ".obazl.d"
 #endif
 
+UT_string *workspace_file;
+UT_string *pkg_parent;
+
 char *obazl_root = OBAZL_ROOT;
 
 /* UT_string *exec_root; */
@@ -122,6 +125,10 @@ EXPORT void obazl_configure(char *_exec_root, char *cmd)
     /* printf("obazl_configure: %s, %s\n", _exec_root, cmd); */
     log_debug("obazl_configure: %s", cmd);
 #endif
+
+    utstring_new(workspace_file);
+    utstring_new(pkg_parent);
+
 
     /* if (access("bazel-out/volatile.txt", F_OK)) */
     /*     printf("FOUND: bazel-out/volatile.txt\n"); */

@@ -457,8 +457,20 @@ int handle_lib_meta(char *switch_lib,
         log_debug("emitting buildfile for pkg: %s", pkg->name);
         /* dump_package(0, pkg); */
         fflush(bootstrap_FILE);
+
+        utstring_renew(workspace_file);
+        utstring_printf(workspace_file, "%s/%s", obazl_opam_root, pkg->name);
+        mkdir_r(utstring_body(workspace_file));
+        utstring_printf(workspace_file, "%s", "/WORKSPACE.bazel");
+        printf("emitting ws file: %s\n", utstring_body(workspace_file));
+        emit_workspace_file(workspace_file, pkg->name);
+
+        utstring_renew(pkg_parent);
         emit_build_bazel(host_repo,
                          obazl_opam_root,      /* _repo_root: "." or "./tmp/opam" */
+                         0,                    /* level */
+                         pkg->name, /* pkg root - constant */
+                         pkg_parent,
                          NULL, // "buildfiles",        /* _pkg_prefix */
                          utstring_body(imports_path),
                         /* "",      /\* pkg-path *\/ */
