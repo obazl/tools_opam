@@ -123,6 +123,25 @@ void _emit_ocaml_bin_symlinks(void) // UT_string *dst_dir, UT_string *src_dir)
     closedir(srcd);
 }
 
+void emit_ocaml_stdlib_pkg(char *switch_name)
+{
+    if (debug)
+        log_debug("emit_ocaml_stdlib_pkg");
+
+    UT_string *ocaml_file;
+    utstring_new(ocaml_file);
+    utstring_concat(ocaml_file, bzl_switch_pfx);
+    utstring_printf(ocaml_file, "/ocaml/stdlib");
+    mkdir_r(utstring_body(ocaml_file));
+
+    _symlink_ocaml_stdlib(utstring_body(ocaml_file));
+
+    utstring_printf(ocaml_file, "/BUILD.bazel");
+
+    _copy_buildfile("ocaml_stdlib.BUILD", ocaml_file);
+    utstring_free(ocaml_file);
+}
+
 void _symlink_ocaml_stdlib(char *tgtdir)
 {
     if (debug)
@@ -1538,7 +1557,7 @@ void emit_ocaml_workspace(char *switch_name, FILE *bootstrap_FILE)
     emit_ocaml_platform_buildfiles();
     /* emit_ocaml_toolchain_buildfile(); */
 
-    /* emit_ocaml_stdlib_pkg(switch_name); */
+    emit_ocaml_stdlib_pkg(switch_name);
 
     emit_ocaml_stublibs(switch_name);
     emit_lib_stublibs(switch_name);
