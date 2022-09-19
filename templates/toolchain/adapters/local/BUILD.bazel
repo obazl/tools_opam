@@ -40,7 +40,7 @@ ocaml_toolchain_adapter(
 
 ########################
 ocaml_toolchain_adapter(
-    name                   = "bcbc",
+    name                   = "vmvm",
     host                   = "vm",
     target                 = "vm",
     repl                   = "@ocaml//bin:ocaml",
