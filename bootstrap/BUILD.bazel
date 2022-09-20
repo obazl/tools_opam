@@ -137,6 +137,7 @@ cc_library(
         "//templates:ocaml_dynlink.BUILD",
         "//templates:ocaml_num.BUILD",
         "//templates:ocaml_ocamldoc.BUILD",
+        "//templates:ocaml_runtime.BUILD",
         "//templates:ocaml_stdlib.BUILD",
         "//templates:ocaml_str.BUILD",
         "//templates/toolchain/adapters/local:BUILD.bazel",
