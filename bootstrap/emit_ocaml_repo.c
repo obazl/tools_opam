@@ -131,7 +131,7 @@ void emit_ocaml_stdlib_pkg(char *switch_name)
     UT_string *ocaml_file;
     utstring_new(ocaml_file);
     utstring_concat(ocaml_file, bzl_switch_pfx);
-    utstring_printf(ocaml_file, "/ocaml/stdlib");
+    utstring_printf(ocaml_file, "/ocaml/lib/stdlib");
     mkdir_r(utstring_body(ocaml_file));
 
     _symlink_ocaml_stdlib(utstring_body(ocaml_file));
@@ -856,6 +856,13 @@ void emit_ocaml_compiler_libs_pkg(char *switch_name)
     mkdir_r(utstring_body(ocaml_file));
     utstring_printf(ocaml_file, "/BUILD.bazel");
     _copy_buildfile("compiler_libs/optcomp.BUILD", ocaml_file);
+
+    utstring_renew(ocaml_file);
+    utstring_concat(ocaml_file, bzl_switch_pfx);
+    utstring_printf(ocaml_file, "/ocaml/compiler-libs/toplevel");
+    mkdir_r(utstring_body(ocaml_file));
+    utstring_printf(ocaml_file, "/BUILD.bazel");
+    _copy_buildfile("compiler_libs/toplevel.BUILD", ocaml_file);
 
     utstring_free(ocaml_file);
 }
