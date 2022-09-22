@@ -75,11 +75,11 @@ lemon = rule(
         ),
         "template": attr.label(
             allow_single_file =  True,
-            default = "//bootstrap:lempar.c"
+            default = ":lempar.c"
         ),
         "_tool": attr.label(
             allow_single_file = True,
-            default = "//bootstrap:lemon",
+            default = ":lemon",
             executable = True,
             cfg = "host"
         )

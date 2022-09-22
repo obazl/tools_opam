@@ -1,8 +1,9 @@
 load("@bazel_skylib//rules:common_settings.bzl",
      "bool_flag", "string_flag")
-load("//bootstrap:BUILD.bzl", "CMD_FLAGS", "BOOTSTRAP_INCLUDES")
 
-load(":BUILD.bzl", "lemon") # , "DEBUG_DEFINES")
+load(":BUILD.bzl", "CMD_FLAGS", "BOOTSTRAP_INCLUDES", "lemon")
+
+# load(":BUILD.bzl", "lemon") # , "DEBUG_DEFINES")
 
 exports_files([
     "log.c", "log.h", "utarray.h", "uthash.h", "utstring.h"
@@ -229,7 +230,7 @@ cc_library(
     deps = [
         ":meta_lexis",
         ":meta_syntaxis",
-        ":opam_parser",
+        # ":opam_parser",
         "//external/libinih:inih",
         "@libs7//src:s7",
         # "@libs7//vendored/linenoise",
@@ -270,7 +271,7 @@ cc_library(
     #     "-I$(GENDIR)/external/tools_opam/bootstrap",
 
     # ],
-    deps = ["opam_lexer"],
+    # deps = ["opam_lexer"],
     visibility = ["//test:__subpackages__"]
 )
 
@@ -349,180 +350,63 @@ cc_library(
 ################################################################
 ####    OPAM Parser
 ################################################################
-cc_library(
-    name = "opam_parser",
-    # name = "opam_syntaxis",
-    srcs = [
-        "opam_parser.c",
-        "opam_parser.h",
-        "opam_syntaxis.c",
-        "opam_syntaxis.h",
-        "log.h",
-        "utarray.h",
-        "uthash.h",
-        "utstring.h",
-        ],
-    hdrs = [
-        "libopamparser.h",
-        # "opam_parser.h"
-    ],
-    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES,
-    defines = select({
-        ":yydebug-enabled": ["YYDEBUG"],
-        "//conditions:default":   []
-    }) + select({
-        ":lexdebug-enabled": ["LEXDEBUG"],
-        "//conditions:default":   []
-    }) + select({
-        ":lexdebug-fvf": ["LEXDEBUG_FVF"],
-        "//conditions:default":   []
-    }),
-    deps = ["opam_lexer"],
-    visibility = ["//test:__subpackages__"]
-)
-
-lemon(
-    name = "gen_opam_syntaxis",
-    yy   = "opam_syntaxis.y",
-    outs = ["opam_syntaxis.c","opam_syntaxis.out"],
-    compress = False,
-    defines = select({
-        ":yydebug-enabled": ["YYDEBUG"],
-        "//conditions:default":   []
-    }) + select({
-        ":yydebug-exit-on-error-enabled": ["YYDEBUG_EXIT_ON_ERROR"],
-        "//conditions:default":   []
-    }) + select({
-        ":yydebug-filter": ["YYDEBUG_FILTER"],
-        "//conditions:default":   []
-    }) + select({
-        ":yydebug-fpf": ["YYDEBUG_FPF"],
-        "//conditions:default":   []
-    }) + select({
-        ":lexdebug-fvf": ["YYDEBUG_FVF"],
-        "//conditions:default":   []
-    }) + select({
-        ":yydebug-build-filter": ["YYDEBUG_BUILD_FILTER"],
-        "//conditions:default":   []
-    })
-)
-
-###########
-cc_library(
-    name = "opam_lexer",
-    srcs = [
-        "opam_lexer.c", "opam_lexer.h",
-        "opam_lexis.c", "opam_lexis.h",
-        "log.c", "log.h",
-        "utarray.h",
-        "uthash.h",
-        "utstring.h",
-    ],
-    copts = CMD_FLAGS + BOOTSTRAP_INCLUDES,
-    defines = select({
-        ":yydebug-enabled": ["YYDEBUG"],
-        "//conditions:default":   []
-    }) + select({
-        ":lexdebug-enabled": ["LEXDEBUG"],
-        "//conditions:default":   []
-    }) + select({
-        ":lexdebug-version": ["LEXDEBUG_VERSION"],
-        "//conditions:default":   []
-    }) + select({
-        ":lexdebug-fpf": ["LEXDEBUG_FPF"],
-        "//conditions:default":   []
-    }) + select({
-        ":lexdebug-fvf": ["LEXDEBUG_FVF"],
-        "//conditions:default":   []
-    }) + select({
-        ":lexdebug-build-filter": ["LEXDEBUG_BUILD_FILTER"],
-        "//conditions:default":   []
-    }),
-    visibility = ["//test:__subpackages__"]
-)
-
-## re2c takes a long time to build. we do not need to run it every
-## time once the grammar is stable, so we put the .c file under
-## version control. if you need to work on the opam lexer, uncomment this:
-# genrule(
-#     name = "gen_opam_lexis",
-#     outs  = ["opam_lexis.c"],
-#     srcs = ["opam_lexis.re"],
-#     tools = ["@opam_re2c//:re2c"],
-#     cmd   = "\n".join([
-#         "for f in $(locations @opam_re2c//:re2c)",
-#         "do",
-#         "    if [ -f $$f ]",
-#         "    then",
-#         "        if [ re2c = `basename $$f` -a -x $$f ]",
-#         "        then",
-#         "            break",
-#         "        fi",
-#         "    fi",
-#         "done",
-#         "$$f --conditions --tags -o $(@D)/opam_lexis.c $(location opam_lexis.re)",
-#     ]),
-#     visibility = ["//visibility:public"]
+# cc_library(
+#     name = "opam_parser",
+#     # name = "opam_syntaxis",
+#     srcs = [
+#         "opam_parser.c",
+#         "opam_parser.h",
+#         "opam_syntaxis.c",
+#         "opam_syntaxis.h",
+#         "log.h",
+#         "utarray.h",
+#         "uthash.h",
+#         "utstring.h",
+#         ],
+#     hdrs = [
+#         "libopamparser.h",
+#         # "opam_parser.h"
+#     ],
+#     copts = CMD_FLAGS + BOOTSTRAP_INCLUDES,
+#     defines = select({
+#         ":yydebug-enabled": ["YYDEBUG"],
+#         "//conditions:default":   []
+#     }) + select({
+#         ":lexdebug-enabled": ["LEXDEBUG"],
+#         "//conditions:default":   []
+#     }) + select({
+#         ":lexdebug-fvf": ["LEXDEBUG_FVF"],
+#         "//conditions:default":   []
+#     }),
+#     # deps = ["opam_lexer"],
+#     visibility = ["//test:__subpackages__"]
 # )
 
-genrule(
-    name = "parse_mkhdrs",
-    srcs = [
-        "opam_lexer.c",
-        "opam_lexis.c",
-        "opam_parser.c",
-        "opam_syntaxis.c", ## defines token_type constants
-        "opam_package.c" ## ast node types, etc.
-    ],
-    outs = [
-        "opam_lexer.h",
-        "opam_lexis.h",
-        "opam_parser.h",
-        "opam_syntaxis.h",
-    ],
-    cmd = "\n".join([
-        "SRC1=$(location opam_lexer.c)",
-        "SRCDIR1=`dirname $$SRC1`",
-        "$(location :makeheaders) \\",
-        "    $(location opam_lexer.c) \\",
-        "    $(location opam_lexis.c) \\",
-        "    $(location opam_package.c) \\",
-        "    $(location opam_parser.c) \\",
-        "    $(location opam_syntaxis.c)",
-        "cp $${SRCDIR1}/*.h $(@D)",
-        # "> $@"
-    ]),
-    tools = [":makeheaders"],
-    visibility = ["//visibility:public"]
-)
-
-genrule(
-    name = "parse_mkhdrs_export",
-    srcs = [
-        "opam_lexer.c",
-        "opam_lexis.c",
-        "opam_parser.c",
-        "opam_syntaxis.c",
-        "opam_package.c"
-    ],
-    outs = [
-        "libopamparser.h",
-    ],
-    cmd = "\n".join([
-        "SRC1=$(location opam_lexis.c)",
-        "SRCDIR1=`dirname $$SRC1`",
-        "$(location :makeheaders) -H \\",
-        "    $(location opam_lexer.c) \\",
-        "    $(location opam_lexis.c) \\",
-        "    $(location opam_package.c) \\",
-        "    $(location opam_parser.c) \\",
-        "    $(location opam_syntaxis.c) \\",
-        "> $@"
-        # "cp $${SRCDIR1}/*.h $(@D)",
-    ]),
-    tools = [":makeheaders"],
-    visibility = ["//visibility:public"]
-)
+# lemon(
+#     name = "gen_opam_syntaxis",
+#     yy   = "opam_syntaxis.y",
+#     outs = ["opam_syntaxis.c","opam_syntaxis.out"],
+#     compress = False,
+#     defines = select({
+#         ":yydebug-enabled": ["YYDEBUG"],
+#         "//conditions:default":   []
+#     }) + select({
+#         ":yydebug-exit-on-error-enabled": ["YYDEBUG_EXIT_ON_ERROR"],
+#         "//conditions:default":   []
+#     }) + select({
+#         ":yydebug-filter": ["YYDEBUG_FILTER"],
+#         "//conditions:default":   []
+#     }) + select({
+#         ":yydebug-fpf": ["YYDEBUG_FPF"],
+#         "//conditions:default":   []
+#     }) + select({
+#         ":lexdebug-fvf": ["YYDEBUG_FVF"],
+#         "//conditions:default":   []
+#     }) + select({
+#         ":yydebug-build-filter": ["YYDEBUG_BUILD_FILTER"],
+#         "//conditions:default":   []
+#     })
+# )
 
 ################################################################
 
@@ -720,14 +604,14 @@ genrule(
         "opam_here_opam_install.c",
         "opam_init_prompts.c",
         "opam_init_xdg.c",
-        "opam_lexer.c",
+        # "opam_lexer.c",
         "opam_local.c",
         "opam_local_clean.c",
         "opam_local_export.c",
         "opam_local_import.c",
         "opam_local_init.c",
         "opam_local_refresh.c",
-        "opam_parser.c",
+        # "opam_parser.c",
         "opam_status.c",
         "opam_xdg_list.c",
         "opam_xdg_refresh.c",
@@ -773,14 +657,14 @@ genrule(
         "    $(location opam_here_opam_install.c) \\",
         "    $(location opam_init_prompts.c) \\",
         "    $(location opam_init_xdg.c) \\",
-        "    $(location opam_lexer.c) \\",
+        # "    $(location opam_lexer.c) \\",
         "    $(location opam_local.c) \\",
         "    $(location opam_local_clean.c) \\",
         "    $(location opam_local_export.c) \\",
         "    $(location opam_local_import.c) \\",
         "    $(location opam_local_init.c) \\",
         "    $(location opam_local_refresh.c) \\",
-        "    $(location opam_parser.c) \\",
+        # "    $(location opam_parser.c) \\",
         "    $(location opam_status.c) \\",
         "    $(location opam_xdg_list.c) \\",
         "    $(location opam_xdg_refresh.c) \\",

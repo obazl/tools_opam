@@ -1,7 +1,0 @@
-#{os = "macos"}
-
-#{os = "openbsd" | os = "freebsd"}
-
-{os != "openbsd" & os != "freebsd" & os != "macos"}
-
-
