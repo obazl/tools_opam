@@ -123,76 +123,76 @@ void _emit_ocaml_bin_symlinks(void) // UT_string *dst_dir, UT_string *src_dir)
     closedir(srcd);
 }
 
-void emit_ocaml_stdlib_pkg(char *switch_name)
-{
-    if (debug)
-        log_debug("emit_ocaml_stdlib_pkg");
+/* void emit_ocaml_stdlib_pkg(char *switch_name) */
+/* { */
+/*     if (debug) */
+/*         log_debug("emit_ocaml_stdlib_pkg"); */
 
-    UT_string *ocaml_file;
-    utstring_new(ocaml_file);
-    utstring_concat(ocaml_file, bzl_switch_pfx);
-    utstring_printf(ocaml_file, "/ocaml/lib/stdlib");
-    mkdir_r(utstring_body(ocaml_file));
+/*     UT_string *ocaml_file; */
+/*     utstring_new(ocaml_file); */
+/*     utstring_concat(ocaml_file, bzl_switch_pfx); */
+/*     utstring_printf(ocaml_file, "/ocaml/lib/stdlib"); */
+/*     mkdir_r(utstring_body(ocaml_file)); */
 
-    _symlink_ocaml_stdlib(utstring_body(ocaml_file));
+/*     _symlink_ocaml_stdlib(utstring_body(ocaml_file)); */
 
-    utstring_printf(ocaml_file, "/BUILD.bazel");
+/*     utstring_printf(ocaml_file, "/BUILD.bazel"); */
 
-    _copy_buildfile("ocaml_stdlib.BUILD", ocaml_file);
-    utstring_free(ocaml_file);
-}
+/*     _copy_buildfile("ocaml_stdlib.BUILD", ocaml_file); */
+/*     utstring_free(ocaml_file); */
+/* } */
 
-void _symlink_ocaml_stdlib(char *tgtdir)
-{
-    if (debug)
-        log_debug("_symlink_ocaml_stdlib to %s\n", tgtdir);
+/* void _symlink_ocaml_stdlib(char *tgtdir) */
+/* { */
+/*     if (debug) */
+/*         log_debug("_symlink_ocaml_stdlib to %s\n", tgtdir); */
 
-    UT_string *opamdir;
-    utstring_new(opamdir);
-    utstring_printf(opamdir, "%s/ocaml", utstring_body(opam_switch_lib));
+/*     UT_string *opamdir; */
+/*     utstring_new(opamdir); */
+/*     utstring_printf(opamdir, "%s/ocaml", utstring_body(opam_switch_lib)); */
 
-    UT_string *src;
-    utstring_new(src);
-    UT_string *dst;
-    utstring_new(dst);
-    int rc;
+/*     UT_string *src; */
+/*     utstring_new(src); */
+/*     UT_string *dst; */
+/*     utstring_new(dst); */
+/*     int rc; */
 
-    DIR *d = opendir(utstring_body(opamdir));
-    if (d == NULL) {
-        fprintf(stderr, "Unable to opendir for symlinking stdlib: %s\n",
-                utstring_body(opamdir));
-        /* exit(EXIT_FAILURE); */
-        return;
-    }
+/*     DIR *d = opendir(utstring_body(opamdir)); */
+/*     if (d == NULL) { */
+/*         fprintf(stderr, "Unable to opendir for symlinking stdlib: %s\n", */
+/*                 utstring_body(opamdir)); */
+/*         /\* exit(EXIT_FAILURE); *\/ */
+/*         return; */
+/*     } */
 
-    struct dirent *direntry;
-    while ((direntry = readdir(d)) != NULL) {
-        if(direntry->d_type==DT_REG){
-            if (strncmp("stdlib", direntry->d_name, 6) != 0)
-                continue;
+/*     struct dirent *direntry; */
+/*     while ((direntry = readdir(d)) != NULL) { */
+/*         if(direntry->d_type==DT_REG){ */
+/*             if (strncmp("stdlib", direntry->d_name, 6) != 0) */
+/*                 continue; */
 
-            utstring_renew(src);
-            utstring_printf(src, "%s/%s",
-                            utstring_body(opamdir), direntry->d_name);
-            utstring_renew(dst);
-            utstring_printf(dst, "%s/%s",
-                            tgtdir, direntry->d_name);
-            /* printf("symlinking %s to %s\n", */
-            /*        utstring_body(src), */
-            /*        utstring_body(dst)); */
-            rc = symlink(utstring_body(src),
-                         utstring_body(dst));
-            if (rc != 0) {
-                if (errno != EEXIST) {
-                    perror(utstring_body(src));
-                    fprintf(stderr, "exiting\n");
-                    exit(EXIT_FAILURE);
-                }
-            }
-        }
-    }
-    closedir(d);
-}
+/*             utstring_renew(src); */
+/*             utstring_printf(src, "%s/%s", */
+/*                             utstring_body(opamdir), direntry->d_name); */
+/*             utstring_renew(dst); */
+/*             utstring_printf(dst, "%s/%s", */
+/*                             tgtdir, direntry->d_name); */
+/*             /\* printf("symlinking %s to %s\n", *\/ */
+/*             /\*        utstring_body(src), *\/ */
+/*             /\*        utstring_body(dst)); *\/ */
+/*             rc = symlink(utstring_body(src), */
+/*                          utstring_body(dst)); */
+/*             if (rc != 0) { */
+/*                 if (errno != EEXIST) { */
+/*                     perror(utstring_body(src)); */
+/*                     fprintf(stderr, "exiting\n"); */
+/*                     exit(EXIT_FAILURE); */
+/*                 } */
+/*             } */
+/*         } */
+/*     } */
+/*     closedir(d); */
+/* } */
 
 void emit_ocaml_runtime_pkg(char *switch_name)
 {
@@ -1637,7 +1637,7 @@ void emit_ocaml_workspace(char *switch_name, FILE *bootstrap_FILE)
     /* emit_ocaml_toolchain_buildfile(); */
 
     /* FIXME: decide on stdlib or runtime */
-    emit_ocaml_stdlib_pkg(switch_name);
+    /* emit_ocaml_stdlib_pkg(switch_name); */
     emit_ocaml_runtime_pkg(switch_name);
 
     emit_ocaml_stublibs(switch_name);

@@ -5,8 +5,8 @@ load("@opam//build:rules.bzl", "opam_import")
 opam_import(
     name       = "common",
     doc        = """Common compiler routines""",
-    cma        = ["ocamlcommon.cma"],
-    cmxa       = ["ocamlcommon.cmxa"],
+    cma        = "ocamlcommon.cma",
+    cmxa       = "ocamlcommon.cmxa",
     cmi        = glob(["*.cmi"]),
     cmo        = glob(["*.cmo"]),
     cmx        = glob(["*.cmx"]),
@@ -22,8 +22,8 @@ opam_import(
 opam_import(
     name       = "bytecomp",
     doc        = """Common compiler routines""",
-    cma        = ["ocamlbytecomp.cma"],
-    cmxa       = ["ocamlbytecomp.cmxa"],
+    cma        = "ocamlbytecomp.cma",
+    cmxa       = "ocamlbytecomp.cmxa",
     cmi        = glob(["*.cmi"]),
     cmo        = glob(["*.cmo"]),
     cmx        = glob(["*.cmx"]),
@@ -39,8 +39,8 @@ opam_import(
 opam_import(
     name       = "optcomp",
     doc        = """optcomp compiler routines""",
-    cma        = ["ocamloptcomp.cma"],
-    cmxa       = ["ocamloptcomp.cmxa"],
+    cma        = "ocamloptcomp.cma",
+    cmxa       = "ocamloptcomp.cmxa",
     cmi        = glob(["*.cmi"]),
     cmo        = glob(["*.cmo"]),
     cmx        = glob(["*.cmx"]),
@@ -56,8 +56,8 @@ opam_import(
 opam_import(
     name = "toplevel",
     doc = """Toplevel interactions""",
-    cma  = ["ocamltoplevel.cma"],
-    # cmxa = ["ocamltoplevel.cmxa"],
+    cma  = "ocamltoplevel.cma",
+    # cmxa = "ocamltoplevel.cmxa",
     cmi  = glob(["*.cmi"]),
     cmo  = glob(["*.cmo"]),
     # cmx  = glob(["*.cmx"]),

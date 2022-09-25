@@ -5,8 +5,8 @@ load("@opam//build:rules.bzl", "opam_import")
 opam_import(
     name       = "core",
     version    = "[distributed with OCaml]",
-    cma        = ["nums.cma"],
-    cmxa       = ["nums.cmxa"],
+    cma        = "nums.cma",
+    cmxa       = "nums.cmxa",
     cmi        = glob(["*.cmi"]),
     cmo        = glob(["*.cmo"]),
     cmx        = glob(["*.cmx"]),

@@ -9,10 +9,10 @@ load("@rules_ocaml//toolchain:profiles.bzl",
 COMPILE_WARNINGS = []
 COMPILE_OPTIONS  = [
     "-keep-locs",
-    "-noassert",
     "-short-paths",
     "-strict-formats",
     "-strict-sequence"
+    # "-noassert",
 ]
 
 LINK_WARNINGS    = [] ## "-w", "A-4-42-41-48-70"] # dune

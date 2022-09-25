@@ -5,8 +5,8 @@ load("@opam//build:rules.bzl", "opam_import")
 opam_import(
     name       = "threads",
     version    = "[distributed with OCaml]",
-    cma        = ["threads.cma"],
-    cmxa       = ["threads.cmxa"],
+    cma        = "threads.cma",
+    cmxa       = "threads.cmxa",
     cmi        = glob(["*.cmi"]),
     cmo        = glob(["*.cmo"]),
     cmx        = glob(["*.cmx"]),

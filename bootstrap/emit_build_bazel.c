@@ -956,11 +956,11 @@ void emit_bazel_archive_attr(FILE* ostream,
             if (strncmp(utstring_body(cmtag), "cmxa", 4) == 0)
                 indent--;
             if (settings_ct > 1) {
-                    fprintf(ostream, "%*s = [\"%s\"],\n",
+                    fprintf(ostream, "%*s = \"%s\",\n",
                                         /* "@%.*s//%s/%s:%s", */
                             indent, sp, utstring_body(label));
             } else {
-                    fprintf(ostream, "%*s = [\"%s\"],\n",
+                    fprintf(ostream, "%*s = \"%s\",\n",
                             indent, sp, utstring_body(label));
             }
         }

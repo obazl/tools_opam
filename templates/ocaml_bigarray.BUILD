@@ -5,8 +5,8 @@ load("@opam//build:rules.bzl", "opam_import")
 opam_import(
     name       = "bigarray",
     version    = "[distributed with OCaml]",
-    cma        = ["bigarray.cma"],
-    cmxa       = ["bigarray.cmxa"],
+    cma        = "bigarray.cma",
+    cmxa       = "bigarray.cmxa",
     cmi        = glob(["*.cmi"]),
     cmo        = glob(["*.cmo"]),
     cmx        = glob(["*.cmx"]),

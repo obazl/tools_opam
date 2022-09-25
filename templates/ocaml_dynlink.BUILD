@@ -5,8 +5,8 @@ load("@opam//build:rules.bzl", "opam_import")
 opam_import(
     name       = "dynlink",
     version    = "[distributed with OCaml]",
-    cma        = ["dynlink.cma"],
-    cmxa       = ["dynlink.cmxa"],
+    cma        = "dynlink.cma",
+    cmxa       = "dynlink.cmxa",
     cmi        = glob(["*.cmi"]),
     cmo        = glob(["*.cmo"]),
     cmx        = glob(["*.cmx"]),
