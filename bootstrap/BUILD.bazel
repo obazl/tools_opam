@@ -563,7 +563,7 @@ genrule(
         "utils.h",
     ],
     cmd = CMD_HDR + MAC_FILES + select({
-        "//bzl/host:linux": " $(location strlcpy.c);",
+        "//bzl/host:linux": " $(location strlcpy.c) $(location strlcat.c) ;",
         "//conditions:default": ";"
     }) + "cp $${SRCDIR1}/*.h $(@D)",
     tools = [":makeheaders"],
