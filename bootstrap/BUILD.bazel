@@ -117,7 +117,7 @@ cc_library(
         # "s7_config.h",
 
     ] + select({
-        "//bzl/host:linux": ["strlcpy.c"],
+        "//bzl/host:linux": ["strlcpy.c", "strlcat.c"],
         "//conditions:default":   []
     }),
     hdrs = [
@@ -515,7 +515,7 @@ genrule(
         "utils.c",
         "ansi_colors.h",
     ] + select({
-        "//bzl/host:linux": ["strlcpy.c"],
+        "//bzl/host:linux": ["strlcpy.c", "strlcat.c"],
         "//conditions:default":   []
     }),
     outs = [
