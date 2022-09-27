@@ -35,6 +35,8 @@ static char *rcsid = "$OpenBSD: strlcat.c,v 1.2 1999/06/17 16:28:58 millert Exp 
 #include <sys/cdefs.h>
 /* obazl __FBSDID("$FreeBSD$"); */
 
+#include <string.h>             /* obazl */
+
 #include <sys/types.h>
 /* obazl #include <sys/libkern.h> */
 
