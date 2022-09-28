@@ -18,7 +18,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#if EXPORT_INTERFACE
 #include "s7.h"
+#endif
 
 #include "log.h"
 #include "utarray.h"
@@ -28,7 +30,7 @@
 
 /* **************************************************************** */
 s7_scheme *s7;                  /* GLOBAL s7 */
-const char *errmsg = NULL;
+/* const char *errmsg = NULL; */
 #define TO_STR(x) s7_object_to_c_string(s7, x)
 
 static int level = 0;
@@ -3144,14 +3146,15 @@ char *dunefile_to_string(UT_string *dunefile_name)
 /* https://stackoverflow.com/questions/54592366/replacing-one-character-in-a-string-with-multiple-characters-in-c */
 
         if (cursor == NULL) {
-            /* printf("remainder: %s\n", inptr); */
+            printf("remainder: %s\n", inptr);
             size_t ct = strlcpy(outptr, (const char*)inptr, strlen(inptr));
             break;
         } else {
             if (debug) printf("FOUND and fixing \".)\" at pos: %d\n", cursor - inbuf);
             size_t ct = strlcpy(outptr, (const char*)inptr, cursor - inptr);
+            printf("copied %d chars\n", ct);
             if (ct >= BUFSZ) {
-                // output string has been truncated
+                printf("output string has been truncated!\n");
             }
             outptr = outptr + (cursor - inptr) - 1;
             outptr[cursor - inptr] = '\0';
@@ -3196,7 +3199,7 @@ s7_pointer read_dune_package(UT_string *dunefile_name)
     if (trace) printf("read_dune_package\n");
 
     char *dunestring = dunefile_to_string(dunefile_name);
-    /* printf("readed str: %s\n", dunestring); */
+    printf("readed str: %s\n", dunestring);
 
     /* stanza accumulator */
     s7_pointer stanzas = s7_list(s7, 0);
@@ -3213,7 +3216,7 @@ s7_pointer read_dune_package(UT_string *dunefile_name)
         }
     }
 
-    /* printf("s7 reading stanzas\n"); */
+    printf("s7 reading stanzas\n");
 
     /* read all stanzas in dunefile */
     while(true) {

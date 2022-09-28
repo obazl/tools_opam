@@ -108,6 +108,9 @@ cc_library(
         "utils.c",
         "utils.h",
 
+        "error_handler.c",       # s7
+        "error_handler.h",       # s7
+
         "log.c",
         "log.h",
         "utarray.h",
@@ -201,7 +204,6 @@ cc_library(
     }),
     copts = CMD_FLAGS + BOOTSTRAP_INCLUDES + [
         "-Iexternal/libinih",
-        "-Iexternal/libs7/src",
         "-Iexternal/libs7/src",
     ],
     # copts = [
@@ -464,6 +466,7 @@ MAC_FILES = " ".join([
     "$(location run_cmd.c)",
     "$(location spawn_cmd.c)",
     "$(location utils.c)",
+    "$(location error_handler.c)",
     "$(location ansi_colors.h)",
 ])
 
@@ -513,6 +516,7 @@ genrule(
         "run_cmd.c",
         "spawn_cmd.c",
         "utils.c",
+        "error_handler.c",
         "ansi_colors.h",
     ] + select({
         "//bzl/host:linux": ["strlcpy.c", "strlcat.c"],
@@ -561,6 +565,7 @@ genrule(
         "run_cmd.h",
         "spawn_cmd.h",
         "utils.h",
+        "error_handler.h",
     ],
     cmd = CMD_HDR + MAC_FILES + select({
         "//bzl/host:linux": " $(location strlcpy.c) $(location strlcat.c) ;",
@@ -618,6 +623,7 @@ genrule(
         "run_cmd.c",
         "spawn_cmd.c",
         "utils.c",
+        "error_handler.c",
         "ansi_colors.h"
     ],
     outs = [
@@ -671,6 +677,7 @@ genrule(
         "    $(location run_cmd.c) \\",
         "    $(location spawn_cmd.c) \\",
         "    $(location utils.c) \\",
+        "    $(location error_handler.c) \\",
         "    $(location ansi_colors.h) \\",
         "> $@"
     ]),

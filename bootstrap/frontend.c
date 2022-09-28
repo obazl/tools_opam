@@ -166,6 +166,8 @@ EXPORT int opam_main(int argc, char *argv[], int oswitch) // bool here)
 
     printf("initializing s7\n");
     s7 = s7_init();
+    error_config();
+    init_error_handlers();
 
     /* UT_string *logfile; */
     /* utstring_new(logfile); */

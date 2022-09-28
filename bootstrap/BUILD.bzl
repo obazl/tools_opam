@@ -16,6 +16,7 @@ BOOTSTRAP_INCLUDES = [
     "-I.",
     "-Ibootstrap",
     "-Iexternal/opam/bootstrap",
+    "-Iexternal/libs7/src",
 
     "-I$(GENDIR)",
     "-I$(GENDIR)/bootstrap",
