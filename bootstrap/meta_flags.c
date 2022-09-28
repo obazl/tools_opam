@@ -222,33 +222,35 @@ char *obzl_meta_flags_to_comment(obzl_meta_flags *flags)
 #ifdef DEBUG_FLAGS
     log_trace("%*obzl_meta_flags_to_string", indent, sp);
 #endif
-    char *buf = (char*)calloc(512, 1);
+    /* char *buf = (char*)calloc(512, 1); */
+    UT_string *buf;
+    utstring_new(buf);
 
     if (flags == NULL) {
         /* printf("%*sflags: none\n", indent, sp); */
-        return buf;
+        return utstring_body(buf);
     } else {
         if ( flags->list ) {
             if (utarray_len(flags->list) == 0) {
                 /* printf("%*sflags ct: 0\n", indent, sp); */
-                return buf;
+                return utstring_body(buf);
             } else {
                 /* log_trace("%*sflags ct: %d", indent, sp, utarray_len(flags->list)); */
                 struct obzl_meta_flag *a_flag = NULL;
                 while ( (a_flag=(struct obzl_meta_flag*)utarray_next(flags->list, a_flag))) {
                     /* printf("%*s%s (polarity: %d)\n", delta+indent, sp, a_flag->s, a_flag->polarity); */
                     if ( !a_flag->polarity )
-                        mystrcat(buf, "-");
-                    mystrcat(buf, a_flag->s);
-                    mystrcat(buf, ", ");
+                        utstring_printf(buf, "%s", "-");
+                    utstring_printf(buf, "%s", a_flag->s); // mystrcat(buf, a_flag->s);
+                    utstring_printf(buf, "%s", ", "); // mystrcat(buf, ", ");
                 }
                 /* printf("buf: %s\n", buf); */
-                return buf;
+                return utstring_body(buf);
             }
         } else {
             /* printf("%*sflags none: 0\n", indent, sp); */
             /* log_debug("%*sflags: none", indent, sp); */
-            return buf;
+            return utstring_body(buf);
         }
     }
 }
@@ -322,8 +324,10 @@ bool obzl_meta_flags_to_selection_label(obzl_meta_flags *flags,
                     /* compound condition */
                     int ct = utarray_len(flags->list); // obzl_meta_flags_count(flags);
                     log_trace("%*sflags ct: %d", indent, sp, ct);
-                    char config_name[128];
-                    config_name[0] = '\0';
+                    /* char config_name[128]; */
+                    /* config_name[0] = '\0'; */
+                    UT_string *config_name;
+                    utstring_new(config_name);
                     struct obzl_meta_flag *a_flag = NULL;
                     int saw_ppx_driver = 0;
                     for (int i=0; i < ct; i++) {
@@ -361,12 +365,12 @@ bool obzl_meta_flags_to_selection_label(obzl_meta_flags *flags,
                            other flags start with "mt" */
                         if (strncmp(a_flag->s, "mt", 2) == 0) return false;
 
-                        if (i - saw_ppx_driver > 0) mystrcat(config_name, "_");
+                        if (i - saw_ppx_driver > 0) utstring_printf(config_name, "%s", "_"); // mystrcat(config_name, "_");
                         log_debug("%*s%s (polarity: %d)", delta+indent, sp, a_flag->s, a_flag->polarity);
                         if ( !a_flag->polarity ) /* '-' prefix */
                             if (saw_ppx_driver == 0)
-                                mystrcat(config_name, "no_");
-                        mystrcat(config_name, a_flag->s);
+                                utstring_printf(config_name, "%s", "no_"); // mystrcat(config_name, "no_");
+                        utstring_printf(config_name, "%s", a_flag->s); // mystrcat(config_name, a_flag->s);
                     }
 
                     /* some packages use plugin and toploop flags in
@@ -460,8 +464,10 @@ bool obzl_meta_flags_to_cmtag(obzl_meta_flags *flags,
                     /* compound condition */
                     int ct = utarray_len(flags->list); // obzl_meta_flags_count(flags);
                     log_trace("%*sflags ct: %d", indent, sp, ct);
-                    char config_name[128];
-                    config_name[0] = '\0';
+                    /* char config_name[128]; */
+                    /* config_name[0] = '\0'; */
+                    UT_string *config_name;
+                    utstring_new(config_name);
                     struct obzl_meta_flag *a_flag = NULL;
                     int saw_ppx_driver = 0;
                     for (int i=0; i < ct; i++) {
@@ -499,12 +505,12 @@ bool obzl_meta_flags_to_cmtag(obzl_meta_flags *flags,
                            other flags start with "mt" */
                         if (strncmp(a_flag->s, "mt", 2) == 0) return false;
 
-                        if (i - saw_ppx_driver > 0) mystrcat(config_name, "_");
+                        if (i - saw_ppx_driver > 0) utstring_printf(config_name, "%s", "_"); // mystrcat(config_name, "_");
                         log_debug("%*s%s (polarity: %d)", delta+indent, sp, a_flag->s, a_flag->polarity);
                         if ( !a_flag->polarity ) /* '-' prefix */
                             if (saw_ppx_driver == 0)
-                                mystrcat(config_name, "no_");
-                        mystrcat(config_name, a_flag->s);
+                                utstring_printf(config_name, "%s", "no_"); // mystrcat(config_name, "no_");
+                        utstring_printf(config_name, "%s", a_flag->s); // mystrcat(config_name, a_flag->s);
                     }
 
                     /* some packages use plugin and toploop flags in

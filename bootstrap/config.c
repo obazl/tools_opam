@@ -251,12 +251,12 @@ EXPORT void config_logging(UT_string *_logfile)
 
 
 // FIXME: replace with utstrings
-EXPORT char* mystrcat( char* dest, char* src )
-{
-     while (*dest) dest++;
-     while ( (*dest++ = *src++) );
-     return --dest;
-}
+/* EXPORT char* mystrcat( char* dest, char* src ) */
+/* { */
+/*      while (*dest) dest++; */
+/*      while ( (*dest++ = *src++) ); */
+/*      return --dest; */
+/* } */
 
 
 EXPORT void shutdown(void)

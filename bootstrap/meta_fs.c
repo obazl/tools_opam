@@ -28,6 +28,7 @@
 #if EXPORT_INTERFACE
 #include "uthash.h"
 #include "utarray.h"
+#include "utstring.h"
 #endif
 
 #include "meta_fs.h"
@@ -44,20 +45,15 @@ typedef int (*file_handler)(char *rootdir,
                             char *metafile);
 #endif
 
-/* // FIXME: replace with utstrings */
-/* char* mystrcat( char* dest, char* src ) */
-/* { */
-/*      while (*dest) dest++; */
-/*      while ( (*dest++ = *src++) ); */
-/*      return --dest; */
-/* } */
+UT_string *last_seg;
 
-EXPORT char *mkdir_r_impl(char *base, char *path)
+EXPORT char *mkdir_r_impl(char *base, char *_path)
 {
-    log_debug("entering mkdir_r_impl base: '%s', path: '%s'\n", base, path);
+    log_debug("entering mkdir_r_impl base: '%s', path: '%s'\n", base, _path);
 
     char *buf_dirname;   // [PATH_MAX];
     char *buf_basename;  //[PATH_MAX];
+    char *path = strdup(_path);
 
     if ( access(base, F_OK) < 0 ) {
         /* base does not exist, recur to start at existing seg */
@@ -68,8 +64,8 @@ EXPORT char *mkdir_r_impl(char *base, char *path)
         strlcpy(buf_dirname, base, blen);
         buf_basename = malloc(blen);
         strlcpy(buf_basename, base, blen);
-        mkdir_r_impl(dirname((char*)buf_dirname),
-                     basename((char*)buf_basename));
+        mkdir_r_impl(dirname(strdup((char*)buf_dirname)),
+                     basename(strdup((char*)buf_basename)));
         /* mkdir_r_impl(dirname_r(base, (char*)buf_dirname), */
         /*              basename_r(base, (char*)buf_basename)); */
     }
@@ -87,15 +83,18 @@ EXPORT char *mkdir_r_impl(char *base, char *path)
 
     char work[PATH_MAX];
     work[0] = '\0';
-    char last_seg[PATH_MAX];
-    last_seg[0] = '\0';
+    /* char last_seg[PATH_MAX]; */
+    /* last_seg[0] = '\0'; */
 
     char *bn = basename(path);
-    mystrcat(last_seg, bn);
+    utstring_renew(last_seg);
+    /* mystrcat(last_seg, bn); */
+    utstring_printf(last_seg, "%s", bn);
+
     /* printf("mkdir_r last_seg: %s\n", last_seg); */
-    if ( ! strncmp(last_seg, path, PATH_MAX) ) { // 0 (false) means equal, so !0 means true
+    if ( ! strncmp(utstring_body(last_seg), path, PATH_MAX) ) { // 0 (false) means equal, so !0 means true
         /* printf("mkdir_r bottomed out at %s\n", path); */
-        sprintf(work, "%s/%s", base, last_seg);
+        sprintf(work, "%s/%s", base, utstring_body(last_seg));
         /* log_debug("making dir1: %s\n", work); */
         rc = mkdir(work, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
         if (rc != 0) {
@@ -127,7 +126,7 @@ EXPORT char *mkdir_r_impl(char *base, char *path)
         /* log_debug("mkdir_r resuming after %s with pending last_seg %s\n", d, last_seg); */
 
         /* log_debug("mkdir_r so far: %s\n", so_far); */
-        sprintf(work, "%s/%s", so_far, last_seg);
+        sprintf(work, "%s/%s", so_far, utstring_body(last_seg));
         if ( access(work, R_OK) ) {
             /* work does not exist */
             /* log_info("mkdir_r mking dir: %s\n", work); */
@@ -175,12 +174,14 @@ void mkdir_r_loop(char *path)
 EXPORT void mkdir_r(char *_path)
 {
     char *path = strdup(_path);
+    utstring_new(last_seg);
     errno = 0;
     if(mkdir(path, 0777) < 0) {
         if (errno == ENOENT) { // EEXIST)
             mkdir_r_loop(path);
         }
     }
+    /* utstring_delete(last_seg); */
 }
 
 EXPORT int meta_walk(char *srcroot,
@@ -191,6 +192,7 @@ EXPORT int meta_walk(char *srcroot,
 {
     if (handle_meta == NULL) {
         log_error("walk called with NULL callback fn ptr.");
+        printf("walk called with NULL callback fn ptr.\n");
         return -1;
     }
     return meta_walk_impl(srcroot, obazl_opam_root,
@@ -215,28 +217,37 @@ LOCAL int meta_walk_impl(char *basedir,
                     /* char *file_to_handle, */
                     file_handler handle_meta)
 {
-    /* log_trace("meta_walk_impl %s\n", basedir); //, out_directory); */
-    /* log_trace("meta_walk_impl directory: %s\n", directory); */
-    /* log_trace("meta_walk_impl bazel_pkg: %s\n", bazel_pkg); */
+    log_trace("meta_walk_impl %s\n", basedir); //, out_directory);
+    log_trace("meta_walk_impl directory: %s\n", directory);
+    log_trace("meta_walk_impl bazel_pkg: %s\n", bazel_pkg);
 
-    char currdir[PATH_MAX];
-    currdir[0] = '\0';
-    mystrcat(currdir, basedir);
+    /* char currdir[PATH_MAX]; */
+    /* currdir[0] = '\0'; */
+    UT_string *currdir;
+    utstring_new(currdir);
+    utstring_printf(currdir, "%s", basedir);
+    /* mystrcat(currdir, basedir); */
     if (strnlen(directory, PATH_MAX) > 0) {
-        mystrcat(currdir, "/");
-        mystrcat(currdir, directory);
+        /* mystrcat(currdir, "/"); */
+        /* mystrcat(currdir, directory); */
+        utstring_printf(currdir, "/%s", directory);
     }
 
-    char currpkg[PATH_MAX];
-    currpkg[0] = '\0';
+    /* char currpkg[PATH_MAX]; */
+    /* currpkg[0] = '\0'; */
+    UT_string *currpkg;
+    utstring_new(currpkg);
     if (strnlen(bazel_pkg, PATH_MAX) > 0) {
-        mystrcat(currpkg, bazel_pkg);
+        /* mystrcat(currpkg, bazel_pkg); */
+        utstring_printf(currpkg, "%s", bazel_pkg);
         if (strnlen(directory, PATH_MAX) > 0) {
-            mystrcat(currpkg, "/");
-            mystrcat(currpkg, directory);
+            /* mystrcat(currpkg, "/"); */
+            /* mystrcat(currpkg, directory); */
+            utstring_printf(currpkg, "/%s", directory);
         }
     } else {
-        mystrcat(currpkg, directory);
+        /* mystrcat(currpkg, directory); */
+        utstring_printf(currpkg, "%s", directory);
     }
     /* log_debug("currpkg: %s", currpkg); */
 
@@ -245,12 +256,12 @@ LOCAL int meta_walk_impl(char *basedir,
     /* printf("opening dir %s\n", currdir); */
     /* d = opendir("/usr/local/lib/coq/plugins"); // coqlib); */
     DIR *some_dir;
-    some_dir = opendir(currdir);
+    some_dir = opendir(utstring_body(currdir));
     if (some_dir == NULL) {
         errnum = errno;
-        printf("opendir failure for %s", currdir);
+        printf("opendir failure for %s", utstring_body(currdir));
         fprintf(stderr, "Value of errno: %d\n", errnum);
-        fprintf(stderr, "opendir error %s: %s\n", currdir, strerror( errnum ));
+        fprintf(stderr, "opendir error %s: %s\n", utstring_body(currdir), strerror( errnum ));
         exit(1);
         /* return(-1); */
     }
@@ -270,8 +281,8 @@ LOCAL int meta_walk_impl(char *basedir,
                        ))
                  ) {
                 /* log_debug("recurring on subdir %s for outdir: %s\n", dir_entry->d_name, outdir); */
-                meta_walk_impl(currdir, obazl_opam_root,
-                               currpkg, dir_entry->d_name,
+                meta_walk_impl(utstring_body(currdir), obazl_opam_root,
+                               utstring_body(currpkg), dir_entry->d_name,
                                linkfiles,
                                /* file_to_handle, */
                                handle_meta);
@@ -281,9 +292,9 @@ LOCAL int meta_walk_impl(char *basedir,
                     if ( (strlen(dir_entry->d_name) == 4)
                          && (strncmp(dir_entry->d_name, "META", 4) == 0) ) {
                         int rc = handle_meta(basedir, obazl_opam_root,
-                                             currpkg, dir_entry->d_name);
+                                             utstring_body(currpkg), dir_entry->d_name);
                         if (rc) {
-                            log_error("handle_meta fail for %s/%s", currpkg, dir_entry->d_name);
+                            log_error("handle_meta fail for %s/%s", utstring_body(currpkg), dir_entry->d_name);
                             return rc;
                         }
                     } else {

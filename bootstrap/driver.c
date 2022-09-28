@@ -203,36 +203,44 @@ bool _skip_pkg(char *pkg)
 
 EXPORT struct obzl_meta_package *obzl_meta_parse_file(char *_fname)
 {
+    printf("obzl_meta_parse_file\n");
 /* #ifdef DEBUG */
 /*     log_set_quiet(false); */
 /* #else */
 /*     log_set_quiet(true); */
 /* #endif */
-    /* log_info("obzl_meta_parse_file: %s", fname); */
+    log_info("obzl_meta_parse_file: %s", _fname);
 
     /* we're using dirname which can mutate its arg. we need to return fname as-is */
-    char *fname = strdup(fname);
+    errno = 0;
+    char *fname = strdup(_fname);
+
+    printf("strduped %s\n", fname);
 
     FILE *f;
 
     f = fopen(fname, "r");
     if (f == NULL) {
-        /* errnum = errno; */
-        /* log_error("fopen failure for %s", fname); */
-        /* log_error("Value of errno: %d", errnum); */
-        /* log_error("fopen error %s", strerror( errnum )); */
+        errnum = errno;
+        log_error("fopen failure for %s", fname);
+        log_error("Value of errno: %d", errnum);
+        log_error("fopen error %s", strerror( errnum ));
         return NULL;
     }
+    printf("fopened %s", fname);
     fseek(f, 0, SEEK_END);
     const size_t fsize = (size_t) ftell(f);
     if (fsize == 0) {
+        printf("fsize == 0; returning NULL\n");
         fclose(f);
         errno = -1;
         return NULL;
     }
     fseek(f, 0, SEEK_SET);
     char *buffer = (char*) malloc(fsize + 1);
-    fread(buffer, 1, fsize, f);
+    printf("reading\n");
+    size_t read_ct = fread(buffer, 1, fsize, f);
+    printf("readed: %d\nn", read_ct);
     buffer[fsize] = 0;
     fclose(f);
 
@@ -242,6 +250,7 @@ EXPORT struct obzl_meta_package *obzl_meta_parse_file(char *_fname)
         return NULL;
     }
 
+    printf("lexing\n");
     /* THE_METAFILE[0] = '\0'; */
     /* mystrcat(THE_METAFILE, fname); */
 
@@ -391,13 +400,16 @@ int handle_lib_meta(char *switch_lib,
 
     fflush(bootstrap_FILE);
 
-    char buf[PATH_MAX];
-    buf[0] = '\0';
-    mystrcat(buf, switch_lib);
-    mystrcat(buf, "/");
-    mystrcat(buf, pkgdir);
-    mystrcat(buf, "/");
-    mystrcat(buf, metafile);
+    /* char buf[PATH_MAX]; */
+    /* buf[0] = '\0'; */
+    UT_string *buf;
+    utstring_new(buf);
+    /* mystrcat(buf, switch_lib); */
+    /* mystrcat(buf, "/"); */
+    /* mystrcat(buf, pkgdir); */
+    /* mystrcat(buf, "/"); */
+    /* mystrcat(buf, metafile); */
+    utstring_printf(buf, "%s/%s/%s", switch_lib, pkgdir, metafile);
 
     /* mkdir_r(buf, "/"); */
     /* mystrcat(buf, "/BUILD.bazel"); */
@@ -412,19 +424,19 @@ int handle_lib_meta(char *switch_lib,
     /* fclose(f); */
 
     errno = 0;
-    log_debug("PARSING: %s", buf);
-    struct obzl_meta_package *pkg = obzl_meta_parse_file(buf);
+    log_debug("PARSING: %s", utstring_body(buf));
+    struct obzl_meta_package *pkg = obzl_meta_parse_file(utstring_body(buf));
     if (pkg == NULL) {
         if (errno == -1)
-            log_warn("Empty META file: %s", buf);
+            log_warn("Empty META file: %s", utstring_body(buf));
         else
             if (errno == -2)
-                log_warn("META file contains only whitespace: %s", buf);
+                log_warn("META file contains only whitespace: %s", utstring_body(buf));
             else
-                log_error("Error parsing %s", buf);
+                log_error("Error parsing %s", utstring_body(buf));
         emitted_bootstrapper = false;
     } else {
-        log_warn("PARSED %s", buf);
+        log_warn("PARSED %s", utstring_body(buf));
         /* dump_package(0, pkg); */
 
         stdlib_root = false;
@@ -440,8 +452,8 @@ int handle_lib_meta(char *switch_lib,
         }
 
         /* skip ocaml core pkgs, we do them by hand */
-        if (_skip_pkg(buf)) {
-            log_debug("SKIPPING pkg %s", buf);
+        if (_skip_pkg(utstring_body(buf))) {
+            log_debug("SKIPPING pkg %s", utstring_body(buf));
             return 0;
         }
 
