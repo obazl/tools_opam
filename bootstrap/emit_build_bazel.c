@@ -3148,7 +3148,7 @@ char *dunefile_to_string(UT_string *dunefile_name)
             size_t ct = strlcpy(outptr, (const char*)inptr, strlen(inptr));
             break;
         } else {
-            if (debug) printf("FOUND \".)\" at pos: %d\n", cursor - inbuf);
+            if (debug) printf("FOUND and fixing \".)\" at pos: %d\n", cursor - inbuf);
             size_t ct = strlcpy(outptr, (const char*)inptr, cursor - inptr);
             if (ct >= BUFSZ) {
                 // output string has been truncated

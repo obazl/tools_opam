@@ -201,7 +201,7 @@ bool _skip_pkg(char *pkg)
     return false;
 }
 
-EXPORT struct obzl_meta_package *obzl_meta_parse_file(char *fname)
+EXPORT struct obzl_meta_package *obzl_meta_parse_file(char *_fname)
 {
 /* #ifdef DEBUG */
 /*     log_set_quiet(false); */
@@ -209,6 +209,10 @@ EXPORT struct obzl_meta_package *obzl_meta_parse_file(char *fname)
 /*     log_set_quiet(true); */
 /* #endif */
     /* log_info("obzl_meta_parse_file: %s", fname); */
+
+    /* we're using dirname which can mutate its arg. we need to return fname as-is */
+    char *fname = strdup(fname);
+
     FILE *f;
 
     f = fopen(fname, "r");
@@ -262,8 +266,8 @@ EXPORT struct obzl_meta_package *obzl_meta_parse_file(char *fname)
     /* log_set_quiet(true); */
 
     MAIN_PKG = (struct obzl_meta_package*)calloc(sizeof(struct obzl_meta_package), 1);
-    MAIN_PKG->name      = package_name_from_file_name(fname);
-    MAIN_PKG->path      = dirname(fname);
+    MAIN_PKG->name      = package_name_from_file_name(strdup(fname));
+    MAIN_PKG->path      = dirname(strdup(fname));
     MAIN_PKG->directory = MAIN_PKG->name; // dirname(fname);
     MAIN_PKG->metafile  = fname;
 
@@ -398,7 +402,7 @@ int handle_lib_meta(char *switch_lib,
     /* mkdir_r(buf, "/"); */
     /* mystrcat(buf, "/BUILD.bazel"); */
 
-    /* /\* log_debug("out buf: %s", buf); *\/ */
+    /* log_debug("out buf: %s", buf); */
     /* FILE *f; */
     /* if ((f = fopen(buf, "w")) == NULL){ */
     /*     log_fatal("Error! opening file %s", buf); */
@@ -408,7 +412,7 @@ int handle_lib_meta(char *switch_lib,
     /* fclose(f); */
 
     errno = 0;
-    /* log_debug("PARSING: %s", buf); */
+    log_debug("PARSING: %s", buf);
     struct obzl_meta_package *pkg = obzl_meta_parse_file(buf);
     if (pkg == NULL) {
         if (errno == -1)
@@ -484,9 +488,9 @@ int handle_lib_meta(char *switch_lib,
     utstring_new(dune_pkg_file);
     utstring_printf(dune_pkg_file, "%s/%s/dune-package",
                     switch_lib, pkgdir);
-    /* printf("\nCHECKING DUNE-PACKAGE: %s\n", utstring_body(dune_pkg_file)); */
+    printf("\nCHECKING DUNE-PACKAGE: %s\n", utstring_body(dune_pkg_file));
     if (access(utstring_body(dune_pkg_file), F_OK) == 0) {
-        /* printf("obazl dir: %s\n", obazl_opam_root); */
+        printf("obazl dir: %s\n", obazl_opam_root);
         emit_opam_pkg_bindir(dune_pkg_file, switch_lib, pkgdir, obazl_opam_root, emitted_bootstrapper);
     }
 

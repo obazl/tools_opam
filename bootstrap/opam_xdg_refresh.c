@@ -284,11 +284,14 @@ EXPORT void opam_xdg_refresh(char *_opam_switch_name)
             /* log_trace("%*s'%s'", delta+indent, sp, *a_pkg); */
             if ( ! access(utstring_body(s), R_OK) ) {
                 /* log_debug("FOUND: %s", utstring_body(s)); */
-                handle_lib_meta(utstring_body(opam_switch_lib),
-                                utstring_body(bzl_switch_pfx),
-                                /* obzl_meta_package_name(pkg), */
-                                *a_pkg,
-                                "META");
+                rc = handle_lib_meta(utstring_body(opam_switch_lib),
+                                     utstring_body(bzl_switch_pfx),
+                                     /* obzl_meta_package_name(pkg), */
+                                     *a_pkg,
+                                     "META");
+                if (rc != 0) {
+                    log_fatal("handle_lib_meta returned rc: %d for %s\n", rc, *a_pkg);
+                }
             } else {
                 log_fatal("NOT found: %s", utstring_body(s));
                 exit(EXIT_FAILURE);
