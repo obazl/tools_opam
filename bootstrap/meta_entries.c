@@ -181,7 +181,7 @@ EXPORT obzl_meta_package *obzl_meta_entry_package(obzl_meta_entry *e)
 }
 
 /* **************************************************************** */
-#if DEBUG_DUMP
+#if defined(DEBUG_DUMP)
 void dump_entry(int indent, struct obzl_meta_entry *entry)
 {
     log_trace("%*sdump_entry:", indent, sp);

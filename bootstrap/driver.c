@@ -483,7 +483,7 @@ int handle_lib_meta(char *switch_lib,
 
         utstring_renew(pkg_parent);
         emit_build_bazel(host_repo,
-                         obazl_opam_root,      /* _repo_root: "." or "./tmp/opam" */
+                         obazl_opam_root, /* dest */
                          0,                    /* level */
                          pkg->name, /* pkg root - constant */
                          pkg_parent,
@@ -505,6 +505,7 @@ int handle_lib_meta(char *switch_lib,
         printf("obazl dir: %s\n", obazl_opam_root);
         emit_opam_pkg_bindir(dune_pkg_file, switch_lib, pkgdir, obazl_opam_root, emitted_bootstrapper);
     }
-
+    log_debug("FINISHED handling:  switch_lib: %s; obazl_opam_root: %s; pkgdir: %s; metafile: %s",
+              switch_lib, obazl_opam_root, pkgdir, metafile);
     return 0;
 }

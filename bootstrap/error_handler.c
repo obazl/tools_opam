@@ -174,11 +174,11 @@ void init_error_handlers(void)
                        _s7_error_handler, 1, 0, false,
                        "our error handler");
 
-    s7_eval_c_string(s7, "(set! (hook-functions *error-hook*) \n\
-                            (list (lambda (hook) \n\
-                                    (error-handler \n\
-                                      (apply format #f (hook 'data))) \n\
-                                    (set! (hook 'result) 'our-error))))");
+    /* s7_eval_c_string(s7, "(set! (hook-functions *error-hook*) \n\ */
+    /*                         (list (lambda (hook) \n\ */
+    /*                                 (error-handler \n\ */
+    /*                                   (apply format #f (hook 'data))) \n\ */
+    /*                                 (set! (hook 'result) 'our-error))))"); */
 
     /* read-error-hook evidently only catches problems with # names
        and \ escapes, not general read errors. */

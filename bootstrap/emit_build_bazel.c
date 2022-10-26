@@ -3220,7 +3220,7 @@ s7_pointer read_dune_package(UT_string *dunefile_name)
 
     /* read all stanzas in dunefile */
     while(true) {
-        /* printf("iter\n"); */
+        printf("iter\n");
         s7_pointer stanza = s7_read(s7, sport);
         /* FIXME: error checks */
         /* errmsg = s7_get_output_string(s7, s7_current_error_port(s7)); */
