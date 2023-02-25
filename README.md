@@ -1,6 +1,16 @@
 # OBazl tools_opam
 Tools & rules for using OPAM with OBazl
 
+WARNING: OBSOLETE DOCUMENTATION
+
+Documentation is at link:https://obazl.github.io/docs_obazl/[The OBazl Book].
+
+Targets:
+
+* `@opam//local:refresh`
+* `@opam//shared:refresh`
+
+
 See also:
 
 * [rules_ocaml](https://github.com/obazl/rules_ocaml)

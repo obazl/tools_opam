@@ -3,43 +3,19 @@ workspace(name = "opam")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-http_archive(
-    name = "bazel_skylib",
-    urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.0.2/bazel-skylib-1.0.2.tar.gz",
-        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.0.2/bazel-skylib-1.0.2.tar.gz",
-    ],
-    sha256 = "97e70364e9249702246c0e9444bccdc4b847bed1eb03c5a3ece4f83dfe6abc44",
-)
+load("//:WORKSPACE.bzl", "fetch_repos")
+fetch_repos()
+
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 bazel_skylib_workspace()
 
-################################################################
-http_archive(
-    name = "rules_ocaml",
-    url = "https://github.com/obazl/rules_ocaml/archive/2c981ba4e8b7b590d04f8fedf328d824a407be1b.zip",
-    sha256 = "1f4fe9e432c9d361f80e99c64a8687c9f1738c37c18800cfc552ae8d7b7c7b08",
-    strip_prefix = "rules_ocaml-2c981ba4e8b7b590d04f8fedf328d824a407be1b"
-)
+# load("@rules_foreign_cc//foreign_cc:repositories.bzl",
+#      "rules_foreign_cc_dependencies")
 
-# git_repository(
-#     name = "rules_ocaml",
-#     remote = "https://github.com/obazl/rules_ocaml",
-#     branch = "main",
+# rules_foreign_cc_dependencies(
+#     # register_preinstalled_tools = False
+#     # register_built_tools=False
 # )
-# load("@rules_ocaml//:WORKSPACE.bzl", "ocaml_configure")
-# ocaml_configure()
-
-load("//:WORKSPACE.bzl", "opam_fetch_repos")
-opam_fetch_repos()
-
-load("@rules_foreign_cc//foreign_cc:repositories.bzl",
-     "rules_foreign_cc_dependencies")
-
-rules_foreign_cc_dependencies(
-    # register_preinstalled_tools = False
-    # register_built_tools=False
-)
 
 load("@libs7//:WORKSPACE.bzl", libs7_fetch_repos = "cc_fetch_repos")
 libs7_fetch_repos()
