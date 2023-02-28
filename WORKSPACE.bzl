@@ -2,6 +2,8 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
+OBAZL_BRANCH = "dev"
+
 ################################################################
 def fetch_repos():
 
@@ -16,12 +18,19 @@ def fetch_repos():
     )
 
     maybe(
-        http_archive,
+        git_repository,
         name = "rules_ocaml",
-        url = "https://github.com/obazl/rules_ocaml/archive/2c981ba4e8b7b590d04f8fedf328d824a407be1b.zip",
-        sha256 = "1f4fe9e432c9d361f80e99c64a8687c9f1738c37c18800cfc552ae8d7b7c7b08",
-        strip_prefix = "rules_ocaml-2c981ba4e8b7b590d04f8fedf328d824a407be1b"
+        remote = "https://github.com/obazl/rules_ocaml",
+        branch = OBAZL_BRANCH
     )
+
+    maybe(
+        git_repository,
+        name = "libs7",
+        remote = "https://github.com/obazl/libs7",
+        branch = OBAZL_BRANCH
+    )
+
 
     # maybe(
     #     http_archive,
@@ -30,13 +39,6 @@ def fetch_repos():
     #     strip_prefix = "rules_foreign_cc-0.8.0",
     #     url = "https://github.com/bazelbuild/rules_foreign_cc/archive/0.8.0.tar.gz",
     # )
-
-    maybe(
-        git_repository,
-        name = "libs7",
-        remote = "https://github.com/obazl/libs7",
-        branch = "dev"
-    )
 
     # maybe(
     #     http_archive,
