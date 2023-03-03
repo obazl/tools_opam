@@ -28,7 +28,7 @@ load("@rules_ocaml//ocaml/_debug:colors.bzl",
 ##############################################
 def _import_transition_impl(settings, attr):
     return {
-        "@rules_ocaml//cfg/manifest"   : [],
+        # "@rules_ocaml//cfg/manifest"   : [],
         "@rules_ocaml//cfg/ns:nonce"      : "",
         "@rules_ocaml//cfg/ns:prefixes"   : [],
         "@rules_ocaml//cfg/ns:submodules" : []
@@ -42,7 +42,7 @@ _import_transition = transition(
     #     "@rules_ocaml//cfg/ns:submodules",
     # ],
     outputs = [
-        "@rules_ocaml//cfg/manifest",
+        # "@rules_ocaml//cfg/manifest",
         "@rules_ocaml//cfg/ns:nonce",
         "@rules_ocaml//cfg/ns:prefixes",
         "@rules_ocaml//cfg/ns:submodules",
