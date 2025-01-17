@@ -1,89 +1,52 @@
-.obazl.d
-.opam
-.bazel
-.private
-bazel-*
-user.bazelrc
-obsolete
-*.h
-*.log
-*.dSYM
+# Prerequisites
+*.d
 
-*.annot
-*.cmo
-*.cma
-*.cmi
-*.a
+# Object files
 *.o
-*.cmx
-*.cmxs
-*.cmxa
+*.ko
+*.obj
+*.elf
 
-# ocamlbuild working directory
-_build/
+# Linker output
+*.ilk
+*.map
+*.exp
 
-# ocamlbuild targets
-*.byte
-*.native
+# Precompiled Headers
+*.gch
+*.pch
 
-# oasis generated files
-setup.data
-setup.log
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
 
-# Merlin configuring file for Vim and Emacs
-.merlin
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
 
-# Dune generated files
-*.install
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
 
-# Local OPAM switch
-_opam/
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
 
-# -*- mode: gitignore; -*-
-*~
-\#*\#
-/.emacs.desktop
-/.emacs.desktop.lock
-*.elc
-auto-save-list
-tramp
-.\#*
-
-# Org-mode
-.org-id-locations
-*_archive
-
-# flymake-mode
-*_flymake.*
-
-# eshell files
-/eshell/history
-/eshell/lastdir
-
-# elpa packages
-/elpa/
-
-# reftex files
-*.rel
-
-# AUCTeX auto folder
-/auto/
-
-# cask packages
-.cask/
-dist/
-
-# Flycheck
-flycheck_*.el
-
-# server auth directory
-/server/
-
-# projectiles files
-.projectile
-
-# directory configuration
-.dir-locals.el
-
-# network security
-/network-security.data
+# Kernel Module Compile Results
+*.mod*
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+Mkfile.old
+dkms.conf
