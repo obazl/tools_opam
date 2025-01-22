@@ -167,8 +167,8 @@ void opam_libpkg_handler(char *pkg_name)
                     pkg_name);
                     /* utstring_body(opam_switch_lib), pkg_name); */
     /* if (verbosity > 1) */
-    fprintf(stdout, "%s:%d meta_path: %s\n", __FILE__, __LINE__, utstring_body(meta_path));
-        fflush(NULL);
+    LOG_DEBUG(0, "%s:%d meta_path: %s\n", __FILE__, __LINE__, utstring_body(meta_path));
+    /* fflush(NULL); */
 
     errno = 0;
     if ( access(utstring_body(meta_path), F_OK) != 0 ) {

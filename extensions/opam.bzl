@@ -324,7 +324,7 @@ def _opam_ext_impl(mctx):
         newdeps.append(before)
     newdeps = collections.uniq(newdeps)
     newdeps = sorted(newdeps)
-    print("ALL DEPS: %s" % newdeps)
+    # print("ALL DEPS: %s" % newdeps)
     # for now, ignore versions
     for pkg in newdeps:
         # print("creating repo for: " + pkg)

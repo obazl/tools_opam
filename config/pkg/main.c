@@ -187,7 +187,8 @@ int main(int argc, char *argv[])
     /* } */
 
     char *cwd = getcwd(NULL, 0);
-    log_debug("cwd: '%s'", cwd);
+    (void)cwd;
+    LOG_DEBUG(0, "cwd: '%s'", cwd);
     /* size_t length; */
     /* cwk_path_get_dirname(cwd, &length); */
     /* log_debug("cwd dirname is: '%.*s'", (int)length, cwd); */
