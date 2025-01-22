@@ -1,2 +1,5 @@
-common --enable_bzlmod
-try-import user.bazelrc
+try-import %workspace%/.config/registries.bazelrc
+common --registry=https://raw.githubusercontent.com/obazl/registry/main/
+common --registry=https://bcr.bazel.build
+
+try-import %workspace%/.config/user.bazelrc

@@ -1,0 +1,9 @@
+exports_files(
+    glob(["**/*.BUILD"])
+)
+
+filegroup(
+    name = "compiler_libs",
+    srcs = glob(["*.c"]),
+    visibility = ["//lib:__pkg__"]
+)

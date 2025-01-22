@@ -1,0 +1,11 @@
+exports_files(
+    ["bazel_wrapper.sh"] + glob(
+        ["**/*.c", "**/*.BUILD", "**/*.BUILD.mustache"]
+    )
+)
+
+filegroup(
+    name = "templates",
+    srcs = glob(["ocamlsdk/**/*.c"]),
+    visibility = ["//lib:__pkg__"]
+)

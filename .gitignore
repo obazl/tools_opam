@@ -1,3 +1,11 @@
+.bazel
+bazel-*
+user.bazelrc
+obsolete
+*.log
+log.*
+*.dSYM
+
 # Prerequisites
 *.d
 
