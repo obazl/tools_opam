@@ -93,7 +93,7 @@ extern char *bazel_compat;
 
 bool distrib_pkg;
 
-extern char *switch_id;
+/* extern char *switch_id; */
 extern char *switch_pfx;
 extern char *switch_lib;
 
@@ -3204,8 +3204,9 @@ EXPORT void ext_emit_module_file(UT_string *module_file,
             while ( (p=(char**)utarray_next(pkg_deps, p))) {
                 if ((strncmp(*p, "compiler-libs", 13) == 0)
                     || (strncmp(*p, "dynlink", 7) == 0)
+                    || (strncmp(*p, "ocamldoc", 8) == 0)
                     || (strncmp(*p, "str", 3) == 0)
-                    || (strncmp(*p, "thread", 5) == 0)
+                    || (strncmp(*p, "threads", 7) == 0)
                     || (strncmp(*p, "unix", 4) == 0)
                     ){
                     fprintf(ostream, "bazel_dep(name = \"ocamlsdk\",       version = \"%s\")\n", ocaml_version);
@@ -3224,6 +3225,15 @@ EXPORT void ext_emit_module_file(UT_string *module_file,
             /* exit(0); */
             while ( (p=(char**)utarray_next(pkg_deps, p))) {
                 LOG_DEBUG(0, "pkg dep: %s", *p);
+                if ((strncmp(*p, "compiler-libs", 13) == 0)
+                    || (strncmp(*p, "dynlink", 7) == 0)
+                    || (strncmp(*p, "ocamldoc", 8) == 0)
+                    || (strncmp(*p, "str", 3) == 0)
+                    || (strncmp(*p, "threads", 7) == 0)
+                    || (strncmp(*p, "unix", 4) == 0)
+                    ){
+                    continue;
+                }
                 if (strncmp(*p, _pkg->name, 512) != 0) {
                     /* for now ignore actual versions */
                     sprintf(version, "%d.%d.%d", 0,0,0);
@@ -3958,19 +3968,21 @@ void _emit_alias_pkg(FILE *ostream, char *pkg, char *parent, char *target)
 }
 
 /* ################################################################ */
-void ext_emit_ocamlsdk_module(char *switch_id, char *switch_pfx)
+void ext_emit_ocamlsdk_module(/* char *switch_id, */
+                              char *_ocaml_version,
+                              char *switch_pfx)
                               /* char *coswitch_lib, */
                               /* char *runfiles) */
 {
     TRACE_ENTRY;
-    LOG_DEBUG(0, "switch_id: %s", switch_id);
+    LOG_DEBUG(0, "switch_pfx: %s", switch_pfx);
 
     char *coswitch_lib = "lib";
-    char *compiler_version = opam_ocaml_compiler_version(switch_id);
-    if (compiler_version == NULL) {
-        //FIXME: msg?
-        exit(EXIT_FAILURE);
-    }
+    /* char *compiler_version = opam_ocaml_compiler_version(switch_id); */
+    /* if (compiler_version == NULL) { */
+    /*     //FIXME: msg? */
+    /*     exit(EXIT_FAILURE); */
+    /* } */
     /* char *switch_pfx = opam_switch_prefix(switch_id); */
     /* char *switch_lib = opam_switch_lib(switch_id); */
 
@@ -4158,7 +4170,7 @@ void ext_emit_ocamlsdk_module(char *switch_id, char *switch_pfx)
     utstring_renew(dst_dir);
     utstring_printf(dst_dir, "version");
     mkdir_r(utstring_body(dst_dir));
-    emit_ocaml_version(dst_dir, coswitch_lib, compiler_version);
+    emit_ocaml_version(dst_dir, coswitch_lib, _ocaml_version);
 
     TRACE_EXIT;
 }

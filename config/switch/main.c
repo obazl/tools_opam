@@ -43,8 +43,8 @@ extern char *switch_name;
 extern int  DEBUG_LEVEL;
 #define TRACE_FLAG coswitch_trace
 extern bool TRACE_FLAG;
-extern bool findlibc_trace;
-extern int  findlibc_debug;
+extern bool trace_findlibc;
+extern int  debug_findlibc;
 extern bool opamc_trace;
 extern int  opamc_debug;
 extern bool xdgc_trace;
@@ -251,11 +251,11 @@ void _set_options(struct option options[])
             log_error( "--debug-findlibc must be an int.");
             exit(EXIT_FAILURE);
         } else {
-            findlibc_debug = (int)tmp;
+            debug_findlibc = (int)tmp;
         }
     }
     if (options[FLAG_TRACE_FINDLIBC].count) {
-        findlibc_trace = true;
+        trace_findlibc = true;
     }
 
     if (options[OPT_DEBUG_OPAMC].count) {

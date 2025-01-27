@@ -49,8 +49,8 @@ char *switch_name;
 int  DEBUG_LEVEL;
 #define TRACE_FLAG trace_opam
 bool TRACE_FLAG;
-extern bool findlibc_trace;
-extern int  findlibc_debug;
+extern bool trace_findlibc;
+extern int  debug_findlibc;
 extern bool opamc_trace;
 extern int  opamc_debug;
 extern bool xdgc_trace;
@@ -96,37 +96,42 @@ extern char *pkg_path; // = NULL;
 
 char *switch_id;
 char *switch_pfx;
+UT_string *_switch_lib;
 char *switch_lib;
 char *pkg_name;
 
-void opam_pkg_handler(char *_switch_id,
+void opam_pkg_handler(char *_switch_pfx,
+                      char *_ocaml_version,
                       char *pkg_name)
         /* .registry = registry, */
         /* .coswitch_lib = coswitch_lib */
 // coswitch is always <switch_pfx>/share/obazl/registry
 {
     TRACE_ENTRY;
-    LOG_DEBUG(0, "switch_id: %s", _switch_id);
+    LOG_DEBUG(0, "switch_pfx: %s", _switch_pfx);
     /* printf("%s:%d OPAM switch_lib: %s\n", __FILE__, __LINE__, _switch_lib); */
     LOG_DEBUG(0, "pkg name: %s", pkg_name);
 
-    switch_id = _switch_id;
-    switch_pfx = opam_switch_prefix(switch_id);
-    switch_lib = opam_switch_lib(switch_id);
+    /* switch_id = _switch_id; */
+    switch_pfx = _switch_pfx; // opam_switch_prefix(switch_id);
+    utstring_new(_switch_lib);
+    utstring_printf(_switch_lib, "%s/lib", switch_pfx);
+    switch_lib = utstring_body(_switch_lib);
 
     if ((strncmp(pkg_name, "ocamlsdk", 8) == 0)
         && strlen(pkg_name) == 8) {
-        ext_emit_ocamlsdk_module(switch_id, switch_pfx);
+        ext_emit_ocamlsdk_module(_ocaml_version, switch_pfx);
     }
     else if ((strncmp(pkg_name, "stublibs", 8) == 0)
         && strlen(pkg_name) == 8) {
         /* calls 'opam var stublibs --switch <switch id> */
-        char *switch_stublibs = opam_switch_stublibs(switch_id);
+        /* char *switch_stublibs = opam_switch_stublibs(switch_id); */
         UT_string *dst_dir;
         utstring_new(dst_dir);
         utstring_printf(dst_dir, "./");
         mkdir_r(utstring_body(dst_dir));
-        emit_lib_stublibs_pkg(dst_dir, switch_stublibs);
+        emit_lib_stublibs_pkg(dst_dir, switch_lib);
+        // switch_stublibs);
         /* ext_emit_lib_stublibs(switch_id, switch_pfx); */
     } else {
         opam_libpkg_handler(pkg_name);

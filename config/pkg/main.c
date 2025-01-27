@@ -52,7 +52,8 @@ extern s7_scheme *s7;
 
 enum OPTS {
     OPT_PKG = 0,
-    OPT_SWITCH_ID,
+    OPT_OCAML_VERSION,
+    OPT_SWITCH_PFX,
     FLAG_CLEAN,
     FLAG_DEBUG,
     FLAG_TRACE,
@@ -90,10 +91,10 @@ static struct option options[] = {
     /* 0 */
     [OPT_PKG] = {.long_name="pkg",.short_name='p',
                  .flags=GOPT_ARGUMENT_REQUIRED},
-    [OPT_SWITCH_ID] = {.long_name="switch",
+    [OPT_OCAML_VERSION] = {.long_name="ocaml-version",
+                           .flags=GOPT_ARGUMENT_REQUIRED},
+    [OPT_SWITCH_PFX]    = {.long_name="switch-pfx",
         .flags=GOPT_ARGUMENT_REQUIRED},
-    /* [OPT_SWITCH_LIB] = {.long_name="switch-lib", */
-    /*     .flags=GOPT_ARGUMENT_REQUIRED}, */
     [FLAG_CLEAN] = {.long_name="clean",.short_name='c',
                     .flags=GOPT_ARGUMENT_FORBIDDEN},
     [FLAG_DEBUG] = {.long_name="debug",.short_name='d',
@@ -177,8 +178,12 @@ int main(int argc, char *argv[])
         log_error("-p <pkg> or --pkg <pkg> required");
         exit(EXIT_FAILURE);
     }
-    if (!options[OPT_SWITCH_ID].count) {
-        log_error("--switch <switch id> required");
+    /* if (!options[OPT_OCAML_VERSION].count) { */
+    /*     log_error("--ocaml-version <v> required"); */
+    /*     exit(EXIT_FAILURE); */
+    /* } */
+    if (!options[OPT_SWITCH_PFX].count) {
+        log_error("--switch-pfx <path> required");
         exit(EXIT_FAILURE);
     }
     /* if (!options[OPT_SWITCH_LIB].count) { */
@@ -210,10 +215,21 @@ int main(int argc, char *argv[])
     LOG_INFO(0, "BAZEL_CURRENT_REPOSITORY: %s", BAZEL_CURRENT_REPOSITORY);
     /* LOG_INFO(0, "rf_root: %s", rf_root()); */
 
-    opam_pkg_handler(options[OPT_SWITCH_ID].argument,
+    opam_pkg_handler(options[OPT_SWITCH_PFX].argument,
+                     options[OPT_OCAML_VERSION].argument,
                      options[OPT_PKG].argument);
                      /* options[OPT_SWITCH_LIB].argument, */
     LOG_INFO(0, "cwd: %s", getcwd(NULL, 0));
+
+    /* FILE *ostream = fopen(utstring_body(dst_file), "w"); */
+    /* if (ostream == NULL) { */
+    /*     log_error("%s", strerror(errno)); */
+    /*     perror(utstring_body(dst_file)); */
+    /*     exit(EXIT_FAILURE); */
+    /* } */
+    /* fprintf(ostream, "## generated file - DO NOT EDIT\n\n"); */
+
+
     TRACE_EXIT;
 }
 

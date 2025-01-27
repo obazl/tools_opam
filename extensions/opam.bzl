@@ -1,19 +1,97 @@
 load("@bazel_skylib//lib:collections.bzl", "collections")
+load("opam_download_toolchain.bzl",
+     "download_and_config_toolchain")
+load("opam_deps.bzl", "opam_dep", "OBAZL_PKGS")
+
+##############################
+def _local_opam_repo_impl(repo_ctx):
+    repo_ctx.file("dummy", content="")
+
+local_opam_repo = repository_rule(
+    implementation = _local_opam_repo_impl,
+)
+
+###################################################
+def config_local_toolchain(mctx, debug, verbosity):
+    if debug > 0: print("config_local_toolchain")
+
+    opam = mctx.which("opam")
+    if debug > 0: print("OPAM: %s" % opam)
+
+    cmd = ["realpath", "../../execroot/_main/_opam"]
+    res = mctx.execute(cmd)
+    if res.return_code == 0:
+        cmd = ["readlink", "-f", "../../execroot/_main"]
+        result = mctx.execute(cmd)
+        if res.return_code == 0:
+            switch = result.stdout.strip()
+        else:
+            print("cmd: %s" % cmd)
+            print("stdout: {stdout}".format(stdout= res.stdout))
+            print("stderr: {stderr}".format(stderr= res.stderr))
+            fail("cmd failure.")
+    else:
+        cmd = [opam, "var", "switch"]
+        res = mctx.execute(cmd)
+        if res.return_code == 0:
+            switch = res.stdout.strip()
+        else:
+            print("cmd: %s" % cmd)
+            print("stdout: {stdout}".format(stdout= res.stdout))
+            print("stderr: {stderr}".format(stderr= res.stderr))
+            fail("cmd failure.")
+
+    if debug > 1:
+        print("switch: %s" % switch)
+
+    cmd = [opam, "var", "bin", "--switch", switch]
+    res = mctx.execute(cmd)
+    if res.return_code == 0:
+        switch_bin = res.stdout.strip()
+    else:
+        print("cmd: %s" % cmd)
+        print("stdout: {stdout}".format(stdout= res.stdout))
+        print("stderr: {stderr}".format(stderr= res.stderr))
+        fail("cmd failure.")
+
+    ocamlfind = mctx.path(switch_bin + "/ocamlfind")
+    if not ocamlfind.exists:
+        mctx.report_progress("Installing ocamlfind")
+        cmd = [opam, "install", "ocamlfind", "--switch", switch]
+        res = mctx.execute(cmd)
+        if res.return_code != 0:
+            print("cmd: %s" % cmd)
+            print("stdout: {stdout}".format(stdout= res.stdout))
+            print("stderr: {stderr}".format(stderr= res.stderr))
+            fail("cmd failure.")
+
+    if ocamlfind.exists:
+        if debug > 1: print("ocamlfind: %s" % ocamlfind)
+    else:
+        fail("ocamlfind installation failed.")
+
+    # downloaded sdk creates @opam and needs a use_repo for it
+    # to prevent warning "Imported but not created" we need
+    # to create it (as a dummy repo).
+    local_opam_repo(name="opam")
+
+    return (opam, switch, ocamlfind)
 
 ##################################
 def _throw_cmd_error(cmd, r):
-    # print("cmd {cmd} rc    : {rc}".format(cmd=cmd, rc= r.return_code))
-    print("stdout: {stdout}".format(cmd=cmd, stdout= r.stdout))
-    print("stderr: {stderr}".format(cmd=cmd, stderr= r.stderr))
+    print("cmd: %s" % cmd)
+    print("stdout: {stdout}".format(stdout= r.stdout))
+    print("stderr: {stderr}".format(stderr= r.stderr))
     fail("cmd failure.")
 
 # Set to false to see debug messages
-DEBUG_QUIET = True
 
 ##################################
-def _get_deps(mctx, ocamlfind, pkg, version):
-    # ocamlfind query -predicates ppx_driver -p-format -recursive $D
-    # print("get deps for: " + pkg)
+def _ocamlfind_deps(mctx, ocamlfind, pkg, version, debug, verbosity):
+    if debug > 0: print("_ocamlfind_deps: %s" % pkg)
+
+    
+
     cmd = [
         ocamlfind,
         "query",
@@ -23,10 +101,10 @@ def _get_deps(mctx, ocamlfind, pkg, version):
         "-recursive",
         pkg
     ]
-    deps = mctx.execute(cmd, quiet = DEBUG_QUIET)
+    res = mctx.execute(cmd, quiet = (verbosity < 1))
 
-    if deps.return_code == 0:
-        deps = deps.stdout.strip()
+    if res.return_code == 0:
+        deps = res.stdout.strip()
         deps = deps.splitlines()
         # print("ocamlfind query ok, deps: %s" % deps)
     # elif deps.return_code == 2:
@@ -34,156 +112,13 @@ def _get_deps(mctx, ocamlfind, pkg, version):
     #     print("ocamlfind query stderr: %s" % deps.stderr)
     #     fail("findlib pkg not found: " + pkg)
     else:
-        _throw_cmd_error(cmd, deps)
+        print("cmd: %s" % cmd)
+        print("rc: %s" % res.return_code)
+        print("stdout: %s" % res.stdout)
+        print("stderr: %s" % res.stderr)
+        fail("cmd failure")
 
     return deps
-
-##############################
-def _opam_dep_repo_impl(repo_ctx):
-    ## repo_cts.name == tools_opam++opam+opam.ounit2
-    # print("REPO " + repo_ctx.name)
-    repo = repo_ctx.name.removeprefix("tools_opam++opam+")
-    repo_pkg = repo.removeprefix("opam.")
-
-    # print("REPO {} TOOL: {}".format(repo_pkg, repo_ctx.attr.tool))
-    # if repo_pkg == "ocamlsdk":
-    # print("OPAM pkg: " + repo_pkg)
-
-    # cmd = ["opam", "var", "bin"]
-    # cmd = ["PWD"]
-    # switch_bin = repo_ctx.execute(cmd)
-    # if switch_bin.return_code == 0:
-    #     switch_bin = switch_bin.stdout.strip()
-    #     # print("opam prefix: %s" % switch_bin)
-    # elif switch_bin.return_code == 5: # Not found
-    #     fail("OPAM cmd {cmd} switch_bin: not found.".format(cmd = cmd))
-    # else:
-    #     _throw_cmd_error(cmd, switch_bin)
-
-    # print("pwd: " + switch_bin)
-    # ocamlfind = switch_bin + "/ocamlfind"
-
-    # repo = repo_ctx.name.removeprefix("+_repo_rules+")
-    # repo_pkg = repo.removeprefix("opam.")
-
-    # print("opam pfx: " + switch_pfx)
-    # check: installed?
-    # if repo_pkg not in ["ocamlsdk",
-    #                 "compiler-libs",
-    #                 "dynlink",
-    #                 "ffi",
-    #                 "ocamldoc",
-    #                 "profiling",
-    #                 "runtime_events",
-    #                 "stdlib",
-    #                 "str",
-    #                 "threads",
-    #                 "unix",
-    #                 "findlib",
-    #                 "stublibs"]:
-    #     cmd = ["opam", "var", repo_pkg + ":installed"]
-    #     opam_installed = repo_ctx.execute(cmd)
-    #     if opam_installed.return_code == 0:
-    #         opam_installed = opam_installed.stdout.strip()
-    #         if opam_installed == "false":
-    #             fail("Requested pkg %s is not installed" % repo_pkg)
-
-    # check version
-    if False: # repo_ctx.attr.version:
-        # print("PKG %s %s" %
-        #       (repo, repo_ctx.attr.version))
-
-        cmd = ["opam", "var", repo_pkg + ":version"]
-        opam_version = repo_ctx.execute(cmd)
-        if opam_version.return_code == 0:
-            opam_version = opam_version.stdout.strip()
-            # print("%s installed version: %s" %
-            #   (repo, opam_version))
-            if opam_version != repo_ctx.attr.version:
-                fail("Requested version of %s is %s, but installed version is %s" %
-                     (repo_pkg, repo_ctx.attr.version, opam_version))
-        elif opam_version.return_code == 5: # Not found
-            fail("OPAM cmd {cmd} opam_version: not found.".format(cmd = cmd))
-        else:
-            fail("OPAM dependency not found: %s.%s" %
-              (repo_pkg, repo_ctx.attr.version))
-
-        # opam_path = switch_pfx + "/.opam-switch/packages/" + repo + "." + repo_ctx.attr.version
-        # print("path: " + opam_path)
-        # pkg_path = repo_ctx.path(opam_path)
-        # if pkg_path.is_dir:
-        #     print("Found: " + opam_path)
-        # else:
-        #     print("Not found: " + opam_path)
-        #     fail("OPAM dependency not found: %s.%s" %
-        #       (repo, repo_ctx.attr.version))
-
-    ## Running repo_ctx.execute cmd creates the repo
-    ## so the ensuing symlink would fail with 'already exists'
-    ## so we delete it before creating the symlink:
-
-    repo_ctx.delete(".")
-
-    # cmd = ["pwd"]
-    # result = repo_ctx.execute(cmd)
-    # if result.return_code == 0:
-    #     result = result.stdout.strip()
-    #     print("PWD1: %s" % result)
-    # else:
-    #     _throw_cmd_error(cmd, result)
-
-
-    # tgt =   "{pfx}/../.config/obazl/lib/{repo}/".format(
-
-    # tgt = "{pfx}/share/obazl/repository/lib/{repo}/".format(
-    #     pfx=repo_ctx.attr.switch_pfx,
-    #     repo=repo)
-    # print("SYMLINKING: " + tgt)
-    # repo_ctx.symlink(tgt, repo_ctx.name)
-
-    # print("BUILD_WORKSPACE_DIRECTORY: %s" %
-    #       repo_ctx.getenv("BUILD_WORKSPACE_DIRECTORY", "NO BWSD"))
-    # print("RUNFILES_DIR: %s" %
-    #       repo_ctx.getenv("RUNFILES_DIR", "NO RFD"))
-    # print("RUNFILES_MANIFEST_FILE: %s" %
-    #       repo_ctx.getenv("RUNFILES_MANIFEST_FILE", "NO RFMF"))
-
-    # cmd = ["ls", "-l", "../tools_opam+/templates/"]
-    # result = repo_ctx.execute(cmd)
-    # if result.return_code == 0:
-    #     result = result.stdout.strip()
-    #     # print("tools_opam+: %s" % result)
-    # else:
-    #     _throw_cmd_error(cmd, result)
-
-
-    cmd = [repo_ctx.attr.tool,
-           "-ddt",
-           "--pkg", repo_pkg,
-           "--switch", repo_ctx.attr.switch_id]
-    _pkg_deps = repo_ctx.execute(cmd)
-    if _pkg_deps.return_code == 0:
-        _pkg_deps = _pkg_deps.stdout.strip()
-        # print("pkg {} deps: {}".format(repo_pkg, _pkg_deps))
-    else:
-        print("cmd {cmd} rc    : {rc}".format(
-            cmd=cmd,
-            rc= _pkg_deps.return_code))
-        _throw_cmd_error(cmd, _pkg_deps)
-
-## for use with use_repo_rule
-opam_dep = repository_rule(
-    implementation = _opam_dep_repo_impl,
-    attrs = {
-        "switch_id": attr.string(mandatory = True),
-        "switch_pfx": attr.string(mandatory = True),
-        "switch_lib": attr.string(mandatory = True),
-        "version": attr.string(
-            mandatory = False,
-        ),
-        "tool": attr.string()
-    },
-)
 
 ################################################################
 ## extension
@@ -199,18 +134,36 @@ opam_dep = repository_rule(
 #### EXTENSION IMPL ####
 def _opam_ext_impl(mctx):
     # print("OPAM EXTENSION")
-    # for each module in the depgraph that calls this extension
 
-    # print("bwsd: " + mctx.getenv("BUILD_WORKSPACE_DIRECTORY",
-    #                              ""))
+    # get version ids etc. from root module
+    opam_version = None
+    ocaml_version = None
+    local_tc = False
+    debug = 0
+    verbosity = 0
+    root_module = None
+    for m in mctx.modules:
+        if m.is_root:
+            root_module = m
+            for cfg in m.tags.deps:
+                local_tc = cfg.local_toolchain
+                opam_version = cfg.opam_version
+                ocaml_version = cfg.ocaml_version
+                debug  = cfg.debug
+                verbosity = cfg.verbosity
+    if debug > 1:
+        print("local tc? %s" % local_tc)
 
-    # for m in mctx.modules:
-    #     print(m.name)
-    #     print("is root? %s" % m.is_root)
-    #     if m.is_root:
-    #         print("root tags")
-    #         for cfg in m.tags.dep:
-    #             print(cfg)
+    if local_tc:
+        (opam, switch, ocamlfind) = config_local_toolchain(mctx, debug, verbosity)
+        xopam = None # str(opam)
+    else:
+        download_and_config_toolchain(mctx,
+                                      opam_version,
+                                      ocaml_version,
+                                      debug,
+                                      verbosity)
+        xopam = "@opam//bin:opam"
 
     # cmd = ["pwd"]
     # result = mctx.execute(cmd)
@@ -228,92 +181,21 @@ def _opam_ext_impl(mctx):
     # else:
     #     _throw_cmd_error(cmd, result)
 
-    # cmd = ["ls", "-l", "../../execroot/_main/_opam"]
-    cmd = ["realpath", "../../execroot/_main/_opam"]
-    result = mctx.execute(cmd)
-    if result.return_code == 0:
-        cmd = ["readlink", "-f", "../../execroot/_main"]
-        result = mctx.execute(cmd)
-        if result.return_code == 0:
-            local_opam = result.stdout.strip()
-        else:
-            _throw_cmd_error(cmd, result)
-    else:
-        local_opam = None
-
-
-    cmd = ["opam", "var", "prefix"]
-    if local_opam:
-        cmd.extend(["--switch", local_opam])
-           # "/Users/gar/obazl/demos_obazl/rules_ocaml"]
-    switch_pfx = mctx.execute(cmd)
-    if switch_pfx.return_code == 0:
-        switch_pfx = switch_pfx.stdout.strip()
-    else:
-        _throw_cmd_error(cmd, switch_pfx)
-
-    # print("opam pfx: " + switch_pfx)
-
-    cmd = ["opam", "var", "bin"]
-    if local_opam:
-        cmd.extend(["--switch", local_opam])
-    # print("cmd: %s" % cmd)
-    switch_bin = mctx.execute(cmd)
-    if switch_bin.return_code == 0:
-        switch_bin = switch_bin.stdout.strip()
-    else:
-        _throw_cmd_error(cmd, switch_bin)
-
-    # print("opam bin: " + switch_bin)
-    ocamlfind = switch_bin + "/ocamlfind"
-    ## FIXME: verify ocamlfind installed
-    ## else install it.
-
-    cmd = ["opam", "var", "lib"]
-    if local_opam:
-        cmd.extend(["--switch", local_opam])
-    # print("cmd: %s" % cmd)
-    switch_lib = mctx.execute(cmd)
-    if switch_lib.return_code == 0:
-        switch_lib = switch_lib.stdout.strip()
-    else:
-        _throw_cmd_error(cmd, switch_lib)
-
     # deps = set()
     deps = []
+    subdeps = []
     for mod in mctx.modules:
         # create repo for each dep
-        for config in mod.tags.dep:
+        for config in mod.tags.deps:
             config_pkg_tool = mctx.which(config._tool.name)
-            # print("TOOL: %s" % config_pkg_tool)
-            # if mod.is_root:
-            #     print("_loc: %s" %
-            #           config._loc.workspace_root)
-            #     cmd = ["ls", "-l"]
-            #     result = mctx.execute(cmd)
-            #     if result.return_code == 0:
-            #         result = result.stdout.strip()
-            #         print("loc ls: %s" % result)
-            #     else:
-            #         _throw_cmd_error(cmd, result)
-
-            for k, v in config.pkgs.items():
-                # print("CONFIG.name: " + k)
-                if k not in ["findlib",
-                             "ocamlsdk",
-                             "stublibs",
-                             "threads"]:
-                    # deps.update(_get_deps(mctx, k, v))
-                    deps.extend(_get_deps(mctx, ocamlfind, k, v))
-                    # print("DEPS %s" % deps)
-                else:
-                    # print("ADDING DEP " + k)
-                    opam_dep(name="{}".format(k),
-                             switch_id = local_opam,
-                             switch_pfx=switch_pfx,
-                             switch_lib=switch_lib,
-                             tool = str(config_pkg_tool),
-                             version = v)
+            for pkg, val in config.direct_deps.items():
+                if debug > 1: print("pkg name: " + pkg)
+                deps.append(pkg)
+                if local_tc:
+                    # always derive subdeps, ensures completeness
+                    if pkg not in OBAZL_PKGS:
+                        subdeps.extend(_ocamlfind_deps(mctx, ocamlfind, pkg, val, debug, verbosity))
+            subdeps.extend(config.indirect_deps.keys())
 
     deps = collections.uniq(deps)
     newdeps = []
@@ -324,16 +206,86 @@ def _opam_ext_impl(mctx):
         newdeps.append(before)
     newdeps = collections.uniq(newdeps)
     newdeps = sorted(newdeps)
-    # print("ALL DEPS: %s" % newdeps)
+    if debug > 1: print("ALL DEPS: %s" % newdeps)
+
+    if debug > 1: print("ALL SUBDEPS: %s" % subdeps)
+    subdeps = collections.uniq(subdeps)
+    newsubdeps = []
+    for dep in subdeps:
+        (before, sep, after) = dep.partition(".")
+        # deps.remove(dep)
+        # deps.add(before)
+        if before not in OBAZL_PKGS:
+            if before not in newdeps:
+                newsubdeps.append(before)
+    newsubdeps = collections.uniq(newsubdeps)
+    newsubdeps = sorted(newsubdeps)
+    if debug > 1: print("ALL NEWSUBDEPS: %s" % newsubdeps)
+
     # for now, ignore versions
     for pkg in newdeps:
-        # print("creating repo for: " + pkg)
-        opam_dep(name="opam.{}".format(pkg),
-                 switch_id = local_opam,
-                 switch_pfx=switch_pfx,
-                 switch_lib=switch_lib,
-                 tool = str(config_pkg_tool))
-                 #          version = v)
+        if pkg in OBAZL_PKGS:
+            pkg = pkg
+        else:
+            pkg = "opam.{}".format(pkg)
+        if debug > 1: print("creating repo for: " + pkg)
+        opam_dep(name=pkg,
+                 xopam = xopam,
+                 ocaml_version = ocaml_version,
+                 # switch_id = switch,
+                 # switch_pfx=switch_pfx,
+                 # switch_lib=switch_lib,
+                 tool = str(config_pkg_tool),
+                 debug = debug,
+                 verbosity = verbosity
+                 )
+        if debug > 1: print("done")
+
+    ## installing deps already installs subdeps
+    ## so we create repo & config w/o installing opam pkg
+    for pkg in newsubdeps:
+        if pkg in OBAZL_PKGS:
+            pkg = pkg
+        else:
+            pkg = "opam.{}".format(pkg)
+        if debug > 1: print("creating repo for: " + pkg)
+        # if pkg == "stublibs": # special case
+        #     install = True
+        # else:
+        install = False
+        opam_dep(name=pkg,
+                 install = install,
+                 xopam = xopam,
+                 ocaml_version = ocaml_version,
+                 # switch_id = switch,
+                 # switch_pfx=switch_pfx,
+                 # switch_lib=switch_lib,
+                 tool = str(config_pkg_tool),
+                 debug = debug,
+                 verbosity = verbosity
+                 )
+        if debug > 1: print("done")
+
+    # always configure ocamlsdk & stublibs
+    opam_dep(name="ocamlsdk",
+             xopam = xopam,
+             ocaml_version = ocaml_version,
+             # switch_id = switch,
+             # switch_pfx=switch_pfx,
+             # switch_lib=switch_lib,
+                 tool = str(config_pkg_tool),
+             debug = debug,
+             verbosity = verbosity)
+    opam_dep(name="opam.stublibs",
+             xopam = xopam,
+             ocaml_version = ocaml_version,
+             # switch_id = switch,
+             # switch_pfx=switch_pfx,
+             # switch_lib=switch_lib,
+                 tool = str(config_pkg_tool),
+             debug = debug,
+             verbosity = verbosity)
+
     return mctx.extension_metadata(
         root_module_direct_deps = "all",
         root_module_direct_dev_deps = []
@@ -342,17 +294,32 @@ def _opam_ext_impl(mctx):
 ##############################
 opam = module_extension(
   implementation = _opam_ext_impl,
-  tag_classes = {"dep": tag_class(
-      attrs = {
-          "pkgs": attr.string_dict(
-              mandatory = True,
-              allow_empty = False
-          ),
-          "_tool": attr.label(
-              default = "@@//bin:obazl_config_opam_pkg")
-          # "name": attr.string(),
-          # "version": attr.string(),
-      }
-  )}
+  tag_classes = {
+      "deps": tag_class(
+          attrs = {
+              "opam_version": attr.string(
+                  default = "2.3.0"
+              ),
+              "ocaml_version": attr.string(
+                  default = "5.3.0"
+              ),
+              "direct_deps": attr.string_dict(
+                  mandatory = True,
+                  allow_empty = False
+              ),
+              "indirect_deps": attr.string_dict(
+                  mandatory = True,
+                  allow_empty = False
+              ),
+              "local_toolchain": attr.bool(
+                  default = False
+              ),
+              "_tool": attr.label(
+                  default = "@@//bin:obazl_config_opam_pkg"),
+              "debug": attr.int(default=0),
+              "verbosity": attr.int(default=0)
+          }
+      )
+  }
 )
 

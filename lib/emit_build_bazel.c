@@ -3252,8 +3252,9 @@ EXPORT void emit_module_file(UT_string *module_file,
             while ( (p=(char**)utarray_next(pkg_deps, p))) {
                 if ((strncmp(*p, "compiler-libs", 13) == 0)
                     || (strncmp(*p, "dynlink", 7) == 0)
+                    || (strncmp(*p, "ocamldoc", 8) == 0)
                     || (strncmp(*p, "str", 3) == 0)
-                    || (strncmp(*p, "thread", 5) == 0)
+                    || (strncmp(*p, "threads", 7) == 0)
                     || (strncmp(*p, "unix", 4) == 0)
                     ){
                     fprintf(ostream, "bazel_dep(name = \"ocamlsdk\",       version = \"%s\")\n", ocaml_version);
@@ -3271,6 +3272,15 @@ EXPORT void emit_module_file(UT_string *module_file,
             /* LOG_DEBUG(0, "HASH CT: %d", HASH_COUNT(_pkgs)); */
             /* exit(0); */
             while ( (p=(char**)utarray_next(pkg_deps, p))) {
+                if ((strncmp(*p, "compiler-libs", 13) == 0)
+                    || (strncmp(*p, "dynlink", 7) == 0)
+                    || (strncmp(*p, "ocamldoc", 8) == 0)
+                    || (strncmp(*p, "str", 3) == 0)
+                    || (strncmp(*p, "threads", 7) == 0)
+                    || (strncmp(*p, "unix", 4) == 0)
+                    ){
+                    continue;
+                }
                 if (strncmp(*p, _pkg->name, 512) != 0) {
                     HASH_FIND_STR(_pkgs, *p, pkg);
                     if (pkg) {

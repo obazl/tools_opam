@@ -586,15 +586,17 @@ EXPORT void _emit_ocaml_stublibs_symlinks(UT_string *dst_dir,
    <switch>/lib/stublibs - no META file, populated by other pkgs
  */
 EXPORT void emit_lib_stublibs_pkg(UT_string *dst_dir,
-                                  char *switch_stublibs)
+                                  char *switch_lib)
+                                  /* char *switch_stublibs) */
 {
     /* (void)registry; */
     TRACE_ENTRY;
     UT_string *switch_stublibs_dir;
     utstring_new(switch_stublibs_dir);
     utstring_printf(switch_stublibs_dir,
-                    "%s",
-                    switch_stublibs);
+                    "%s/stublibs",
+                    switch_lib);
+                    /* switch_stublibs); */
     int rc = access(utstring_body(switch_stublibs_dir), F_OK);
     if (rc != 0) {
         /* if (coswitch_trace) */
@@ -702,7 +704,8 @@ EXPORT void emit_lib_stublibs_pkg(UT_string *dst_dir,
     /* utstring_renew(dst_file); */
     /* utstring_printf(dst_file, "%s/lib/stublibs", */
     /*                 utstring_body(dst_dir)); */
-    _emit_lib_stublibs_symlinks(switch_stublibs, utstring_body(dst_dir));
+    _emit_lib_stublibs_symlinks(utstring_body(switch_stublibs_dir),
+                                utstring_body(dst_dir));
 
     utstring_free(dst_file);
     TRACE_EXIT;
@@ -2994,7 +2997,7 @@ void _symlink_ocaml_runtime_libs(char *switch_lib, char *tgtdir)
             utstring_printf(dst, "%s/%s",
                             utstring_body(obazldir), /* tgtdir, */
                             direntry->d_name);
-            LOG_DEBUG(1, "c_libs: symlinking %s to %s\n",
+            LOG_DEBUG(1, "c_libs: symlinking %s to %s",
                       utstring_body(src), utstring_body(dst));
             errno = 0;
             rc = symlink(utstring_body(src),
@@ -3067,7 +3070,7 @@ void _symlink_ocaml_runtime_compiler_libs(char *switch_lib, char *tgtdir)
             utstring_printf(dst, "%s/%s",
                             utstring_body(obazldir), /* tgtdir, */
                             direntry->d_name);
-            LOG_DEBUG(1, "c_libs: symlinking %s to %s\n",
+            LOG_DEBUG(1, "c_libs: symlinking %s to %s",
                       utstring_body(src),
                       utstring_body(dst));
             errno = 0;
@@ -3135,7 +3138,6 @@ EXPORT void emit_ocaml_version(UT_string *dst_dir,
     utstring_free(dst_file);
     TRACE_EXIT;
 }
-
 
 /*
   src: an opam <switch>/lib dir

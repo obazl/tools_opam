@@ -41,8 +41,8 @@ static char *coswitch_name = NULL; // may be "local"
 extern int  DEBUG_LEVEL;
 #define TRACE_FLAG coswitch_trace
 extern bool TRACE_FLAG;
-extern bool findlibc_trace;
-extern int  findlibc_debug;
+extern bool trace_findlibc;
+extern int  debug_findlibc;
 extern bool opamc_trace;
 extern int  opamc_debug;
 extern bool xdgc_trace;
@@ -228,11 +228,11 @@ char *pkg_path = NULL;
 /*             log_error( "--debug-findlibc must be an int."); */
 /*             exit(EXIT_FAILURE); */
 /*         } else { */
-/*             findlibc_debug = (int)tmp; */
+/*             debug_findlibc = (int)tmp; */
 /*         } */
 /*     } */
 /*     if (options[FLAG_TRACE_FINDLIBC].count) { */
-/*         findlibc_trace = true; */
+/*         trace_findlib = true; */
 /*     } */
 
 /*     if (options[OPT_DEBUG_OPAMC].count) { */
@@ -493,7 +493,12 @@ void pkg_handler(char *switch_pfx,
     /*                      default_version // (char*)version */
     /*                      ); */
 
-    emit_pkg_bindir(switch_pfx, utstring_body(coswitch_lib),
+    UT_string *dst_dir;
+    utstring_new(dst_dir);
+    utstring_printf(dst_dir, "%s", utstring_body(coswitch_lib));
+    emit_pkg_bindir(dst_dir,
+                    switch_pfx,
+                    utstring_body(coswitch_lib),
                     pkg->name);
 }
 

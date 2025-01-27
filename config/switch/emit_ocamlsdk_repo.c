@@ -338,7 +338,7 @@ EXPORT void emit_ocamlsdk_module(UT_string *registry,
                     "%s/ocamlsdk/version",
                     coswitch_lib);
     mkdir_r(utstring_body(dst_dir));
-    emit_ocaml_version(dst_dir, coswitch_lib, compiler_version);
+    /* emit_ocaml_version(dst_dir, coswitch_lib, compiler_version); */
 
     utstring_free(dst_dir);
 
