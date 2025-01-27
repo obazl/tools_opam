@@ -2,6 +2,6 @@
 
 alias(
     name   = "runtime_events",
-    actual = "@ocamlsdk//lib/runtime_events",
+    actual = "@opam.ocamlsdk//lib/runtime_events",
     visibility = ["//visibility:public"]
 )

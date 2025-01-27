@@ -135,6 +135,61 @@ def _ocamlfind_deps(mctx, ocamlfind, pkg, version, debug, verbosity):
 def _opam_ext_impl(mctx):
     # print("OPAM EXTENSION")
 
+    bazel = mctx.which("bazel")
+    # print("BAZEL: %s" % bazel)
+
+    mctx.file(".bazelrc", content = """
+common --registry=file:///Users/gar/.local/share/registry
+common --registry=file:///Users/gar/obazl/registry
+common --registry=https://raw.githubusercontent.com/obazl/registry/main/
+common --registry=https://bcr.bazel.build
+common --config=showpp
+    """)
+
+    mctx.file("MODULE.bazel",
+              content = """
+module(
+    name = "bzl",
+    version = "0.1.0",
+    bazel_compatibility = [">=8.0.0"],
+    compatibility_level = 0,
+)
+bazel_dep(name = "tools_opam", version = "5.0.0")
+local_path_override(
+    module_name = "tools_opam",
+    path = "/Users/gar/obazl/tools_opam",
+)
+              """)
+
+    mctx.report_progress("Building @tools_opam//config/pkg")
+
+    cmd = [bazel, "build", "@tools_opam//config/pkg"]
+    res = mctx.execute(cmd) # , quiet = False)
+    if res.return_code == 0:
+        res = res.stdout.strip()
+    else:
+        print("cmd: %s" % cmd)
+        print("rc: %s" % res.return_code)
+        print("stdout: %s" % res.stdout)
+        print("stderr: %s" % res.stderr)
+        fail("cmd failure")
+
+    # cmd = ["ls", "-l", ".bazel/bin/external/tools_opam+/config/pkg"]
+    # res = mctx.execute(cmd)
+    # if res.return_code == 0:
+    #     res = res.stdout.strip()
+    #     print("ls .bazel/etc:\n%s" % res)
+    # else:
+    #     print("cmd: %s" % cmd)
+    #     print("rc: %s" % res.return_code)
+    #     print("stdout: %s" % res.stdout)
+    #     print("stderr: %s" % res.stderr)
+    #     fail("cmd failure")
+
+    config_pkg_tool = mctx.path(".bazel/bin/external/tools_opam+/config/pkg/pkg")
+    # this is the path on modextwd, we need the real path
+    config_pkg_tool = config_pkg_tool.realpath
+
     # get version ids etc. from root module
     opam_version = None
     ocaml_version = None
@@ -187,7 +242,7 @@ def _opam_ext_impl(mctx):
     for mod in mctx.modules:
         # create repo for each dep
         for config in mod.tags.deps:
-            config_pkg_tool = mctx.which(config._tool.name)
+            # config_pkg_tool = mctx.which(config._tool.name)
             for pkg, val in config.direct_deps.items():
                 if debug > 1: print("pkg name: " + pkg)
                 deps.append(pkg)
@@ -267,7 +322,7 @@ def _opam_ext_impl(mctx):
         if debug > 1: print("done")
 
     # always configure ocamlsdk & stublibs
-    opam_dep(name="ocamlsdk",
+    opam_dep(name="opam.ocamlsdk",
              xopam = xopam,
              ocaml_version = ocaml_version,
              # switch_id = switch,

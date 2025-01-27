@@ -2,6 +2,6 @@
 
 alias(
     name   = "dynlink",
-    actual = "@ocamlsdk//lib/dynlink",
+    actual = "@opam.ocamlsdk//lib/dynlink",
     visibility = ["//visibility:public"]
 )

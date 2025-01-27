@@ -2039,7 +2039,7 @@ LOCAL bool emit_special_case_rule(FILE* ostream,
 
         fprintf(ostream, "alias(\n"
                 "    name = \"bigarray\",\n"
-                "    actual = \"@ocamlsdk//lib/bigarray\",\n"
+                "    actual = \"@opam.ocamlsdk//lib/bigarray\",\n"
                 "    visibility = [\"//visibility:public\"]\n"
                 ")\n");
         return true;
@@ -2054,7 +2054,7 @@ LOCAL bool emit_special_case_rule(FILE* ostream,
         fprintf(ostream, "## special case: dynlink");
         fprintf(ostream, "alias(\n"
                 "    name = \"dynlink\",\n"
-                "    actual = \"@ocamlsdk//lib/dynlink\",\n"
+                "    actual = \"@opam.ocamlsdk//lib/dynlink\",\n"
                 "    visibility = [\"//visibility:public\"]\n"
                 ")\n");
         return true;
@@ -2075,7 +2075,7 @@ LOCAL bool emit_special_case_rule(FILE* ostream,
 
         fprintf(ostream, "alias(\n"
                 "    name = \"compiler-libs\",\n"
-                "    actual = \"@ocamlsdk//lib/compiler-libs/common\",\n"
+                "    actual = \"@opam.ocamlsdk//lib/compiler-libs/common\",\n"
                 "    visibility = [\"//visibility:public\"]\n"
                 ")\n");
         return true;
@@ -2111,7 +2111,7 @@ LOCAL bool emit_special_case_rule(FILE* ostream,
 
     /*     fprintf(ostream, "alias(\n" */
     /*             "    name = \"bytecomp\",\n" */
-    /*             "    actual = \"@ocamlsdk//lib/compiler-libs/bytecomp\",\n" */
+    /*             "    actual = \"@opam.ocamlsdk//lib/compiler-libs/bytecomp\",\n" */
     /*             "    visibility = [\"//visibility:public\"]\n" */
     /*             ")\n"); */
     /*     return true; */
@@ -2129,7 +2129,7 @@ LOCAL bool emit_special_case_rule(FILE* ostream,
 
 /*         fprintf(ostream, "alias(\n" */
 /*                 "    name = \"num\",\n" */
-/*                 "    actual = \"@ocamlsdk//lib/num/core\",\n" */
+/*                 "    actual = \"@opam.ocamlsdk//lib/num/core\",\n" */
 /*                 "    visibility = [\"//visibility:public\"]\n" */
 /*                 ")\n"); */
 /*         return true; */
@@ -2143,7 +2143,7 @@ LOCAL bool emit_special_case_rule(FILE* ostream,
 
         fprintf(ostream, "alias(\n"
                 "    name = \"ocamldoc\",\n"
-                "    actual = \"@ocamlsdk//lib/ocamldoc\",\n"
+                "    actual = \"@opam.ocamlsdk//lib/ocamldoc\",\n"
                 "    visibility = [\"//visibility:public\"]\n"
                 ")\n");
         return true;
@@ -2157,7 +2157,7 @@ LOCAL bool emit_special_case_rule(FILE* ostream,
         /* fprintf(ostream, "xxxxxxxxxxxxxxxx"); */
         fprintf(ostream, "alias(\n"
                 "    name = \"str\",\n"
-                "    actual = \"@ocamlsdk//lib/str\",\n"
+                "    actual = \"@opam.ocamlsdk//lib/str\",\n"
                 "    visibility = [\"//visibility:public\"]\n"
                 ")\n");
         return true;
@@ -2171,7 +2171,7 @@ LOCAL bool emit_special_case_rule(FILE* ostream,
 
         fprintf(ostream, "alias(\n"
                 "    name = \"threads\",\n"
-                "    actual = \"@ocamlsdk//lib/threads\",\n"
+                "    actual = \"@opam.ocamlsdk//lib/threads\",\n"
                 "    visibility = [\"//visibility:public\"]\n"
                 ")\n");
         return true;
@@ -2185,7 +2185,7 @@ LOCAL bool emit_special_case_rule(FILE* ostream,
 
         fprintf(ostream, "alias(\n"
                 "    name = \"unix\",\n"
-                "    actual = \"@ocamlsdk//lib/unix\",\n"
+                "    actual = \"@opam.ocamlsdk//lib/unix\",\n"
                 "    visibility = [\"//visibility:public\"]\n"
                 ")\n");
         return true;
@@ -2201,12 +2201,12 @@ LOCAL bool special_case_multiseg_dep(FILE* ostream,
 {
     if (delim1 == NULL) {
         if (strncmp(*dep_name, "compiler-libs", 13) == 0) {
-            fprintf(ostream, "%*s    \"@ocamlsdk//lib/compiler-libs/common\",\n",
+            fprintf(ostream, "%*s    \"@opam.ocamlsdk//lib/compiler-libs/common\",\n",
                     (1+level)*spfactor, sp);
             return true;
         } else {
             if (strncmp(*dep_name, "threads", 13) == 0) {
-                fprintf(ostream, "%*s    \"@ocamlsdk//lib/threads\",\n",
+                fprintf(ostream, "%*s    \"@opam.ocamlsdk//lib/threads\",\n",
                         (1+level)*spfactor, sp);
                 return true;
             }
@@ -2215,14 +2215,14 @@ LOCAL bool special_case_multiseg_dep(FILE* ostream,
 
         if (strncmp(*dep_name, "compiler-libs/", 14) == 0) {
             fprintf(ostream,
-                    "%*s    \"@ocamlsdk//lib/compiler-libs/%s\",\n",
+                    "%*s    \"@opam.ocamlsdk//lib/compiler-libs/%s\",\n",
                     (1+level)*spfactor, sp, delim1+1);
             return true;
         }
 
         if (strncmp(*dep_name, "threads/", 8) == 0) {
             /* threads.posix, threads.vm => threads */
-            fprintf(ostream, "        \"@ocamlsdk//lib/threads\",\n");
+            fprintf(ostream, "        \"@opam.ocamlsdk//lib/threads\",\n");
             /* (1+level)*spfactor, sp, delim1+1); */
             return true;
         }
@@ -2403,15 +2403,15 @@ LOCAL void emit_bazel_deps_attribute(FILE* ostream, int level,
                         /* FIXME: obsolete? */
                         if ((strncmp(dep_name, "bigarray", 8) == 0)
                             && strlen(dep_name) == 8) {
-                            fprintf(ostream, "%*s\"@ocamlsdk//lib/bigarray\",\n",
+                            fprintf(ostream, "%*s\"@opam.ocamlsdk//lib/bigarray\",\n",
                                     (1+level)*spfactor, sp);
                         } else {
                             if ((strncmp(dep_name, "unix", 4) == 0)
                                 && strlen(dep_name) == 4) {
-                                fprintf(ostream, "%*s\"@ocamlsdk//lib/unix\",\n",
+                                fprintf(ostream, "%*s\"@opam.ocamlsdk//lib/unix\",\n",
                                         (1+level)*spfactor, sp);
                             } else {
-                                /* WARNING: for distrib-pkgs, form @ocamlsdk//lib/<pkg>,
+                                /* WARNING: for distrib-pkgs, form @opam.ocamlsdk//lib/<pkg>,
                                    not @<pkg>//lib/<pkg>
                                  */
                                 if (strncmp("dynlink", dep_name, 7) == 0)

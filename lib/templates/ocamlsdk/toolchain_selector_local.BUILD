@@ -9,7 +9,7 @@ exports_files(glob(["*.bazel"]))
 ###################
 toolchain_selector(
     name      = "ocamlopt.opt.endo",
-    toolchain = "@ocamlsdk//toolchain/adapters/local:ocamlopt.opt",
+    toolchain = "@opam.ocamlsdk//toolchain/adapters/local:ocamlopt.opt",
     build_host_constraints  = [
         "@rules_ocaml//platform/arch:sys",
         "@rules_ocaml//platform/executor:sys",
@@ -21,14 +21,14 @@ toolchain_selector(
         # "@rules_ocaml//platform/emitter:sys"
     ],
     toolchain_constraints = [
-        "@ocamlsdk//runtime:std?"
+        "@opam.ocamlsdk//runtime:std?"
     ],
     visibility     = ["//visibility:public"],
 )
 
 toolchain_selector(
     name      = "ocamlopt.opt.endo.d",
-    toolchain = "@ocamlsdk//toolchain/adapters/local:ocamlopt.opt.d",
+    toolchain = "@opam.ocamlsdk//toolchain/adapters/local:ocamlopt.opt.d",
     build_host_constraints  = [
         "@rules_ocaml//platform/arch:sys",
         "@rules_ocaml//platform/executor:sys",
@@ -40,14 +40,14 @@ toolchain_selector(
         # "@rules_ocaml//platform/emitter:sys"
     ],
     toolchain_constraints = [
-        "@ocamlsdk//runtime:dbg?"
+        "@opam.ocamlsdk//runtime:dbg?"
     ],
     visibility     = ["//visibility:public"],
 )
 
 toolchain_selector(
     name      = "ocamlopt.opt.endo.i",
-    toolchain = "@ocamlsdk//toolchain/adapters/local:ocamlopt.opt.d",
+    toolchain = "@opam.ocamlsdk//toolchain/adapters/local:ocamlopt.opt.d",
     build_host_constraints  = [
         "@rules_ocaml//platform/arch:sys",
         "@rules_ocaml//platform/executor:sys",
@@ -59,7 +59,7 @@ toolchain_selector(
         # "@rules_ocaml//platform/emitter:sys"
     ],
     toolchain_constraints = [
-        "@ocamlsdk//runtime:instrumented?"
+        "@opam.ocamlsdk//runtime:instrumented?"
     ],
     visibility     = ["//visibility:public"],
 )
@@ -67,7 +67,7 @@ toolchain_selector(
 ##########
 toolchain_selector(
     name      = "ocamlc.byte.endo",
-    toolchain = "@ocamlsdk//toolchain/adapters/local:ocamlc.byte",
+    toolchain = "@opam.ocamlsdk//toolchain/adapters/local:ocamlc.byte",
     build_host_constraints  = [
         "@rules_ocaml//platform/arch:sys",
         "@rules_ocaml//platform/executor:vm",
@@ -78,7 +78,7 @@ toolchain_selector(
         "@rules_ocaml//platform/executor:vm"
     ],
     toolchain_constraints = [
-        "@ocamlsdk//runtime:std?"
+        "@opam.ocamlsdk//runtime:std?"
     ],
     visibility              = ["//visibility:public"],
 )
@@ -88,7 +88,7 @@ toolchain_selector(
 ###################
 toolchain_selector(
     name      = "ocamlc.opt.exo",
-    toolchain = "@ocamlsdk//toolchain/adapters/local:ocamlc.opt",
+    toolchain = "@opam.ocamlsdk//toolchain/adapters/local:ocamlc.opt",
     build_host_constraints  = [
         "@rules_ocaml//platform/arch:sys",
         "@rules_ocaml//platform/executor:sys",
@@ -104,7 +104,7 @@ toolchain_selector(
 ##########
 toolchain_selector(
     name      = "ocamlopt.byte.exo",
-    toolchain = "@ocamlsdk//toolchain/adapters/local:ocamlopt.byte",
+    toolchain = "@opam.ocamlsdk//toolchain/adapters/local:ocamlopt.byte",
     build_host_constraints    = [
         "@rules_ocaml//platform/arch:sys",
         "@rules_ocaml//platform/executor:vm",
@@ -140,7 +140,7 @@ toolchain_selector(
 ## will be same as build host due to tc transition.
 toolchain_selector(
     name                    = "ocamlopt.byte.endo",
-    toolchain               = "@ocamlsdk//toolchain/adapters/local:ocamlopt.byte",
+    toolchain               = "@opam.ocamlsdk//toolchain/adapters/local:ocamlopt.byte",
     build_host_constraints    = [
         "@rules_ocaml//platform/arch:sys",
         "@rules_ocaml//platform/executor:vm",
@@ -166,7 +166,7 @@ toolchain_selector(
 ## so linking tools would fail if we used ocamlopt.opt
 toolchain_selector(
     name      = "ocamlc.opt.endo",
-    toolchain = "@ocamlsdk//toolchain/adapters/local:ocamlc.opt",
+    toolchain = "@opam.ocamlsdk//toolchain/adapters/local:ocamlc.opt",
     build_host_constraints  = [
         "@rules_ocaml//platform/arch:sys",
         "@rules_ocaml//platform/executor:sys",
@@ -183,7 +183,7 @@ toolchain_selector(
 # ##########
 # toolchain_selector(
 #     name           = "_vm", # *>vm
-#     toolchain      = "@ocamlsdk//toolchain/adapters/local:ocamlc.opt",
+#     toolchain      = "@opam.ocamlsdk//toolchain/adapters/local:ocamlc.opt",
 #     target_host_constraints  = ["@rules_ocaml//platform/executor:vm"],
 #     visibility     = ["//visibility:public"],
 # )
@@ -191,6 +191,6 @@ toolchain_selector(
 # ##########
 # toolchain_selector(
 #     name           = "__", # *>*
-#     toolchain      = "@ocamlsdk//toolchain/adapters/local:ocamlopt.opt",
+#     toolchain      = "@opam.ocamlsdk//toolchain/adapters/local:ocamlopt.opt",
 #     visibility     = ["//visibility:public"],
 # )

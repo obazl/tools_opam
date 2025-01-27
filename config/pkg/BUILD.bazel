@@ -31,8 +31,9 @@ cc_binary(
         # "@runfiles//lib:runfiles",
         "@uthash//lib:uthash",
     ],
+    includes = ["."],
     copts = BASE_COPTS + [
-        "-I$(GENDIR)/config/pkg"
+        "-I$(GENDIR)/config/pkg",
     ],
     features = ["layering_check"],
     linkopts = BASE_LINKOPTS + [
