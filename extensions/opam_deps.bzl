@@ -1,5 +1,6 @@
 OBAZL_PKGS = [
     "ocamlsdk",
+    "findlib",
     "compiler-libs",
     "dynlink",
     "ffi",
@@ -50,7 +51,7 @@ def _opam_dep_repo_impl(repo_ctx):
     debug     = repo_ctx.attr.debug
     verbosity = repo_ctx.attr.verbosity
 
-    if debug > 1:
+    if debug > 0:
         print("OPAM Configuring " + repo_ctx.name)
 
     if repo_ctx.attr.xopam == None:
@@ -82,7 +83,7 @@ def _opam_dep_repo_impl(repo_ctx):
     if repo_ctx.attr.debug > 1:
         print("OPAMBIN: %s" % opambin)
     # switch = opambin.dirname.dirname
-    switch = repo_ctx.attr.ocaml_version
+    switch = repo_ctx.attr.switch
     # print("OPAMREPO ROOT: %s" % opam_repo_root)
     # switch = repo_ctx.path("./")
     if repo_ctx.attr.debug > 1:
@@ -117,6 +118,11 @@ def _opam_dep_repo_impl(repo_ctx):
         if repo_ctx.attr.install:
             _opam_install_pkg(repo_ctx, xopam, repo_pkg,  repo_ctx.attr.ocaml_version, root, debug, verbosity)
 
+    if debug > 0: print("Calling config tool: {}{}, {}".format(
+        repo_ctx.attr.obazl_pfx,
+        repo_pkg,
+        switch_pfx)
+    )
     cmd = [repo_ctx.attr.tool,
            "--pkg", repo_pkg,
            "--pkg-pfx", repo_ctx.attr.obazl_pfx,
@@ -126,16 +132,17 @@ def _opam_dep_repo_impl(repo_ctx):
         cmd.extend(["--ocaml-version", repo_ctx.attr.ocaml_version])
 
     repo_ctx.report_progress("Configuring pkg %s" % repo_pkg)
-    _pkg_deps = repo_ctx.execute(cmd)
-    if _pkg_deps.return_code == 0:
-        _pkg_deps = _pkg_deps.stdout.strip()
+    res = repo_ctx.execute(cmd)
+    if res.return_code == 0:
+        _pkg_deps = res.stdout.strip()
         # if repo_ctx.attr.debug > 0:
             # print("pkg {} deps: {}".format(repo_pkg, _pkg_deps))
     else:
-        print("cmd {cmd} rc    : {rc}".format(
-            cmd=cmd,
-            rc= _pkg_deps.return_code))
-        _throw_cmd_error(cmd, _pkg_deps)
+        print("cmd: %s" % cmd)
+        print("rc: %s" % res.return_code)
+        print("stdout: %s" % res.stdout)
+        print("stderr: %s" % res.stderr)
+        fail("cmd failure")
 
 ###########################
 opam_dep = repository_rule(
@@ -143,6 +150,7 @@ opam_dep = repository_rule(
     attrs = {
         "install": attr.bool(default = True),
         "xopam": attr.label(),
+        "switch": attr.string(),
         "ocaml_version": attr.string(),
         "obazl_pfx": attr.string(),
         # "switch_id": attr.string(mandatory = True),

@@ -103,7 +103,7 @@ def _ocamlfind_deps(mctx, ocamlfind, switch, pkg, version, debug, verbosity):
         ocamlfind,
         "query",
         "-predicates",
-        "-ppx_driver",
+        "ppx_driver",
         "-p-format",
         "-recursive",
         pkg
@@ -141,15 +141,36 @@ def _ocamlfind_deps(mctx, ocamlfind, switch, pkg, version, debug, verbosity):
 def _opam_ext_impl(mctx):
     # print("OPAM EXTENSION")
 
+    # r = mctx.which("read")
+    # print("READ: %s" % r)
+    # cmd = ["echo", "foo bar?"]
+    # res = mctx.execute(cmd, quiet = False)
+    # cmd = ["/Users/gar/obazl/tools_opam/extensions/config/prompt"]
+    # res = mctx.execute(cmd, quiet = False)
+    # if res.return_code == 0:
+    #     res = res.stdout.strip()
+    #     print("You said: %s" % res)
+    #     p = mctx.path(res)
+    #     # this is the path on modextwd, we need the real path
+    #     # p = p.realpath
+    #     # print("link: %s" % p)
+    # else:
+    #     print("cmd: %s" % cmd)
+    #     print("rc: %s" % res.return_code)
+    #     print("stdout: %s" % res.stdout)
+    #     print("stderr: %s" % res.stderr)
+    #     fail("cmd failure")
+    # fail("foo")
+
     # get version ids etc. from root module
-    opam_version = None
-    ocaml_version = None
-    obazl_pfx       = None
-    force_local = False
-    local_tc = False
-    debug = 0
-    verbosity = 0
-    root_module = None
+    opam_version  = None
+    ocaml_version = "5.3.0"
+    obazl_pfx     = "opam."
+    force_local   = False
+    local_tc      = True
+    debug         = 2
+    verbosity     = 2
+    root_module   = None
     for m in mctx.modules:
         if m.is_root:
             root_module = m
@@ -157,7 +178,7 @@ def _opam_ext_impl(mctx):
                 local_tc = cfg.local_toolchain
                 opam_version = cfg.opam_version
                 ocaml_version = cfg.ocaml_version
-                obazl_pfx       = cfg.pkg_prefix
+                # obazl_pfx       = cfg.pkg_prefix
                 force_local   = cfg.force_local_switch
                 debug  = cfg.debug
                 verbosity = cfg.verbosity
@@ -279,9 +300,9 @@ local_path_override(
         newdeps.append(before)
     newdeps = collections.uniq(newdeps)
     newdeps = sorted(newdeps)
-    if debug > 1: print("ALL DEPS: %s" % newdeps)
+    if debug > 0: print("ALL DEPS: %s" % newdeps)
 
-    if debug > 1: print("ALL SUBDEPS: %s" % subdeps)
+    if debug > 0: print("ALL SUBDEPS: %s" % subdeps)
     subdeps = collections.uniq(subdeps)
     newsubdeps = []
     for dep in subdeps:
@@ -304,6 +325,7 @@ local_path_override(
         if debug > 1: print("creating repo for: " + pkg)
         opam_dep(name=pkg,
                  xopam = xopam,
+                 switch = switch,
                  ocaml_version = ocaml_version,
                  obazl_pfx = obazl_pfx,
                  tool = str(config_pkg_tool),
@@ -329,6 +351,7 @@ local_path_override(
         opam_dep(name=pkg,
                  install = install,
                  xopam = xopam,
+                 switch = switch,
                  ocaml_version = ocaml_version,
                  obazl_pfx = obazl_pfx,
                  tool = str(config_pkg_tool),
@@ -337,9 +360,10 @@ local_path_override(
                  )
         if debug > 1: print("done")
 
-    # always configure ocamlsdk & stublibs
+    # always configure ocamlsdk & stublibs & ocamlfind
     opam_dep(name="{}ocamlsdk".format(obazl_pfx),
              xopam = xopam,
+             switch = switch,
              ocaml_version = ocaml_version,
              obazl_pfx = obazl_pfx,
              tool = str(config_pkg_tool),
@@ -347,6 +371,23 @@ local_path_override(
              verbosity = verbosity)
     opam_dep(name="{}stublibs".format(obazl_pfx),
              xopam = xopam,
+             switch = switch,
+             ocaml_version = ocaml_version,
+             obazl_pfx = obazl_pfx,
+             tool = str(config_pkg_tool),
+             debug = debug,
+             verbosity = verbosity)
+    opam_dep(name="{}ocamlfind".format(obazl_pfx),
+             xopam = xopam,
+             switch = switch,
+             ocaml_version = ocaml_version,
+             obazl_pfx = obazl_pfx,
+             tool = str(config_pkg_tool),
+             debug = debug,
+             verbosity = verbosity)
+    opam_dep(name="{}findlib".format(obazl_pfx),
+             xopam = xopam,
+             switch = switch,
              ocaml_version = ocaml_version,
              obazl_pfx = obazl_pfx,
              tool = str(config_pkg_tool),
@@ -373,19 +414,19 @@ opam = module_extension(
               "force_local_switch": attr.bool(
                   default = True
               ),
-              "pkg_prefix": attr.string(
-                  # default = "opam."
-              ),
+              # "pkg_prefix": attr.string(
+              #     default = "opam."
+              # ),
               "direct_deps": attr.string_dict(
                   mandatory = True,
                   allow_empty = False
               ),
               "indirect_deps": attr.string_dict(
-                  mandatory = True,
-                  allow_empty = False
+                  mandatory = False,
+                  allow_empty = True
               ),
               "local_toolchain": attr.bool(
-                  default = False
+                  default = True
               ),
               "_tool": attr.label(
                   default = "@@//bin:obazl_config_opam_pkg"),
