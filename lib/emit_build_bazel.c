@@ -758,17 +758,18 @@ LOCAL void emit_bazel_cc_imports(FILE* ostream,
 
 UT_array *cc_stubs;
 
-void emit_bazel_stublibs_attr(FILE* ostream,
-                              char *coswitch_lib,
-                              int level, /* indentation lvl */
-                              char *_pkg_root,
-                              char *_pkg_prefix,
-                              char *obazl_pfx, /* for bazel name, e.g. 'opam.' */
-                              char *_pkg_name,
-                              UT_string *_pkg_parent,
-                              char *_filedeps_path, /* _lib */
-                              obzl_meta_entries *_entries,
-                              obzl_meta_package *_pkg)
+LOCAL void emit_bazel_stublibs_attr(FILE* ostream,
+                                    char *coswitch_pkg_root,
+                                    char *coswitch_lib,
+                                    int level, /* indentation lvl */
+                                    char *_pkg_root,
+                                    char *_pkg_prefix,
+                                    char *obazl_pfx, /* for bazel name, e.g. 'opam.' */
+                                    char *_pkg_name,
+                                    UT_string *_pkg_parent,
+                                    char *_filedeps_path, /* _lib */
+                                    obzl_meta_entries *_entries,
+                                    obzl_meta_package *_pkg)
 {
     (void)obazl_pfx;
     (void)coswitch_lib;
@@ -785,12 +786,13 @@ void emit_bazel_stublibs_attr(FILE* ostream,
 
     static UT_string *dname;
     utstring_new(dname);
-    utstring_printf(dname, "%s/%s%s/lib",
-                    coswitch_lib, /* e.g. <switch>/lib */
-                    obazl_pfx,
-                    /* FIXME: what about multilevels, e.g.
-                     @foo//lib/bar/baz/buz ? */
-                    _pkg_root);
+    utstring_printf(dname, "%s/lib", coswitch_pkg_root);
+                    /* "%s/%s%s/lib", */
+                    /* coswitch_lib, /\* e.g. <switch>/lib *\/ */
+                    /* obazl_pfx, */
+                    /* /\* FIXME: what about multilevels, e.g. */
+                    /*  @foo//lib/bar/baz/buz ? *\/ */
+                    /* _pkg_root); */
     if (_pkg_parent != NULL) {
         if (utstring_len(_pkg_parent) > 0) {
             /* LOG_DEBUG(0, "parent: %s", utstring_body(_pkg_parent)); */
@@ -807,17 +809,21 @@ void emit_bazel_stublibs_attr(FILE* ostream,
     errno = 0;
     DIR *d = opendir(utstring_body(dname));
     if (d == NULL) {
-        fprintf(stderr,
+        fprintf(stdout,
                 "%s:%d ERROR: bad opendir: %s\n\t%s\n",
                 __FILE__, __LINE__,
-                strerror(errno), //);
-        /* fprintf(stderr, "%s:%d ERROR: bad opendir: %s\n", */
-        /*         __FILE__, __LINE__, */
+                strerror(errno),
+                utstring_body(dname));
+        fprintf(ostream,
+                "%s:%d ERROR: bad opendir: %s\n\t%s\n",
+                __FILE__, __LINE__,
+                strerror(errno),
                 utstring_body(dname));
         fprintf(ostream, "## pkg root: %s\n", _pkg_root);
         fprintf(ostream, "## pkg parent: %s\n", utstring_body(_pkg_parent));
         fprintf(ostream, "## _pkg_prefix: %s\n", _pkg_prefix);
         fprintf(ostream, "## _pkg_name: %s\n", _pkg_name);
+        fflush(NULL);
         return;
     }
     /* if ( (strncmp(_pkg_name, "base", 4) == 0) && strlen(_pkg_name) == 4) { */
@@ -920,9 +926,7 @@ LOCAL void emit_bazel_jsoo_runtime_attr(FILE* ostream,
         utstring_printf(dname, "/%s", utstring_body(_pkg_parent));
     utstring_printf(dname, "/%s", _pkg_name);
 
-#if defined(PROFILE_fastbuild)
     LOG_DEBUG(0, "emit_bazel_jsoo_runtime_attr: %s", utstring_body(dname));
-#endif
 
     errno = 0;
     DIR *d = opendir(utstring_body(dname));
@@ -933,8 +937,8 @@ LOCAL void emit_bazel_jsoo_runtime_attr(FILE* ostream,
                 strerror(errno));
                 /* "ERROR: bad opendir: %s\n", strerror(errno)); */
         fprintf(ostream, "## ERROR: bad opendir: %s\n", utstring_body(dname));
-        fprintf(ostream, "## pkg root: %s\n", _pkg_root);
-        fprintf(ostream, "## pkg parent: %s\n", utstring_body(_pkg_parent));
+        fprintf(ostream, "## Pkg root: %s\n", _pkg_root);
+        fprintf(ostream, "## Pkg parent: %s\n", utstring_body(_pkg_parent));
         fprintf(ostream, "## _pkg_prefix: %s\n", _pkg_prefix);
         fprintf(ostream, "## _pkg_name: %s\n", _pkg_name);
         return;
@@ -1717,6 +1721,7 @@ LOCAL void emit_bazel_metadatum(FILE* ostream, int level,
 
 LOCAL void emit_bazel_archive_rule(FILE *ostream,
                              char *opam_switch_dir,
+                             char *coswitch_pkg_root,
                              char *coswitch_lib,
                              int level,
                              /* char *ws_name, */
@@ -1890,6 +1895,7 @@ Note that "archive" should only be used for archive files that are intended to b
 
     /* emit cc_deps attr with lib*stubs.a */
     emit_bazel_stublibs_attr(ostream,
+                             coswitch_pkg_root,
                              coswitch_lib,
                              1, /* indent level */
                              _pkg_root,
@@ -3868,6 +3874,7 @@ EXPORT void emit_build_bazel(UT_string *opam_switch_lib,
                         emit_bazel_archive_rule(ostream,
                                                 /* utstring_body(bazel_pkg_root), */
                                                 utstring_body(opam_switch_lib),
+                                                coswitch_pkg_root,
                                                 coswitch_lib,
                                                 1, /* indent level */
                                                 /* ws_name, // ocaml_ws, */
