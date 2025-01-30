@@ -104,7 +104,7 @@ def _opam_dep_repo_impl(repo_ctx):
         print("SWITCH PFX %s" % switch_pfx)
 
     repo = repo_ctx.name.removeprefix("tools_opam++opam+")
-    repo_pkg = repo.removeprefix("opam.")
+    repo_pkg = repo.removeprefix(repo_ctx.attr.obazl_pfx)
 
     ## Running repo_ctx.execute cmd creates the repo
     ## so the ensuing symlink would fail with 'already exists'
@@ -119,6 +119,7 @@ def _opam_dep_repo_impl(repo_ctx):
 
     cmd = [repo_ctx.attr.tool,
            "--pkg", repo_pkg,
+           "--pkg-pfx", repo_ctx.attr.obazl_pfx,
            "--switch-pfx", switch_pfx]
            # "--switch", repo_ctx.attr.switch_id]
     if repo_ctx.attr.ocaml_version:
@@ -143,6 +144,7 @@ opam_dep = repository_rule(
         "install": attr.bool(default = True),
         "xopam": attr.label(),
         "ocaml_version": attr.string(),
+        "obazl_pfx": attr.string(),
         # "switch_id": attr.string(mandatory = True),
         # "switch_pfx": attr.string(mandatory = True),
         # "switch_lib": attr.string(mandatory = True),

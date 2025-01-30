@@ -2,6 +2,6 @@
 
 alias(
     name   = "threads",
-    actual = "@opam.ocamlsdk//lib/threads",
+    actual = "@{{pfx}}ocamlsdk//lib/threads",
     visibility = ["//visibility:public"]
 )

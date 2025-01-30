@@ -17,7 +17,6 @@
 
 #include "cwalk.h"
 /* #include "gopt.h" */
-/* #include "libs7.h" */
 #include "liblogc.h"
 #include "findlibc.h"
 #include "opamc.h"
@@ -80,10 +79,6 @@ extern bool enable_jsoo;
 
 extern char *pkg_path; // = NULL;
 
-/* #define S7_DEBUG_LEVEL libs7_debug */
-/* extern int  libs7_debug; */
-/* extern bool libs7_trace; */
-
 /* LOCAL void _pkg_handler(char *switch_pfx, */
 /*                         char *switch_lib, /\* switch_lib *\/ */
 /*                         char *pkg_dir, */
@@ -102,7 +97,8 @@ char *pkg_name;
 
 void opam_pkg_handler(char *_switch_pfx,
                       char *_ocaml_version,
-                      char *pkg_name)
+                      char *pkg_name,
+                      char *obazl_pfx)
         /* .registry = registry, */
         /* .coswitch_lib = coswitch_lib */
 // coswitch is always <switch_pfx>/share/obazl/registry
@@ -120,7 +116,7 @@ void opam_pkg_handler(char *_switch_pfx,
 
     if ((strncmp(pkg_name, "ocamlsdk", 8) == 0)
         && strlen(pkg_name) == 8) {
-        ext_emit_ocamlsdk_module(_ocaml_version, switch_pfx);
+        ext_emit_ocamlsdk_module(_ocaml_version, switch_pfx, obazl_pfx);
     }
     else if ((strncmp(pkg_name, "stublibs", 8) == 0)
         && strlen(pkg_name) == 8) {
@@ -134,12 +130,12 @@ void opam_pkg_handler(char *_switch_pfx,
         // switch_stublibs);
         /* ext_emit_lib_stublibs(switch_id, switch_pfx); */
     } else {
-        opam_libpkg_handler(pkg_name);
+        opam_libpkg_handler(obazl_pfx, pkg_name);
     }
     TRACE_EXIT;
 }
 
-void opam_libpkg_handler(char *pkg_name)
+void opam_libpkg_handler(char *obazl_pfx, char *pkg_name)
 {
     /* struct paths_s *paths = (struct paths_s*)_paths; */
     /* UT_string *registry = (UT_string*)paths->registry; */
@@ -150,6 +146,7 @@ void opam_libpkg_handler(char *pkg_name)
      */
     bool empty_pkg = false;
 
+    /* local coswitch lib dir is just cwd */
     UT_string *coswitch_lib;
     utstring_new(coswitch_lib);
     utstring_printf(coswitch_lib, "./");
@@ -157,6 +154,10 @@ void opam_libpkg_handler(char *pkg_name)
                     /* switch_pfx); */
     /* struct obzl_meta_package *pkgs */
     /*     = (struct obzl_meta_package*)paths->pkgs; */
+
+    UT_string *coswitch_pkg_root;
+    utstring_new(coswitch_pkg_root);
+    utstring_printf(coswitch_pkg_root, ".");
 
     if (verbosity > 1) {
         log_debug("pkg_handler: %s", pkg_name);
@@ -343,23 +344,25 @@ void opam_libpkg_handler(char *pkg_name)
         utstring_printf(_switch_lib, "%s", switch_lib);
 
         /* emit @opam.foo */
-        ext_emit_build_bazel(_switch_lib, // switch_lib,
-                         utstring_body(coswitch_lib),
-                         /* utstring_body(ws_root), */
-                         0,         /* indent level */
-                         pkg_name, // pkg_root
-                         pkg_parent, /* needed for handling subpkgs */
-                         NULL, // "buildfiles",        /* _pkg_prefix */
-                         utstring_body(imports_path),
-                         /* "",      /\* pkg-path *\/ */
-                         pkg,
-                         false); /* alias */
+        emit_build_bazel(_switch_lib, // switch_lib,
+                             utstring_body(coswitch_lib),
+                             utstring_body(coswitch_pkg_root),
+                             /* utstring_body(ws_root), */
+                             0,         /* indent level */
+                             pkg_name, // pkg_root
+                             pkg_parent, /* needed for handling subpkgs */
+                             NULL, // "buildfiles",        /* _pkg_prefix */
+                             utstring_body(imports_path),
+                             /* "",      /\* pkg-path *\/ */
+                             obazl_pfx,
+                             pkg,
+                             false); /* alias */
         log_info("emitted bazel pkg %s, to %s",
                  pkg_name, utstring_body(coswitch_lib));
-        return;
+        /* return; */
 
         /* /\* emit @foo, aliased to @opam.foo *\/ */
-        /* ext_emit_build_bazel(_switch_lib, // switch_lib, */
+        /* emit_build_bazel(_switch_lib, // switch_lib, */
         /*                      "./", */
         /*                  /\* utstring_body(coswitch_lib), *\/ */
         /*                  /\* utstring_body(ws_root), *\/ */

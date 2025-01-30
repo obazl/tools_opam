@@ -2,6 +2,9 @@ load("@bazel_skylib//lib:collections.bzl", "collections")
 load("opam_download_toolchain.bzl",
      "download_and_config_toolchain")
 load("opam_deps.bzl", "opam_dep", "OBAZL_PKGS")
+load("opam_ops.bzl",
+     "opam_create_local_switch",
+     "opam_install_pkg")
 
 ##############################
 def _local_opam_repo_impl(repo_ctx):
@@ -12,7 +15,9 @@ local_opam_repo = repository_rule(
 )
 
 ###################################################
-def config_local_toolchain(mctx, debug, verbosity):
+def config_local_toolchain(mctx, force_local,
+                           ocaml_version, root,
+                           debug, verbosity):
     if debug > 0: print("config_local_toolchain")
 
     opam = mctx.which("opam")
@@ -30,6 +35,10 @@ def config_local_toolchain(mctx, debug, verbosity):
             print("stdout: {stdout}".format(stdout= res.stdout))
             print("stderr: {stderr}".format(stderr= res.stderr))
             fail("cmd failure.")
+    elif force_local:
+        # switch_id = mctx.path("../../execroot/_main/_opam")
+        switch = opam_create_local_switch(mctx, opam, ocaml_version,
+                                 debug, verbosity)
     else:
         cmd = [opam, "var", "switch"]
         res = mctx.execute(cmd)
@@ -87,10 +96,8 @@ def _throw_cmd_error(cmd, r):
 # Set to false to see debug messages
 
 ##################################
-def _ocamlfind_deps(mctx, ocamlfind, pkg, version, debug, verbosity):
+def _ocamlfind_deps(mctx, ocamlfind, switch, pkg, version, debug, verbosity):
     if debug > 0: print("_ocamlfind_deps: %s" % pkg)
-
-    
 
     cmd = [
         ocamlfind,
@@ -107,10 +114,9 @@ def _ocamlfind_deps(mctx, ocamlfind, pkg, version, debug, verbosity):
         deps = res.stdout.strip()
         deps = deps.splitlines()
         # print("ocamlfind query ok, deps: %s" % deps)
-    # elif deps.return_code == 2:
-    #     print("ocamlfind query stdout: %s" % deps.stdout)
-    #     print("ocamlfind query stderr: %s" % deps.stderr)
-    #     fail("findlib pkg not found: " + pkg)
+    elif res.return_code == 2:
+        print("findlib pkg not found: " + pkg)
+        return None
     else:
         print("cmd: %s" % cmd)
         print("rc: %s" % res.return_code)
@@ -134,6 +140,29 @@ def _ocamlfind_deps(mctx, ocamlfind, pkg, version, debug, verbosity):
 #### EXTENSION IMPL ####
 def _opam_ext_impl(mctx):
     # print("OPAM EXTENSION")
+
+    # get version ids etc. from root module
+    opam_version = None
+    ocaml_version = None
+    obazl_pfx       = None
+    force_local = False
+    local_tc = False
+    debug = 0
+    verbosity = 0
+    root_module = None
+    for m in mctx.modules:
+        if m.is_root:
+            root_module = m
+            for cfg in m.tags.deps:
+                local_tc = cfg.local_toolchain
+                opam_version = cfg.opam_version
+                ocaml_version = cfg.ocaml_version
+                obazl_pfx       = cfg.pkg_prefix
+                force_local   = cfg.force_local_switch
+                debug  = cfg.debug
+                verbosity = cfg.verbosity
+    if debug > 1:
+        print("local tc? %s" % local_tc)
 
     bazel = mctx.which("bazel")
     # print("BAZEL: %s" % bazel)
@@ -161,9 +190,9 @@ local_path_override(
 )
               """)
 
-    mctx.report_progress("Building @tools_opam//config/pkg")
+    mctx.report_progress("Building @tools_opam//extensions/config")
 
-    cmd = [bazel, "build", "@tools_opam//config/pkg"]
+    cmd = [bazel, "build", "@tools_opam//extensions/config"]
     res = mctx.execute(cmd) # , quiet = False)
     if res.return_code == 0:
         res = res.stdout.strip()
@@ -174,43 +203,22 @@ local_path_override(
         print("stderr: %s" % res.stderr)
         fail("cmd failure")
 
-    # cmd = ["ls", "-l", ".bazel/bin/external/tools_opam+/config/pkg"]
-    # res = mctx.execute(cmd)
-    # if res.return_code == 0:
-    #     res = res.stdout.strip()
-    #     print("ls .bazel/etc:\n%s" % res)
-    # else:
-    #     print("cmd: %s" % cmd)
-    #     print("rc: %s" % res.return_code)
-    #     print("stdout: %s" % res.stdout)
-    #     print("stderr: %s" % res.stderr)
-    #     fail("cmd failure")
-
-    config_pkg_tool = mctx.path(".bazel/bin/external/tools_opam+/config/pkg/pkg")
+    config_pkg_tool = mctx.path(".bazel/bin/external/tools_opam+/extensions/config/config")
     # this is the path on modextwd, we need the real path
     config_pkg_tool = config_pkg_tool.realpath
 
-    # get version ids etc. from root module
-    opam_version = None
-    ocaml_version = None
-    local_tc = False
-    debug = 0
-    verbosity = 0
-    root_module = None
-    for m in mctx.modules:
-        if m.is_root:
-            root_module = m
-            for cfg in m.tags.deps:
-                local_tc = cfg.local_toolchain
-                opam_version = cfg.opam_version
-                ocaml_version = cfg.ocaml_version
-                debug  = cfg.debug
-                verbosity = cfg.verbosity
-    if debug > 1:
+    ltc = mctx.getenv("OBAZL_USE_LOCAL_TC")
+    if debug > 1: print("OBAZL LTC: %s" % ltc)
+    if ltc:
+        local_tc = True
         print("local tc? %s" % local_tc)
 
     if local_tc:
-        (opam, switch, ocamlfind) = config_local_toolchain(mctx, debug, verbosity)
+        (opam, switch,
+         ocamlfind) = config_local_toolchain(mctx, force_local,
+                                             ocaml_version,
+                                             None, # root
+                                             debug, verbosity)
         xopam = None # str(opam)
     else:
         download_and_config_toolchain(mctx,
@@ -249,7 +257,17 @@ local_path_override(
                 if local_tc:
                     # always derive subdeps, ensures completeness
                     if pkg not in OBAZL_PKGS:
-                        subdeps.extend(_ocamlfind_deps(mctx, ocamlfind, pkg, val, debug, verbosity))
+                        sdeps = _ocamlfind_deps(mctx, ocamlfind, switch, pkg, val, debug, verbosity)
+                        if sdeps:
+                            subdeps.extend(sdeps)
+                        else:
+                            opam_install_pkg(mctx, pkg, switch,
+                                             debug, verbosity)
+                            sdeps = _ocamlfind_deps(mctx, ocamlfind, switch, pkg, val, debug, verbosity)
+                            if sdeps:
+                                subdeps.extend(sdeps)
+                            else:
+                                fail("XXXXXXXXXXXXXXXX?")
             subdeps.extend(config.indirect_deps.keys())
 
     deps = collections.uniq(deps)
@@ -282,14 +300,12 @@ local_path_override(
         if pkg in OBAZL_PKGS:
             pkg = pkg
         else:
-            pkg = "opam.{}".format(pkg)
+            pkg = "{pfx}{pkg}".format(pfx=obazl_pfx, pkg=pkg)
         if debug > 1: print("creating repo for: " + pkg)
         opam_dep(name=pkg,
                  xopam = xopam,
                  ocaml_version = ocaml_version,
-                 # switch_id = switch,
-                 # switch_pfx=switch_pfx,
-                 # switch_lib=switch_lib,
+                 obazl_pfx = obazl_pfx,
                  tool = str(config_pkg_tool),
                  debug = debug,
                  verbosity = verbosity
@@ -298,11 +314,13 @@ local_path_override(
 
     ## installing deps already installs subdeps
     ## so we create repo & config w/o installing opam pkg
+    ## FIXME: this install is only for hermetic tc
+    ## for local tc they're already installed
     for pkg in newsubdeps:
         if pkg in OBAZL_PKGS:
             pkg = pkg
         else:
-            pkg = "opam.{}".format(pkg)
+            pkg = "{pfx}{pkg}".format(pfx=obazl_pfx, pkg=pkg)
         if debug > 1: print("creating repo for: " + pkg)
         # if pkg == "stublibs": # special case
         #     install = True
@@ -312,9 +330,7 @@ local_path_override(
                  install = install,
                  xopam = xopam,
                  ocaml_version = ocaml_version,
-                 # switch_id = switch,
-                 # switch_pfx=switch_pfx,
-                 # switch_lib=switch_lib,
+                 obazl_pfx = obazl_pfx,
                  tool = str(config_pkg_tool),
                  debug = debug,
                  verbosity = verbosity
@@ -322,22 +338,18 @@ local_path_override(
         if debug > 1: print("done")
 
     # always configure ocamlsdk & stublibs
-    opam_dep(name="opam.ocamlsdk",
+    opam_dep(name="{}ocamlsdk".format(obazl_pfx),
              xopam = xopam,
              ocaml_version = ocaml_version,
-             # switch_id = switch,
-             # switch_pfx=switch_pfx,
-             # switch_lib=switch_lib,
-                 tool = str(config_pkg_tool),
+             obazl_pfx = obazl_pfx,
+             tool = str(config_pkg_tool),
              debug = debug,
              verbosity = verbosity)
-    opam_dep(name="opam.stublibs",
+    opam_dep(name="{}stublibs".format(obazl_pfx),
              xopam = xopam,
              ocaml_version = ocaml_version,
-             # switch_id = switch,
-             # switch_pfx=switch_pfx,
-             # switch_lib=switch_lib,
-                 tool = str(config_pkg_tool),
+             obazl_pfx = obazl_pfx,
+             tool = str(config_pkg_tool),
              debug = debug,
              verbosity = verbosity)
 
@@ -357,6 +369,12 @@ opam = module_extension(
               ),
               "ocaml_version": attr.string(
                   default = "5.3.0"
+              ),
+              "force_local_switch": attr.bool(
+                  default = True
+              ),
+              "pkg_prefix": attr.string(
+                  # default = "opam."
               ),
               "direct_deps": attr.string_dict(
                   mandatory = True,

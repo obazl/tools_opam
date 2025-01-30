@@ -11,6 +11,7 @@ load("//config/cc:CONFIG.bzl",
 exports_files(["emit_build_bazel.c",
                "emit_ocaml_repo.c",
                "emit_pkg_bindir.c",
+               "dune-package.c",
                "registry.c",
                "utils.c",
                "versions.c"])
@@ -19,7 +20,7 @@ exports_files(["emit_build_bazel.c",
 
 ###########
 cc_library(
-    name = "bazel",
+    name = "tools_opam",
     srcs = [
         "emit_build_bazel.c",
         "emit_ocaml_repo.c",
@@ -28,27 +29,27 @@ cc_library(
         "utils.c",
         "versions.c",
         ":mkhdrs",
+        "dune-package.c",
         "//lib/templates/compiler_libs",
         "//lib/templates/ocamlsdk",
     ],
     includes = [".", "$(GENDIR)"],
     hdrs = ["tools_opam.h"],
     alwayslink = True,
-    linkopts = select({
-        # static linkage under -c opt: we need to retain
-        # one symbol from libdune_s7:
-        "@platforms//os:macos": [
-            "-Xlinker", "-exported_symbol",
-            "-Xlinker", "'_libdune_s7_init'"],
-        "//conditions:default": []
-    }),
+    # linkopts = select({
+    #     # static linkage under -c opt: we need to retain
+    #     # one symbol from libdune_s7:
+    #     "@platforms//os:macos": [
+    #         "-Xlinker", "-exported_symbol",
+    #         "-Xlinker", "'_libdune_s7_init'"],
+    #     "//conditions:default": []
+    # }),
     implementation_deps = [
-        # "@runfiles//lib:runfiles",
-        "@dune_s7//lib:dune_s7",
+        # "@dune_s7//lib:dune_s7",
+        # "@libs7//lib:s7",
         "@findlibc//lib:findlibc",
         "@opamc//lib:opamc",
-        # "//src/utils",
-        "@libs7//lib:s7",
+        "@sfsexp//src:sfsexp",
     ],
     copts = BASE_COPTS + [
         # only for clang 15/
@@ -134,6 +135,7 @@ makeheaders(
         "registry.c",
         "utils.c",
         "versions.c",
+        "dune-package.c",
     ],
     additional_srcs = [
         "//lib/templates/compiler_libs",
@@ -142,11 +144,11 @@ makeheaders(
     ] + select({
         "@obazl_config_cc//profile:dev?": [
             "@liblogc//macros:logging_debug.h",
-            "@libs7//macros:s7_logging_debug.h"
+            # "@libs7//macros:s7_logging_debug.h"
         ],
         "//conditions:default": [
             "@liblogc//macros:logging_ndebug.h",
-            "@libs7//macros:s7_logging_ndebug.h"
+            # "@libs7//macros:s7_logging_ndebug.h"
         ]
     }),
     # ] + select({
@@ -180,11 +182,11 @@ makeheaders(
     ] + select({
         "@obazl_config_cc//profile:dev?": [
             "@liblogc//macros:logging_debug.h",
-            "@libs7//macros:s7_logging_debug.h"
+            # "@libs7//macros:s7_logging_debug.h"
         ],
         "//conditions:default": [
             "@liblogc//macros:logging_ndebug.h",
-            "@libs7//macros:s7_logging_ndebug.h"
+            # "@libs7//macros:s7_logging_ndebug.h"
         ]
     }),
     # ] + select({

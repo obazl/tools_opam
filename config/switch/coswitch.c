@@ -274,8 +274,8 @@ char *pkg_path = NULL;
 /* Fills in the paths_s struct, including struct obzl_meta_package *pkgs; */
 /* Side-effects: emits BUILD.bazel and pkg bindir */
 void pkg_handler(char *switch_pfx,
-                 char *site_lib, /* switch_lib */
-                 char *pkg_dir,  /* subdir of site_lib */
+                 char *_switch_lib, /* switch_lib */
+                 char *pkg_dir,  /* subdir of switch_lib */
                  void *_paths) /* struct paths_s* */
         /* .registry = registry, */
         /* .coswitch_lib = coswitch_lib */
@@ -289,7 +289,7 @@ void pkg_handler(char *switch_pfx,
 
     if (verbosity > 1) {
         log_debug("pkg_handler: %s", pkg_dir);
-        log_debug("site-lib: %s", site_lib);
+        log_debug("switch lib: %s", _switch_lib);
         log_debug("registry: %s", utstring_body(registry));
         log_debug("coswitch: %s", utstring_body(coswitch_lib));
         log_debug("pkgs ct: %d", HASH_COUNT(pkgs));
@@ -297,7 +297,7 @@ void pkg_handler(char *switch_pfx,
 
     utstring_renew(meta_path);
     utstring_printf(meta_path, "%s/%s/META",
-                    site_lib,
+                    _switch_lib,
                     pkg_dir);
                     /* utstring_body(opam_switch_lib), pkg_name); */
     if (verbosity > 1)
@@ -452,30 +452,39 @@ void pkg_handler(char *switch_pfx,
         // for now:
         UT_string *switch_lib;
         utstring_new(switch_lib);
-        utstring_printf(switch_lib, "%s", site_lib);
+        utstring_printf(switch_lib, "%s", switch_lib);
 
-        emit_build_bazel(switch_lib, // site_lib,
+        UT_string *coswitch_pkg_root;
+        utstring_new(coswitch_pkg_root);
+        utstring_printf(coswitch_pkg_root,
+                        "%s/%s%s",
+                        coswitch_lib,
+                        obazl_pfx, pkg_name);
+
+        emit_build_bazel(switch_lib, // switch_lib,
                          utstring_body(coswitch_lib),
-                         /* utstring_body(ws_root), */
+                         utstring_body(coswitch_pkg_root),
                          0,         /* indent level */
                          pkg_name, // pkg_root
                          pkg_parent, /* needed for handling subpkgs */
                          NULL, // "buildfiles",        /* _pkg_prefix */
                          utstring_body(imports_path),
                          /* "",      /\* pkg-path *\/ */
+                         obazl_pfx,
                          pkg,
                          false); /* alias */
-        emit_build_bazel(switch_lib, // site_lib,
-                         utstring_body(coswitch_lib),
-                         /* utstring_body(ws_root), */
-                         0,         /* indent level */
-                         pkg_name, // pkg_root
-                         pkg_parent, /* needed for handling subpkgs */
-                         NULL, // "buildfiles",        /* _pkg_prefix */
-                         utstring_body(imports_path),
-                         /* "",      /\* pkg-path *\/ */
-                         pkg,
-                         true); /* alias */
+        /* emit_build_bazel(switch_lib, // switch_lib, */
+        /*                  utstring_body(coswitch_lib), */
+        /*                  /\* utstring_body(ws_root), *\/ */
+        /*                  0,         /\* indent level *\/ */
+        /*                  pkg_name, // pkg_root */
+        /*                  pkg_parent, /\* needed for handling subpkgs *\/ */
+        /*                  NULL, // "buildfiles",        /\* _pkg_prefix *\/ */
+        /*                  utstring_body(imports_path), */
+        /*                  /\* "",      /\\* pkg-path *\\/ *\/ */
+        /*                  obazl_pfx, */
+        /*                  pkg, */
+        /*                  true); /\* alias *\/ */
         /* opam_pending_deps, */
         /* opam_completed_deps); */
     }
@@ -495,7 +504,8 @@ void pkg_handler(char *switch_pfx,
 
     UT_string *dst_dir;
     utstring_new(dst_dir);
-    utstring_printf(dst_dir, "%s", utstring_body(coswitch_lib));
+    utstring_printf(dst_dir, "%s/%s",
+                    utstring_body(coswitch_lib), pkg->name);
     emit_pkg_bindir(dst_dir,
                     switch_pfx,
                     utstring_body(coswitch_lib),

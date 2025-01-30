@@ -2,6 +2,6 @@
 
 alias(
     name   = "str",
-    actual = "@opam.ocamlsdk//lib/str",
+    actual = "@{{pfx}}ocamlsdk//lib/str",
     visibility = ["//visibility:public"]
 )

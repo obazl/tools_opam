@@ -12,7 +12,7 @@ LOCAL_REPO=repository_name()[1:]
 
 ##########
 cc_binary(
-    name  = "pkg",
+    name  = "config",
     visibility = ["//visibility:public"],
     srcs  = [
         "main.c",
@@ -21,12 +21,11 @@ cc_binary(
         ":mkhdrs",
     ],
     deps = [
-        "//lib:bazel",
+        "//lib:tools_opam",
         "@cwalk//lib:cwalk",
         "@findlibc//lib:findlibc",
         "@gopt//lib:gopt",
         "@liblogc//lib:logc",
-        "@libs7//lib:s7",
         "@opamc//lib:opamc",
         # "@runfiles//lib:runfiles",
         "@uthash//lib:uthash",

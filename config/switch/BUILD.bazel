@@ -23,7 +23,7 @@ cc_binary(
         ":mkhdrs",
     ],
     deps = [
-        "//lib:bazel",
+        "//lib:tools_opam",
         "@findlibc//lib:findlibc",
         "@libs7//lib:s7",
         "@opamc//lib:opamc",

@@ -2,6 +2,6 @@
 
 alias(
     name   = "stdlib",
-    actual = "@opam.ocamlsdk//lib/stdlib",
+    actual = "@{{pfx}}ocamlsdk//lib/stdlib",
     visibility = ["//visibility:public"]
 )

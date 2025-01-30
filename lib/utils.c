@@ -147,6 +147,70 @@ void _copy_template(char *buildfile, UT_string *to_file) {
     }
 }
 
+int write_template(char *pfx,
+                   unsigned char input[], int len,
+                   char *tofile)
+{
+    TRACE_ENTRY;
+    /* copy buf to file, replacing all "{{pfx}}" */
+    /* we could count the nbr of occurrances and then
+       allocate workbuf accordingly, but we know that
+       at most a few dozen are possible, so just allow
+       for 2K.
+ */
+
+    /* input[len] = '\0'; */
+    /* printf("input: %s\n", (char*)input); */
+    /* return 0; */
+
+    char *work_buf = (char*)calloc(len + 4096, sizeof(char));
+    if (work_buf == NULL) {
+        //FIXME handle error
+        printf("work_buf alloc error\n");
+        exit(EXIT_FAILURE);
+    }
+
+    /* based on https://stackoverflow.com/questions/56043612/how-to-replace-a-part-of-a-string-with-another-substring */
+
+    char *scanp = (char*)input;
+    char *last_char = (char*)(input + len);
+
+    size_t pfx_size = strlen(pfx);
+    char *tag = "{{pfx}}";
+    size_t tag_size = 7;
+    char *wbp = (char*)work_buf;
+    char *tagp = strstr((char*)scanp, tag);
+
+    while ((tagp != NULL) && (scanp <= last_char)) {
+        if (tagp == scanp) {
+            memcpy (wbp, pfx, pfx_size+1);
+            wbp += pfx_size;
+            scanp += tag_size;
+            tagp = strstr(scanp, tag);
+        } else {
+            while (scanp != tagp)
+                *(wbp++) = *(scanp++);
+        }
+    }
+    /* chars following last {{pfx}} */
+    while (scanp < last_char) *(wbp++) = *(scanp++);
+    *wbp = '\0';
+
+    FILE *target = fopen(tofile, "w");
+    if (target == NULL) {
+        fprintf(stderr, "write_buf fopen fail on tofile: %s\n", tofile);
+        exit(EXIT_FAILURE);
+    }
+    for (wbp = work_buf; *wbp != '\0'; wbp++) {
+        fputc(*wbp, target);
+    }
+    free(work_buf);
+    fclose(target);
+    if (verbosity > log_writes)
+        fprintf(INFOFD, GRN "INFO" CRESET " cp to %s\n", tofile);
+    return 0;
+}
+
 int write_buf(unsigned char buf[], int len, char *tofile)
 {
     TRACE_ENTRY;

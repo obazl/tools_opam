@@ -215,7 +215,7 @@ EXPORT void emit_ocamlsdk_module(UT_string *registry,
                     "%s/ocamlsdk/lib/stdlib",
                     coswitch_lib);
     mkdir_r(utstring_body(dst_dir));
-    emit_ocaml_stdlib_pkg(dst_dir, switch_lib);
+    emit_ocaml_stdlib_pkg(obazl_pfx, dst_dir, switch_lib);
 
     utstring_renew(dst_dir);
     utstring_printf(dst_dir,

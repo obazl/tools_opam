@@ -18,7 +18,6 @@
 
 #include "cwalk.h"
 #include "gopt.h"
-#include "libs7.h"
 #include "liblogc.h"
 /* #include "semver.h" */
 /* #include "utarray.h" */
@@ -48,10 +47,9 @@ bool quiet;
 bool verbose;
 int  verbosity;
 
-extern s7_scheme *s7;
-
 enum OPTS {
     OPT_PKG = 0,
+    OPT_PKG_PFX,
     OPT_OCAML_VERSION,
     OPT_SWITCH_PFX,
     FLAG_CLEAN,
@@ -91,6 +89,8 @@ static struct option options[] = {
     /* 0 */
     [OPT_PKG] = {.long_name="pkg",.short_name='p',
                  .flags=GOPT_ARGUMENT_REQUIRED},
+    [OPT_PKG_PFX] = {.long_name="pkg-pfx",
+        .flags=GOPT_ARGUMENT_REQUIRED},
     [OPT_OCAML_VERSION] = {.long_name="ocaml-version",
                            .flags=GOPT_ARGUMENT_REQUIRED},
     [OPT_SWITCH_PFX]    = {.long_name="switch-pfx",
@@ -178,6 +178,10 @@ int main(int argc, char *argv[])
         log_error("-p <pkg> or --pkg <pkg> required");
         exit(EXIT_FAILURE);
     }
+    /* if (!options[OPT_PKG_PFX].count) { */
+    /*     log_error("--pkg-pfx <str> required"); */
+    /*     exit(EXIT_FAILURE); */
+    /* } */
     /* if (!options[OPT_OCAML_VERSION].count) { */
     /*     log_error("--ocaml-version <v> required"); */
     /*     exit(EXIT_FAILURE); */
@@ -203,21 +207,15 @@ int main(int argc, char *argv[])
     /*                 (int)length, cwd); */
     /* log_debug("runfiles: %s", utstring_body(dir)); */
 
-    /* for reading dune-project files */
-    s7 = libs7_init(argv[0]);
-
-    /* this uses dlsym to fine libdune_s7_init,
-     and should work with either static or dso lib */
-    libs7_load_plugin(s7, "dune");
-
-    /* rf_init(utstring_body(dir)); */
-    /* rf_init(argv[0]); */
     LOG_INFO(0, "BAZEL_CURRENT_REPOSITORY: %s", BAZEL_CURRENT_REPOSITORY);
     /* LOG_INFO(0, "rf_root: %s", rf_root()); */
 
     opam_pkg_handler(options[OPT_SWITCH_PFX].argument,
                      options[OPT_OCAML_VERSION].argument,
-                     options[OPT_PKG].argument);
+                     options[OPT_PKG].argument,
+                     options[OPT_PKG_PFX].count
+                     ? options[OPT_PKG_PFX].argument
+                     : "");
                      /* options[OPT_SWITCH_LIB].argument, */
     LOG_INFO(0, "cwd: %s", getcwd(NULL, 0));
 
