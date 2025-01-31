@@ -645,11 +645,6 @@ EXPORT void emit_lib_stublibs_pkg(UT_string *dst_dir,
         fprintf(INFOFD, GRN "INFO" CRESET
                 " wrote: %s\n", utstring_body(dst_file));
 
-    /* utstring_new(dst_file); */
-    /* utstring_printf(dst_file, "%s/WORKSPACE.bazel", */
-    /*                 utstring_body(dst_dir)); */
-    /* emit_workspace_file(dst_file, "stublibs"); */
-
     /* now BUILD.bazel */
     utstring_renew(dst_file);
     utstring_printf(dst_file, "%s/lib/stublibs",

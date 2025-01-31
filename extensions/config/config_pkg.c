@@ -15,7 +15,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "cwalk.h"
+/* #include "cwalk.h" */
 /* #include "gopt.h" */
 #include "liblogc.h"
 #include "findlibc.h"
@@ -222,98 +222,19 @@ void opam_libpkg_handler(char *obazl_pfx, char *pkg_name)
             pkg->directory = pkg->name; // dirname(fname);
             pkg->metafile  = utstring_body(meta_path);
             pkg->entries = NULL;
-            /* return; */
-            /* } */
-            /* else if (errno == -2) { */
-            /*     log_warn("META file contains only whitespace: %s", utstring_body(meta_path)); */
-            /*     return; */
         } else {
             log_error("Error parsing %s", utstring_body(meta_path));
             return;
         }
-        /* emitted_bootstrapper = false; */
     } else {
-        /* #if defined(DEVBUILD) */
         if (verbosity > 2) {
             log_info("Parsed %d %s", verbosity, utstring_body(meta_path));
         }
-        /* if (coswitch_debug_findlib) */
-        /* DUMP_PKG(0, pkg); */
-        /* #endif */
-        // write module stuff in site-lib
-        // write registry stuff
     }
 
-    /* struct obzl_meta_packages_s *pkg */
-    /*     = malloc(sizeof(obzl_meta_packages_s)); */
-    /* char *n =  "TEST"; */
-    /* pkg->name = n; */
-
-    /* if (HASH_COUNT(pkgs) == 0) { */
-    /*     log_debug("adding initial pkg: %s", pkg->name); */
-    /*     pkgs = pkg; */
-    /* } else { */
-    /*     log_debug("adding next pkg", pkg->name); */
-    /*     HASH_ADD_PTR(pkgs, name, pkg); */
-    /* } */
-
-    /* log_debug("pkg->name: %s", pkg->name); */
-    /* log_debug("pkg->module_name: %s", pkg->module_name); */
-
-    /* char *pkg_name = strdup(pkg->name); */
     LOG_DEBUG(0, "pkg_name: %s", pkg_name);
 
-    /* char *p = pkg_name; */
-    /* for (p = pkg_name; *p; ++p) *p = tolower(*p); */
-
-    /* log_debug("adding next pkg: %s, (%p)", pkg->name, pkg); */
-    /* log_debug("hashing keyptr: %s", pkg->name); */
-    /* log_debug("  path: %s (%p)", pkg->path, pkg->path); */
-
-    /* HASH_ADD_KEYPTR(hh, paths->pkgs, */
-    /*                 pkg_name, strlen(pkg_name), */
-    /*                 pkg); */
-
-    /* log_debug("HASH CT: %d", HASH_COUNT(paths->pkgs)); */
-    /* struct obzl_meta_package *p; */
-    /* HASH_FIND_STR(paths->pkgs, pkg->name, p); */
-    /* if (p) */
-    /*     log_debug("found: %s", p->name); */
-    /* else */
-    /*     log_debug("NOT found: %s", pkg->name); */
-
-    /* log_debug("iterating"); */
-    /* struct obzl_meta_package *s; */
-    /* for (s = paths->pkgs; s != NULL; s = s->hh.next) { */
-    /*     log_debug("\tpkg ptr %p", s); */
-    /*     log_debug("\tpkg name %s", s->name); */
-    /*     log_debug("\tpkg path %s (%p)", s->path, s->path); */
-    /* } */
-
-
-    /* log_debug("coswitch_lib: %s", utstring_body(coswitch_lib)); */
-
-    /** emit workspace, module files for opam pkg **/
-    // WORKSPACE.bazel
-    /* UT_string *ws_root; */
-    /* utstring_new(ws_root); */
-    /* utstring_printf(ws_root, "%s/%s", */
-    /*                 utstring_body(coswitch_lib), */
-    /*                 pkg_name); */
-    /* mkdir_r(utstring_body(ws_root)); */
-
-    /* utstring_new(ws_root); */
-    /* utstring_printf(ws_root, "%s/opam.%s", */
-    /*                 utstring_body(coswitch_lib), */
-    /*                 pkg_name); */
-    /* mkdir_r(utstring_body(ws_root)); */
-
-    /* UT_string *bazel_file; */
-    /* utstring_new(bazel_file); */
-    /* utstring_printf(bazel_file, "%s/WORKSPACE.bazel", */
-    /*                 utstring_body(ws_root)); */
-    /* emit_workspace_file(bazel_file, pkg_name); */
-
+    /** emit module files for opam pkg **/
     // MODULE.bazel emitted later, after all pkgs parsed
     UT_string *mfile;
     utstring_new(mfile);
@@ -326,11 +247,11 @@ void opam_libpkg_handler(char *obazl_pfx, char *pkg_name)
     xmkdir_r(utstring_body(mfile));
     utstring_printf(mfile, "/MODULE.bazel");
     /* utstring_body(mfile)); */
-    ext_emit_module_file(mfile, pkg, /* paths.pkgs, */ false);
+    //ext_emit_module_file(mfile, obazl_pfx, pkg, NULL);
+    emit_module_file(mfile, obazl_pfx, pkg, NULL);
     utstring_free(mfile);
 
     if (!empty_pkg) {
-
         // then emit the BUILD.bazel files for the opam pkg
         utstring_new(imports_path);
         utstring_printf(imports_path, "%s", pkg_name);
@@ -345,53 +266,20 @@ void opam_libpkg_handler(char *obazl_pfx, char *pkg_name)
 
         /* emit @opam.foo */
         emit_build_bazel(_switch_lib, // switch_lib,
-                             utstring_body(coswitch_lib),
-                             utstring_body(coswitch_pkg_root),
-                             /* utstring_body(ws_root), */
-                             0,         /* indent level */
-                             pkg_name, // pkg_root
-                             pkg_parent, /* needed for handling subpkgs */
-                             NULL, // "buildfiles",        /* _pkg_prefix */
-                             utstring_body(imports_path),
-                             /* "",      /\* pkg-path *\/ */
-                             obazl_pfx,
-                             pkg,
-                             false); /* alias */
+                         utstring_body(coswitch_lib),
+                         utstring_body(coswitch_pkg_root),
+                         /* utstring_body(ws_root), */
+                         0,         /* indent level */
+                         pkg_name, // pkg_root
+                         pkg_parent, /* needed for handling subpkgs */
+                         NULL, // "buildfiles",        /* _pkg_prefix */
+                         utstring_body(imports_path),
+                         /* "",      /\* pkg-path *\/ */
+                         obazl_pfx,
+                         pkg);
         log_info("emitted bazel pkg %s, to %s",
                  pkg_name, utstring_body(coswitch_lib));
-        /* return; */
-
-        /* /\* emit @foo, aliased to @opam.foo *\/ */
-        /* emit_build_bazel(_switch_lib, // switch_lib, */
-        /*                      "./", */
-        /*                  /\* utstring_body(coswitch_lib), *\/ */
-        /*                  /\* utstring_body(ws_root), *\/ */
-        /*                  0,         /\* indent level *\/ */
-        /*                  pkg_name, // pkg_root */
-        /*                  pkg_parent, /\* needed for handling subpkgs *\/ */
-        /*                  NULL, // "buildfiles",        /\* _pkg_prefix *\/ */
-        /*                  utstring_body(imports_path), */
-        /*                  /\* "",      /\\* pkg-path *\\/ *\/ */
-        /*                  pkg, */
-        /*                  true); /\* alias *\/ */
-        /* opam_pending_deps, */
-        /* opam_completed_deps); */
     }
-    // this will emit one BUILD.bazel file per pkg & subpkg
-    // and put them in <switch>/lib/<repo>/lib/<subpkg> dirs
-    // e.g. <switch>/lib/ppxlib/lib/ast for ppxlib.ast
-
-    /* ******************************** */
-    // finally, the registry record
-    // emit registry files
-    // not needed for opam.dep extension
-    /* emit_registry_record(registry, */
-    /*                      meta_path, */
-    /*                      pkg_dir, */
-    /*                      pkg, */
-    /*                      default_version // (char*)version */
-    /*                      ); */
-
     UT_string *dst_dir;
     utstring_new(dst_dir);
     utstring_printf(dst_dir, "./");

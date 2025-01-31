@@ -436,7 +436,6 @@ void pkg_handler(char *switch_pfx,
     /* utstring_new(bazel_file); */
     /* utstring_printf(bazel_file, "%s/WORKSPACE.bazel", */
     /*                 utstring_body(ws_root)); */
-    /* emit_workspace_file(bazel_file, pkg_name); */
 
     // MODULE.bazel emitted later, after all pkgs parsed
 
@@ -471,22 +470,7 @@ void pkg_handler(char *switch_pfx,
                          utstring_body(imports_path),
                          /* "",      /\* pkg-path *\/ */
                          obazl_pfx,
-                         pkg,
-                         false); /* alias */
-        /* emit_build_bazel(switch_lib, // switch_lib, */
-        /*                  utstring_body(coswitch_lib), */
-        /*                  /\* utstring_body(ws_root), *\/ */
-        /*                  0,         /\* indent level *\/ */
-        /*                  pkg_name, // pkg_root */
-        /*                  pkg_parent, /\* needed for handling subpkgs *\/ */
-        /*                  NULL, // "buildfiles",        /\* _pkg_prefix *\/ */
-        /*                  utstring_body(imports_path), */
-        /*                  /\* "",      /\\* pkg-path *\\/ *\/ */
-        /*                  obazl_pfx, */
-        /*                  pkg, */
-        /*                  true); /\* alias *\/ */
-        /* opam_pending_deps, */
-        /* opam_completed_deps); */
+                         pkg)
     }
     // this will emit one BUILD.bazel file per pkg & subpkg
     // and put them in <switch>/lib/<repo>/lib/<subpkg> dirs
@@ -880,7 +864,7 @@ EXPORT void coswitch_main(char *launch_dir)
         mkdir_r(utstring_body(mfile));
         utstring_printf(mfile, "/MODULE.bazel");
                         /* utstring_body(mfile)); */
-        emit_module_file(mfile, pkg, paths.pkgs, true);
+        emit_module_file(mfile, obazl_pfx, pkg, paths.pkgs);
 
         utstring_renew(mfile);
         utstring_printf(mfile, "%s/opam.%s",
@@ -892,7 +876,7 @@ EXPORT void coswitch_main(char *launch_dir)
         mkdir_r(utstring_body(mfile));
         utstring_printf(mfile, "/MODULE.bazel");
                         /* utstring_body(mfile)); */
-        emit_module_file(mfile, pkg, paths.pkgs, false);
+        emit_module_file(mfile, obazl_pfx, pkg, paths.pkgs);
         utstring_free(mfile);
 
         free(pkg_name);

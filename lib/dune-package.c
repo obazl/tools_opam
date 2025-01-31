@@ -25,6 +25,13 @@ int  DEBUG_LEVEL;
 bool TRACE_FLAG;
 
 char pstr[8192];
+FILE  *instream = NULL;
+int    fd;
+static size_t read_len;
+static char *inbuf = NULL;
+static char *check_buf = NULL;
+
+char * dune_lang_version = NULL;
 
 void _handle_error(sexp_errcode_t sexperrno)
 {
@@ -72,12 +79,6 @@ void _handle_error(sexp_errcode_t sexperrno)
         printf("err: other\n");
     }
 }
-
-FILE  *instream = NULL;
-int    fd;
-static size_t read_len;
-static char *inbuf = NULL;
-static char *check_buf = NULL;
 
 EXPORT void dune_package_open(char *dune_pkg_file)
 {
@@ -135,6 +136,9 @@ EXPORT void dune_package_open(char *dune_pkg_file)
     read_len = fread(inbuf, 1, file_size, instream);
     /* FIXME: error check */
     inbuf[read_len] = '\0';       /* make sure it's properly terminated */
+
+    _set_dune_lang_version();
+
     return;
  failure:
     exit(EXIT_FAILURE);
@@ -148,6 +152,15 @@ EXPORT void dune_package_close(void)
     close(fd);
 }
 
+/*
+  WARNING: this is for recent dune versions.
+  Earlier versions (e.g. 4.14.0, pkg base) used:
+   (foreign_archives (archives (for all) (files libbase_stubs.a)))
+   or  (foreign_archives libbase_stubs.a)
+   that's with dune lang 2.8, 2.9
+   with dune lang 3.10 (3.0?) we get (files ... (stublibs ...))
+ */
+
 EXPORT UT_array *dune_package_files_fld(char *fldname)
 {
     sexp_t *sx    = NULL;
@@ -155,9 +168,10 @@ EXPORT UT_array *dune_package_files_fld(char *fldname)
     sexp_t *fldsexp = NULL;
     pcont_t *cc = NULL;
 
+    printf("dune lang version: %s\n", dune_lang_version);
 
     UT_array *values;
-    utarray_new(values,&ut_str_icd);
+    utarray_new(values, &ut_str_icd);
 
     if (cc == NULL) { cc = init_continuation(inbuf); }
 
@@ -165,6 +179,8 @@ EXPORT UT_array *dune_package_files_fld(char *fldname)
     while (sx != NULL) {
         filesexp = find_sexp("files",sx);
         if (filesexp != NULL) {
+            print_sexp(pstr, 1024, filesexp);
+            /* printf("files = %s\n", pstr); */
             fldsexp = find_sexp(fldname, filesexp);
             if (fldsexp != NULL) {
                 sexp_t *valsexp = fldsexp->next;
@@ -192,8 +208,35 @@ EXPORT UT_array *dune_package_files_fld(char *fldname)
         destroy_sexp(sx);
         sx = (sexp_t *)iparse_sexp(inbuf, read_len, cc);
     }
+    fflush(NULL);
     destroy_continuation(cc);
     destroy_sexp(sx);
     sexp_cleanup();
     return values;
+}
+
+LOCAL void _set_dune_lang_version(void)
+{
+    sexp_t *sx    = NULL;
+    sexp_t *keysexp = NULL;
+    pcont_t *cc = NULL;
+
+    if (cc == NULL) { cc = init_continuation(inbuf); }
+
+    sx = (sexp_t *)iparse_sexp(inbuf, read_len, cc);
+    keysexp = find_sexp("lang",sx);
+    if (keysexp != NULL) {
+        /* print_sexp(pstr, 1024, keysexp); */
+        /* printf("lang = %s\n", pstr); */
+        sexp_t *valsexp = keysexp->next;
+        /* print_sexp(pstr, 1024, valsexp); */
+        /* printf("val = %s\n", valsexp->val); */
+        valsexp = valsexp->next;
+        /* print_sexp(pstr, 1024, valsexp); */
+        /* printf("version = %s\n", valsexp->val); */
+        dune_lang_version = strdup(valsexp->val);
+        destroy_sexp(sx);
+        fflush(NULL);
+    }
+    destroy_continuation(cc);
 }

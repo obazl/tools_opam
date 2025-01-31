@@ -16,7 +16,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "cwalk.h"
+/* #include "cwalk.h" */
 #include "gopt.h"
 #include "liblogc.h"
 /* #include "semver.h" */

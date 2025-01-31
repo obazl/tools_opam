@@ -61,7 +61,10 @@ void _emit_opam_pkg_bindir(UT_string *dst_dir,
 
     dune_package_open(utstring_body(dune_pkg_file));
     UT_array *executables = dune_package_files_fld("bin");
-    if (utarray_len(executables) == 0) goto stublibs;
+    if (utarray_len(executables) == 0) {
+        LOG_DEBUG(0, "No executables found for pkg '%s'", pkg);
+        goto stublibs;
+    }
 
     /* if executables not null:
        1. create 'bin' subdir of pkg
@@ -161,10 +164,7 @@ void _emit_opam_pkg_bindir(UT_string *dst_dir,
 
  stublibs:
     ;
-    /* LOG_DEBUG(0, "STUBLIBS", ""); */
-
-    // FIXME: get stublibs dir from opam_switch_stublibs()
-
+    // FIXME: get stublibs dir from opam_switch_stublibs()?
     /* opam dumps all stublibs ('dllfoo.so') in lib/stublibs; they are
        not found in the pkg's lib subdir. But the package's
        dune-package file lists them, so we read that and then symlink
@@ -174,7 +174,7 @@ void _emit_opam_pkg_bindir(UT_string *dst_dir,
     UT_array *stublibs = dune_package_files_fld("stublibs");
     dune_package_close();
     if (utarray_len(stublibs) == 0) {
-        LOG_DEBUG(0, "NO STUBLIBS", "");
+        LOG_DEBUG(0, "NO STUBLIBS for %s", pkg);
         goto finished;
     }
 
@@ -197,7 +197,7 @@ void _emit_opam_pkg_bindir(UT_string *dst_dir,
                     /* coswitch_lib, */
                     /* pkg); */
     /* rc = access(utstring_body(build_bazel_file), F_OK); */
-    LOG_DEBUG(0, "fopening: %s", utstring_body(outpath));
+    LOG_DEBUG(1, "fopening: %s", utstring_body(outpath));
 
     /* FILE *ostream; */
     errno = 0;
@@ -225,7 +225,7 @@ void _emit_opam_pkg_bindir(UT_string *dst_dir,
                         "%s/lib/stublibs/%s",
                         switch_pfx,
                         *p);
-        LOG_DEBUG(0, "SYMLINK SRC: %s", utstring_body(opam_stublib));
+        LOG_DEBUG(1, "symlink src: %s", utstring_body(opam_stublib));
         utstring_renew(outpath);
         utstring_printf(outpath,
                         "%s/stublibs/%s",
@@ -233,7 +233,7 @@ void _emit_opam_pkg_bindir(UT_string *dst_dir,
                         /* coswitch_lib, */
                         /* pkg, */
                         *p);
-        LOG_DEBUG(0, "SYMLINK DST: %s", utstring_body(outpath));
+        LOG_DEBUG(1, "symlink dst: %s", utstring_body(outpath));
         int rc = symlink(utstring_body(opam_stublib),
                      utstring_body(outpath));
         symlink_ct++;
@@ -283,7 +283,7 @@ EXPORT void emit_pkg_bindir(UT_string *dst_dir,
                     opam_switch_pfx, /* global */
                     pkg);
 
-    LOG_DEBUG(0, "CHECKING DUNE-PACKAGE: %s\n", utstring_body(dune_pkg_file));
+    LOG_DEBUG(0, "CHECKING DUNE-PACKAGE: %s", utstring_body(dune_pkg_file));
     if (access(utstring_body(dune_pkg_file), F_OK) == 0) {
         _emit_opam_pkg_bindir(dst_dir,
                               opam_switch_pfx,

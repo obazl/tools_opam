@@ -76,7 +76,8 @@ void _emit_reg_rec(UT_string *reg_file, char *pkg_name)
 EXPORT void emit_registry_record(UT_string *registry,
                                  char *compiler_version,
                                  struct obzl_meta_package *pkg,
-                                 struct obzl_meta_package *pkgs)
+                                 struct obzl_meta_package *pkgs,
+                                 char *obazl_pfx)
 {
     TRACE_ENTRY;
     if (pkg) {
@@ -95,6 +96,7 @@ EXPORT void emit_registry_record(UT_string *registry,
         _emit_registry_record(registry,
                               compiler_version,
                               pkg, pkgs,
+                              obazl_pfx,
                               pkg_name,
                               module_name,
                               version); //, semv->major);
@@ -102,48 +104,56 @@ EXPORT void emit_registry_record(UT_string *registry,
         _emit_registry_record(registry,
                               compiler_version,
                               pkg, pkgs,
+                              obazl_pfx,
                               "ocamlsdk", "ocamlsdk", "0.0.0");
         _emit_registry_record(registry,
                               compiler_version,
                               pkg, pkgs,
+                              obazl_pfx,
                               "stublibs", "stublibs", "0.0.0");
         _emit_registry_record(registry,
                               compiler_version,
                               pkg, pkgs,
+                              obazl_pfx,
                               "compiler-libs",
                               "compiler-libs",
                               "0.0.0");
         _emit_registry_record(registry,
                               compiler_version,
                               pkg, pkgs,
+                              obazl_pfx,
                               "dynlink",
                               "dynlink",
                               "0.0.0");
         _emit_registry_record(registry,
                               compiler_version,
                               pkg, pkgs,
+                              obazl_pfx,
                               "str", "str", "0.0.0");
         _emit_registry_record(registry,
                               compiler_version,
                               pkg, pkgs,
+                              obazl_pfx,
                               "threads", "threads", "0.0.0");
         _emit_registry_record(registry,
                               compiler_version,
                               pkg, pkgs,
+                              obazl_pfx,
                               "unix", "unix", "0.0.0");
     }
     TRACE_EXIT;
 }
 
 void _emit_registry_record(UT_string *registry,
-                                  char *compiler_version,
-                                  struct obzl_meta_package *pkg,
-                                  struct obzl_meta_package *pkgs,
-                                  //WARN: module name is
-                                  // pkg_name, downcased
-                                  char *pkg_name,
-                                  char *module_name,
-                                  char *version)
+                           char *compiler_version,
+                           struct obzl_meta_package *pkg,
+                           struct obzl_meta_package *pkgs,
+                           //WARN: module name is
+                           // pkg_name, downcased
+                           char *obazl_pfx,
+                           char *pkg_name,
+                           char *module_name,
+                           char *version)
 {
     TRACE_ENTRY;
     (void)compiler_version;
@@ -230,7 +240,7 @@ void _emit_registry_record(UT_string *registry,
         // emit lib/ocaml and lib/stublibs
         _emit_reg_rec(reg_file, pkg_name);
     } else {
-        emit_module_file(reg_file, pkg, pkgs, false);
+        emit_module_file(reg_file, obazl_pfx, pkg, pkgs);
     }
     // JUST FOR DEBUGGING:
 #if defined(PROFILE_dev)
@@ -286,167 +296,169 @@ void _emit_registry_record(UT_string *registry,
     utstring_free(reg_file);
     utstring_free(bazel_file);
 
-    _emit_registry_record_alias(registry,
-                              compiler_version,
-                              pkg, pkgs,
-                              pkg_name,
-                              module_name,
-                              version); //, semv->major);
+    /* _emit_registry_record_alias(registry, */
+    /*                             compiler_version, */
+    /*                             pkg, pkgs, */
+    /*                             obazl_pfx, */
+    /*                             pkg_name, */
+    /*                             module_name, */
+    /*                             version); //, semv->major); */
     TRACE_EXIT;
 }
 
-void _emit_registry_record_alias(UT_string *registry,
-                                  char *compiler_version,
-                                  struct obzl_meta_package *pkg,
-                                  struct obzl_meta_package *pkgs,
-                                  //WARN: module name is
-                                  // pkg_name, downcased
-                                  char *pkg_name,
-                                  char *module_name,
-                                  char *version)
-{
-    TRACE_ENTRY;
-    (void)compiler_version;
-    /* UT_string *tmp; */
-    /* utstring_new(tmp); */
-    /* utstring_printf(tmp, "%s/modules/%s", */
-    /*                 utstring_body(registry), */
-    /*                 module_name); */
-    /* mkdir_r(utstring_body(tmp)); */
+/* void _emit_registry_record_alias(UT_string *registry, */
+/*                                  char *compiler_version, */
+/*                                  struct obzl_meta_package *pkg, */
+/*                                  struct obzl_meta_package *pkgs, */
+/*                                  //WARN: module name is */
+/*                                  // pkg_name, downcased */
+/*                                  char *obazl_pfx, */
+/*                                  char *pkg_name, */
+/*                                  char *module_name, */
+/*                                  char *version) */
+/* { */
+/*     TRACE_ENTRY; */
+/*     (void)compiler_version; */
+/*     /\* UT_string *tmp; *\/ */
+/*     /\* utstring_new(tmp); *\/ */
+/*     /\* utstring_printf(tmp, "%s/modules/%s", *\/ */
+/*     /\*                 utstring_body(registry), *\/ */
+/*     /\*                 module_name); *\/ */
+/*     /\* mkdir_r(utstring_body(tmp)); *\/ */
 
-    UT_string *reg_dir;
-    utstring_new(reg_dir);
-    utstring_printf(reg_dir,
-                    "%s/modules/%s",
-                    utstring_body(registry),
-                    module_name);
-                    /* pkg_name); */
-                    /* default_version); */
-                    /* (char*)version); */
-    mkdir_r(utstring_body(reg_dir));
-    /* log_debug("regdir: %s", utstring_body(reg_dir)); */
+/*     UT_string *reg_dir; */
+/*     utstring_new(reg_dir); */
+/*     utstring_printf(reg_dir, */
+/*                     "%s/modules/%s", */
+/*                     utstring_body(registry), */
+/*                     module_name); */
+/*                     /\* pkg_name); *\/ */
+/*                     /\* default_version); *\/ */
+/*                     /\* (char*)version); *\/ */
+/*     mkdir_r(utstring_body(reg_dir)); */
+/*     /\* log_debug("regdir: %s", utstring_body(reg_dir)); *\/ */
 
-    // modules/$MODULE/metadata.json
-    /* UT_string *metadata_json_file; */
-    UT_string *bazel_file;
-    utstring_new(bazel_file);
-    utstring_printf(bazel_file,
-                    "%s/metadata.json",
-                    utstring_body(reg_dir));
-    /* if (verbose) */
-        /* log_info("metadata.json: %s", */
-        /*          utstring_body(bazel_file)); */
+/*     // modules/$MODULE/metadata.json */
+/*     /\* UT_string *metadata_json_file; *\/ */
+/*     UT_string *bazel_file; */
+/*     utstring_new(bazel_file); */
+/*     utstring_printf(bazel_file, */
+/*                     "%s/metadata.json", */
+/*                     utstring_body(reg_dir)); */
+/*     /\* if (verbose) *\/ */
+/*         /\* log_info("metadata.json: %s", *\/ */
+/*         /\*          utstring_body(bazel_file)); *\/ */
 
-    //FIXME: from opam file: maintainer(s), homepage
+/*     //FIXME: from opam file: maintainer(s), homepage */
 
-    char *metadata_json_template = ""
-        "{\n"
-        "    \"homepage\": \"\",\n"
-        "    \"maintainers\": [],\n"
-        "    \"versions\": [\"%s\"],\n"
-        "    \"yanked_versions\": {}\n"
-        "}\n";
-    // optional?  "repository": ["github:obazl/semverc"]
+/*     char *metadata_json_template = "" */
+/*         "{\n" */
+/*         "    \"homepage\": \"\",\n" */
+/*         "    \"maintainers\": [],\n" */
+/*         "    \"versions\": [\"%s\"],\n" */
+/*         "    \"yanked_versions\": {}\n" */
+/*         "}\n"; */
+/*     // optional?  "repository": ["github:obazl/semverc"] */
 
-    UT_string *metadata_json;
-    utstring_new(metadata_json);
-    utstring_printf(metadata_json,
-                    metadata_json_template,
-                    version);
-    /* if (verbose) */
-        /* log_info("metadata_json:\n%s", */
-        /*          utstring_body(metadata_json)); */
+/*     UT_string *metadata_json; */
+/*     utstring_new(metadata_json); */
+/*     utstring_printf(metadata_json, */
+/*                     metadata_json_template, */
+/*                     version); */
+/*     /\* if (verbose) *\/ */
+/*         /\* log_info("metadata_json:\n%s", *\/ */
+/*         /\*          utstring_body(metadata_json)); *\/ */
 
-    FILE *metadata_json_fd
-        = fopen(utstring_body(bazel_file), "w");
-    fprintf(metadata_json_fd,
-            "%s", utstring_body(metadata_json));
-    fclose (metadata_json_fd);
-    if (verbosity > log_writes) {
-        fprintf(INFOFD, GRN "INFO" CRESET " wrote %s\n", utstring_body(bazel_file));
-        /* fflush(NULL); */
-    }
+/*     FILE *metadata_json_fd */
+/*         = fopen(utstring_body(bazel_file), "w"); */
+/*     fprintf(metadata_json_fd, */
+/*             "%s", utstring_body(metadata_json)); */
+/*     fclose (metadata_json_fd); */
+/*     if (verbosity > log_writes) { */
+/*         fprintf(INFOFD, GRN "INFO" CRESET " wrote %s\n", utstring_body(bazel_file)); */
+/*         /\* fflush(NULL); *\/ */
+/*     } */
 
-    utstring_free(metadata_json);
+/*     utstring_free(metadata_json); */
 
-    // modules/$MODULE/$VERSION/[MODULE.bazel, source.json]
-    utstring_printf(reg_dir, "/%s", default_version); //version);
-    mkdir_r(utstring_body(reg_dir));
-    /* log_debug("regdir: %s", utstring_body(reg_dir)); */
+/*     // modules/$MODULE/$VERSION/[MODULE.bazel, source.json] */
+/*     utstring_printf(reg_dir, "/%s", default_version); //version); */
+/*     mkdir_r(utstring_body(reg_dir)); */
+/*     /\* log_debug("regdir: %s", utstring_body(reg_dir)); *\/ */
 
-    /* FIXME: just copy the MODULE.bazel file from lib */
+/*     /\* FIXME: just copy the MODULE.bazel file from lib *\/ */
 
-    UT_string *reg_file;
-    utstring_new(reg_file);
-    utstring_printf(reg_file,
-                    "%s/MODULE.bazel",
-                    utstring_body(reg_dir));
-    /* log_info("reg MODULE.bazel: %s", */
-    /*          utstring_body(reg_file)); */
+/*     UT_string *reg_file; */
+/*     utstring_new(reg_file); */
+/*     utstring_printf(reg_file, */
+/*                     "%s/MODULE.bazel", */
+/*                     utstring_body(reg_dir)); */
+/*     /\* log_info("reg MODULE.bazel: %s", *\/ */
+/*     /\*          utstring_body(reg_file)); *\/ */
 
-    /* if ( (strncmp("ocaml", pkg_name, 6) == 0) */
-    /*      || (strncmp("stublibs", pkg_name, 8) == 0)) { */
-    if (pkg == NULL) {
-        // emit lib/ocaml and lib/stublibs
-        _emit_reg_rec(reg_file, pkg_name);
-    } else {
-        emit_module_file(reg_file, pkg, pkgs, true);
-   }
-    // JUST FOR DEBUGGING:
-#if defined(PROFILE_dev)
-    if (pkg) {
-        if (pkg->metafile) {
-            utstring_new(reg_file);
-            utstring_printf(reg_file,
-                            "%s/META",
-                            utstring_body(reg_dir));
-            /* log_info("reg META: %s", */
-            /*          utstring_body(reg_file)); */
+/*     /\* if ( (strncmp("ocaml", pkg_name, 6) == 0) *\/ */
+/*     /\*      || (strncmp("stublibs", pkg_name, 8) == 0)) { *\/ */
+/*     if (pkg == NULL) { */
+/*         // emit lib/ocaml and lib/stublibs */
+/*         _emit_reg_rec(reg_file, pkg_name); */
+/*     } else { */
+/*         emit_module_file(reg_file, obazl_pfx, pkg, pkgs); */
+/*    } */
+/*     // JUST FOR DEBUGGING: */
+/* #if defined(PROFILE_dev) */
+/*     if (pkg) { */
+/*         if (pkg->metafile) { */
+/*             utstring_new(reg_file); */
+/*             utstring_printf(reg_file, */
+/*                             "%s/META", */
+/*                             utstring_body(reg_dir)); */
+/*             /\* log_info("reg META: %s", *\/ */
+/*             /\*          utstring_body(reg_file)); *\/ */
 
-            copy_buildfile(pkg->metafile, reg_file);
-        }
-    }
-#endif
+/*             copy_buildfile(pkg->metafile, reg_file); */
+/*         } */
+/*     } */
+/* #endif */
 
-    utstring_renew(reg_file);
-    utstring_printf(reg_file,
-                    "%s/source.json",
-                    utstring_body(reg_dir));
-    /* log_info("reg source.json : %s", */
-    /*          utstring_body(reg_file)); */
+/*     utstring_renew(reg_file); */
+/*     utstring_printf(reg_file, */
+/*                     "%s/source.json", */
+/*                     utstring_body(reg_dir)); */
+/*     /\* log_info("reg source.json : %s", *\/ */
+/*     /\*          utstring_body(reg_file)); *\/ */
 
-    char *source_json_template = ""
-        "{\n"
-        "    \"type\": \"local_path\",\n"
-        "    \"path\": \"%s\"\n"
-        "}\n";
+/*     char *source_json_template = "" */
+/*         "{\n" */
+/*         "    \"type\": \"local_path\",\n" */
+/*         "    \"path\": \"%s\"\n" */
+/*         "}\n"; */
 
-    UT_string *source_json;
-    utstring_new(source_json);
-    utstring_printf(source_json,
-                    source_json_template,
-                    pkg_name);
-                    /* pkg_name); */
-    /* if (verbose) { */
-    /*     log_info("source_json:\n%s", */
-    /*              utstring_body(source_json)); */
-    /*     log_info("regfile: %s", utstring_body(reg_file)); */
-    /* } */
-    FILE *source_json_fd
-        = fopen(utstring_body(reg_file), "w");
-    fprintf(source_json_fd,
-            "%s", utstring_body(source_json));
-    fclose (source_json_fd);
-    if (verbosity > log_writes) {
-        fprintf(INFOFD, GRN "INFO" CRESET " wrote %s\n", utstring_body(reg_file));
-    }
+/*     UT_string *source_json; */
+/*     utstring_new(source_json); */
+/*     utstring_printf(source_json, */
+/*                     source_json_template, */
+/*                     pkg_name); */
+/*                     /\* pkg_name); *\/ */
+/*     /\* if (verbose) { *\/ */
+/*     /\*     log_info("source_json:\n%s", *\/ */
+/*     /\*              utstring_body(source_json)); *\/ */
+/*     /\*     log_info("regfile: %s", utstring_body(reg_file)); *\/ */
+/*     /\* } *\/ */
+/*     FILE *source_json_fd */
+/*         = fopen(utstring_body(reg_file), "w"); */
+/*     fprintf(source_json_fd, */
+/*             "%s", utstring_body(source_json)); */
+/*     fclose (source_json_fd); */
+/*     if (verbosity > log_writes) { */
+/*         fprintf(INFOFD, GRN "INFO" CRESET " wrote %s\n", utstring_body(reg_file)); */
+/*     } */
 
-    utstring_free(source_json);
+/*     utstring_free(source_json); */
 
-    utstring_free(reg_file);
-    utstring_free(bazel_file);
-    TRACE_EXIT;
-}
+/*     utstring_free(reg_file); */
+/*     utstring_free(bazel_file); */
+/*     TRACE_EXIT; */
+/* } */
 
 /* ************************************************ */
 /*
