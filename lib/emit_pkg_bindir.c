@@ -288,10 +288,6 @@ EXPORT void emit_pkg_bindir(UT_string *dst_dir,
         _emit_opam_pkg_bindir(dst_dir,
                               opam_switch_pfx,
                               coswitch_lib,
-                              pkg); // dune_pkg_file);
-                             /* switch_lib, */
-                             /* pkgdir, */
-                             /* obazl_opam_root, */
-                             /* emitted_bootstrapper); */
+                              pkg);
     }
 }

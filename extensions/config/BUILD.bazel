@@ -10,13 +10,6 @@ load("//config/cc:CONFIG.bzl",
 ## ERROR: repo_name not defined (v 7.0)
 LOCAL_REPO=repository_name()[1:]
 
-cc_binary(
-    name  = "prompt",
-    visibility = ["//visibility:public"],
-    srcs  = [
-        "prompt.c",
-    ],
-)
 ##########
 cc_binary(
     name  = "config",

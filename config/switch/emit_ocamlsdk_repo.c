@@ -64,17 +64,14 @@ EXPORT void emit_ocamlsdk_module(UT_string *registry,
                                  char *switch_name,
                                  char *switch_pfx,
                                  char *coswitch_lib,
+                                 char *obazl_pfx,
                                  char *runfiles)
 {
     TRACE_ENTRY;
     LOG_DEBUG(0, "switch_name: %s", switch_name);
-#if defined(PROFILE_fastbuild)
-    /* if (verbosity > 0) { */
-        LOG_TRACE(0, BLU "EMIT_ocaml_workspace:" CRESET
-                  " switch_pfx:%s, dst: %s",
-                  switch_pfx, coswitch_lib);
-    /* } */
-#endif
+    LOG_TRACE(0, BLU "EMIT_ocaml_workspace:" CRESET
+              " switch_pfx:%s, dst: %s",
+              switch_pfx, coswitch_lib);
 
     char *switch_lib = opam_switch_lib(switch_name);
 
@@ -140,49 +137,8 @@ EXPORT void emit_ocamlsdk_module(UT_string *registry,
         fprintf(INFOFD, GRN "INFO" CRESET
                 " wrote %s\n", utstring_body(dst_file));
 
-
-
-    /* now drop WORKSPACE.bazel from path */
     utstring_renew(dst_file);
     utstring_printf(dst_file, "%s/ocamlsdk", coswitch_lib);
-
-    /*
-      if we are in a bazel env get runfiles dir
-      else runfiles dir is <switch_pfx>/share/obazl/templates
-     */
-
-    /* UT_string *xrunfiles; */
-    /* utstring_new(xrunfiles); */
-    /* LOG_DEBUG(0, "PWD: %s", getcwd(NULL,0)); */
-    /* LOG_DEBUG(0, "OPAM_SWITCH_PREFIX: %s", */
-    /*           getenv("OPAM_SWITCH_PREFIX")); */
-    /* LOG_DEBUG(0, "BAZEL_CURRENT_REPOSITORY: %s", */
-    /*           BAZEL_CURRENT_REPOSITORY); */
-    /* if (getenv("BUILD_WORKSPACE_DIRECTORY")) { */
-    /*     if (strlen(BAZEL_CURRENT_REPOSITORY) == 0) { */
-    /*         utstring_printf(xrunfiles, "%s", */
-    /*                         realpath("new", NULL)); */
-    /*     } else { */
-    /*         LOG_DEBUG(0, "XXXXXXXXXXXXXXXX %s", */
-    /*                   BAZEL_CURRENT_REPOSITORY); */
-    /*         char *rp = realpath("external/" */
-    /*                             BAZEL_CURRENT_REPOSITORY, */
-    /*                             NULL); */
-    /*         LOG_DEBUG(0, "PWD: %s", getcwd(NULL,0)); */
-    /*         LOG_DEBUG(0, "AAAAAAAAAAAAAAAA %s", rp); */
-    /*         utstring_printf(xrunfiles, "%s", rp); */
-    /* LOG_DEBUG(0, "XXXXXXXXXXXXXXXX %s", */
-    /*           utstring_body(xrunfiles)); */
-    /*     } */
-    /* } else { */
-    /*     utstring_printf(xrunfiles, "%s/share/obazl", */
-    /*                     switch_pfx); */
-    /*     // runfiles = <switch-pfx>/share/obazl */
-    /*     /\* runfiles = "../../../share/obazl"; *\/ */
-    /* } */
-
-    /* char *runfiles = utstring_body(xrunfiles); // strdup? */
-    /* LOG_DEBUG(0, "RUNFILES root: %s", rf_root()); */
 
     UT_string *bld_file;
     utstring_new(bld_file);
@@ -208,7 +164,7 @@ EXPORT void emit_ocamlsdk_module(UT_string *registry,
                     "%s/ocamlsdk/toolchain",
                     coswitch_lib);
     mkdir_r(utstring_body(dst_dir));
-    emit_ocaml_toolchain_buildfiles(dst_dir);
+    emit_ocaml_toolchain_buildfiles(obazl_pfx, dst_dir);
 
     utstring_renew(dst_dir);
     utstring_printf(dst_dir,

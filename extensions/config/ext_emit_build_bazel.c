@@ -61,7 +61,6 @@ extern int debug;
 extern bool trace;
 
 UT_string *bzl_switch_pfx;
-
 UT_string *bazel_pkg_root;
 UT_string *build_bazel_file;
 
@@ -73,11 +72,12 @@ extern char *bazel_compat;
 
 bool distrib_pkg;
 
+/* extern char *switch_id; */
 extern char *switch_pfx;
 extern char *switch_lib;
 
 EXPORT void xmkdir_r(const char *dir) {
-    TRACE_ENTRY;
+    /* log_debug("xmkdir_r %s", dir); */
     char tmp[512];
     char *p = NULL;
     size_t len;
@@ -95,10 +95,198 @@ EXPORT void xmkdir_r(const char *dir) {
     mkdir(tmp, S_IRWXU);
 }
 
-UT_array *cc_stubs;
+//UT_array *cc_stubs;
 
-void ext_emit_ocamlsdk_module(/* char *switch_id, */
-                              char *_ocaml_version,
+
+EXPORT void ext_emit_module_file(UT_string *module_file,
+                                 struct obzl_meta_package *_pkg,
+                                 bool alias)
+{
+    TRACE_ENTRY_MSG("%s", _pkg->name);
+    LOG_DEBUG(0, "module file: %s", utstring_body(module_file));
+    findlib_version_t *semv;
+    char version[256];
+    semv = findlib_pkg_version(_pkg);
+    sprintf(version, "%d.%d.%d",
+            semv->major, semv->minor, semv->patch);
+
+    FILE *ostream;
+    ostream = fopen(utstring_body(module_file), "w");
+    if (ostream == NULL) {
+        LOG_ERROR(0, "fopen fail: %s %s",
+                  utstring_body(module_file),
+                  strerror(errno));
+        perror(utstring_body(module_file));
+        exit(EXIT_FAILURE);
+    }
+
+    fprintf(ostream, "## generated file - DO NOT EDIT\n\n");
+
+    fprintf(ostream, "module(\n");
+    if (alias) {
+        fprintf(ostream, "    name = \"%s\",\n", _pkg->module_name);
+    } else {
+        fprintf(ostream, "    name = \"opam.%s\",\n", _pkg->module_name);
+    }
+    fprintf(ostream, "    version = \"%s\",  # %s\n",
+            default_version, version);
+    fprintf(ostream, "    compatibility_level = %d, # %d\n",
+            default_compat, semv->major);
+    fprintf(ostream, "    bazel_compatibility = [\">=%s\"]\n",
+            bazel_compat);
+    fprintf(ostream, ")\n");
+    fprintf(ostream, "\n");
+
+    /* opam bzlmodules depend on ocaml_import */
+    /* if (!alias) { */
+    fprintf(ostream, "bazel_dep(name = \"rules_ocaml\", version = \"%s\")\n", rules_ocaml_version);
+    /* } */
+    /* modules that depend on built-ins, e.g. str, threads, unix, etc. */
+    LOG_DEBUG(0, "running findlib", "");
+    UT_array *pkg_deps = findlib_pkg_deps(_pkg, true);
+    if (pkg_deps == NULL) {
+        LOG_DEBUG(0, "pkg has no deps", "");
+        fprintf(ostream, "\n");
+        fclose(ostream);
+        TRACE_EXIT;
+        return;
+    }
+    LOG_DEBUG(0, "pkg deps ct: %d", utarray_len(pkg_deps));
+    char **p = NULL;
+    if (!alias) {
+        if (pkg_deps) {
+            while ( (p=(char**)utarray_next(pkg_deps, p))) {
+                if ((strncmp(*p, "compiler-libs", 13) == 0)
+                    || (strncmp(*p, "dynlink", 7) == 0)
+                    || (strncmp(*p, "ocamldoc", 8) == 0)
+                    || (strncmp(*p, "str", 3) == 0)
+                    || (strncmp(*p, "threads", 7) == 0)
+                    || (strncmp(*p, "unix", 4) == 0)
+                    ){
+                    fprintf(ostream, "bazel_dep(name = \"ocamlsdk\",       version = \"%s\")\n", ocaml_version);
+                    break;
+                }
+            }
+        }
+        /* fprintf(ostream, "          version = \"0.0.0\")\n"); */
+        fprintf(ostream, "\n");
+
+        // get **repo** deps: direct deps of pkg and all subpkgs
+        if (pkg_deps) {
+            p = NULL;
+            /* struct obzl_meta_package *pkg; */
+            /* LOG_DEBUG(0, "HASH CT: %d", HASH_COUNT(_pkgs)); */
+            /* exit(0); */
+            while ( (p=(char**)utarray_next(pkg_deps, p))) {
+                LOG_DEBUG(0, "pkg dep: %s", *p);
+                if ((strncmp(*p, "compiler-libs", 13) == 0)
+                    || (strncmp(*p, "dynlink", 7) == 0)
+                    || (strncmp(*p, "ocamldoc", 8) == 0)
+                    || (strncmp(*p, "str", 3) == 0)
+                    || (strncmp(*p, "threads", 7) == 0)
+                    || (strncmp(*p, "unix", 4) == 0)
+                    ){
+                    continue;
+                }
+                if (strncmp(*p, _pkg->name, 512) != 0) {
+                    /* for now ignore actual versions */
+                    sprintf(version, "%d.%d.%d", 0,0,0);
+                    /* HASH_FIND_STR(_pkgs, *p, pkg); */
+                    /* if (pkg) { */
+                    /*     free(semv); */
+                    /*     version[0] = '\0'; */
+                    /*     semv = findlib_pkg_version(pkg); */
+                    /*     sprintf(version, "%d.%d.%d", */
+                    /*             semv->major, semv->minor, semv->patch); */
+                    /* } else { */
+                    /*     //FIXME: pkg 'compiler-libs' (a dep of */
+                    /*     // ppxlib.astlib etc.) is a pseudo-pkg, */
+                    /*     // referring to lib/ocaml/compiler-libs, */
+                    /*     // so it has neither pkg entry nor version */
+                    /*     if (strncmp(*p, "compiler-libs", 13) == 0) { */
+                    /*         sprintf(version, "%d.%d.%d", 0,0,0); */
+                    /*     } else { */
+                    /*         sprintf(version, "%d.%d.%d", -1, -1 , -1); */
+                    /*     } */
+                    /* } */
+                    fprintf(ostream, "bazel_dep(name = \"%s\", version = \"%s\")\n",
+                            *p, default_version);
+                    /* fprintf(ostream, "bazel_dep(name = \"opam.%s\", version = \"%s\") # %s\n", */
+                    /*         *p, default_version, version); */
+                    /* fprintf(ostream, "          version = \"%s\")\n", */
+                    /*         default_version); */
+                }
+            }
+        }
+    }
+    /* HACK ALERT! This hideous code deals with ppx_runtime_deps,
+       and must check to prevent duplicates.
+     */
+    char **already = NULL;      /* for searching */
+    if (pkg_deps) {
+        utarray_sort(pkg_deps,strsort);
+    }
+    UT_array *pkg_codeps = findlib_pkg_codeps(_pkg, true);
+    if (pkg_codeps) {
+        char **p = NULL;
+        /* struct obzl_meta_package *pkg; */
+        /* LOG_DEBUG(0, "HASH CT: %d", HASH_COUNT(_pkgs)); */
+        /* exit(0); */
+        while ( (p=(char**)utarray_next(pkg_codeps, p))) {
+            if (strncmp(*p, _pkg->name, 512) != 0) {
+                sprintf(version, "%d.%d.%d", 0,0,0);
+                /* HASH_FIND_STR(_pkgs, *p, pkg); */
+                /* if (pkg) { */
+                /*     free(semv); */
+                /*     version[0] = '\0'; */
+                /*     semv = findlib_pkg_version(pkg); */
+                /*     sprintf(version, "%d.%d.%d", */
+                /*             semv->major, semv->minor, semv->patch); */
+                /* } else { */
+                /*     //FIXME: pkg 'compiler-libs' (a dep of */
+                /*     // ppxlib.astlib etc.) is a pseudo-pkg, */
+                /*     // referring to lib/ocaml/compiler-libs, */
+                /*     // so it has neither pkg entry nor version */
+                /*     if (strncmp(*p, "compiler-libs", 13) == 0) { */
+                /*         sprintf(version, "%d.%d.%d", 0,0,0); */
+                /*     } else { */
+                /*         sprintf(version, "%d.%d.%d", -1, -1 , -1); */
+                /*     } */
+                /* } */
+                if (pkg_deps) {
+                    already = NULL;
+                    already = (char**)utarray_find(pkg_deps, p, strsort);
+                    if (already == NULL) {
+                        fprintf(ostream, "bazel_dep(name = \"%s\", version = \"%s\")\n",
+                                *p, default_version);
+                        /* fprintf(ostream, "bazel_dep(name = \"%s\", # %s\n", */
+                        /*         *p, version); */
+                        /* fprintf(ostream, "          version = \"%s\") #codep\n", */
+                        /*         default_version); */
+                    }
+                }
+            }
+        }
+    }
+
+    fprintf(ostream, "\n");
+
+    fclose(ostream);
+    if (verbosity > log_writes) {
+        fprintf(INFOFD, GRN "INFO" CRESET
+                " wrote: %s\n", utstring_body(module_file));
+    }
+    if (pkg_deps) {
+        utarray_free(pkg_deps);
+    }
+    if (pkg_codeps) {
+        utarray_free(pkg_codeps);
+    }
+    TRACE_EXIT;
+}
+
+/* ############################################### */
+void ext_emit_ocamlsdk_module(char *_ocaml_version,
                               char *switch_pfx,
                               char *obazl_pfx)
 {
@@ -139,6 +327,45 @@ void ext_emit_ocamlsdk_module(/* char *switch_id, */
         fprintf(INFOFD, GRN "INFO" CRESET
                 " wrote %s\n", utstring_body(dst_file));
 
+
+    /*
+      if we are in a bazel env get runfiles dir
+      else runfiles dir is <switch_pfx>/share/obazl/templates
+     */
+
+    /* UT_string *xrunfiles; */
+    /* utstring_new(xrunfiles); */
+    /* LOG_DEBUG(0, "PWD: %s", getcwd(NULL,0)); */
+    /* LOG_DEBUG(0, "OPAM_SWITCH_PREFIX: %s", */
+    /*           getenv("OPAM_SWITCH_PREFIX")); */
+    /* LOG_DEBUG(0, "BAZEL_CURRENT_REPOSITORY: %s", */
+    /*           BAZEL_CURRENT_REPOSITORY); */
+    /* if (getenv("BUILD_WORKSPACE_DIRECTORY")) { */
+    /*     if (strlen(BAZEL_CURRENT_REPOSITORY) == 0) { */
+    /*         utstring_printf(xrunfiles, "%s", */
+    /*                         realpath("new", NULL)); */
+    /*     } else { */
+    /*         LOG_DEBUG(0, "XXXXXXXXXXXXXXXX %s", */
+    /*                   BAZEL_CURRENT_REPOSITORY); */
+    /*         char *rp = realpath("external/" */
+    /*                             BAZEL_CURRENT_REPOSITORY, */
+    /*                             NULL); */
+    /*         LOG_DEBUG(0, "PWD: %s", getcwd(NULL,0)); */
+    /*         LOG_DEBUG(0, "AAAAAAAAAAAAAAAA %s", rp); */
+    /*         utstring_printf(xrunfiles, "%s", rp); */
+    /* LOG_DEBUG(0, "XXXXXXXXXXXXXXXX %s", */
+    /*           utstring_body(xrunfiles)); */
+    /*     } */
+    /* } else { */
+    /*     utstring_printf(xrunfiles, "%s/share/obazl", */
+    /*                     switch_pfx); */
+    /*     // runfiles = <switch-pfx>/share/obazl */
+    /*     /\* runfiles = "../../../share/obazl"; *\/ */
+    /* } */
+
+    /* char *runfiles = utstring_body(xrunfiles); // strdup? */
+    /* LOG_DEBUG(1, "RUNFILES root: %s", rf_root()); */
+
     UT_string *bld_file;
     utstring_new(bld_file);
     utstring_printf(bld_file, "bin");
@@ -150,6 +377,13 @@ void ext_emit_ocamlsdk_module(/* char *switch_id, */
     utstring_new(dst_dir);
     utstring_printf(dst_dir, "bin");
     _emit_ocaml_bin_symlinks(dst_dir, switch_pfx); //, coswitch_lib);
+
+    /* UT_string *templates; */
+    /* utstring_new(templates); */
+    /* utstring_printf(templates, "%s/templates", runfiles); */
+
+    /* emit_ocaml_platform_buildfiles(/\* templates, *\/ coswitch_lib); */
+
     utstring_renew(dst_dir);
     utstring_printf(dst_dir, "toolchain");
     mkdir_r(utstring_body(dst_dir));
@@ -165,12 +399,26 @@ void ext_emit_ocamlsdk_module(/* char *switch_id, */
     mkdir_r(utstring_body(dst_dir));
     emit_ocaml_stublibs(dst_dir, switch_pfx);
 
+    //  <switch>lib/stublibs: not an ocamlsdk subdir,
+    // must be installed separately
+    /* char *switch_stublibs = opam_switch_stublibs(switch_id); */
+    /* emit_lib_stublibs_pkg(NULL, switch_stublibs, coswitch_lib); */
+
+    // aliases <switch>lib/compiler-libs:
+    /* NB: under opam_dep extension this must
+       be built as a distinct dep
+     */
+    /* emit_compiler_libs_pkg(NULL, coswitch_lib); */
+
     utstring_renew(dst_dir);
-    utstring_printf(dst_dir, "lib/compiler-libs");
+    utstring_printf(dst_dir,
+                    "lib/compiler-libs");
+                    /* coswitch_lib); */
     mkdir_r(utstring_body(dst_dir));
     emit_ocaml_compiler_libs_pkg(obazl_pfx,
                                  dst_dir,
                                  switch_lib);
+                                 /* coswitch_lib); */
 
     emit_ocaml_bigarray_pkg(NULL, obazl_pfx,
                             switch_lib, coswitch_lib);
@@ -207,6 +455,9 @@ void ext_emit_ocamlsdk_module(/* char *switch_id, */
     utstring_printf(dst_dir, "lib/threads");
     mkdir_r(utstring_body(dst_dir));
     emit_ocaml_threads_pkg(dst_dir, switch_lib);
+    /* if (!ocaml_prev5) */
+        /* emit_registry_record(registry, compiler_version, */
+        /*                      NULL, pkgs); */
 
     utstring_renew(dst_dir);
     utstring_printf(dst_dir, "lib/unix");
