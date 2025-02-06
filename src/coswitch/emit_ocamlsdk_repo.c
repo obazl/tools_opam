@@ -15,16 +15,10 @@
 
 #include "liblogc.h"
 #include "findlibc.h"
-#include "opamc.h"
 #include "utarray.h"
 #if EXPORT_INTERFACE
 #include "utstring.h"
 #endif
-
-/* #include "cjson/cJSON.h" */
-/* #include "mustach-cjson.h" */
-/* #include "mustach.h" */
-/* #include "librunfiles.h" */
 
 #include "emit_ocamlsdk_repo.h"
 
@@ -36,14 +30,7 @@ extern char *default_version;
 extern int   default_compat;
 extern char *bazel_compat;
 
-/* LOCAL const char *ws_name = "mibl"; */
-
-/* extern UT_string *opam_switch_id; */
-/* extern UT_string *opam_switch_prefix; */
 extern UT_string *opam_ocaml_version;
-/* extern UT_string *opam_switch_bin; */
-/* extern UT_string *opam_switch_lib; */
-/* extern UT_string *coswitch_runfiles_root; */
 
 #define DEBUG_LEVEL coswitch_debug
 extern int  DEBUG_LEVEL;
@@ -83,25 +70,6 @@ EXPORT void emit_ocamlsdk_module(UT_string *registry,
     /* utstring_concat(dst_file, coswitch_lib); // pfx); */
     utstring_printf(dst_file, "%s/ocamlsdk", coswitch_lib);
     mkdir_r(utstring_body(dst_file));
-
-    /* utstring_printf(dst_file, "/WORKSPACE.bazel"); */
-
-    /* FILE *ostream = fopen(utstring_body(dst_file), "w"); */
-    /* if (ostream == NULL) { */
-    /*     log_error("fopen: %s: %s", strerror(errno), */
-    /*               utstring_body(dst_file)); */
-    /*     fprintf(stderr, "fopen: %s: %s", strerror(errno), */
-    /*             utstring_body(dst_file)); */
-    /*     fprintf(stderr, "exiting\n"); */
-    /*     /\* perror(utstring_body(dst_file)); *\/ */
-    /*     exit(EXIT_FAILURE); */
-    /* } */
-    /* fprintf(ostream, "# generated file - DO NOT EDIT\n"); */
-
-    /* fclose(ostream); */
-    /* if (verbosity > log_writes) */
-    /*     fprintf(INFOFD, GRN "INFO" CRESET */
-    /*             " wrote %s\n", utstring_body(dst_file)); */
 
     // now MODULE.bazel
     utstring_renew(dst_file);
@@ -153,12 +121,6 @@ EXPORT void emit_ocamlsdk_module(UT_string *registry,
     mkdir_r(utstring_body(dst_dir));
     _emit_ocaml_bin_symlinks(dst_dir, switch_pfx); //, coswitch_lib);
 
-    /* UT_string *templates; */
-    /* utstring_new(templates); */
-    /* utstring_printf(templates, "%s/templates", runfiles); */
-
-    /* emit_ocaml_platform_buildfiles(/\* templates, *\/ coswitch_lib); */
-
     utstring_renew(dst_dir);
     utstring_printf(dst_dir,
                     "%s/ocamlsdk/toolchain",
@@ -189,24 +151,15 @@ EXPORT void emit_ocamlsdk_module(UT_string *registry,
     mkdir_r(utstring_body(dst_dir));
     emit_lib_stublibs_pkg(dst_dir,
                           switch_stublibs);
-    /* aliases in <switch>/lib/compiler-libs */
-    /* utstring_renew(dst_dir); */
-    /* utstring_printf(dst_dir, */
-    /*                 "lib", */
-    /*                 coswitch_lib); */
-    /* mkdir_r(utstring_body(dst_dir)); */
-    /* emit_compiler_libs_pkg(dst_dir, coswitch_lib); */
+    utstring_renew(dst_dir);
+    utstring_printf(dst_dir,
+                    "%s/ocamlsdk/lib/compiler-libs",
+                    coswitch_lib);
+    mkdir_r(utstring_body(dst_dir));
+    emit_ocaml_compiler_libs_pkg(dst_dir,
+                                 switch_lib);
 
-     utstring_renew(dst_dir);
-     utstring_printf(dst_dir,
-                     "%s/ocamlsdk/lib/compiler-libs",
-                     coswitch_lib);
-     mkdir_r(utstring_body(dst_dir));
-     emit_ocaml_compiler_libs_pkg(dst_dir,
-                                  switch_lib);
-                                 /* coswitch_lib); */
-
-     /* Bigarray integrated into stdlib as of 4.07 */
+    /* Bigarray integrated into stdlib as of 4.07 */
     emit_ocaml_bigarray_pkg(runfiles, switch_lib, coswitch_lib);
 
     utstring_renew(dst_dir);
@@ -263,9 +216,6 @@ EXPORT void emit_ocamlsdk_module(UT_string *registry,
                     coswitch_lib);
     mkdir_r(utstring_body(dst_dir));
     emit_ocaml_threads_pkg(dst_dir, switch_lib);
-    /* if (!ocaml_prev5) */
-        /* emit_registry_record(registry, compiler_version, */
-        /*                      NULL, pkgs); */
 
     utstring_renew(dst_dir);
     utstring_printf(dst_dir,

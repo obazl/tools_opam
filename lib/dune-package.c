@@ -168,7 +168,7 @@ EXPORT UT_array *dune_package_files_fld(char *fldname)
     sexp_t *fldsexp = NULL;
     pcont_t *cc = NULL;
 
-    printf("dune lang version: %s\n", dune_lang_version);
+    /* printf("dune lang version: %s\n", dune_lang_version); */
 
     UT_array *values;
     utarray_new(values, &ut_str_icd);

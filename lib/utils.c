@@ -151,7 +151,7 @@ int write_template(char *pfx,
                    unsigned char input[], int len,
                    char *tofile)
 {
-    TRACE_ENTRY;
+    TRACE_ENTRY_MSG("%s", tofile);
     /* copy buf to file, replacing all "{{pfx}}" */
     /* we could count the nbr of occurrances and then
        allocate workbuf accordingly, but we know that

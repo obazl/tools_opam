@@ -19,7 +19,6 @@
 /* #include "gopt.h" */
 #include "liblogc.h"
 #include "findlibc.h"
-#include "opamc.h"
 /* #include "semver.h" */
 #include "utarray.h"
 #include "uthash.h"
@@ -44,10 +43,10 @@ static UT_string *meta_path;
 char *switch_name;
 //static char *coswitch_name = NULL; // may be "local"
 
-#define DEBUG_LEVEL debug_opam
-int  DEBUG_LEVEL;
-#define TRACE_FLAG trace_opam
-bool TRACE_FLAG;
+#define DEBUG_LEVEL debug_tools_opam
+int  DEBUG_LEVEL = 2;
+#define TRACE_FLAG trace_tools_opam
+bool TRACE_FLAG = true;
 extern bool trace_findlibc;
 extern int  debug_findlibc;
 extern bool opamc_trace;
@@ -109,7 +108,7 @@ void opam_pkg_handler(char *_switch_pfx,
     LOG_DEBUG(0, "pkg name: %s", pkg_name);
 
     /* switch_id = _switch_id; */
-    switch_pfx = _switch_pfx; // opam_switch_prefix(switch_id);
+    switch_pfx = _switch_pfx;
     utstring_new(_switch_lib);
     utstring_printf(_switch_lib, "%s/lib", switch_pfx);
     switch_lib = utstring_body(_switch_lib);
@@ -120,27 +119,19 @@ void opam_pkg_handler(char *_switch_pfx,
     }
     else if ((strncmp(pkg_name, "stublibs", 8) == 0)
         && strlen(pkg_name) == 8) {
-        /* calls 'opam var stublibs --switch <switch id> */
-        /* char *switch_stublibs = opam_switch_stublibs(switch_id); */
         UT_string *dst_dir;
         utstring_new(dst_dir);
         utstring_printf(dst_dir, "./");
         mkdir_r(utstring_body(dst_dir));
         emit_lib_stublibs_pkg(dst_dir, switch_lib);
-        // switch_stublibs);
-        /* ext_emit_lib_stublibs(switch_id, switch_pfx); */
     } else {
-        opam_libpkg_handler(obazl_pfx, pkg_name);
+        _opam_libpkg_handler(obazl_pfx, pkg_name);
     }
     TRACE_EXIT;
 }
 
-void opam_libpkg_handler(char *obazl_pfx, char *pkg_name)
+LOCAL void _opam_libpkg_handler(char *obazl_pfx, char *pkg_name)
 {
-    /* struct paths_s *paths = (struct paths_s*)_paths; */
-    /* UT_string *registry = (UT_string*)paths->registry; */
-    /* UT_string *coswitch_lib = (UT_string*)paths->coswitch_lib; */
-
     /* SPECIAL HANDLING for psuedo-pkgs:
        ocamlsdk, stublibs, thread, etc.
      */
@@ -150,31 +141,22 @@ void opam_libpkg_handler(char *obazl_pfx, char *pkg_name)
     UT_string *coswitch_lib;
     utstring_new(coswitch_lib);
     utstring_printf(coswitch_lib, "./");
-                    // "%s/share/obazl/registry/lib",
-                    /* switch_pfx); */
-    /* struct obzl_meta_package *pkgs */
-    /*     = (struct obzl_meta_package*)paths->pkgs; */
 
     UT_string *coswitch_pkg_root;
     utstring_new(coswitch_pkg_root);
     utstring_printf(coswitch_pkg_root, ".");
 
-    if (verbosity > 1) {
-        log_debug("pkg_handler: %s", pkg_name);
-        log_debug("site-lib: %s", switch_lib);
-        /* log_debug("registry: %s", utstring_body(registry)); */
-        log_debug("coswitch: %s", utstring_body(coswitch_lib));
-        /* log_debug("pkgs ct: %d", HASH_COUNT(pkgs)); */
-    }
+    LOG_DEBUG(0, "pkg_handler: %s", pkg_name);
+    LOG_DEBUG(0, "site-lib: %s", switch_lib);
+    /* LOG_DEBUG(0, "registry: %s", utstring_body(registry)); */
+    LOG_DEBUG(0, "coswitch: %s", utstring_body(coswitch_lib));
+    /* LOG_DEBUG(0, "pkgs ct: %d", HASH_COUNT(pkgs)); */
 
     utstring_renew(meta_path);
     utstring_printf(meta_path, "%s/%s/META",
                     switch_lib,
                     pkg_name);
-                    /* utstring_body(opam_switch_lib), pkg_name); */
-    /* if (verbosity > 1) */
     LOG_DEBUG(0, "%s:%d meta_path: %s\n", __FILE__, __LINE__, utstring_body(meta_path));
-    /* fflush(NULL); */
 
     errno = 0;
     if ( access(utstring_body(meta_path), F_OK) != 0 ) {
@@ -184,10 +166,15 @@ void opam_libpkg_handler(char *obazl_pfx, char *pkg_name)
         log_warn("%s: %s",
                  strerror(errno), utstring_body(meta_path));
         fprintf(stdout, "ERROR: pkg %s not installed?\n", pkg_name);
+        UT_string *dst_dir;
+        utstring_new(dst_dir);
+        utstring_printf(dst_dir, "./");
+        emit_pkg_bindir(dst_dir,
+                        switch_pfx,
+                        utstring_body(coswitch_lib),
+                        pkg_name);
+        utstring_free(dst_dir);
         return;
-    /* } else { */
-    /*     /\* exists *\/ */
-    /*     log_info("accessible: %s", utstring_body(meta_path)); */
     }
     empty_pkg = false;
     errno = 0;
@@ -199,17 +186,10 @@ void opam_libpkg_handler(char *obazl_pfx, char *pkg_name)
         if ((errno == -1)
             || (errno == -2)) {
             empty_pkg = true;
-            /* #if defined(TRACING) */
-            if (verbosity > 2)
-                log_warn("Empty META file: %s", utstring_body(meta_path));
-            /* #endif */
-            /* check dune-package for installed executables */
-            /* chdir(old_cwd); */
-
+            LOG_WARN(1, "Empty META file: %s", utstring_body(meta_path));
             pkg = (struct obzl_meta_package*)calloc(sizeof(struct obzl_meta_package), 1);
             char *fname = strdup(utstring_body(meta_path));
             pkg->name      = package_name_from_file_name(fname);
-            /* pkg->name      = pkg_dir; */
             char *x = strdup(pkg->name);
             char *p;
             // module names may not contain uppercase
@@ -219,7 +199,7 @@ void opam_libpkg_handler(char *obazl_pfx, char *pkg_name)
             x = strdup(fname);
             pkg->path      = strdup(dirname(x));
             free(x);
-            pkg->directory = pkg->name; // dirname(fname);
+            pkg->directory = pkg->name;
             pkg->metafile  = utstring_body(meta_path);
             pkg->entries = NULL;
         } else {
@@ -239,15 +219,8 @@ void opam_libpkg_handler(char *obazl_pfx, char *pkg_name)
     UT_string *mfile;
     utstring_new(mfile);
     utstring_printf(mfile, "./");
-    /* "%s/%s", */
-    /* utstring_body(coswitch_lib), */
-    /* /\* version->major, version->minor, *\/ */
-    /* /\* version->patch, *\/ */
-    /* pkg_name); */
     xmkdir_r(utstring_body(mfile));
     utstring_printf(mfile, "/MODULE.bazel");
-    /* utstring_body(mfile)); */
-    //ext_emit_module_file(mfile, obazl_pfx, pkg, NULL);
     emit_module_file(mfile, obazl_pfx, pkg, NULL);
     utstring_free(mfile);
 
@@ -255,8 +228,6 @@ void opam_libpkg_handler(char *obazl_pfx, char *pkg_name)
         // then emit the BUILD.bazel files for the opam pkg
         utstring_new(imports_path);
         utstring_printf(imports_path, "%s", pkg_name);
-        /* obzl_meta_package_name(pkg)); */
-
         utstring_new(pkg_parent);
 
         // for now:
@@ -265,20 +236,19 @@ void opam_libpkg_handler(char *obazl_pfx, char *pkg_name)
         utstring_printf(_switch_lib, "%s", switch_lib);
 
         /* emit @opam.foo */
-        emit_build_bazel(_switch_lib, // switch_lib,
+        emit_build_bazel(_switch_lib,
                          utstring_body(coswitch_lib),
                          utstring_body(coswitch_pkg_root),
-                         /* utstring_body(ws_root), */
                          0,         /* indent level */
                          pkg_name, // pkg_root
                          pkg_parent, /* needed for handling subpkgs */
-                         NULL, // "buildfiles",        /* _pkg_prefix */
+                         NULL, /* _pkg_suffix? prefix? */
                          utstring_body(imports_path),
-                         /* "",      /\* pkg-path *\/ */
                          obazl_pfx,
                          pkg);
-        log_info("emitted bazel pkg %s, to %s",
-                 pkg_name, utstring_body(coswitch_lib));
+        /* char *rp = realpath(utstring_body(coswitch_lib), NULL); */
+        /* LOG_INFO(0, "emitted bazel pkg %s, to %s", */
+        /*          pkg_name, rp); */
     }
     UT_string *dst_dir;
     utstring_new(dst_dir);

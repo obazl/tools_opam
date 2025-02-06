@@ -20,24 +20,14 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-/* #include "libcoswitch.h" */
-#include "opamc.h"
-/* #include "librunfiles.h" */
-
+#include "cwalk.h"
 #include "liblogc.h"
-/* #if EXPORT_INTERFACE */
-/* #include "semver.h" */
 #include "utarray.h"
 #include "utstring.h"
-/* #endif */
 
 #include "findlibc.h"
 
-/* #include "tools_opam.h" */
 #include "ext_emit_build_bazel.h"
-
-/* **************************************************************** */
-/* /\* const char *errmsg = NULL; *\/ */
 
 extern int level;
 extern int spfactor;
@@ -46,15 +36,14 @@ extern char *sp;
 extern int log_writes;
 extern int log_symlinks;
 
-#define DEBUG_LEVEL debug_opam
+#define DEBUG_LEVEL debug_tools_opam
 extern int  DEBUG_LEVEL;
-#define TRACE_FLAG trace_opam
+#define TRACE_FLAG trace_tools_opam
 extern bool TRACE_FLAG;
 extern int indent;
 extern int delta;
 
-/* extern */ char *ocaml_ws;
-/* extern char *dst_root; */
+char *ocaml_ws;
 
 extern bool verbose;
 extern int debug;
@@ -72,7 +61,6 @@ extern char *bazel_compat;
 
 bool distrib_pkg;
 
-/* extern char *switch_id; */
 extern char *switch_pfx;
 extern char *switch_lib;
 
@@ -95,8 +83,121 @@ EXPORT void xmkdir_r(const char *dir) {
     mkdir(tmp, S_IRWXU);
 }
 
-//UT_array *cc_stubs;
+/* ******************************** */
+EXPORT char *_opam_root(void)
+{
+    TRACE_ENTRY;
 
+#define BUFSZ 512
+    char buf[BUFSZ];
+    /* char *result = NULL; */
+    char *exe = "opam";
+    /* char *argv[] = {"opam", "var", "root", NULL}; */
+    /* result = run_cmd(exe, argv); */
+    /* if (result == NULL) { */
+    /*     fprintf(stderr, "FAIL: run_cmd 'opam var root'\n"); */
+    /* } */
+    /* return result; */
+
+    char *argv[] = {
+        "opam", "var", "root",
+        NULL
+    };
+
+    int argc = (sizeof(argv) / sizeof(argv[0])) - 1;
+    int stdout_pipe;
+    int stderr_pipe;
+    FILE *stdoutstream = NULL;
+    FILE *stderrstream = NULL;
+    errno = 0;
+    int result = spawn_cmd(exe, argc, argv, &stdout_pipe, &stderr_pipe);
+    /* result = spawn_cmd_with_stdout(exe, argc, argv); */
+    if (result != 0) {
+        fprintf(stderr, "FAIL: spawn_cmd\n");
+        exit(EXIT_FAILURE);
+    } else {
+        if (errno == 2) {
+            LOG_ERROR(0, "ERRNO 2", "");
+        } else if (errno != 0) {
+            LOG_INFO(0, "cmd rc: %d", errno);
+        }
+        LOG_DEBUG(0, "getting spawn output", "");
+        errno = 0;
+        stdoutstream = fdopen(stdout_pipe, "r");
+        if (stdoutstream == NULL) {
+            /* Handle error */
+            log_error("fdopen failure on pipe", "");
+            perror(NULL);
+            return NULL;
+        } else {
+            /* #if defined(PROFILE_fastbuild) */
+            /*         log_debug("fdopened pipe", ""); */
+            /* #endif */
+        }
+
+        /* char *pkg_name; */
+        while (fgets(buf, BUFSZ, stdoutstream)) {
+            /* if dotted, print only first seg */
+            buf[strcspn(buf, "\n")] = 0;
+            if (strlen(buf) == 0) continue;
+
+            LOG_DEBUG(0, "res: %s", buf);
+        }
+        fclose(stdoutstream);
+        /* now stderr */
+        errno = 0;
+        stderrstream = fdopen(stderr_pipe, "r");
+        if (stderrstream == NULL) {
+            /* Handle error */
+            log_error("fdopen failure on pipe", "");
+            perror(NULL);
+            return NULL;
+        } else {
+            /* #if defined(PROFILE_fastbuild) */
+            /*         log_debug("fdopened pipe", ""); */
+            /* #endif */
+        }
+
+        /* char *pkg_name; */
+        while (fgets(buf, BUFSZ, stderrstream)) {
+            fprintf(stderr, "%s", buf);
+        }
+
+        fclose(stderrstream);
+    }
+    close(stdout_pipe);
+    close(stderr_pipe);
+    return strdup(buf);
+}
+
+/* ******************************** */
+/* char *_get_system_compiler_pfx(char *_switch_pfx) */
+/* { */
+/*     char *root = getenv("OBAZL_SDKROOT"); */
+/*     return root; */
+
+/*     UT_string *work; */
+/*     utstring_new(work); */
+/*     utstring_printf(work, "%s/.opam-switch/switch-state", */
+/*                     _switch_pfx); */
+/*     LOG_DEBUG(0, "looking for %s", utstring_body(work)); */
+/*     int rc = access(utstring_body(work), F_OK); */
+/*     if (rc == 0) { */
+/*         /\* found switch-state file, now parse it *\/ */
+/*         LOG_INFO(0, "found config file: %s", */
+/*                  utstring_body(work)); */
+/*         /\* char *ld_path = getenv("CAML_LD_LIBRARY_PATH"); *\/ */
+/*         /\* LOG_INFO(0, "CAML_LD_LIBRARY_PATH: %s", ld_path); *\/ */
+/*         switch_pfx = "/Users/gar/.opam/5.2.1"; */
+/*         switch_lib = "/Users/gar/.opam/5.2.1/lib"; */
+/*         return "5.2.1";         /\* FIXME FIXME *\/ */
+/*     } else { */
+/*         perror("WTF?"); */
+/*         LOG_DEBUG(0, "Not found: %s\n", */
+/*                   utstring_body(work)); */
+/*         exit(EXIT_FAILURE); */
+/*     } */
+/* } */
 
 EXPORT void ext_emit_module_file(UT_string *module_file,
                                  struct obzl_meta_package *_pkg,
@@ -176,7 +277,6 @@ EXPORT void ext_emit_module_file(UT_string *module_file,
             p = NULL;
             /* struct obzl_meta_package *pkg; */
             /* LOG_DEBUG(0, "HASH CT: %d", HASH_COUNT(_pkgs)); */
-            /* exit(0); */
             while ( (p=(char**)utarray_next(pkg_deps, p))) {
                 LOG_DEBUG(0, "pkg dep: %s", *p);
                 if ((strncmp(*p, "compiler-libs", 13) == 0)
@@ -293,6 +393,59 @@ void ext_emit_ocamlsdk_module(char *_ocaml_version,
     TRACE_ENTRY;
     LOG_DEBUG(0, "switch_pfx: %s", switch_pfx);
 
+    /* for the sdk, we are only interested in the sdk_lib,
+       which is the lib/ subdir of the effective switch (either
+       opam or system). if switch uses the system-compiler,
+       then we find that lib; otherwise we use $switch_pfx/lib.
+
+       if switch uses system-compiler, we need both the
+       system bin/ and the switch bin. otherwise just the
+       switch bin.
+     */
+
+    char *switch_bin;
+    char *sdk_lib = getenv("OBAZL_SDKLIB");
+    char *sdk_bin = NULL;
+    LOG_DEBUG(0, "SDKLIB: %s", sdk_lib);
+
+    UT_string *work;
+    utstring_new(work);
+    utstring_printf(work,
+                    "%s/bin",
+                    switch_pfx);
+    switch_bin = strdup(utstring_body(work));
+    utstring_renew(work);
+    if (sdk_lib == NULL) {
+        utstring_printf(work,
+                        "%s/lib",
+                        switch_pfx);
+        sdk_lib = strdup(utstring_body(work));
+        /* utstring_new(work); */
+        /* utstring_printf(work, */
+        /*                 "%s/bin", */
+        /*                 switch_pfx); */
+        /* sdk_bin = strdup(utstring_body(work)); */
+    } else {
+        /* switch uses system-compiler */
+        /* cwk_path_get_dirname(sdk_lib, &len); */
+        char *p = strrchr(sdk_lib, '/');
+        int len = p - sdk_lib;
+        /* LOG_DEBUG(0, "len: %d", len); */
+        char buf[len];
+        memcpy(buf, sdk_lib, len); // includes the '/'
+        buf[len] = '\0';           // replace the '/'
+        LOG_DEBUG(0, "buf: %s", buf);
+        UT_string *_sdkbin;
+        utstring_new(_sdkbin);
+        utstring_printf(_sdkbin,
+                        "%s/bin",
+                        buf);
+        sdk_bin = utstring_body(_sdkbin);
+    }
+    LOG_DEBUG(0, "switch_bin: %s", switch_bin);
+    LOG_DEBUG(0, "sdk_bin: %s", sdk_bin);
+    LOG_DEBUG(0, "sdk_lib: %s", sdk_lib);
+
     char *coswitch_lib = "lib";
 
     UT_string *dst_file;
@@ -327,63 +480,20 @@ void ext_emit_ocamlsdk_module(char *_ocaml_version,
         fprintf(INFOFD, GRN "INFO" CRESET
                 " wrote %s\n", utstring_body(dst_file));
 
-
-    /*
-      if we are in a bazel env get runfiles dir
-      else runfiles dir is <switch_pfx>/share/obazl/templates
-     */
-
-    /* UT_string *xrunfiles; */
-    /* utstring_new(xrunfiles); */
-    /* LOG_DEBUG(0, "PWD: %s", getcwd(NULL,0)); */
-    /* LOG_DEBUG(0, "OPAM_SWITCH_PREFIX: %s", */
-    /*           getenv("OPAM_SWITCH_PREFIX")); */
-    /* LOG_DEBUG(0, "BAZEL_CURRENT_REPOSITORY: %s", */
-    /*           BAZEL_CURRENT_REPOSITORY); */
-    /* if (getenv("BUILD_WORKSPACE_DIRECTORY")) { */
-    /*     if (strlen(BAZEL_CURRENT_REPOSITORY) == 0) { */
-    /*         utstring_printf(xrunfiles, "%s", */
-    /*                         realpath("new", NULL)); */
-    /*     } else { */
-    /*         LOG_DEBUG(0, "XXXXXXXXXXXXXXXX %s", */
-    /*                   BAZEL_CURRENT_REPOSITORY); */
-    /*         char *rp = realpath("external/" */
-    /*                             BAZEL_CURRENT_REPOSITORY, */
-    /*                             NULL); */
-    /*         LOG_DEBUG(0, "PWD: %s", getcwd(NULL,0)); */
-    /*         LOG_DEBUG(0, "AAAAAAAAAAAAAAAA %s", rp); */
-    /*         utstring_printf(xrunfiles, "%s", rp); */
-    /* LOG_DEBUG(0, "XXXXXXXXXXXXXXXX %s", */
-    /*           utstring_body(xrunfiles)); */
-    /*     } */
-    /* } else { */
-    /*     utstring_printf(xrunfiles, "%s/share/obazl", */
-    /*                     switch_pfx); */
-    /*     // runfiles = <switch-pfx>/share/obazl */
-    /*     /\* runfiles = "../../../share/obazl"; *\/ */
-    /* } */
-
-    /* char *runfiles = utstring_body(xrunfiles); // strdup? */
-    /* LOG_DEBUG(1, "RUNFILES root: %s", rf_root()); */
-
     UT_string *bld_file;
     utstring_new(bld_file);
     utstring_printf(bld_file, "bin");
     mkdir_r(utstring_body(bld_file));
     utstring_printf(bld_file, "/BUILD.bazel");
-    emit_ocaml_bin_dir(utstring_body(bld_file));
+    emit_ocaml_bin_build_file(utstring_body(bld_file));
 
     UT_string *dst_dir;
     utstring_new(dst_dir);
     utstring_printf(dst_dir, "bin");
-    _emit_ocaml_bin_symlinks(dst_dir, switch_pfx); //, coswitch_lib);
-
-    /* UT_string *templates; */
-    /* utstring_new(templates); */
-    /* utstring_printf(templates, "%s/templates", runfiles); */
-
-    /* emit_ocaml_platform_buildfiles(/\* templates, *\/ coswitch_lib); */
-
+    emit_ocaml_bin_symlinks(dst_dir, switch_bin);
+    if (sdk_bin != NULL) {
+        emit_ocaml_sdkbin_symlinks(dst_dir, sdk_bin);
+    }
     utstring_renew(dst_dir);
     utstring_printf(dst_dir, "toolchain");
     mkdir_r(utstring_body(dst_dir));
@@ -392,12 +502,12 @@ void ext_emit_ocamlsdk_module(char *_ocaml_version,
     utstring_renew(dst_dir);
     utstring_printf(dst_dir, "lib/stdlib");
     mkdir_r(utstring_body(dst_dir));
-    emit_ocaml_stdlib_pkg(dst_dir, switch_lib);
+    emit_ocaml_stdlib_pkg(dst_dir, sdk_lib);
 
     utstring_renew(dst_dir);
     utstring_printf(dst_dir, "lib/stublibs");
     mkdir_r(utstring_body(dst_dir));
-    emit_ocaml_stublibs(dst_dir, switch_pfx);
+    emit_ocaml_stublibs(dst_dir, sdk_lib);
 
     //  <switch>lib/stublibs: not an ocamlsdk subdir,
     // must be installed separately
@@ -417,44 +527,44 @@ void ext_emit_ocamlsdk_module(char *_ocaml_version,
     mkdir_r(utstring_body(dst_dir));
     emit_ocaml_compiler_libs_pkg(obazl_pfx,
                                  dst_dir,
-                                 switch_lib);
+                                 sdk_lib);
                                  /* coswitch_lib); */
 
     emit_ocaml_bigarray_pkg(NULL, obazl_pfx,
-                            switch_lib, coswitch_lib);
+                            sdk_lib, coswitch_lib);
 
     utstring_renew(dst_dir);
     utstring_printf(dst_dir, "lib/dynlink");
     mkdir_r(utstring_body(dst_dir));
-    emit_ocaml_dynlink_pkg(dst_dir, switch_lib);
+    emit_ocaml_dynlink_pkg(dst_dir, sdk_lib);
 
     /* num lib split out of core distrib starting 4.06.0 */
-    /* emit_ocaml_num_pkg(NULL, switch_lib, coswitch_lib); */
+    /* emit_ocaml_num_pkg(NULL, sdk_lib, coswitch_lib); */
 
     utstring_renew(dst_dir);
     utstring_printf(dst_dir, "lib/ocamldoc");
     mkdir_r(utstring_body(dst_dir));
-    emit_ocaml_ocamldoc_pkg(dst_dir, switch_lib);
+    emit_ocaml_ocamldoc_pkg(dst_dir, sdk_lib);
 
     utstring_renew(dst_dir);
     utstring_printf(dst_dir, "lib/profiling");
     mkdir_r(utstring_body(dst_dir));
-    emit_ocaml_profiling_pkg(dst_dir, switch_lib);
+    emit_ocaml_profiling_pkg(dst_dir, sdk_lib);
 
     utstring_renew(dst_dir);
     utstring_printf(dst_dir, "lib/runtime_events");
     mkdir_r(utstring_body(dst_dir));
-    emit_ocaml_rtevents_pkg(dst_dir, switch_lib);
+    emit_ocaml_rtevents_pkg(dst_dir, sdk_lib);
 
     utstring_renew(dst_dir);
     utstring_printf(dst_dir, "lib/str");
-    emit_ocaml_str_pkg(dst_dir, switch_lib);
+    emit_ocaml_str_pkg(dst_dir, sdk_lib);
 
     //NB: vmthreads removed in v. 4.08.0?
     utstring_renew(dst_dir);
     utstring_printf(dst_dir, "lib/threads");
     mkdir_r(utstring_body(dst_dir));
-    emit_ocaml_threads_pkg(dst_dir, switch_lib);
+    emit_ocaml_threads_pkg(dst_dir, sdk_lib);
     /* if (!ocaml_prev5) */
         /* emit_registry_record(registry, compiler_version, */
         /*                      NULL, pkgs); */
@@ -462,18 +572,18 @@ void ext_emit_ocamlsdk_module(char *_ocaml_version,
     utstring_renew(dst_dir);
     utstring_printf(dst_dir, "lib/unix");
     mkdir_r(utstring_body(dst_dir));
-    emit_ocaml_unix_pkg(dst_dir, switch_lib);
+    emit_ocaml_unix_pkg(dst_dir, sdk_lib);
 
     /* this is an obazl invention: */
     utstring_renew(dst_dir);
     utstring_printf(dst_dir, "runtime");
     mkdir_r(utstring_body(dst_dir));
-    emit_ocaml_runtime_pkg(dst_dir, switch_lib);
+    emit_ocaml_runtime_pkg(dst_dir, sdk_lib);
 
     utstring_renew(dst_dir);
     utstring_printf(dst_dir, "lib/ffi");
     mkdir_r(utstring_body(dst_dir));
-    emit_ocaml_c_ffi_pkg(dst_dir, switch_lib);
+    emit_ocaml_c_ffi_pkg(dst_dir, sdk_lib);
 
     utstring_renew(dst_dir);
     utstring_printf(dst_dir, "version");

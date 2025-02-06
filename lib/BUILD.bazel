@@ -9,21 +9,20 @@ load("//config/cc:CONFIG.bzl",
      "PROFILE")
 
 exports_files(["emit_build_bazel.c",
-               "emit_ocaml_repo.c",
+               "emit_ocamlsdk.c",
                "emit_pkg_bindir.c",
                "dune-package.c",
                "utils.c",
                "versions.c"])
-
-# TOOLCHAINS = ["//:module_profiles"]
 
 ###########
 cc_library(
     name = "tools_opam",
     srcs = [
         "emit_build_bazel.c",
-        "emit_ocaml_repo.c",
+        "emit_ocamlsdk.c",
         "emit_pkg_bindir.c",
+        "spawn_cmd.c",
         "utils.c",
         "versions.c",
         ":mkhdrs",
@@ -43,10 +42,7 @@ cc_library(
     #     "//conditions:default": []
     # }),
     implementation_deps = [
-        # "@dune_s7//lib:dune_s7",
-        # "@libs7//lib:s7",
         "@findlibc//lib:findlibc",
-        "@opamc//lib:opamc",
         "@sfsexp//src:sfsexp",
     ],
     copts = BASE_COPTS + [
@@ -61,66 +57,6 @@ cc_library(
     local_defines = [
         "BAZEL_CURRENT_REPOSITORY=\\\"{}\\\"".format(package_relative_label("@tools_opam").repo_name)
     ],
-    # data  = [
-    #     "//templates:bazel_wrapper.sh",
-    #     # WARNING: keep in sync with //opam/BUILD.bazel
-    #     "//templates/ocaml:ocaml_bigarray.BUILD",
-    #     "//templates/ocaml:ocaml_bigarray_alias.BUILD",
-    #     "//templates/ocaml:ocaml_c_ffi.BUILD",
-    #     "//templates/ocaml:ocaml_compiler-libs.BUILD",
-    #     "//templates/ocaml:ocaml_compiler-libs-bytecomp.BUILD",
-    #     "//templates/ocaml:ocaml_compiler-libs-common.BUILD",
-    #     "//templates/ocaml:ocaml_compiler-libs-native-toplevel.BUILD",
-    #     "//templates/ocaml:ocaml_compiler-libs-optcomp.BUILD",
-    #     "//templates/ocaml:ocaml_compiler-libs-toplevel.BUILD",
-    #     "//templates/ocaml:ocaml_compiler-libs_alias.BUILD",
-    #     "//templates/ocaml/compiler_libs:bytecomp.BUILD",
-    #     "//templates/ocaml/compiler_libs:common.BUILD",
-    #     "//templates/ocaml/compiler_libs:optcomp.BUILD",
-    #     "//templates/ocaml/compiler_libs:toplevel.BUILD",
-    #     "//templates/ocaml/compiler_libs:native_toplevel.BUILD",
-    #     "//templates/ocaml:ocaml_dynlink.BUILD",
-    #     "//templates/ocaml:ocaml_dynlink_alias.BUILD",
-    #     "//templates/ocaml:ocaml_num.BUILD",
-    #     "//templates/ocaml:ocaml_ocamldoc.BUILD",
-    #     "//templates/ocaml:ocaml_profiling.BUILD",
-    #     "//templates/ocaml:ocaml_runtime.BUILD",
-    #     "//templates/ocaml/runtime:runtime_sys.BUILD",
-    #     "//templates/ocaml/runtime:runtime_vm.BUILD",
-    #     "//templates/ocaml:ocaml_rtevents.BUILD",
-    #     "//templates/ocaml:ocaml_rtevents_alias.BUILD",
-    #     "//templates/ocaml:ocaml_stdlib.BUILD",
-    #     "//templates/ocaml:ocaml_stdlib_alias.BUILD",
-    #     "//templates/ocaml:ocaml_str.BUILD",
-    #     "//templates/ocaml:ocaml_str_alias.BUILD",
-
-    #     "//templates:platform_arch.BUILD",
-    #     "//templates:platform_emitter.BUILD",
-    #     "//templates:platform_executor.BUILD",
-    #     "//templates:platform_platform.BUILD",
-
-    #     "//templates:toolchain/adapters/local.BUILD",
-    #     "//templates:toolchain/adapters/local.BUILD.mustache",
-    #     "//templates:toolchain/adapters/linux/x86_64.BUILD",
-    #     "//templates:toolchain/adapters/linux/arm.BUILD",
-    #     "//templates:toolchain/adapters/macos/x86_64.BUILD",
-    #     "//templates:toolchain/adapters/macos/arm.BUILD",
-    #     "//templates:toolchain/profiles/profiles.BUILD",
-    #     "//templates:toolchain/selectors/local.BUILD",
-    #     "//templates:toolchain/selectors/linux/x86_64.BUILD",
-    #     "//templates:toolchain/selectors/linux/arm.BUILD",
-    #     "//templates:toolchain/selectors/macos/arm.BUILD",
-    #     "//templates:toolchain/selectors/macos/x86_64.BUILD",
-    #     # "//templates/host/bazel:BUILD.bazel",
-    #     # "//templates/host/build:BUILD.bazel",
-    #     # "//templates/host/target:BUILD.bazel",
-    #     "//templates/ocaml:ocaml_threads.BUILD",
-    #     "//templates/ocaml:ocaml_threads_alias.BUILD",
-    #     "//templates/ocaml:ocaml_unix.BUILD",
-    #     "//templates/ocaml:ocaml_unix_alias.BUILD",
-    #     "//templates/ocaml:ocaml_version.BUILD",
-    # ],
-    # toolchains = TOOLCHAINS,
     visibility = ["//visibility:public"]
 )
 
@@ -128,8 +64,9 @@ makeheaders(
     name = "mkhdrs",
     hdrs_srcs = [
         "emit_build_bazel.c",
-        "emit_ocaml_repo.c",
+        "emit_ocamlsdk.c",
         "emit_pkg_bindir.c",
+        "spawn_cmd.c",
         "utils.c",
         "versions.c",
         "dune-package.c",
@@ -148,14 +85,6 @@ makeheaders(
             # "@libs7//macros:s7_logging_ndebug.h"
         ]
     }),
-    # ] + select({
-    #    "@obazl_config_cc//profile:dev?": [
-    #         "//src:logging_debug.h",
-    #     ],
-    #     "//conditions:default":   [
-    #         "//src:logging_ndebug.h",
-    #     ]
-    # }),
     visibility = ["//visibility:public"]
 )
 
@@ -165,33 +94,21 @@ makeheaders(
     export_interface = True,
     hdrs_srcs = [
         "emit_build_bazel.c",
-        "emit_ocaml_repo.c",
+        "emit_ocamlsdk.c",
         "emit_pkg_bindir.c",
+        "spawn_cmd.c",
         "utils.c",
         "versions.c",
     ],
     additional_srcs = [
-        # "//lib:coswitch.c",
-        # ":utils.c",
-        # ":versions.c",
         "@liblogc//macros:ansi_colors.h",
     ] + select({
         "@obazl_config_cc//profile:dev?": [
             "@liblogc//macros:logging_debug.h",
-            # "@libs7//macros:s7_logging_debug.h"
         ],
         "//conditions:default": [
             "@liblogc//macros:logging_ndebug.h",
-            # "@libs7//macros:s7_logging_ndebug.h"
         ]
     }),
-    # ] + select({
-    #    "@obazl_config_cc//profile:dev?": [
-    #         "//src:logging_debug.h",
-    #     ],
-    #     "//conditions:default":   [
-    #         "//src:logging_ndebug.h",
-    #     ]
-    # }),
     visibility = ["//visibility:public"]
 )

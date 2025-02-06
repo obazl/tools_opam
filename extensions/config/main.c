@@ -16,25 +16,19 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-/* #include "cwalk.h" */
 #include "gopt.h"
 #include "liblogc.h"
-/* #include "semver.h" */
-/* #include "utarray.h" */
-/* #include "uthash.h" */
 #include "utstring.h"
-/* #include "librunfiles.h" */
 
 #include "main.h"
 
 bool bazel_env;
 
 extern char *switch_name;
-/* static char *coswitch_name; // may be "local" */
 
-#define DEBUG_LEVEL debug_opam
+#define DEBUG_LEVEL debug_tools_opam
 int  DEBUG_LEVEL;
-#define TRACE_FLAG trace_opam
+#define TRACE_FLAG trace_tools_opam
 bool TRACE_FLAG;
 
 extern int  debug_findlibc;
@@ -132,15 +126,15 @@ void _set_options(struct option options[])
     }
 
     if (options[FLAG_DEBUG].count) {
-        debug_opam = options[FLAG_DEBUG].count;
-        coswitch_debug = debug_opam;
+        debug_tools_opam = 3; //options[FLAG_DEBUG].count;
+        coswitch_debug = 3; //debug_tools_opam;
     }
     if (options[FLAG_TRACE].count) {
-        trace_opam = true;
-        coswitch_trace = trace_opam;
+        trace_tools_opam = true;
+        coswitch_trace = true; //trace_tools_opam;
     }
     if (options[FLAG_DEBUG_FINDLIBC].count) {
-        debug_findlibc = options[FLAG_DEBUG].count;
+        debug_findlibc = 3; //options[FLAG_DEBUG].count;
     }
     if (options[FLAG_TRACE_FINDLIBC].count) {
         trace_findlibc = true;
