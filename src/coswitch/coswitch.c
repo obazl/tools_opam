@@ -15,18 +15,14 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-/* #include "cwalk.h" */
 #include "gopt.h"
-#include "libs7.h"
+/* #include "libs7.h" */
 #include "liblogc.h"
 #include "findlibc.h"
-#include "opamc.h"
-/* #include "semver.h" */
 #include "utarray.h"
 #include "uthash.h"
 #include "utstring.h"
 #include "xdgc.h"
-/* #include "librunfiles.h" */
 
 #include "coswitch.h"
 
@@ -48,15 +44,15 @@ extern int  opamc_debug;
 extern bool xdgc_trace;
 extern int  xdgc_debug;
 
-#define S7_DEBUG_LEVEL libs7_debug
-extern int  libs7_debug;
-extern bool libs7_trace;
+/* #define S7_DEBUG_LEVEL libs7_debug */
+/* extern int  libs7_debug; */
+/* extern bool libs7_trace; */
 
 bool quiet;
 bool verbose;
 int  verbosity;
 
-extern s7_scheme *s7;
+/* extern s7_scheme *s7; */
 
 UT_string *imports_path;
 UT_string *pkg_parent;
@@ -451,14 +447,14 @@ void pkg_handler(char *switch_pfx,
         // for now:
         UT_string *switch_lib;
         utstring_new(switch_lib);
-        utstring_printf(switch_lib, "%s", switch_lib);
+        utstring_printf(switch_lib, "%s", utstring_body(switch_lib));
 
         UT_string *coswitch_pkg_root;
         utstring_new(coswitch_pkg_root);
-        utstring_printf(coswitch_pkg_root,
-                        "%s/%s%s",
-                        coswitch_lib,
-                        obazl_pfx, pkg_name);
+        /* utstring_printf(coswitch_pkg_root, */
+        /*                 "%s/%s%s", */
+        /*                 coswitch_lib, */
+        /*                 obazl_pfx, pkg_name); */
 
         emit_build_bazel(switch_lib, // switch_lib,
                          utstring_body(coswitch_lib),
@@ -470,7 +466,7 @@ void pkg_handler(char *switch_pfx,
                          utstring_body(imports_path),
                          /* "",      /\* pkg-path *\/ */
                          obazl_pfx,
-                         pkg)
+                         pkg);
     }
     // this will emit one BUILD.bazel file per pkg & subpkg
     // and put them in <switch>/lib/<repo>/lib/<subpkg> dirs
@@ -545,11 +541,11 @@ EXPORT void coswitch_main(char *launch_dir)
     /* s7_scheme *s7 = coswitch_s7_init(); */
 
     /* for reading dune-project files */
-    s7 = libs7_init(launch_dir);
+    /* s7 = libs7_init(launch_dir); */
 
     /* this uses dlsym to fine libdune_s7_init,
      and should work with either static or dso lib */
-    libs7_load_plugin(s7, "dune");
+    /* libs7_load_plugin(s7, "dune"); */
 
     /* coswitch_s7_init2(NULL, // options[OPT_MAIN].argument, */
     /*              NULL); // options[OPT_WS].argument); */

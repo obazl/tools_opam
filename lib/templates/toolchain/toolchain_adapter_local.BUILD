@@ -4,6 +4,9 @@ exports_files(["BUILD.bazel"])
 
 load("@rules_ocaml//toolchain:BUILD.bzl", "ocaml_toolchain_adapter")
 
+# load("@toolchains_ocaml//build:rules.bzl",
+#      "ocaml_toolchain_adapter")
+
 ########################
 ocaml_toolchain_adapter(
     name                   = "ocamlopt.opt",

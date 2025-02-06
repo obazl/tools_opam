@@ -51,7 +51,8 @@ extern bool verbose;
 extern int debug;
 extern bool trace;
 
-UT_string *bazel_pkg_root;
+UT_string *bazel_repo_name;
+UT_string *bazel_pkg_label;
 UT_string *build_bazel_file;
 
 int symlink_ct;
@@ -74,6 +75,7 @@ LOCAL void emit_bazel_hdr(FILE* ostream)
 
 }
 
+/* ********************************** */
 LOCAL void emit_bazel_cc_imports(FILE* ostream,
                            int level, /* indentation control */
                            char *_pkg_prefix,
@@ -140,28 +142,38 @@ LOCAL void emit_bazel_stublibs_attr(FILE* ostream,
                                     obzl_meta_entries *_entries,
                                     obzl_meta_package *_pkg)
 {
+    TRACE_ENTRY;
     (void)obazl_pfx;
     (void)coswitch_lib;
+    (void)coswitch_pkg_root;
     (void)_entries;
     (void)_filedeps_path;
     (void)_pkg;
     /* here we read the symlinks in the coswitch not the opam switch */
-#if defined(PROFILE_fastbuild)
-    LOG_DEBUG(0, "stublibs pkg root: '%s'", _pkg_root);
-    LOG_DEBUG(0, "stublibs pkg prefix: '%s'", _pkg_prefix);
-    LOG_DEBUG(0, "stublibs pkg name: '%s'", _pkg_name);
-    LOG_DEBUG(0, "stublibs pkg parent: '%s'", utstring_body(_pkg_parent));
-#endif
+    LOG_DEBUG(0, "coswitch pkg root: '%s'", coswitch_pkg_root);
+    LOG_DEBUG(0, " pkg root: '%s'", _pkg_root);
+    LOG_DEBUG(0, " pkg prefix: '%s'", _pkg_prefix);
+    LOG_DEBUG(0, " pkg name: '%s'", _pkg_name);
+    LOG_DEBUG(0, " pkg parent: '%s'", utstring_body(_pkg_parent));
 
     static UT_string *dname;
     utstring_new(dname);
-    utstring_printf(dname, "%s/lib", coswitch_pkg_root);
-    if (_pkg_parent != NULL) {
-        if (utstring_len(_pkg_parent) > 0) {
-            utstring_printf(dname, "/%s", utstring_body(_pkg_parent));
-        }
+    if (_pkg_prefix == 0) {
+        utstring_printf(dname, "lib");
+    } else {
+        utstring_printf(dname, "%s/%s/lib",
+                        utstring_body(_pkg_parent),
+                        _pkg_name);
     }
-    utstring_printf(dname, "/%s", _pkg_name);
+
+                    /* "%s/lib", */
+                    /* coswitch_pkg_root); */
+    /* if (_pkg_parent != NULL) { */
+    /*     if (utstring_len(_pkg_parent) > 0) { */
+    /*         utstring_printf(dname, "/%s", utstring_body(_pkg_parent)); */
+    /*     } */
+    /* } */
+    /* utstring_printf(dname, "/%s", _pkg_name); */
 
     LOG_DEBUG(0, "emit_bazel_stublibs_attr: %s",
               utstring_body(dname));
@@ -1151,12 +1163,12 @@ EXPORT void emit_bazel_deps_attribute(FILE* ostream, int level,
                                 else
                                     distrib_pkg = false;
                                 fprintf(ostream,
-                                        "%*s\"@%s%s//lib/%s%s\",\n",
+                                        "%*s\"@%s%s//lib\",\n",
                                         (1+level)*spfactor, sp,
                                         (char*)obazl_pfx,
-                                        distrib_pkg? "ocaml" : dep_name,
-                                        dep_name,
-                                        jsoo? ":js" : "");
+                                        distrib_pkg? "ocaml" : dep_name);
+                                        /* dep_name, */
+                                        /* jsoo? ":js" : ""); */
                             }
                         }
                     }
@@ -1167,7 +1179,8 @@ EXPORT void emit_bazel_deps_attribute(FILE* ostream, int level,
                     else {
                         int repo_len = delim1 - (char*)dep_name;
                         fprintf(ostream,
-                                "%*s\"@%s%.*s//lib/%s%s\",\n",
+                                "%*s\"@%s%.*s//%s%s/lib\",\n",
+                                /* "%*s\"@%s%.*s//lib/%s%s\",\n", */
                                 (1+level)*spfactor, sp,
                                 obazl_pfx,
                                 repo_len,
@@ -1359,11 +1372,11 @@ EXPORT void emit_bazel_ppx_codeps(FILE* ostream, int level,
                     else {
                     int repo_len = strlen((char*)*v);
                     fprintf(ostream,
-                            "%*s\"@%s%.*s//lib/%s\",\n",
+                            "%*s\"@%s%.*s//lib\",\n",
                             (1+level)*spfactor, sp,
                             obazl_pfx,
                             repo_len,
-                            *v, *v);
+                            *v); // *v);
                     }
                 } else {
                     if (special_case_multiseg_dep(ostream, obazl_pfx, v, delim1))
@@ -1372,7 +1385,7 @@ EXPORT void emit_bazel_ppx_codeps(FILE* ostream, int level,
                         //first the repo string
                         int repo_len = delim1 - (char*)*v;
                         fprintf(ostream,
-                                "%*s\"@%s%.*s//lib",
+                                "%*s\"@%s%.*s/",
                                 (1+level)*spfactor, sp,
                                 obazl_pfx,
                                 repo_len, *v);
@@ -1385,7 +1398,7 @@ EXPORT void emit_bazel_ppx_codeps(FILE* ostream, int level,
                             *tmp = '/';
                             s = tmp;
                         }
-                        fprintf(ostream, "%s\",\n", delim1);
+                        fprintf(ostream, "%s/lib\",\n", delim1);
                     }
                 }
             }
@@ -1433,11 +1446,22 @@ void emit_bazel_deps_target(FILE* ostream, int level,
 
     /* sorry, special findlib hack: */
     if (strncmp(_pkg_name, "findlib", 7) == 0) {
+        fprintf(ostream,
+                "\nalias(\n"
+                "    name   = \"lib\",\n"
+                "    actual = \"@%sfindlib//internal/lib\",\n"
+                ")\n", obazl_pfx);
+
         fprintf(ostream, "\nalias(\n");
         fprintf(ostream, "    name   = \"findlib\",\n");
-        fprintf(ostream, "    actual = \"@%sfindlib//lib/internal\",\n", obazl_pfx);
+        fprintf(ostream, "    actual = \"@%sfindlib//internal/lib\",\n", obazl_pfx);
         fprintf(ostream, ")\n");
     } else {
+        fprintf(ostream,
+                "\nalias(\n"
+                "    name   = \"lib\",\n"
+                "    actual = \"%s\"\n"
+                ")\n", _pkg_name);
         fprintf(ostream, "\nocaml_import(\n");
         fprintf(ostream, "    name = \"%s\",\n", _pkg_name);
         emit_bazel_metadatum(ostream, 1,
@@ -1541,11 +1565,11 @@ LOCAL void emit_bazel_subpackages(// char *ws_name,
     newlevel++;
     if (newlevel > 1) {
         utstring_printf(pkg_parent, "%s", pkg_name);
+    } else {
+        utstring_printf(pkg_parent, "./");
     }
 
-#if defined(PROFILE_fastbuild)
     LOG_DEBUG(0, "starting level: %d", newlevel);
-#endif
     for (int i = 0; i < obzl_meta_entries_count(entries); i++) {
         entry = obzl_meta_entries_nth(entries, i);
         if (entry->type == OMP_PACKAGE) {
@@ -1554,7 +1578,7 @@ LOCAL void emit_bazel_subpackages(// char *ws_name,
                              coswitch_lib,
                              coswitch_pkg_root,
                              newlevel,
-                             _pkg_root,
+                             _pkg_root, /* pkg_name */
                              pkg_parent,
                              utstring_body(_new_pkg_suffix),
                              _filedeps_path,
@@ -1866,21 +1890,25 @@ EXPORT void emit_pkg_symlinks(UT_string *opam_switch_lib,
             if (strncmp(direntry->d_name, "WORKSPACE", 9) == 0) {
                 continue;
             }
-
+            /* LOG_DEBUG(0, "DIRENTRY: %s", direntry->d_name); */
             utstring_renew(src);
             utstring_printf(src, "%s/%s",
                             utstring_body(opamdir), direntry->d_name);
             utstring_renew(dst);
-            utstring_printf(dst, "%s/%s/%s",
-                            utstring_body(dst_dir),
-                            pkg_name,
-                            direntry->d_name);
+            utstring_printf(dst, "%s/%s",
+                            utstring_body(dst_dir), direntry->d_name);
+                            /* "%s/%s/%s", */
+                            /* utstring_body(dst_dir), */
+                            /* pkg_name, */
+                            /* direntry->d_name); */
+            /* LOG_DEBUG(0, "Symlinking %s => %s", */
+            /*           utstring_body(src), utstring_body(dst)); */
             rc = symlink(utstring_body(src),
                          utstring_body(dst));
             if (rc != 0) {
                 if (errno != EEXIST) {
-                    perror(utstring_body(src));
-                    fprintf(stderr, "exiting\n");
+                    perror("symlinking");
+                    fprintf(stderr, "%s:%d exiting\n", __FILE__, __LINE__);
                     exit(EXIT_FAILURE);
                 }
             }
@@ -1922,10 +1950,11 @@ EXPORT void emit_build_bazel(UT_string *opam_switch_lib,
     TRACE_ENTRY;
     /* ENTRY */
     LOG_INFO(0, "\tpkg: %s", obzl_meta_package_name(_pkg));
-    LOG_INFO(0, "\tpkg->name: %s", obzl_meta_package_name(_pkg));
     LOG_INFO(0, "\tcoswitch_lib: %s", coswitch_lib);
-    LOG_INFO(0, "\tlevel: %d", level);
+    LOG_INFO(0, "\tcoswitch_pkg_root: %s", coswitch_pkg_root);
+    LOG_INFO(0, "\tpkg->name: %s", obzl_meta_package_name(_pkg));
     LOG_INFO(0, "\t_pkg_name: %s", _pkg_name);
+    LOG_INFO(0, "\tlevel: %d", level);
     LOG_INFO(0, "\tpkg_parent: '%s'", utstring_body(pkg_parent));
     LOG_INFO(0, "\t_pkg_suffix: '%s'", _pkg_suffix);
     LOG_INFO(0, "\t_filedeps_path: %s", _filedeps_path);
@@ -1937,9 +1966,10 @@ EXPORT void emit_build_bazel(UT_string *opam_switch_lib,
     }
 
     char *pkg_name = obzl_meta_package_name(_pkg);
-    utstring_renew(bazel_pkg_root);
+    utstring_renew(bazel_repo_name);
     utstring_renew(build_bazel_file);
-    LOG_DEBUG(0, "build_bazel_file: %s", utstring_body(build_bazel_file));
+
+    /* LOG_DEBUG(0, "build_bazel_file: %s", utstring_body(build_bazel_file)); */
     /* WARNING: pkg may be empty (no entries) */
     /* e.g. js_of_ocaml contains: package "weak" ( ) */
     obzl_meta_entries *entries = _pkg->entries;
@@ -2003,30 +2033,43 @@ EXPORT void emit_build_bazel(UT_string *opam_switch_lib,
     }
     LOG_DEBUG(0, "new_filedeps_path: %s", utstring_body(new_filedeps_path));
 
-    utstring_renew(bazel_pkg_root); /* OUTPUT dir */
-    utstring_printf(bazel_pkg_root,
-                    "%s/lib", coswitch_pkg_root);
+    utstring_renew(bazel_repo_name); /* OUTPUT dir */
+    utstring_printf(bazel_repo_name,
+                    "%s",  // "%s/lib",
+                    coswitch_pkg_root);
 
-    if (level > 1) {
-        /* e.g. a.b.c => <switch>/lib/a/lib/b/c = @a//lib/b/c */
-        utstring_printf(bazel_pkg_root,
-                        "/%s",
-                        utstring_body(pkg_parent));
-        /* log_debug("PARENT %s", utstring_body(bazel_pkg_root)); */
+    utstring_renew(bazel_pkg_label);
+    if (level > 0) {
+        /* mtime.clock    => @opam.mtime//clock/lib
+           mtime.clock.os => @opam.mtime//clock/os/lib */
+        utstring_printf(bazel_pkg_label,
+                        "%s/%s/%s/lib",
+                        utstring_body(pkg_parent),
+                        utstring_body(bazel_repo_name),
+                        _pkg->name);
+
+        /* utstring_printf(bazel_repo_name, */
+        /*                 "/%s", */
+        /*                 utstring_body(pkg_parent)); */
+        /* log_debug("PARENT %s", utstring_body(bazel_repo_name)); */
+    } else {
+        utstring_printf(bazel_pkg_label,
+                        "%s/lib", utstring_body(bazel_repo_name));
     }
-    LOG_DEBUG(0, "bazel_pkg_root: %s",
-              utstring_body(bazel_pkg_root));
+    mkdir_r(utstring_body(bazel_pkg_label));
+
     utstring_renew(build_bazel_file);
     utstring_printf(build_bazel_file,
-                    "%s/%s",
-                    utstring_body(bazel_pkg_root),
-                    /* "%s", */
-                    pkg_name);
-    mkdir_r(utstring_body(build_bazel_file));
-    utstring_printf(build_bazel_file, "/%s", "BUILD.bazel");
+                    "%s/BUILD.bazel",
+                    utstring_body(bazel_pkg_label));
 
-    /* log_debug("bazel_pkg_root: %s", utstring_body(bazel_pkg_root)); */
-    LOG_DEBUG(0, "bazel_pkg_root: %s", utstring_body(bazel_pkg_root));
+                    /* "%s/%s", */
+                    /* utstring_body(bazel_repo_name), */
+                    /* pkg_name); */
+    /* utstring_printf(build_bazel_file, "/%s", "BUILD.bazel"); */
+
+    LOG_DEBUG(0, "bazel_repo_name: %s", utstring_body(bazel_repo_name));
+    LOG_DEBUG(0, "bazel_pkg_label: %s", utstring_body(bazel_pkg_label));
     LOG_DEBUG(0, CYN "build_bazel_file:" CRESET, "");
     LOG_DEBUG(0, CYN "\t%s" CRESET, utstring_body(build_bazel_file));
 
@@ -2053,8 +2096,9 @@ EXPORT void emit_build_bazel(UT_string *opam_switch_lib,
 
        >= 5.0.0 : no META files for the builtin libs dynlink, str, etc.
      */
-    if ((_pkg_suffix == NULL)
-        || ((strncmp(_pkg_suffix, "ocaml", 5) == 0) )) {
+    /* if ((_pkg_suffix == NULL) */
+    /*     || ((strncmp(_pkg_suffix, "ocaml", 5) == 0) )) { */
+    if ((strncmp(_pkg_name, "ocaml", 5) == 0)) {
             /* && (strlen(_pkg_suffix) == 5))) */
         if (emit_special_case_rule(ostream, obazl_pfx, _pkg)) {
             LOG_TRACE(0, "+emit_special_case_rule:TRUE", "");
@@ -2074,7 +2118,8 @@ EXPORT void emit_build_bazel(UT_string *opam_switch_lib,
         }
     }
     emit_pkg_symlinks(opam_switch_lib,
-                      bazel_pkg_root, /* dest */
+                      /* bazel_repo_name, /\* dest *\/ */
+                      bazel_pkg_label,
                       new_filedeps_path, /* src */
                       pkg_name);
 
@@ -2138,6 +2183,14 @@ EXPORT void emit_build_bazel(UT_string *opam_switch_lib,
                 /* 'library_kind` :=  'ppx_deriver' or 'ppx_rewriter' */
                 if (strncmp(e->property->name, "archive", 7)
                     == 0) {
+                    if ((strlen(pkg_name) != 3)
+                        || (strncmp(pkg_name, "lib", 3) != 0)) {
+                        fprintf(ostream,
+                                "\nalias(\n"
+                                "    name   = \"lib\",\n"
+                                "    actual = \"%s\"\n"
+                                ")\n", pkg_name);
+                    }
                     emit_bazel_archive_rule(ostream,
                                             utstring_body(opam_switch_lib),
                                             coswitch_pkg_root,
@@ -2153,8 +2206,7 @@ EXPORT void emit_build_bazel(UT_string *opam_switch_lib,
                                             _pkg);
                     continue;
                 }
-
-                if (strncmp(e->property->name, "plugin", 6) == 0) {
+                else if (strncmp(e->property->name, "plugin", 6) == 0) {
                     emit_bazel_plugin_rule(ostream, 1,
                                            ocaml_ws,
                                            utstring_body(new_filedeps_path),
@@ -2170,7 +2222,7 @@ EXPORT void emit_build_bazel(UT_string *opam_switch_lib,
                    not deliver any files ('archive' or 'plugin').
                 */
 
-                if (strncmp(e->property->name, "requires", 6)
+                else if (strncmp(e->property->name, "requires", 6)
                     == 0) {
                     /* some pkgs have 'requires' but no 'archive' nor 'plugin' */
                     /* compiler-libs has 'requires = ""' and 'director = "+compiler-libs"' */
@@ -2194,7 +2246,27 @@ EXPORT void emit_build_bazel(UT_string *opam_switch_lib,
                                            obazl_pfx, pkg_name, entries);
                     continue;
                 }
-
+                else if (strncmp(e->property->name, "description", 11)
+                    == 0) {
+                    // ignore, handled elsewhere
+                }
+                else if (strncmp(e->property->name, "version", 7)
+                    == 0) {
+                    // ignore, handled elsewhere
+                }
+                else if (strncmp(e->property->name, "warning", 7)
+                    == 0) {
+                    LOG_INFO(0, "processing 'warning' property", "");
+                    // FIXME: emit comment?
+                }
+                else if (strncmp(e->property->name, "exists_if", 9)
+                    == 0) {
+              LOG_INFO(0, "processing 'exists_if' property", "");
+                }
+                else if (strncmp(e->property->name, "exports", 7)
+                    == 0) {
+              LOG_INFO(0, "processing 'exports' property", "");
+                }
                 /* **************** */
                 //TODO:FIXME: only if --enable-jsoo passed
                 /* if (strncmp(e->property->name, "jsoo_runtime", 12) == 0) { */
@@ -2205,17 +2277,16 @@ EXPORT void emit_build_bazel(UT_string *opam_switch_lib,
                 /*     fprintf(ostream, ")\n"); */
                 /* } */
 
-                if (obzl_meta_entries_property(entries, "error")) {
+                else if (obzl_meta_entries_property(entries, "error")) {
                     emit_bazel_error_target(ostream, 1, ocaml_ws,
                                             "FIXME_ERROR",
                                             obazl_pfx,
                                             pkg_name, entries);
                     break;
                 }
-
-#if defined(PROFILE_fastbuild)
-                LOG_WARN(0, "processing other property: %s", e->property->name);
-#endif
+                else {
+                    LOG_WARN(0, "processing other property: %s", e->property->name);
+                }
                 /* dump_entry(0, e); */
                 // push all flags to global pos_flags
             }

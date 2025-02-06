@@ -68,6 +68,7 @@ void _handle_error(sexp_errcode_t sexperrno)
         break;
     case  SEXP_ERR_BAD_CONSTRUCTOR:
         printf("err: bad constructor\n");
+        break;
     case SEXP_ERR_UNKNOWN_STATE:
         printf("err: unknown state\n");
         break;
@@ -168,7 +169,7 @@ EXPORT UT_array *dune_package_files_fld(char *fldname)
     sexp_t *fldsexp = NULL;
     pcont_t *cc = NULL;
 
-    printf("dune lang version: %s\n", dune_lang_version);
+    /* printf("dune lang version: %s\n", dune_lang_version); */
 
     UT_array *values;
     utarray_new(values, &ut_str_icd);

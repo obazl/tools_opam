@@ -15,29 +15,18 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-/* #include "cwalk.h" */
 #include "gopt.h"
-/* #include "libs7.h" */
 #include "liblogc.h"
-/* #include "findlibc.h" */
-/* #include "opamc.h" */
-/* #include "semver.h" */
 #include "utarray.h"
 #include "uthash.h"
 #include "utstring.h"
-/* #include "xdgc.h" */
-/* #include "librunfiles.h" */
 
 #include "main.h"
 
 bool bazel_env;
 
 extern bool xdg_install;
-
-/* static UT_string *meta_path; */
-
 extern char *switch_name;
-/* static char *coswitch_name; // may be "local" */
 
 #define DEBUG_LEVEL coswitch_debug
 extern int  DEBUG_LEVEL;
@@ -58,44 +47,8 @@ bool quiet;
 bool verbose;
 int  verbosity;
 
-/* int level = 0; */
-/* int spfactor = 4; */
-/* char *sp = " "; */
-
-/* s7_scheme *s7; */
-
-/* UT_string *imports_path; */
-/* UT_string *pkg_parent; */
-
-/* struct paths_s { */
-/*     UT_string *registry; */
-/*     UT_string *coswitch_lib; */
-/*     bool ocaml_dep;             /\* depends on builtin e.g. str, threads, unix, etc. *\/ */
-/*     struct obzl_meta_package *pkgs; */
-/* }; */
-
-/* /\* UT_string *coswitch_runfiles_root; *\/ */
-
-/* const char *coswitch_version = COSWITCH_VERSION; */
-/* extern char *findlibc_version; */
-
-/* char *default_version = "0.0.0"; */
-/* int   default_compat  = 0; */
-/* char *bazel_compat    = "8.0.0"; */
-
-/* char *platforms_version = "0.0.10"; */
-/* char *skylib_version    = "1.7.1"; */
-/* char *rules_cc_version  = "0.0.17"; */
-
 extern char *rules_ocaml_version;
-/* char *ocaml_version = "0.0.0"; */
-/* char *compiler_version; */
-
-/* int log_writes = 1; // threshhold for logging all writes */
-/* int log_symlinks = 2; */
 extern bool enable_jsoo;
-
-/* char *pkg_path = NULL; */
 
 enum OPTS {
     OPT_PKG = 0,
@@ -212,7 +165,6 @@ void _set_options(struct option options[])
     }
 
     if (options[FLAG_VERBOSE].count) {
-        /* printf("verbose ct: %d\n", options[FLAG_VERBOSE].count); */
         verbose = true;
         verbosity = options[FLAG_VERBOSE].count;
     }
@@ -281,15 +233,6 @@ void _set_options(struct option options[])
     if (options[FLAG_XDG_INSTALL].count) {
         xdg_install = true;
     }
-
-    /* if (options[OPT_PKG].count) { */
-    /*     utarray_push_back(opam_include_pkgs, &optarg); */
-    /* } */
-
-    /* case 'x': */
-    /*     printf("EXCL %s\n", optarg); */
-    /*     utarray_push_back(opam_exclude_pkgs, &optarg); */
-    /*     break; */
 }
 
 extern char **environ;
@@ -318,7 +261,6 @@ int main(int argc, char *argv[])
     /*     log_info("%s", environ[i++]); */
     /* } */
 
-    /* char *launch_dir = getcwd(NULL,0); */
     if (options[OPT_SWITCH].count) {
         switch_name = options[OPT_SWITCH].argument;
     }
@@ -326,21 +268,6 @@ int main(int argc, char *argv[])
     if (options[OPT_RULES_OCAML].count) {
         rules_ocaml_version = options[OPT_RULES_OCAML].argument;
     }
-
-    /* if (bazel_env) { */
-    /*     if (options[OPT_SWITCH].count) { */
-    /*         switch_name = options[OPT_SWITCH].argument; */
-    /*     } else { */
-    /*         switch_name = opam_switch_name(); */
-    /*     } */
-    /* } else{ */
-    /*     if (options[OPT_SWITCH].count) { */
-    /*         log_warn("Ignoring -s %s", */
-    /*                  options[OPT_SWITCH].argument); */
-    /*     } */
-    /*     // chdir to switch root? */
-    /*     switch_name = opam_switch_name(); */
-    /* } */
 
     if (options[FLAG_QUIET].count) {
         quiet = true;

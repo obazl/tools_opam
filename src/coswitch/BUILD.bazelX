@@ -25,8 +25,7 @@ cc_binary(
     deps = [
         "//lib:tools_opam",
         "@findlibc//lib:findlibc",
-        "@libs7//lib:s7",
-        "@opamc//lib:opamc",
+        # "@libs7//lib:s7",
         # "@runfiles//lib:runfiles",
         "@liblogc//lib:logc",
         "@gopt//lib:gopt",
@@ -35,7 +34,7 @@ cc_binary(
         "@xdgc//lib:xdgc",
     ],
     copts = BASE_COPTS + [
-        "-I$(GENDIR)/config/switch"
+        "-I$(GENDIR)/src/coswitch"
     ],
     features = ["layering_check"],
     linkopts = BASE_LINKOPTS + [
@@ -65,9 +64,9 @@ makeheaders(
     ],
     additional_srcs = [
         "//lib:emit_build_bazel.c",
-        "//lib:emit_ocaml_repo.c",
+        "//lib:emit_ocamlsdk.c",
         "//lib:emit_pkg_bindir.c",
-        "//lib:registry.c",
+        # "//lib:registry.c",
         "//lib:utils.c",
         "//lib:versions.c",
        "@liblogc//macros:ansi_colors.h"
