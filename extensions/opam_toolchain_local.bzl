@@ -6,7 +6,7 @@ load("opam_ops.bzl",
 load("opam_utils.bzl", "get_sdk_lib")
 
 load("colors.bzl",
-     "CCRED", "CCDER", "CCMAG", "CCRESET")
+     "CCRED", "CCYEL", "CCRESET")
 
 ##########################################
 def _opam_create_local_switch(ctx, opambin,
@@ -71,15 +71,18 @@ def config_local_toolchain(mctx,
                 if installed_version != ocaml_version:
                     print("""
 
-{c}WARNING{reset}: You have requested the local switch with OCaml version {v1},
-but your local switch ('_opam') uses version {v2}.
+{c}WARNING{reset}: You have requested the local switch with OCaml version {y}{v1}{reset},
+but your local switch ('_opam') uses version {y}{v2}{reset}.
 
 I will proceed with the build using your local switch.
 
-To remove this warning, either set 'ocaml_version" (in your MODULE.bazel file) to "{v2}",
-or delete the local switch ("./_opam") so I can create a fresh local switch using OCaml version {v1}.
+To remove this warning, either:
+
+    a) set 'ocaml_version" (in your MODULE.bazel file) to "{v2}",
+    b) remove the 'ocaml_version' attribute, or
+    c) delete the local switch ("./_opam") so I can create a fresh local switch using OCaml version {v1}.
                     """.format(
-                        c=CCRED, reset=CCRESET,
+                        c=CCRED, reset=CCRESET, y = CCYEL,
                         v1=ocaml_version, v2=installed_version)
                           )
                 else:

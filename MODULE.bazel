@@ -11,17 +11,8 @@ bazel_dep(name = "bazel_skylib",   version = "1.7.1")
 bazel_dep(name = "rules_cc",       version = "0.0.17")
 
 ## obazl
-bazel_dep(name = "rules_ocaml",     version = "5.0.0")
-local_path_override(
-    module_name = "rules_ocaml",
-    path = "/Users/gar/obazl/rules_ocaml",
-)
 bazel_dep(name = "obazl_config_cc", version = "3.0.0")
 bazel_dep(name = "findlibc",        version = "3.0.0")
-# local_path_override(
-#     module_name = "findlibc",
-#     path = "/Users/gar/obazlc/findlibc",
-# )
 bazel_dep(name = "xdgc",            version = "3.0.0")
 
 ## 3rd party
@@ -30,10 +21,6 @@ bazel_dep(name = "gopt",            version = "10.0.0")
 bazel_dep(name = "liblogc",         version = "3.0.0")
 bazel_dep(name = "makeheaders",     version = "3.0.0")
 bazel_dep(name = "sfsexp",          version = "1.4.1.bzl")
-# local_path_override(
-#     module_name = "sfsexp",
-#     path = "/Users/gar/obazlc/sfsexp",
-# )
 bazel_dep(name = "uthash",          version = "2.3.0.bzl")
 
 ## test
