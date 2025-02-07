@@ -2,6 +2,8 @@
 
 load("@rules_ocaml//build:rules.bzl", "ocaml_import")
 
+# load("@tools_opam//build:rules.bzl", "opam_import")
+
 ocaml_import(
     name       = "common",
     doc        = """Common compiler routines""",

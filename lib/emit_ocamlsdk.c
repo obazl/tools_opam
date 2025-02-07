@@ -648,8 +648,8 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
     write_template(obazl_pfx,
-                   ocamlsdk_toolchain_selector_local_BUILD,
-                   ocamlsdk_toolchain_selector_local_BUILD_len,
+                   toolchain_toolchain_selector_local_BUILD,
+                   toolchain_toolchain_selector_local_BUILD_len,
                    utstring_body(dst_file));
 
 #if defined(XCOMPILE_MACOS)
@@ -660,8 +660,8 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
     write_template(obazl_pfx,
-                   ocamlsdk_toolchain_selector_macos_x86_64_BUILD,
-                   ocamlsdk_toolchain_selector_macos_x86_64_BUILD_len,
+                   toolchain_toolchain_selector_macos_x86_64_BUILD,
+                   toolchain_toolchain_selector_macos_x86_64_BUILD_len,
                    utstring_body(dst_file));
 
     utstring_renew(dst_file);
@@ -671,8 +671,8 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
     write_template(obazl_pfx,
-                   ocamlsdk_toolchain_selector_macos_arm_BUILD,
-                   ocamlsdk_toolchain_selector_macos_arm_BUILD_len,
+                   toolchain_toolchain_selector_macos_arm_BUILD,
+                   toolchain_toolchain_selector_macos_arm_BUILD_len,
                    utstring_body(dst_file));
 #endif
 
@@ -684,8 +684,8 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
     write_template(obazl_pfx,
-                   ocamlsdk_toolchain_selector_linux_x86_64_BUILD,
-                   ocamlsdk_toolchain_selector_linux_x86_64_BUILD_len,
+                   toolchain_toolchain_selector_linux_x86_64_BUILD,
+                   toolchain_toolchain_selector_linux_x86_64_BUILD_len,
                    utstring_body(dst_file));
 
     utstring_renew(dst_file);
@@ -695,8 +695,8 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
     write_template(obazl_pfx,
-                   ocamlsdk_toolchain_selector_linux_arm_BUILD,
-                   ocamlsdk_toolchain_selector_linux_arm_BUILD_len,
+                   toolchain_toolchain_selector_linux_arm_BUILD,
+                   toolchain_toolchain_selector_linux_arm_BUILD_len,
                    utstring_body(dst_file));
 #endif
 
@@ -707,8 +707,8 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
     write_template(obazl_pfx,
-                   ocamlsdk_toolchain_profiles_BUILD,
-                   ocamlsdk_toolchain_profiles_BUILD_len,
+                   toolchain_toolchain_profiles_BUILD,
+                   toolchain_toolchain_profiles_BUILD_len,
                    utstring_body(dst_file));
 
     utstring_new(dst_file);
@@ -719,8 +719,8 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
     utstring_printf(dst_file, "/BUILD.bazel");
 
     write_template(obazl_pfx,
-                   ocamlsdk_toolchain_adapter_local_BUILD,
-                   ocamlsdk_toolchain_adapter_local_BUILD_len,
+                   toolchain_toolchain_adapter_local_BUILD,
+                   toolchain_toolchain_adapter_local_BUILD_len,
                    utstring_body(dst_file));
 
 #if defined(XCOMPILE_LINUX)
@@ -731,8 +731,8 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
     write_template(obazl_pfx,
-                   ocamlsdk_toolchain_adapter_linux_x86_64_BUILD,
-                   ocamlsdk_toolchain_adapter_linux_x86_64_BUILD_len,
+                   toolchain_toolchain_adapter_linux_x86_64_BUILD,
+                   toolchain_toolchain_adapter_linux_x86_64_BUILD_len,
                    utstring_body(dst_file));
 
     utstring_renew(dst_file);
@@ -742,8 +742,8 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
     write_template(obazl_pfx,
-                   ocamlsdk_toolchain_adapter_linux_arm_BUILD,
-                   ocamlsdk_toolchain_adapter_linux_arm_BUILD_len,
+                   toolchain_toolchain_adapter_linux_arm_BUILD,
+                   toolchain_toolchain_adapter_linux_arm_BUILD_len,
                    utstring_body(dst_file));
 #endif
 
@@ -755,8 +755,8 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
     write_template(obazl_pfx,
-                   ocamlsdk_toolchain_adapter_macos_x86_64_BUILD,
-                   ocamlsdk_toolchain_adapter_macos_x86_64_BUILD_len,
+                   toolchain_toolchain_adapter_macos_x86_64_BUILD,
+                   toolchain_toolchain_adapter_macos_x86_64_BUILD_len,
                    utstring_body(dst_file));
 
     utstring_new(dst_file);
@@ -766,8 +766,8 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
     write_template(obazl_pfx,
-                   ocamlsdk_toolchain_adapter_macos_arm_BUILD,
-                   ocamlsdk_toolchain_adapter_macos_arm_BUILD_len,
+                   toolchain_toolchain_adapter_macos_arm_BUILD,
+                   toolchain_toolchain_adapter_macos_arm_BUILD_len,
                    utstring_body(dst_file));
 #endif
     utstring_free(dst_file);

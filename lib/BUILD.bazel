@@ -29,6 +29,7 @@ cc_library(
         "dune-package.c",
         "//lib/templates/compiler_libs",
         "//lib/templates/ocamlsdk",
+        "//lib/templates/toolchain",
     ],
     includes = [".", "$(GENDIR)"],
     hdrs = ["tools_opam.h"],
@@ -74,6 +75,7 @@ makeheaders(
     additional_srcs = [
         "//lib/templates/compiler_libs",
         "//lib/templates/ocamlsdk",
+        "//lib/templates/toolchain",
         "@liblogc//macros:ansi_colors.h",
     ] + select({
         "@obazl_config_cc//profile:dev?": [

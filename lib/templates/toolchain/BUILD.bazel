@@ -1,0 +1,9 @@
+# exports_files(
+#     glob(["**/*.BUILD"])
+# )
+
+filegroup(
+    name = "toolchain",
+    srcs = glob(["*.c"]),
+    visibility = ["//lib:__pkg__"]
+)
