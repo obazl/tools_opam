@@ -16,6 +16,11 @@ def _opam_create_local_switch(ctx, opambin,
 
     switch_id = proj_root
 
+    ## WARNING: sys-ocaml-version may be inaccurate.
+    ## opam will use whatever is on the PATH, which
+    ## may be different. Clean path doesn't help,
+    ## as user may have installed ocaml in e.g. /usr/bin.
+
     if not ocaml_version:
         cmd = ["opam", "var", "sys-ocaml-version"]
         res = ctx.execute(cmd,
@@ -23,7 +28,7 @@ def _opam_create_local_switch(ctx, opambin,
                           quiet = (verbosity < 1))
         if res.return_code == 0:
             ocaml_version = res.stdout.strip()
-            print("FOUND sys-ocaml-version: %s" % ocaml_version)
+            if debug > 0: print("FOUND sys-ocaml-version: %s" % ocaml_version)
         elif res.return_code != 0:
             print("cmd: %s" % cmd)
             print("rc: %s" % res.return_code)

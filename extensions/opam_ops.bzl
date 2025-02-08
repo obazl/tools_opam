@@ -87,7 +87,7 @@ def opam_install_pkg(rctx,
            "--root", "{}".format(root),
            "--yes"]
 
-    if debug > 0: print("SWITCH_BIN: %s/bin" % switch_pfx)
+    if debug > 0: print("Installing pkg: %s" % cmd)
     rctx.report_progress("Installing pkg {p} ({i} of {tot})".format(p=pkg, i=n, tot=tot))
     res = rctx.execute(cmd,
                        environment = {
