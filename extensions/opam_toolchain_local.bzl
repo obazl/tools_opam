@@ -16,17 +16,29 @@ def _opam_create_local_switch(ctx, opambin,
 
     switch_id = proj_root
 
-    cmd = [opambin, "switch", "create", "."]
-    if ocaml_version:
-        cmd.extend(["{}".format(ocaml_version)])
-    cmd.extend(["--deps-only",
-                "--no-switch" # do not automatically select
-                ])
-    if verbosity > 2:
-        cmd.extend(["--verbose"])
+    if not ocaml_version:
+        cmd = ["opam", "var", "sys-ocaml-version"]
+        res = ctx.execute(cmd,
+                          working_directory = str(proj_root),
+                          quiet = (verbosity < 1))
+        if res.return_code == 0:
+            ocaml_version = res.stdout.strip()
+            print("FOUND sys-ocaml-version: %s" % ocaml_version)
+        elif res.return_code != 0:
+            print("cmd: %s" % cmd)
+            print("rc: %s" % res.return_code)
+            print("stdout: %s" % res.stdout)
+            fail(res.stderr)
+
+    cmd = [opambin, "switch", "create", ".",
+           "{}".format(ocaml_version),
+           "--deps-only",
+           "--no-switch" # do not automatically select
+           ]
+    if verbosity > 2: cmd.extend(["--verbose"])
     if debug > 0: print("Creating switch:\n%s" % cmd)
-    ctx.report_progress("Creating local switch for compiler {version}, at {id}".format(
-        id=switch_id, version=ocaml_version))
+
+    ctx.report_progress("""Creating local switch for compiler {v} at {id}""".format(v=ocaml_version, id=switch_id))
 
     res = ctx.execute(cmd,
                       working_directory = str(proj_root),
@@ -42,7 +54,7 @@ def _opam_create_local_switch(ctx, opambin,
         print("stderr: %s" % res.stderr)
         fail("cmd failure: %s" % cmd)
 
-    return switch_id
+    return switch_id, ocaml_version
 
 ################################
 def config_local_toolchain(mctx,
@@ -103,10 +115,11 @@ To remove this warning, either:
 
     else:
         if debug > 0: print("\nLOCAL SWITCH PFX NOT FOUND: %s" % switch_pfx)
-        switch = _opam_create_local_switch(mctx, opambin,
-                                           ocaml_version,
-                                           proj_root,
-                                           debug, verbosity)
+        (switch,
+        ocaml_version) = _opam_create_local_switch(mctx, opambin,
+                                                  ocaml_version,
+                                                  proj_root,
+                                                  debug, verbosity)
         # switch will be path to proj root dir
         switch_pfx = str(switch) + "/_opam"
 
