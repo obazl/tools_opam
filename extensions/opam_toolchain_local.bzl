@@ -3,7 +3,7 @@ load("opam_ops.bzl",
      "is_pkg_installed",
      "opam_install_pkg",
      "run_cmd")
-load("opam_utils.bzl", "get_sdk_lib")
+load("opam_utils.bzl", "get_sdk_root")
 
 load("colors.bzl",
      "CCRED", "CCYEL", "CCRESET")
@@ -12,14 +12,10 @@ load("colors.bzl",
 def _opam_create_local_switch(ctx, opambin,
                               ocaml_version,
                               proj_root,
-                              debug, verbosity):
+                              debug, opam_verbosity,
+                              verbosity):
 
     switch_id = proj_root
-
-    ## WARNING: sys-ocaml-version may be inaccurate.
-    ## opam will use whatever is on the PATH, which
-    ## may be different. Clean path doesn't help,
-    ## as user may have installed ocaml in e.g. /usr/bin.
 
     if not ocaml_version:
         cmd = ["opam", "var", "sys-ocaml-version"]
@@ -38,16 +34,26 @@ def _opam_create_local_switch(ctx, opambin,
     cmd = [opambin, "switch", "create", ".",
            "{}".format(ocaml_version),
            "--deps-only",
-           "--no-switch" # do not automatically select
+           "--no-switch", # do not automatically select
            ]
-    if verbosity > 2: cmd.extend(["--verbose"])
-    if debug > 0: print("Creating switch:\n%s" % cmd)
+    if opam_verbosity > 1:
+        s = "-"
+        for i in range(1, opam_verbosity):
+            s = s + "v"
+        print("S: %s" % s)
+        cmd.extend([s])
+    if (verbosity > 0
+        or opam_verbosity):
+        print("\nCreating switch:\n\t%s" % cmd)
 
     ctx.report_progress("""Creating local switch for compiler {v} at {id}""".format(v=ocaml_version, id=switch_id))
 
     res = ctx.execute(cmd,
                       working_directory = str(proj_root),
-                      quiet = (verbosity < 1))
+                      # environment = {
+                      #     "PATH":  "/usr/local/bin:/bin:/usr/bin:usr/sbin"
+                      # },
+                      quiet = (opam_verbosity < 1))
     if res.return_code == 5:
         # no matching compiler found; run 'opam update'
         # then opam switch list-available
@@ -65,7 +71,7 @@ def _opam_create_local_switch(ctx, opambin,
 def config_local_toolchain(mctx,
                            ocaml_version,
                            deps,
-                           debug, verbosity):
+                           debug, opam_verbosity, verbosity):
     if debug > 0: print("\nconfig_local_toolchain")
 
     opambin = mctx.which("opam")
@@ -78,15 +84,13 @@ def config_local_toolchain(mctx,
         fail("WSROOT NOT FOUND: %s" % proj_root)
 
     switch_pfx = mctx.path(str(proj_root) + "/_opam")
+    if debug > 0: print("OCaml version:")
     if switch_pfx.exists:
         # verify ocaml version
         cmd = [opambin, "var", "ocaml:version",
                "--switch", proj_root,]
         res = mctx.execute(cmd,
-                           environment = {
-                               "PATH": "/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
-                           },
-                           quiet = (verbosity < 1))
+                           quiet = (debug < 1))
         if res.return_code == 0:
             switch =  proj_root
             installed_version = res.stdout.strip()
@@ -122,9 +126,10 @@ To remove this warning, either:
         if debug > 0: print("\nLOCAL SWITCH PFX NOT FOUND: %s" % switch_pfx)
         (switch,
         ocaml_version) = _opam_create_local_switch(mctx, opambin,
-                                                  ocaml_version,
-                                                  proj_root,
-                                                  debug, verbosity)
+                                                   ocaml_version,
+                                                   proj_root,
+                                                   debug, opam_verbosity,
+                                                   verbosity)
         # switch will be path to proj root dir
         switch_pfx = str(switch) + "/_opam"
 
@@ -141,8 +146,10 @@ To remove this warning, either:
 
     # only reliable method I can see is to look for
     # _opam/.opam-switch/config/ocaml-system.config
-    SDKLIB = get_sdk_lib(mctx, opambin, switch_pfx, debug)
-    SDKBIN = SDKLIB.removesuffix("/lib") + "/bin"
+    SDKROOT = get_sdk_root(mctx, opambin, switch_pfx, debug)
+    SDKLIB = SDKROOT + "/lib"
+    SDKBIN = SDKROOT + "/bin"
+    # SDKBIN = SDKLIB.removesuffix("/lib") + "/bin"
     if debug > 0: print("SDKBIN: %s" % SDKBIN)
 
     ## now get the OPAMROOT
@@ -189,7 +196,7 @@ To remove this warning, either:
                              SDKBIN,
                              OPAMROOT,
                              i, tot,
-                             debug, verbosity)
+                             debug, opam_verbosity, verbosity)
 
     # get all installed pkgs
     cmd = ["ls", "-1", "{}".format(switch_lib)]

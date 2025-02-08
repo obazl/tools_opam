@@ -1,4 +1,4 @@
-DEFAULT_PATH = "/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
+DEFAULT_PATH = "/bin:/usr/bin:usr/sbin"
 
 #####################
 def print_cwd(ctx):
@@ -77,24 +77,49 @@ def opam_install_pkg(rctx,
                      sdk_bin,
                      root,
                      n, tot,
-                     debug, verbosity):
+                     debug, opam_verbosity, verbosity):
 
-    # print("installing, root = %s" % root)
+    the_path = "{}:{}/bin:{}".format(
+        sdk_bin, switch_pfx, DEFAULT_PATH)
+    if debug > 0: print("\nPATH: %s" % the_path)
+    # cmd = ["which", "ocaml"]
+    # res = rctx.execute(cmd,
+    #                    environment = {
+    #                        "PATH":  the_path,
+    #                        "OPAM_USER_PATH_RO": the_path
+    #                    },
+    #                    quiet = (verbosity < 1))
+    # if res.return_code == 0:
+    #     print("which ocaml: %s" % res.stdout.strip())
+    # else:
+    #     print("cmd: %s" % cmd)
+    #     print("rc: %s" % res.return_code)
+    #     print("stdout: %s" % res.stdout)
+    #     print("stderr: %s" % res.stderr)
+    #     fail("cmd failure")
+
     cmd = [opam_path,
            "install",
            pkg,
            "--switch", switch,
            "--root", "{}".format(root),
            "--yes"]
+    if opam_verbosity > 1:
+        s = "-"
+        for i in range(1, opam_verbosity):
+            s = s + "v"
+        print("S: %s" % s)
+        cmd.extend([s])
 
-    if debug > 0: print("Installing pkg: %s" % cmd)
+    if (verbosity > 0
+        or opam_verbosity):
+        print("\nInstalling pkg:\n\t%s" % cmd)
     rctx.report_progress("Installing pkg {p} ({i} of {tot})".format(p=pkg, i=n, tot=tot))
     res = rctx.execute(cmd,
                        environment = {
-                           "PATH":  "{}:{}/bin:{}".format(
-                               sdk_bin, switch_pfx, DEFAULT_PATH)
+                           "PATH":  the_path
                        },
-                       quiet = (verbosity < 1))
+                       quiet = (opam_verbosity < 1))
     if res.return_code == 0:
         if debug > 0: print("pkg installed: '%s'" % pkg)
     else:

@@ -141,6 +141,7 @@ def _opam_ext_impl(mctx):
     obazl_pfx     = "opam."
     toolchain     = None
     debug         = 0
+    opam_verbosity    = 0
     verbosity     = 0
     root_module   = None
     direct_deps = []
@@ -163,7 +164,8 @@ def _opam_ext_impl(mctx):
                 ocaml_version = cfg.ocaml_version
                 direct_deps.extend(cfg.pkgs)
                 # subdeps.extend(cfg.indirect_deps)
-                debug  = cfg.debug
+                debug      = cfg.debug
+                opam_verbosity = cfg.opam_verbosity
                 verbosity = cfg.verbosity
         else:
             for cfg in m.tags.deps:
@@ -189,7 +191,7 @@ def _opam_ext_impl(mctx):
             mctx,
             ocaml_version,
             direct_deps,
-            debug, verbosity)
+            debug, opam_verbosity, verbosity)
         if debug > 0: print("SDKLIB: %s" % sdklib)
     elif toolchain == "global":
         if debug > 0: print("TC GLOBAL")
@@ -198,7 +200,7 @@ def _opam_ext_impl(mctx):
             mctx,
             ocaml_version,
             direct_deps,
-            debug,
+            debug, opam_verbosity,
             verbosity)
         if debug > 0: print("SDKLIB: %s" % sdklib)
     elif toolchain == "xdg":
@@ -255,13 +257,14 @@ def _opam_ext_impl(mctx):
 
     ## configure all deps
     # for now, ignore versions
+    if verbosity > 0: print("Registering repos for opam pkgs")
     for pkg in deps:
         ## FIXME: for ocaml >= 5, dynlink etc. not toplevel pkgs?
         if pkg in OBAZL_PKGS: # e.g. dynlink, str, unix
             pkg = pkg
         else:
             pkg = "{pfx}{pkg}".format(pfx=obazl_pfx, pkg=pkg)
-        if debug > 1: print("creating repo for: " + pkg)
+        if verbosity > 0: print("repo: " + pkg)
         opam_dep(name=pkg,
                  install = False,
                  opam = opampath,
@@ -274,7 +277,7 @@ def _opam_ext_impl(mctx):
                  debug = debug,
                  verbosity = verbosity
                  )
-        if debug > 1: print("done")
+        # if debug > 1: print("done")
 
     ## installing deps already installs subdeps
     ## so we create repo & config w/o installing opam pkg
@@ -362,8 +365,9 @@ opam = module_extension(
                   mandatory = False,
                   allow_empty = True
               ),
-              "debug": attr.int(default     = 0),
-              "verbosity": attr.int(default = 0),
+              "debug"     : attr.int(default = 0),
+              "verbosity" : attr.int(default = 0),
+              "opam_verbosity": attr.int(default = 0),
           }
       )
   }

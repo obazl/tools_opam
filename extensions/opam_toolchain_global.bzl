@@ -3,7 +3,7 @@ load("opam_ops.bzl",
      "is_pkg_installed",
      "opam_install_pkg",
      "run_cmd")
-load("opam_utils.bzl", "get_sdk_lib")
+load("opam_utils.bzl", "get_sdk_root")
 
 load("colors.bzl",
      "CCRED", "CCYEL", "CCYELBGH", "CCRESET")
@@ -18,7 +18,7 @@ def _opam_path(switch_pfx):
 def config_global_toolchain(mctx,
                            ocaml_version,
                            direct_deps,
-                           debug, verbosity):
+                           debug, opam_verbosity, verbosity):
     if debug > 0: print("\nconfig_global_toolchain")
 
     opambin = mctx.which("opam")
@@ -93,9 +93,11 @@ To eliminate this warning, either
         fail("cmd failure.")
     if debug > 0: print("switch_pfx: %s" % switch_pfx)
 
-    SDKLIB = get_sdk_lib(mctx, opambin, switch_pfx, debug)
+    SDKROOT = get_sdk_root(mctx, opambin, switch_pfx, debug)
+    SDKLIB = SDKROOT + "/lib"
     if debug > 0: print("SDKLIB: %s" % SDKLIB)
-    SDKBIN = SDKLIB.removesuffix("/lib") + "/bin"
+    SDKBIN = SDKROOT + "/bin"
+    # SDKBIN = SDKLIB.removesuffix("/lib") + "/bin"
     if debug > 0: print("SDKBIN: %s" % SDKBIN)
 
     cmd = [opambin, "var", "lib"] # , "--switch", switch]
@@ -142,7 +144,7 @@ b) Tell me to install all missing packages by setting the env variable OBAZL_FOR
                              SDKBIN,
                              OPAMROOT,
                              i, tot,
-                             debug,
+                             debug, opam_verbosity,
                              verbosity)
 
     # get all installed pkgs

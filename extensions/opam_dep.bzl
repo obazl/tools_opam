@@ -45,8 +45,9 @@ OBAZL_PKGS = [
 ##############################
 def _opam_dep_repo_impl(rctx):
     ## repo_cts.name == tools_opam++opam+opam.ounit2
-    debug     = rctx.attr.debug
-    verbosity = rctx.attr.verbosity
+    debug      = rctx.attr.debug
+    opam_verbosity = rctx.attr.opam_verbosity
+    verbosity  = rctx.attr.verbosity
     if debug > 1: print("opam_dep(%s)" % rctx.name)
 
 #     rctx.file("MODULE.bazel",
@@ -54,8 +55,8 @@ def _opam_dep_repo_impl(rctx):
 # bazel_dep(name = "tools_opam", version = "1.0.0")
 #               """)
 
-    if debug > 1:
-        print("OPAM Configuring '" + rctx.name + "'")
+    if verbosity > 0:
+        print("Creating repo: '" + rctx.name + "'")
 
     opambin = rctx.path(rctx.attr.opam)
     if debug > 1: print("OPAMBIN: %s" % opambin)
@@ -81,7 +82,7 @@ def _opam_dep_repo_impl(rctx):
     cmd = [opambin, "var", "prefix",
            "--switch", "{}".format(opamswitch),
            "--root", opamroot]
-    res = rctx.execute(cmd, quiet = (verbosity < 1))
+    res = rctx.execute(cmd, quiet = (opam_verbosity < 1))
     switch_pfx = None
     if res.return_code == 0:
         switch_pfx = res.stdout.strip()
@@ -161,8 +162,9 @@ opam_dep = repository_rule(
             mandatory = False,
         ),
         "config_tool": attr.string(),
-        "debug": attr.int(default=0),
-        "verbosity": attr.int(default=0),
+        "debug":      attr.int(default=0),
+        "opam_verbosity": attr.int(default=0),
+        "verbosity":  attr.int(default=0),
     },
 )
 
