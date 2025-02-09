@@ -111,7 +111,7 @@ def opam_install_pkg(rctx,
             s = s + "v"
         cmd.extend([s])
 
-    if (verbosity > 0
+    if (verbosity > 1
         or opam_verbosity):
         print("\nInstalling pkg:\n\t%s" % cmd)
     rctx.report_progress("Installing pkg {p} ({i} of {tot})".format(p=pkg, i=n, tot=tot))

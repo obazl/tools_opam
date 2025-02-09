@@ -266,7 +266,7 @@ def _opam_ext_impl(mctx):
             pkg = pkg
         else:
             pkg = "{pfx}{pkg}".format(pfx=obazl_pfx, pkg=pkg)
-        if verbosity > 0: print(
+        if verbosity > 1: print(
             "\n  Registering repo {n} of {tot}: {p}".format(
                 n=i+1, tot=tot, p=pkg))
         opam_dep(name=pkg,

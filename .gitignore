@@ -5,6 +5,7 @@ obsolete
 *.log
 log.*
 *.dSYM
+tmp
 
 # Prerequisites
 *.d

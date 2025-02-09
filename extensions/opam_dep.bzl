@@ -55,7 +55,7 @@ def _opam_dep_repo_impl(rctx):
 # bazel_dep(name = "tools_opam", version = "1.0.0")
 #               """)
 
-    if verbosity > 0:
+    if verbosity > 1:
         print("\n  Creating repo: '" + rctx.name + "'")
 
     opambin = rctx.path(rctx.attr.opam)
