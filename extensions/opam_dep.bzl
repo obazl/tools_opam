@@ -56,7 +56,7 @@ def _opam_dep_repo_impl(rctx):
 #               """)
 
     if verbosity > 0:
-        print("Creating repo: '" + rctx.name + "'")
+        print("\n  Creating repo: '" + rctx.name + "'")
 
     opambin = rctx.path(rctx.attr.opam)
     if debug > 1: print("OPAMBIN: %s" % opambin)

@@ -207,12 +207,13 @@ def _opam_ext_impl(mctx):
         if debug > 0: print("TC PRIVATE")
         (opam, opamroot, sdklib, switch,
          ocaml_version, deps) = config_xdg_toolchain(
-            mctx,
-            opam_version,
-            ocaml_version,
-            direct_deps,
-            debug,
-            verbosity)
+             mctx,
+             opam_version,
+             ocaml_version,
+             direct_deps,
+             debug,
+             opam_verbosity,
+             verbosity)
     # else: # tc == "xdg_local"
 
     # if debug > 0: print(print_cwd(mctx))
@@ -257,14 +258,14 @@ def _opam_ext_impl(mctx):
 
     ## configure all deps
     # for now, ignore versions
-    if verbosity > 0: print("Registering repos for opam pkgs")
+    # if verbosity > 0: print("\n\tRegistering repos for opam pkgs")
     for pkg in deps:
         ## FIXME: for ocaml >= 5, dynlink etc. not toplevel pkgs?
         if pkg in OBAZL_PKGS: # e.g. dynlink, str, unix
             pkg = pkg
         else:
             pkg = "{pfx}{pkg}".format(pfx=obazl_pfx, pkg=pkg)
-        if verbosity > 0: print("repo: " + pkg)
+        if verbosity > 0: print("\n  Registering repo: " + pkg)
         opam_dep(name=pkg,
                  install = False,
                  opam = opampath,

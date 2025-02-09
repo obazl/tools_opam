@@ -92,7 +92,8 @@ def _init_opam(mctx, opambin, opam_version, OPAMROOT, verbosity):
 
 ################
 def _create_switch(mctx, opambin, opam_version,
-                   OPAMROOT, switch_id, verbosity):
+                   OPAMROOT, switch_id,
+                   opam_verbosity, verbosity):
 
     cmd = [opambin,
            "switch",
@@ -121,13 +122,17 @@ def _create_switch(mctx, opambin, opam_version,
             print("stderr: %s" % res.stderr)
             fail("cmd failure: %s" % cmd)
 
+    ocaml_version = None
+
+    return switch_id, ocaml_version
+
 ################
 def config_xdg_toolchain(mctx,
-                                  opam_version,
-                                  ocaml_version,
-                                  pkgs,
-                                  debug,
-                                  verbosity):
+                         opam_version,
+                         ocaml_version,
+                         pkgs,
+                         debug,
+                         opam_verbosity, verbosity):
     if debug > 0: print("config_xdg_toolchain")
 
     #### make Bazel aware that this dir is to be preserved?
@@ -156,15 +161,35 @@ def config_xdg_toolchain(mctx,
     if not file_exists(mctx, OPAMROOT):
         _init_opam(mctx, opambin, opam_version, OPAMROOT, verbosity)
 
-    switch_id = ocaml_version
-    # cmd = ["file", "-b", "{}/{}".format(OPAMROOT, switch)]
-    # check = run_cmd(mctx, cmd) #, verbosity=1)
-    # print("check switch: '%s'" % check)
-    # if check != "directory":
+    if ocaml_version:
+        switch_id = ocaml_version
+        if not file_exists(mctx, "{}/{}".format(OPAMROOT, switch_id)):
+            (switch_id,
+             ocaml_version) = _create_switch(mctx, opambin,
+                                             opam_version,
+                                             OPAMROOT,
+                                             ocaml_version, # switch_id,
+                                             opam_verbosity,
+                                             verbosity)
+        # else:
+            # found switch in xdg env
+    else:
+        # no ocaml_version specified, use default
+        cmd = ["opam", "var", "sys-ocaml-version",
+               "--root", OPAMROOT]
+        res = mctx.execute(cmd,
+                           # environment = {
+                           #     "PATH": "/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
+                           # },
+                           quiet = (opam_verbosity < 1))
+    if res.return_code != 0:
 
-    if not file_exists(mctx, "{}/{}".format(OPAMROOT, switch_id)):
-        _create_switch(mctx, opambin, opam_version, OPAMROOT,
-                       switch_id, verbosity)
+        (switch_id,
+         ocaml_version) = _create_switch(mctx, opambin,
+                                         opam_version, OPAMROOT,
+                                         None, # switch_id,
+                                         opam_verbosity,
+                                         verbosity)
 
     cmd = [opambin, "var", "prefix", "--root", OPAMROOT,
            "--switch", switch_id]

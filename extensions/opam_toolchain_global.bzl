@@ -19,10 +19,16 @@ def config_global_toolchain(mctx,
                            ocaml_version,
                            direct_deps,
                            debug, opam_verbosity, verbosity):
-    if debug > 0: print("\nconfig_global_toolchain")
+    if verbosity > 0: print("\n  Configuring global toolchain")
 
     opambin = mctx.which("opam")
-    if debug > 0: print("\nOPAM: %s" % opambin)
+    if verbosity > 0:
+        cmd = [opambin, "--version"]
+        res = mctx.execute(cmd)
+        if res.return_code == 0:
+            print("\n  Opam version: %s" % res.stdout.strip())
+        else:
+            fail("Unable to run opam")
 
     cmd = [opambin, "var", "root"]
     res = mctx.execute(cmd)
@@ -44,7 +50,7 @@ def config_global_toolchain(mctx,
         print("stdout: {stdout}".format(stdout= res.stdout))
         print("stderr: {stderr}".format(stderr= res.stderr))
         fail("cmd failure.")
-    if debug > 0: print("switch_id: %s" % switch_id)
+    if verbosity > 0: print("\n  Switch id: %s" % switch_id)
 
     effective_ocaml_version = None
     ## check effective ocaml version vs. requested version

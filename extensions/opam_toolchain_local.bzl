@@ -40,7 +40,6 @@ def _opam_create_local_switch(ctx, opambin,
         s = "-"
         for i in range(1, opam_verbosity):
             s = s + "v"
-        print("S: %s" % s)
         cmd.extend([s])
     if (verbosity > 0
         or opam_verbosity):
@@ -195,7 +194,7 @@ To remove this warning, either:
                              switch_pfx,
                              SDKBIN,
                              OPAMROOT,
-                             i, tot,
+                             i+1, tot,
                              debug, opam_verbosity, verbosity)
 
     # get all installed pkgs

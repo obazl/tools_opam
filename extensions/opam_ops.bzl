@@ -82,6 +82,7 @@ def opam_install_pkg(rctx,
     the_path = "{}:{}/bin:{}".format(
         sdk_bin, switch_pfx, DEFAULT_PATH)
     if debug > 0: print("\nPATH: %s" % the_path)
+
     # cmd = ["which", "ocaml"]
     # res = rctx.execute(cmd,
     #                    environment = {
@@ -108,17 +109,17 @@ def opam_install_pkg(rctx,
         s = "-"
         for i in range(1, opam_verbosity):
             s = s + "v"
-        print("S: %s" % s)
         cmd.extend([s])
 
     if (verbosity > 0
         or opam_verbosity):
         print("\nInstalling pkg:\n\t%s" % cmd)
     rctx.report_progress("Installing pkg {p} ({i} of {tot})".format(p=pkg, i=n, tot=tot))
+
     res = rctx.execute(cmd,
-                       environment = {
-                           "PATH":  the_path
-                       },
+                       # environment = {
+                       #     "PATH":  the_path
+                       # },
                        quiet = (opam_verbosity < 1))
     if res.return_code == 0:
         if debug > 0: print("pkg installed: '%s'" % pkg)
