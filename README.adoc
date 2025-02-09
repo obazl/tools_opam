@@ -3,9 +3,23 @@
 
 Tools and rules for integrating link:https://opam.ocaml.org/[opam] (the OCaml package manager) onto Bazel for use by link:https://github.com/obazl/rules_ocaml[rules_ocaml].
 
-Currently the only tool is the opam module extension.
+Currently the only tool is the opam module extension. The Bazel link:https://bazel.build/external/extension#repository_names_and_visibility[module extension] facility is designed to support integration of external
+non-Bazel tools into the Bazel package management (`bzlmod`) and build
+system.  The `tools_opam` extension seamlessly integrates `opam` into bazel so that
+`rules_ocaml` can depend on `opam` resources without any special configuration. You must tell the extension which switch you want and what packages you need, but the tool itself requires no configuration.
 
-== Getting started
+== Quickstart
+
+link:https://bazel.build/install[Install Bazel].  Then:
+
+----
+    git clone https://github.com/obazl/obazl_hello.git
+    cd obazl_hello
+    bazel test //... --build_tests_only
+----
+
+
+== Configuration
 
 [source="starlark", title="MODULE.bazel"]
 ----
@@ -37,15 +51,6 @@ any Bazel registry, so the `bazel_dep` directive would fail. This
 <4> The `opam.ocamlsdk` module is always implicitly created by the extension and must be imported. Do not list it in `pkgs`.
 <5> The toolchains created by `opam.ocamlsdk` must be registered.
 
-The extension adds prefix `opam.` to all opam package names, which
-means your build files will refer to them as `@opam._pkg_` (in this
-example `@opam.ounit2`). This makes it easy to distinguish between
-opam and non-opam dependencies in your build files. If you prefer to
-drop the prefix, or name your packages something else, you can use the
-aliasing facility of `use_repo`:
-
-    use_repo(opam, ounit2 = "opam.ounit2")  # use `@ounit2` in BUILD.bazel files
-
 === Bazel labels for opam packages
 
 With legacy build systems (Dune, ocamlfind, etc.) the opam package
@@ -69,6 +74,15 @@ ocaml_module(name = "Test", struct = "test.ml",
 <1> Alternatively, `@opam.ounit2//lib`, which abbreviates `@opam.ounit2//lib:lib`, which is an alias of "@opam.ounit2//lib:ounit2".
 
 WARNING: Do not confuse Bazel's concept of _package_ with that of opam (or Dune, or findlib, or ...). See the Bazel documentation on link:https://bazel.build/concepts/build-ref#packages[packages] for details.
+
+The extension adds prefix `opam.` to all opam package names, which
+means your build files will refer to them as `@opam._pkg_` (in this
+example `@opam.ounit2`). This makes it easy to distinguish between
+opam and non-opam dependencies in your build files. If you prefer to
+drop the prefix, or name your packages something else, you can use the
+aliasing facility of `use_repo`:
+
+    use_repo(opam, ounit2 = "opam.ounit2")  # use `@ounit2` in BUILD.bazel files
 
 The mapping scheme is straightforward. A package `+pkg+` with no
 subpackages becomes `+@opam.pkg//lib+` (or equivalently
@@ -122,16 +136,44 @@ more information; see <<Getting more info>> below.
 
 == Toolchain strategies
 
+_Toolchain strategy_ refers to the _opam toolchain_ encompassing
+`+opam+`, an opam `+switch+` containing an OCaml SDK (compilers,
+tools, runtimes, standard library, etc.), and a set of opam packages
+installed in the switch.
+
+The opam "toolchain" is not to be confused with the _OCaml toolchains_
+defined by `+rules_ocaml+`, which model the four basic OCaml compiler
+types: `+ocamlopt.opt+` (sys>sys), `ocamlc.byte` (vm>vm),
+`+ocamlopt.byte+` (vm>sys), and `+ocamlc.opt+` (sys>vm).
+
 === Local
 
+By default the extension will use the local switch it it finds one. If
+you have specified `ocaml_version` then the extension will check to
+see if the compiler it uses matches and print a warning if not. If the
+switch is missing required packages the extension will install them.
+
+If you do not have a local switch, the extension will create one and
+install your required packages.
+
 === Global
-You can also use the current global switch, even if you have a local
+
+You can use the current global switch, even if you have a local
 switch, by editing `MODULE.bazel` and changing `toolchain="local"`
 to `toolchain="global"`.
 
+If the extension finds that the version of the compiler in the current
+switch does not match what you have specified in `ocaml_version`, it
+will print a warning but proceed with the build.
+
+If it finds that the current switch lacks any of the packages you
+require, it will print an Error message and abort the build; it will
+not automatically install them. You can override this by setting the
+environment variable `OBAZL_FORCE_INSTALL=1`.
+
 === XDG
 
-Finally, you can tell the extension to create the entire toolchain
+You can tell the extension to create the entire `+opam+` toolchain
 (including opam) in your `XDG_DATA_HOME` directory (default:
 `$HOME/.local/share`) by setting `toolchain="xdg"`. In that case, it
 will:
@@ -144,8 +186,11 @@ will:
 
 Such XDG toolchains are effectively global toolchains that are
 quasi-private to Obazl. They are completely separate from your system
-opam configuration. They will be shared across OBazl projects using
-`toolchain = "xdg".
+opam configuration. They will be shared across OBazl projects that use
+`toolchain = "xdg"`.
+
+WARNING: Currently the extension always uses `$HOME/.local/share`.
+Support for using the `$XDG_DATA_HOME` environment variable will soon be added.
 
 == What does the extension do?
 
@@ -318,3 +363,10 @@ Show only the deps in the `deps` attribute of the target:
     @opam.ocamlsdk//lib/unix:unix
     @opam.ounit2//advanced/lib:lib
     @@tools_opam++opam+opam.seq//lib:lib
+
+== Roadmap
+
+* Acquiring the list of required packges from the `opam` package file.
+
+* Generation of an `opam` package file from `MODULE.bazel`.
+
