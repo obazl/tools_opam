@@ -259,13 +259,16 @@ def _opam_ext_impl(mctx):
     ## configure all deps
     # for now, ignore versions
     # if verbosity > 0: print("\n\tRegistering repos for opam pkgs")
-    for pkg in deps:
+    tot = len(deps)
+    for i, pkg in enumerate(deps):
         ## FIXME: for ocaml >= 5, dynlink etc. not toplevel pkgs?
         if pkg in OBAZL_PKGS: # e.g. dynlink, str, unix
             pkg = pkg
         else:
             pkg = "{pfx}{pkg}".format(pfx=obazl_pfx, pkg=pkg)
-        if verbosity > 0: print("\n  Registering repo: " + pkg)
+        if verbosity > 0: print(
+            "\n  Registering repo {n} of {tot}: {p}".format(
+                n=i+1, tot=tot, p=pkg))
         opam_dep(name=pkg,
                  install = False,
                  opam = opampath,
