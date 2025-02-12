@@ -1078,6 +1078,7 @@ EXPORT void _symlink_ocaml_bigarray(UT_string *bigarray_dir,
 
 /*
   for toplevel <switch>/lib/compiler-libs.
+  pre 5.0.0 only?
   all targets aliased to <switch>/lib/ocaml/compiler-libs
 */
 EXPORT void emit_compiler_libs_pkg(char *obazl_pfx,
@@ -1293,6 +1294,27 @@ void _symlink_ocaml_compiler_libs(char *switch_lib,
         }
     }
     closedir(d);
+    TRACE_EXIT;
+}
+
+EXPORT void emit_ocaml_config_pkg(char *obazl_pfx,
+                                  UT_string *dst_dir,
+                                  char *switch_lib)
+{
+    (void)switch_lib;
+    TRACE_ENTRY;
+    UT_string *dst_file;
+    utstring_new(dst_file);
+
+    utstring_printf(dst_file,
+                    "%s",
+                    utstring_body(dst_dir));
+    mkdir_r(utstring_body(dst_file));
+    utstring_printf(dst_file, "/BUILD.bazel");
+    write_template(obazl_pfx,
+                   ocamlsdk_config_BUILD,
+                   ocamlsdk_config_BUILD_len,
+                   utstring_body(dst_file));
     TRACE_EXIT;
 }
 

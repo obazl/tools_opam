@@ -42,7 +42,7 @@ use_repo(opam, "opam.ocamlsdk")                                              <4>
 register_toolchains("@opam.ocamlsdk//toolchain/selectors/local:all")         <5>
 register_toolchains("@opam.ocamlsdk//toolchain/profiles:all")                <5>
 ----
-<1> This is currently alpha software; it has not yet be released to
+<1> This is currently alpha software; it has not yet been released to
 any Bazel registry, so the `bazel_dep` directive would fail. This
 `git_override` tells Bazel to fetch `tools_opam` from the
 `1.0.0.alpha` branch of the dev repo.

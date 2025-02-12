@@ -493,6 +493,14 @@ void ext_emit_ocamlsdk_module(char *_ocaml_version,
     emit_ocaml_toolchain_buildfiles(obazl_pfx, dst_dir);
 
     utstring_renew(dst_dir);
+    utstring_printf(dst_dir,
+                    "config");
+    mkdir_r(utstring_body(dst_dir));
+    emit_ocaml_config_pkg(obazl_pfx,
+                          dst_dir,
+                          sdk_lib);
+
+    utstring_renew(dst_dir);
     utstring_printf(dst_dir, "lib/stdlib");
     mkdir_r(utstring_body(dst_dir));
     emit_ocaml_stdlib_pkg(dst_dir, sdk_lib);
@@ -521,7 +529,6 @@ void ext_emit_ocamlsdk_module(char *_ocaml_version,
     emit_ocaml_compiler_libs_pkg(obazl_pfx,
                                  dst_dir,
                                  sdk_lib);
-                                 /* coswitch_lib); */
 
     emit_ocaml_bigarray_pkg(NULL, obazl_pfx,
                             sdk_lib, coswitch_lib);
