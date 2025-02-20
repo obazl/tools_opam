@@ -33,14 +33,17 @@ opam.deps(                                                                   <2>
     opam_version   = "2.3.0",  # ignored unless toolchain = "xdg"
     ocaml_version  = "5.3.0",
     pkgs           = {"ounit2": "2.2.7"},  # version ignored currently
-    debug          = 0,
-    verbosity      = 0,
-    opam_verbosity = 0,
 )
 use_repo(opam, "opam.ounit2")                                                <3>
 use_repo(opam, "opam.ocamlsdk")                                              <4>
 register_toolchains("@opam.ocamlsdk//toolchain/selectors/local:all")         <5>
 register_toolchains("@opam.ocamlsdk//toolchain/profiles:all")                <5>
+
+opamdev = use_extension("@tools_opam//extensions:opam.bzl", "opam",
+                               dev_dependencies = True)
+opamdev.deps(
+    pkgs           = {"ounit2": "2.2.7"},  # version ignored currently
+)
 ----
 <1> This is currently alpha software; it has not yet been released to
 any Bazel registry, so the `bazel_dep` directive would fail. This

@@ -397,11 +397,11 @@ LOCAL void emit_bazel_archive_attr(FILE* ostream,
                 if (strncmp(utstring_body(cmtag), "cma", 4) == 0) {
                     fprintf(ostream,
                             "        "
-                            "\"@rules_ocaml//platform/emitter:vm\" :");
+                            "\"@rules_ocaml//platform/executor:vm\" :");
                 } else {
                     fprintf(ostream,
                             "        "
-                            "\"@rules_ocaml//platform/emitter:sys\":");
+                            "\"@rules_ocaml//platform/executor:sys\":");
 
                 }
             }
@@ -732,8 +732,8 @@ Note that "archive" should only be used for archive files that are intended to b
     /* FIXME: only .a stem matching archive stem  */
     fprintf(ostream,
             "    afiles   = select({\n"
-            "        \"@rules_ocaml//platform/emitter:vm\" : [],\n"
-            "        \"@rules_ocaml//platform/emitter:sys\": "
+            "        \"@rules_ocaml//platform/executor:vm\" : [],\n"
+            "        \"@rules_ocaml//platform/executor:sys\": "
             "glob([\"*.a\"], allow_empty=True, exclude=[\"*_stubs.a\"])\n"
             "    }, no_match_error=\"Bad platform\"),\n");
 
@@ -741,8 +741,8 @@ Note that "archive" should only be used for archive files that are intended to b
     //fprintf(ostream, "    astructs = glob([\"*.cmx\"]),\n");
     fprintf(ostream,
             "    astructs = select({\n"
-            "        \"@rules_ocaml//platform/emitter:vm\" : [],\n"
-            "        \"@rules_ocaml//platform/emitter:sys\": "
+            "        \"@rules_ocaml//platform/executor:vm\" : [],\n"
+            "        \"@rules_ocaml//platform/executor:sys\": "
             "glob([\"*.cmx\"], allow_empty=True)\n"
             "    }, no_match_error=\"Bad platform\"),\n");
 
@@ -750,14 +750,14 @@ Note that "archive" should only be used for archive files that are intended to b
     //fprintf(ostream, "    ofiles   = glob([\"*.o\"]),\n");
     fprintf(ostream,
             "    ofiles   = select({\n"
-            "        \"@rules_ocaml//platform/emitter:vm\" : [],\n"
-            "        \"@rules_ocaml//platform/emitter:sys\": "
+            "        \"@rules_ocaml//platform/executor:vm\" : [],\n"
+            "        \"@rules_ocaml//platform/executor:sys\": "
             "glob([\"*.o\"], allow_empty=True)\n"
             "    }, no_match_error=\"Bad platform\"),\n");
 
     fprintf(ostream, "    cmts     = glob([\"*.cmt\"], allow_empty=True),\n");
     fprintf(ostream, "    cmtis    = glob([\"*.cmti\"], allow_empty=True),\n");
-    fprintf(ostream, "    vmlibs   = glob([\"dll*.so\"], allow_empty=True),\n");
+    fprintf(ostream, "    dllibs   = glob([\"dll*.so\"], allow_empty=True),\n");
     fprintf(ostream, "    srcs     = glob([\"*.ml\", \"*.mli\"], allow_empty=True),\n");
 
     //FIXME: only if --enable-jsoo passed

@@ -145,7 +145,7 @@ def _opam_ext_impl(mctx):
     verbosity     = 0
     root_module   = None
     direct_deps = []
-    # subdeps = []
+    dev_deps    = []
 
     for m in mctx.modules:
         if m.is_root:
@@ -162,14 +162,20 @@ def _opam_ext_impl(mctx):
                     toolchain = cfg.toolchain
                 opam_version = cfg.opam_version
                 ocaml_version = cfg.ocaml_version
-                direct_deps.extend(cfg.pkgs)
+                if mctx.is_dev_dependency(cfg):
+                    dev_deps.extend(cfg.pkgs)
+                else:
+                    direct_deps.extend(cfg.pkgs)
                 # subdeps.extend(cfg.indirect_deps)
                 debug      = cfg.debug
                 opam_verbosity = cfg.opam_verbosity
                 verbosity = cfg.verbosity
         else:
             for cfg in m.tags.deps:
-                direct_deps.extend(cfg.pkgs)
+                if mctx.is_dev_dependency(cfg):
+                    dev_deps.extend(cfg.pkgs)
+                else:
+                    direct_deps.extend(cfg.pkgs)
         #         subdeps.extend(cfg.indirect_deps)
         #         if debug > 0:
         #             print("MOD: %s" % config.name)
@@ -179,6 +185,20 @@ def _opam_ext_impl(mctx):
     config_pkg_tool = _build_config_tool(mctx, debug, verbosity)
     if debug > 0: print("CONFIG TOOL: %s" % config_pkg_tool)
 
+    # stublibs is special. it's always configured,
+    # but only as an indirect dep unless user explicitly
+    # lists it in pkgs. In that case it will be listed as
+    # a direct dep and the user must also import it
+    # with use_repo.
+    if "stublibs" in direct_deps:
+        stublibs_direct = True
+    else:
+        stublibs_direct = False
+    # print("DEPS %s" % direct_deps)
+    for pkg in OBAZL_PKGS: # e.g. dynlink, str, unix
+        if pkg in direct_deps:
+            direct_deps.remove(pkg)
+    # print("NEWDEPS %s" % direct_deps)
     # print_tree(mctx)
     # x = mctx.read("MODULE.bazel")
     # print(x)
@@ -188,20 +208,20 @@ def _opam_ext_impl(mctx):
     if toolchain == "local":
         (opam, opamroot, sdklib, switch,
          ocaml_version, deps) = config_local_toolchain(
-            mctx,
-            ocaml_version,
-            direct_deps,
-            debug, opam_verbosity, verbosity)
+             mctx,
+             ocaml_version,
+             direct_deps,
+             debug, opam_verbosity, verbosity)
         if debug > 0: print("SDKLIB: %s" % sdklib)
     elif toolchain == "global":
         if debug > 0: print("TC GLOBAL")
         (opam, opamroot, sdklib, switch,
          ocaml_version, deps) = config_global_toolchain(
-            mctx,
-            ocaml_version,
-            direct_deps,
-            debug, opam_verbosity,
-            verbosity)
+             mctx,
+             ocaml_version,
+             direct_deps,
+             debug, opam_verbosity,
+             verbosity)
         if debug > 0: print("SDKLIB: %s" % sdklib)
     elif toolchain == "xdg":
         if debug > 0: print("TC PRIVATE")
@@ -331,11 +351,16 @@ def _opam_ext_impl(mctx):
     #          verbosity = verbosity)
 
     rmdirects = ["opam.ocamlsdk"]
+    if stublibs_direct:
+        rmdirects.append("opam.stublibs")
     for dep in direct_deps:
         rmdirects.append("{}{}".format(obazl_pfx, dep))
+    devdeps = []
+    for dep in dev_deps:
+        devdeps.append("{}{}".format(obazl_pfx, dep))
     return mctx.extension_metadata(
         root_module_direct_deps = rmdirects,
-        root_module_direct_dev_deps = []
+        root_module_direct_dev_deps = devdeps
     )
 
 ##############################
@@ -362,7 +387,7 @@ opam = module_extension(
     # xdg_switch = {"id": "ocaml_version"}
 
               "pkgs": attr.string_dict(
-                  mandatory = True,
+                  # mandatory = True,
                   allow_empty = False
               ),
               "dev_deps": attr.string_dict(

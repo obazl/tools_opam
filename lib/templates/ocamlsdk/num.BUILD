@@ -7,22 +7,22 @@ ocaml_import(
     version    = "[distributed with OCaml]",
     sigs       = glob(["*.cmi"], allow_empty=True),
     archive    =  select({
-        "@rules_ocaml//platform/emitter:vm" : "nums.cma",
-        "@rules_ocaml//platform/emitter:sys": "nums.cmxa",
+        "@rules_ocaml//platform/executor:vm" : "nums.cma",
+        "@rules_ocaml//platform/executor:sys": "nums.cmxa",
     }, no_match_error="Bad platform"),
     afiles   = select({
-        "@rules_ocaml//platform/emitter:vm" : [],
-        "@rules_ocaml//platform/emitter:sys": glob(["*.a"],
+        "@rules_ocaml//platform/executor:vm" : [],
+        "@rules_ocaml//platform/executor:sys": glob(["*.a"],
                                                    allow_empty=True,
                                                    exclude=["*_stubs.a"])
     }, no_match_error="Bad platform"),
     astructs = select({
-        "@rules_ocaml//platform/emitter:vm" : [],
-        "@rules_ocaml//platform/emitter:sys": glob(["*.cmx"], allow_empty=True)
+        "@rules_ocaml//platform/executor:vm" : [],
+        "@rules_ocaml//platform/executor:sys": glob(["*.cmx"], allow_empty=True)
     }, no_match_error="Bad platform"),
     ofiles   = select({
-        "@rules_ocaml//platform/emitter:vm" : [],
-        "@rules_ocaml//platform/emitter:sys": glob(["*.o"], allow_empty=True)
+        "@rules_ocaml//platform/executor:vm" : [],
+        "@rules_ocaml//platform/executor:sys": glob(["*.o"], allow_empty=True)
     }, no_match_error="Bad platform"),
     cmts       = glob(["*.cmt"], allow_empty=True),
     cmtis      = glob(["*.cmti"], allow_empty=True),
@@ -35,7 +35,7 @@ ocaml_import(
     name       = "plugin",
     version    = "[distributed with OCaml]",
     plugin     =  select({
-        "@rules_ocaml//platform/emitter:vm": "nums.cma",
+        "@rules_ocaml//platform/executor:vm": "nums.cma",
         "//conditions:default":         "nums.cmxs",
     }),
     # cmxs       = "nums.cmxs",
