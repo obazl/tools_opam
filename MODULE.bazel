@@ -15,10 +15,10 @@ bazel_dep(name = "obazl_config_cc", version = "3.0.0")
 bazel_dep(name = "findlibc",        version = "3.0.0")
 bazel_dep(name = "xdgc",            version = "3.0.0")
 
-bazel_dep(name = "rules_ocaml", version = "5.0.0")
-git_override(module_name = "rules_ocaml",
-             branch  = "5.0.0.alpha",
-             remote = "https://github.com/obazl/rules_ocaml.git")
+bazel_dep(name = "rules_ocaml", version = "3.0.0")
+# git_override(module_name = "rules_ocaml",
+#              branch  = "3.0.0.beta",
+#              remote = "https://github.com/obazl/rules_ocaml.git")
 
 ## 3rd party
 bazel_dep(name = "cwalk",           version = "1.2.9")

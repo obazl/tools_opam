@@ -31,6 +31,8 @@ def _opam_create_local_switch(ctx, opambin,
             print("stdout: %s" % res.stdout)
             fail(res.stderr)
 
+
+    ## WARNING: this cmd depends on the local opam file
     cmd = [opambin, "switch", "create", ".",
            "{}".format(ocaml_version),
            "--deps-only",

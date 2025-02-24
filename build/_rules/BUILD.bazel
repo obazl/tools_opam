@@ -1,1 +1,1 @@
-exports_files(["opam.mustache"])
+exports_files(["opam.mustache", "install.template"])

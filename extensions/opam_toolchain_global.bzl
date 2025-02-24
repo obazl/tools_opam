@@ -16,9 +16,10 @@ def _opam_path(switch_pfx):
 
 ################################
 def config_global_toolchain(mctx,
-                           ocaml_version,
-                           direct_deps,
-                           debug, opam_verbosity, verbosity):
+                            ocaml_version,
+                            direct_deps,
+                            dev_deps,
+                            debug, opam_verbosity, verbosity):
     if verbosity > 0: print("\n  Configuring global toolchain")
 
     opambin = mctx.which("opam")
@@ -122,7 +123,20 @@ To eliminate this warning, either
         pkg_path = "{}/{}".format(switch_lib, pkg)
         if not file_exists(mctx, pkg_path):
             force = mctx.getenv("OBAZL_FORCE_INSTALL")
-            if not force:
+            if force:
+                if verbosity > 1: print("Installing pkg '{}'".format(pkg))
+
+                opam_install_pkg(mctx,
+                                 opambin,
+                                 pkg,
+                                 switch_id,
+                                 switch_pfx,
+                                 SDKBIN,
+                                 OPAMROOT,
+                                 i, tot,
+                                 debug, opam_verbosity,
+                                 verbosity)
+            else:
                 print("""
 
 {c}ERROR{reset}: A required package, {exc}{pkg}{reset}, is not installed in the current switch (Id: {exc}{id}{reset}).
@@ -140,18 +154,43 @@ b) Tell me to install all missing packages by setting the env variable OBAZL_FOR
                            exc=CCYEL))
                 fail("Missing package: %s" % pkg)
 
-            if verbosity > 1: print("Installing pkg '{}'".format(pkg))
+    tot = len(dev_deps)
+    for i, pkg in enumerate(dev_deps):
+        pkg_path = "{}/{}".format(switch_lib, pkg)
+        if not file_exists(mctx, pkg_path):
+            force = mctx.getenv("OBAZL_FORCE_INSTALL")
+            if force:
+                if verbosity > 1: print("Installing dev pkg '{}'".format(pkg))
 
-            opam_install_pkg(mctx,
-                             opambin,
-                             pkg,
-                             switch_id,
-                             switch_pfx,
-                             SDKBIN,
-                             OPAMROOT,
-                             i, tot,
-                             debug, opam_verbosity,
-                             verbosity)
+                opam_install_pkg(mctx,
+                                 opambin,
+                                 pkg,
+                                 switch_id,
+                                 switch_pfx,
+                                 SDKBIN,
+                                 OPAMROOT,
+                                 i, tot,
+                                 debug, opam_verbosity,
+                                 verbosity)
+            else:
+                print("""
+
+{c}ERROR{reset}: Package {exc}{pkg}{reset} is required in a dev environment, but is not installed in the current switch (Id: {exc}{id}{reset}).
+The build cannot proceed until missing packages are installed.
+To remedy this tragic situation, you have three equally heartbreaking options:
+
+a) Run the build with --ignore_dev_dependency;
+
+b) Install all missing packages manually, and then rerun the build; or
+
+c) Tell me to install all missing packages by setting the env variable OBAZL_FORCE_INSTALL; for example:
+
+    {exc}$  OBAZL_FORCE_INSTALL=1 bazel build //pkg:target{reset}
+
+                """.format(c=CCRED, reset=CCRESET, pkg=pkg,
+                           id = switch_id,
+                           exc=CCYEL))
+                fail("Missing package: %s" % pkg)
 
     # get all installed pkgs
     cmd = ["ls", "-1", "{}".format(switch_lib)]

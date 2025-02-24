@@ -2,6 +2,7 @@ load("@bazel_skylib//lib:collections.bzl", "collections")
 load("opam_toolchain_xdg.bzl", "config_xdg_toolchain")
 load("opam_toolchain_local.bzl", "config_local_toolchain")
 load("opam_toolchain_global.bzl", "config_global_toolchain")
+load("opam_toolchain_opam.bzl", "config_opam_toolchain")
 load("opam_dep.bzl", "opam_dep", "OBAZL_PKGS")
 load("opam_repo.bzl", "opam_repo")
 load("opam_ops.bzl",
@@ -31,6 +32,7 @@ def _build_config_tool(mctx, debug, verbosity):
 common --registry=file:///Users/gar/.local/share/registry
 common --registry=https://raw.githubusercontent.com/obazl/registry/main/
 common --registry=https://bcr.bazel.build
+# common --announce_rc
 # common --config=showpp
     """
               )
@@ -45,20 +47,31 @@ module(
     version = "0.0.0",
  )
 
-bazel_dep(name = "tools_opam", repo_name="tools") # , version = "1.0.0")
-local_path_override(
-    module_name = "tools_opam",
-    path = "../../external/tools_opam+")
+bazel_dep(name = "tools_opam", repo_name="tools", version = "1.0.0")
 bazel_dep(name = "rules_ocaml", version = "5.0.0")
-local_path_override(
-    module_name = "rules_ocaml",
-    path = "../../external/rules_ocaml+")
                """
               )
 
     mctx.report_progress("Building @tools_opam//extensions/config")
-    cmd = [bazel, "build", "@tools//extensions/config"]
-    res = mctx.execute(cmd, quiet = (verbosity < 1))
+    # print("Running cfg tool build")
+    cmd = [bazel,
+           "--ignore_all_rc_files",
+           "--output_base=../.bazel_base",
+           "--output_user_root=../.bazel_user",
+            "build",
+           "--lockfile_mode=off",
+           "--ignore_dev_dependency",
+           "--override_module=rules_ocaml=/Users/gar/obazl/rules_ocaml",
+           "--override_module=tools_opam=/Users/gar/obazl/tools_opam",
+           "--registry=file:///Users/gar/.local/share/registry",
+           "--registry=https://raw.githubusercontent.com/obazl/registry/main/",
+           "--registry=https://bcr.bazel.build",
+           "@tools//extensions/config"]
+    res = mctx.execute(cmd,
+                       environment = {
+                           "HOME": "../.cache",
+                           "XDG_CACHE_HOME": "../.cache"},
+                       quiet = (verbosity < 1))
     if res.return_code == 0:
         res = res.stdout.strip()
     else:
@@ -70,11 +83,12 @@ local_path_override(
 
     # cmd = ["pwd"]
     # mctx.execute(cmd, quiet = False)
-    # cmd = ["tree", "-a"]
+    # cmd = ["tree", "-a", "-L", "2"]
     # mctx.execute(cmd, quiet = False)
 
-    config_pkg_tool = mctx.path(".bazel/bin/external/tools_opam+/extensions/config/config")
-
+    p1 = "bazel-bin/external/tools_opam+/extensions/config/config"
+    p2 = ".bazel/bin/extensions/config/config"
+    config_pkg_tool = mctx.path(p1)
     # this is the path on modextwd, we need the real path
     config_pkg_tool = config_pkg_tool.realpath
 
@@ -185,6 +199,10 @@ def _opam_ext_impl(mctx):
     config_pkg_tool = _build_config_tool(mctx, debug, verbosity)
     if debug > 0: print("CONFIG TOOL: %s" % config_pkg_tool)
 
+    ## detect whether or not we are in an opam install env.
+    if mctx.getenv("OBAZL_OPAM_ENV"):
+        toolchain = "opam"
+
     # stublibs is special. it's always configured,
     # but only as an indirect dep unless user explicitly
     # lists it in pkgs. In that case it will be listed as
@@ -210,7 +228,7 @@ def _opam_ext_impl(mctx):
          ocaml_version, deps) = config_local_toolchain(
              mctx,
              ocaml_version,
-             direct_deps,
+             direct_deps + dev_deps,
              debug, opam_verbosity, verbosity)
         if debug > 0: print("SDKLIB: %s" % sdklib)
     elif toolchain == "global":
@@ -220,6 +238,7 @@ def _opam_ext_impl(mctx):
              mctx,
              ocaml_version,
              direct_deps,
+             dev_deps,
              debug, opam_verbosity,
              verbosity)
         if debug > 0: print("SDKLIB: %s" % sdklib)
@@ -230,12 +249,19 @@ def _opam_ext_impl(mctx):
              mctx,
              opam_version,
              ocaml_version,
-             direct_deps,
+             direct_deps + dev_deps,
              debug,
              opam_verbosity,
              verbosity)
-    # else: # tc == "xdg_local"
-
+    elif  toolchain == "opam":
+        (opam, opamroot, sdklib, switch,
+         ocaml_version, deps) = config_opam_toolchain(
+             mctx,
+             ocaml_version,
+             direct_deps,
+             debug, opam_verbosity, verbosity)
+    else:
+        fail("unrecognized toolchain: %s" % toolchain)
     # if debug > 0: print(print_cwd(mctx))
 
     ## now create @opam
