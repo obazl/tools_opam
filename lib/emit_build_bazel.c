@@ -729,12 +729,11 @@ Note that "archive" should only be used for archive files that are intended to b
                             "archive",
                             _pkg);
 
-    /* FIXME: only .a stem matching archive stem  */
     fprintf(ostream,
             "    afiles   = select({\n"
             "        \"@rules_ocaml//platform/executor:vm\" : [],\n"
             "        \"@rules_ocaml//platform/executor:sys\": "
-            "glob([\"*.a\"], allow_empty=True, exclude=[\"*_stubs.a\"])\n"
+            "glob([\"*.a\"], allow_empty=True, exclude=[\"lib*_stubs.a\"])\n"
             "    }, no_match_error=\"Bad platform\"),\n");
 
     /* FIXME: 'structs', not 'astructs' -  bazel rule decides what to do */
@@ -1029,7 +1028,7 @@ EXPORT void emit_bazel_deps_attribute(FILE* ostream, int level,
 {
     (void)repo;
     (void)pkg_name;
-    TRACE_ENTRY;
+    TRACE_ENTRY_MSG("%s", pkg_name);
     //FIXME: skip if no 'requires' or requires == ''
     char *pname = "requires";
     struct obzl_meta_property *deps_prop = NULL;
@@ -1047,10 +1046,10 @@ EXPORT void emit_bazel_deps_attribute(FILE* ostream, int level,
     settings_ct -= settings_no_ppx_driver_ct;
 
     if (settings_ct == 0) {
-        /* LOG_INFO(0, "No deps for %s", obzl_meta_property_name(deps_prop)); */
+        LOG_INFO(0, "No deps for %s", obzl_meta_property_name(deps_prop));
         return;
     }
-
+    LOG_INFO(0, "settings_ct: %d", settings_ct);
     obzl_meta_values *vals;
     obzl_meta_value *dep_name_val = NULL;
     char *dep_name;
@@ -1066,7 +1065,7 @@ EXPORT void emit_bazel_deps_attribute(FILE* ostream, int level,
 
     for (int i = 0; i < settings_ct; i++) {
         setting = obzl_meta_settings_nth(settings, i);
-        /* LOG_DEBUG(0, "setting %d", i+1); */
+        LOG_DEBUG(0, "setting %d", i+1);
 
         obzl_meta_flags *flags = obzl_meta_setting_flags(setting);
         if (flags != NULL) {
@@ -1110,9 +1109,11 @@ EXPORT void emit_bazel_deps_attribute(FILE* ostream, int level,
         vals = resolve_setting_values(setting, flags, settings);
         /* now we handle UPDATE settings */
 
+        LOG_DEBUG(0, "emitting %d vals", obzl_meta_values_count(vals));
         for (int j = 0; j < obzl_meta_values_count(vals); j++) {
             dep_name_val = obzl_meta_values_nth(vals, j);
             dep_name = strdup((char*)*dep_name_val);
+            LOG_DEBUG(0, "dep_name: %s", dep_name);
 
             char *s = (char*)dep_name;
             /* special case: uchar */
@@ -1205,11 +1206,12 @@ EXPORT void emit_bazel_deps_attribute(FILE* ostream, int level,
                             /*     distrib_pkg = true; */
                             /* else */
                             /*     distrib_pkg = false; */
-                            /* fprintf(ostream, */
-                            /*         "%*s\"@%s%s//lib\",\n", */
-                            /*         (1+level)*spfactor, sp, */
-                            /*         (char*)obazl_pfx, */
-                            /*         distrib_pkg? "ocaml" : dep_name); */
+                            fprintf(ostream,
+                                    "%*s\"@%s%s//lib\",\n",
+                                    (1+level)*spfactor, sp,
+                                    (char*)obazl_pfx,
+                                    dep_name);
+                                    /* distrib_pkg? "ocaml" : dep_name); */
                             /* dep_name, */
                             /* jsoo? ":js" : ""); */
                         }
@@ -2152,14 +2154,15 @@ EXPORT void emit_build_bazel(UT_string *opam_switch_lib,
         }
     }
 
-    if (strncmp(_pkg_name, "ctypes", 6) == 0) {
-        if (strncmp(_pkg->name, "foreign", 7) == 0) {
-            if (emit_special_case_rule(ostream, obazl_pfx, _pkg))
-                {
-                    return;
-                }
-        }
-    }
+    /* if (strncmp(_pkg_name, "ctypes", 6) == 0) { */
+    /*     if (strncmp(_pkg->name, "foreign", 7) == 0) { */
+    /*         if (emit_special_case_rule(ostream, obazl_pfx, _pkg)) */
+    /*             { */
+    /*                 return; */
+    /*             } */
+    /*     } */
+    /* } */
+
     emit_pkg_symlinks(opam_switch_lib,
                       /* bazel_repo_name, /\* dest *\/ */
                       bazel_pkg_label,
@@ -2183,9 +2186,9 @@ EXPORT void emit_build_bazel(UT_string *opam_switch_lib,
     emit_bazel_hdr(ostream); //, 1, ocaml_ws, "lib", _pkg);
 
     /* special case (why?) */
-    if ((strncmp(pkg_name, "ctypes", 6) == 0)
-        && strlen(pkg_name) == 6) {
-    }
+    /* if ((strncmp(pkg_name, "ctypes", 6) == 0) */
+    /*     && strlen(pkg_name) == 6) { */
+    /* } */
 
     /* special case (why?) */
     if ((strncmp(pkg_name, "cstubs", 6) == 0)
