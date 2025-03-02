@@ -691,8 +691,10 @@ Note that "archive" should only be used for archive files that are intended to b
         if (globs.gl_pathc > 0) {
             /* fprintf(ostream, "## globbed: %s\n", utstring_body(globber)); */
             fprintf(ostream, "\ncc_library(\n");
-            fprintf(ostream, "    name = \"hdrs\",\n");
-            fprintf(ostream, "    hdrs = glob([\"*.h\"], allow_empty=True)\n");
+            fprintf(ostream, "    name     = \"hdrs\",\n");
+            fprintf(ostream, "    hdrs     = glob([\"*.h\"], allow_empty=True),\n");
+            fprintf(ostream, "    includes = [\".\"],\n");
+            fprintf(ostream, "    deps     = [\"@opam.ocamlsdk//ffi/lib\"],\n");
             fprintf(ostream, ")\n\n");
         }
     } else {

@@ -1,7 +1,5 @@
 # generated file - DO NOT EDIT
 
-package(default_visibility=["//visibility:public"])
-
 package(default_visibility = ["//visibility:public"])
 
 alias(name = "lib", actual = ":ffi")
