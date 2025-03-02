@@ -2,6 +2,10 @@
 
 load("@rules_ocaml//build:rules.bzl", "ocaml_import")
 
+package(default_visibility = ["//visibility:public"])
+
+alias(name = "lib", actual = ":bigarray")
+
 ocaml_import(
     name       = "bigarray",
     version    = "[distributed with OCaml]",
@@ -30,7 +34,6 @@ ocaml_import(
     all        = glob(["bigarray.*"], allow_empty=True),
 
     deps       = ["@{{pfx}}ocamlsdk//lib/unix"],
-    visibility = ["//visibility:public"],
 )
 
 ocaml_import(
@@ -41,5 +44,4 @@ ocaml_import(
         "//conditions:default":         "bigarray.cmxs",
     }),
     deps       = ["@{{pfx}}ocamlsdk//lib/unix"],
-    visibility = ["//visibility:public"],
 );

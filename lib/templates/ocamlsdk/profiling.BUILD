@@ -2,6 +2,10 @@
 
 load("@rules_ocaml//build:rules.bzl", "ocaml_import")
 
+package(default_visibility = ["//visibility:public"])
+
+alias(name = "lib", actual = ":profiling")
+
 ocaml_import(
     name       = "profiling",
     version    = """[distributed with Ocaml]""",
@@ -29,5 +33,4 @@ ocaml_import(
     cmtis      = glob(["*.cmti"], allow_empty=True),
     srcs       = glob(["*.ml", "*.mli"], allow_empty=True),
     all        = glob(["profiling.*"], allow_empty=True),
-    visibility = ["//visibility:public"]
 )

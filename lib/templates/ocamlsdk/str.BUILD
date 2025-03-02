@@ -2,6 +2,10 @@
 
 load("@rules_ocaml//build:rules.bzl", "ocaml_import")
 
+package(default_visibility = ["//visibility:public"])
+
+alias(name = "lib", actual = ":str")
+
 ocaml_import(
     name       = "str",
     version    = """[distributed with Ocaml]""",
@@ -29,7 +33,6 @@ ocaml_import(
     cmtis      = glob(["*.cmti"], allow_empty=True),
     srcs       = glob(["*.ml", "*.mli"], allow_empty=True),
     all        = glob(["str.*"], allow_empty=True),
-    visibility = ["//visibility:public"]
 )
 
 ocaml_import(
@@ -40,5 +43,4 @@ ocaml_import(
     }),
     # cmxs       = "str.cmxs",
     # cma        = "str.cma",
-    visibility = ["//visibility:public"]
 )

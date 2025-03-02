@@ -2,6 +2,10 @@
 
 load("@rules_ocaml//build:rules.bzl", "ocaml_import")
 
+package(default_visibility = ["//visibility:public"])
+
+alias(name = "lib", actual = ":unix")
+
 ocaml_import(
     name       = "unix",
     version    = "[distributed with OCaml]",
@@ -28,7 +32,6 @@ ocaml_import(
     cmtis      = glob(["*.cmti"], allow_empty=True),
     srcs       = glob(["*.ml", "*.mli"], allow_empty=True),
     all        = glob(["unix*.*"], allow_empty=True),
-    visibility = ["//visibility:public"],
 )
 
 ocaml_import(
@@ -36,5 +39,4 @@ ocaml_import(
     version    = "[distributed with OCaml]",
     cmxs       = "unix.cmxs",
     # cma        = "unix.cma",
-    visibility = ["//visibility:public"],
 );

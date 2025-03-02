@@ -501,12 +501,12 @@ void ext_emit_ocamlsdk_module(char *_ocaml_version,
                           sdk_lib);
 
     utstring_renew(dst_dir);
-    utstring_printf(dst_dir, "lib/stdlib");
+    utstring_printf(dst_dir, "stdlib/lib");
     mkdir_r(utstring_body(dst_dir));
     emit_ocaml_stdlib_pkg(dst_dir, sdk_lib);
 
     utstring_renew(dst_dir);
-    utstring_printf(dst_dir, "lib/stublibs");
+    utstring_printf(dst_dir, "stublibs/lib");
     mkdir_r(utstring_body(dst_dir));
     emit_ocaml_stublibs(dst_dir, sdk_lib);
 
@@ -522,19 +522,17 @@ void ext_emit_ocamlsdk_module(char *_ocaml_version,
     /* emit_compiler_libs_pkg(NULL, coswitch_lib); */
 
     utstring_renew(dst_dir);
-    utstring_printf(dst_dir,
-                    "lib/compiler-libs");
-                    /* coswitch_lib); */
+    utstring_printf(dst_dir, "compiler-libs");
     mkdir_r(utstring_body(dst_dir));
-    emit_ocaml_compiler_libs_pkg(obazl_pfx,
-                                 dst_dir,
-                                 sdk_lib);
-
-    emit_ocaml_bigarray_pkg(NULL, obazl_pfx,
-                            sdk_lib, coswitch_lib);
+    emit_ocaml_compiler_libs_pkg(obazl_pfx, dst_dir, sdk_lib);
 
     utstring_renew(dst_dir);
-    utstring_printf(dst_dir, "lib/dynlink");
+    utstring_printf(dst_dir, "bigarray/lib");
+    mkdir_r(utstring_body(dst_dir));
+    emit_ocaml_bigarray_pkg(dst_dir, sdk_lib);
+
+    utstring_renew(dst_dir);
+    utstring_printf(dst_dir, "dynlink/lib");
     mkdir_r(utstring_body(dst_dir));
     emit_ocaml_dynlink_pkg(dst_dir, sdk_lib);
 
@@ -542,27 +540,28 @@ void ext_emit_ocamlsdk_module(char *_ocaml_version,
     /* emit_ocaml_num_pkg(NULL, sdk_lib, coswitch_lib); */
 
     utstring_renew(dst_dir);
-    utstring_printf(dst_dir, "lib/ocamldoc");
+    utstring_printf(dst_dir, "ocamldoc/lib");
     mkdir_r(utstring_body(dst_dir));
     emit_ocaml_ocamldoc_pkg(dst_dir, sdk_lib);
 
     utstring_renew(dst_dir);
-    utstring_printf(dst_dir, "lib/profiling");
+    utstring_printf(dst_dir, "profiling/lib");
     mkdir_r(utstring_body(dst_dir));
     emit_ocaml_profiling_pkg(dst_dir, sdk_lib);
 
     utstring_renew(dst_dir);
-    utstring_printf(dst_dir, "lib/runtime_events");
+    utstring_printf(dst_dir, "runtime_events/lib");
     mkdir_r(utstring_body(dst_dir));
     emit_ocaml_rtevents_pkg(dst_dir, sdk_lib);
 
     utstring_renew(dst_dir);
-    utstring_printf(dst_dir, "lib/str");
+    utstring_printf(dst_dir, "str/lib");
+    mkdir_r(utstring_body(dst_dir));
     emit_ocaml_str_pkg(dst_dir, sdk_lib);
 
     //NB: vmthreads removed in v. 4.08.0?
     utstring_renew(dst_dir);
-    utstring_printf(dst_dir, "lib/threads");
+    utstring_printf(dst_dir, "threads/lib");
     mkdir_r(utstring_body(dst_dir));
     emit_ocaml_threads_pkg(dst_dir, sdk_lib);
     /* if (!ocaml_prev5) */
@@ -570,7 +569,7 @@ void ext_emit_ocamlsdk_module(char *_ocaml_version,
         /*                      NULL, pkgs); */
 
     utstring_renew(dst_dir);
-    utstring_printf(dst_dir, "lib/unix");
+    utstring_printf(dst_dir, "unix/lib");
     mkdir_r(utstring_body(dst_dir));
     emit_ocaml_unix_pkg(dst_dir, sdk_lib);
 
@@ -581,7 +580,7 @@ void ext_emit_ocamlsdk_module(char *_ocaml_version,
     emit_ocaml_runtime_pkg(dst_dir, sdk_lib);
 
     utstring_renew(dst_dir);
-    utstring_printf(dst_dir, "lib/ffi");
+    utstring_printf(dst_dir, "ffi/lib");
     mkdir_r(utstring_body(dst_dir));
     emit_ocaml_c_ffi_pkg(dst_dir, sdk_lib);
 

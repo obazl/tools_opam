@@ -2,6 +2,10 @@
 
 package(default_visibility=["//visibility:public"])
 
+package(default_visibility = ["//visibility:public"])
+
+alias(name = "lib", actual = ":ffi")
+
 cc_library(
     name = "ffi",
     hdrs = glob(["caml/**"]),

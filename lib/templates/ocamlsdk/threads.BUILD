@@ -2,6 +2,10 @@
 
 load("@rules_ocaml//build:rules.bzl", "ocaml_import")
 
+package(default_visibility = ["//visibility:public"])
+
+alias(name = "lib", actual = ":threads")
+
 ocaml_import(
     name       = "threads",
     version    = "[distributed with OCaml]",
@@ -28,6 +32,5 @@ ocaml_import(
     cmtis      = glob(["*.cmti"], allow_empty=True),
     srcs       = glob(["*.ml", "*.mli"], allow_empty=True),
     all        = glob(["*.cm*", "*.o", "*.a"], allow_empty=True),
-    deps       = ["//lib/unix"],
-    visibility = ["//visibility:public"],
+    deps       = ["//unix/lib"],
 );

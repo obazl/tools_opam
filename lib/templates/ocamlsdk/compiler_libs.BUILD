@@ -1,8 +1,9 @@
 # generated file - DO NOT EDIT
 
 load("@rules_ocaml//build:rules.bzl", "ocaml_import")
-
 # load("@tools_opam//build:rules.bzl", "opam_import")
+
+package(default_visibility = ["//visibility:public"])
 
 ocaml_import(
     name       = "common",
@@ -30,7 +31,6 @@ ocaml_import(
     cmtis      = glob(["*.cmti"], allow_empty=True),
     srcs       = glob(["*.ml", "*.mli"], allow_empty=True),
     all        = glob(["*"], allow_empty=True),
-    visibility = ["//visibility:public"]
 )
 
 ocaml_import(
@@ -59,7 +59,6 @@ ocaml_import(
     cmtis       = glob(["*.cmti"], allow_empty=True),
     srcs       = glob(["*.ml", "*.mli"], allow_empty=True),
     all        = glob(["*"], allow_empty=True),
-    visibility = ["//visibility:public"]
 )
 
 ocaml_import(
@@ -88,7 +87,6 @@ ocaml_import(
     cmtis       = glob(["*.cmti"], allow_empty=True),
     srcs       = glob(["*.ml", "*.mli"], allow_empty=True),
     all        = glob(["*"], allow_empty=True),
-    visibility = ["//visibility:public"]
 )
 
 ocaml_import(
@@ -115,7 +113,6 @@ ocaml_import(
     srcs = glob(["*.ml", "*.mli"], allow_empty=True),
     all = glob(["*.cmx", "*.cmi"], allow_empty=True),
     deps = [":bytecomp"],
-    visibility = ["//visibility:public"]
 )
 
 ocaml_import(
@@ -142,7 +139,6 @@ ocaml_import(
     srcs = glob(["*.ml", "*.mli"], allow_empty=True),
     all = glob(["*.cmx", "*.cmi"], allow_empty=True),
     deps = [":optcomp", "@{{pfx}}ocamlsdk//lib/dynlink"],
-    visibility = ["//visibility:public"]
 )
 
 # exports_files([
@@ -174,5 +170,4 @@ ocaml_import(
 #         "*.cmt", "*.cmti",
 #         "*.mli", "*.cmi",
 #     ]),
-#     visibility = ["@ocaml//compiler-libs:__subpackages__"]
 # )

@@ -28,9 +28,11 @@ def _in_transition_impl(settings, attr):
         fail("Illegal tc: {}; options are ocamlopt, ocamlc".format(attr.tc))
 
     return {
+        # attr.tc overrides any --tc= cmd line option
         "@rules_ocaml//toolchain": attr.tc,
         "//command_line_option:host_platform": host,
-        "//command_line_option:platforms": tgt
+        "//command_line_option:platforms": tgt,
+        "@rules_ocaml//cfg/library/linkage": attr.linkage
     }
 
 ################
@@ -38,13 +40,12 @@ _in_transition = transition(
     implementation = _in_transition_impl,
     inputs = [
         "@rules_ocaml//toolchain",
-        "//command_line_option:host_platform",
-        "//command_line_option:platforms",
     ],
     outputs = [
         "@rules_ocaml//toolchain",
         "//command_line_option:host_platform",
         "//command_line_option:platforms",
+        "@rules_ocaml//cfg/library/linkage"
     ]
 )
 
@@ -53,23 +54,24 @@ def _libs(ctx):
     libs = set()
     for dep in ctx.attr.lib:
         provider = dep[OCamlDepsProvider]
-        for arch in provider.archives.to_list():
-            libs.add('"{}"'.format(arch.path))
-        for sig in provider.sigs.to_list():
-            libs.add('"{}"'.format(sig.path))
-        for xstruct in provider.structs.to_list():
-            libs.add('"{}"'.format(xstruct.path))
-        for astruct in provider.astructs.to_list():
-            libs.add('"{}"'.format(astruct.path))
-        for afile in provider.afiles.to_list():
-            libs.add('"{}"'.format(afile.path))
-        # print("dep: %s" % dep)
-        # print("provider: %s" % provider)
-        for src in provider.srcs.to_list():
-            libs.add('"{}"'.format(src.path))
+        for item in provider.archives.to_list():
+            libs.add('"{}"'.format(item.path))
+        for item in provider.sigs.to_list():
+            libs.add('"{}"'.format(item.path))
+        if ctx.attr.tc == "ocamlopt":
+            for item in provider.structs.to_list():
+                libs.add('"{}"'.format(item.path))
+        for item in provider.astructs.to_list():
+            libs.add('"{}"'.format(item.path))
+        for item in provider.afiles.to_list():
+            libs.add('"{}"'.format(item.path))
+        for item in provider.srcs.to_list():
+            libs.add('"{}"'.format(item.path))
+        for item in provider.cmts.to_list():
+            libs.add('"{}"'.format(item.path))
+        for item in provider.cmtis.to_list():
+            libs.add('"{}"'.format(item.path))
         # print("OFILES: %s" % provider.ofiles)
-        # print("CMTS: %s" % provider.cmts)
-        # print("CMTIS: %s" % provider.cmtis)
 
     libs = sorted(libs)
     text = ""
@@ -77,40 +79,102 @@ def _libs(ctx):
         text = text + "  " + lib + "\n"
     return text
 
+################
+def _gather_subitems(ctx, sublibs, dep, sublib):
+    pkg = dep.label.package
+    sublibs[sublib] = []
+    provider = dep[OCamlDepsProvider]
+
+    for item in provider.archives.to_list():
+        if item.short_path.startswith(pkg):
+            sublibs[sublib].append('"{}"'.format(item.path))
+    for item in provider.sigs.to_list():
+        if item.short_path.startswith(pkg):
+            sublibs[sublib].append('"{}"'.format(item.path))
+    if ctx.attr.tc == "ocamlopt":
+        for item in provider.structs.to_list():
+            if item.short_path.startswith(pkg):
+                sublibs[sublib].append('"{}"'.format(item.path))
+    for item in provider.astructs.to_list():
+        if item.short_path.startswith(pkg):
+            sublibs[sublib].append('"{}"'.format(item.path))
+    for item in provider.afiles.to_list():
+        if item.short_path.startswith(pkg):
+            sublibs[sublib].append('"{}"'.format(item.path))
+    for item in provider.srcs.to_list():
+        if item.short_path.startswith(pkg):
+            sublibs[sublib].append('"{}"'.format(item.path))
+    for item in provider.cmts.to_list():
+        if item.short_path.startswith(pkg):
+            sublibs[sublib].append('"{}"'.format(item.path))
+    for item in provider.cmtis.to_list():
+        if item.short_path.startswith(pkg):
+            sublibs[sublib].append('"{}"'.format(item.path))
+    # print("OFILES: %s" % provider.ofiles)
+
 ##################
 def _sublibs(ctx):
     sublibs = dict()
     for dep, sublib in ctx.attr.sublibs.items():
+        _gather_subitems(ctx, sublibs, dep, sublib)
+    # fail("SUBLIBS %s" % sublibs)
+
+    text = ""
+    for (pkg, files) in sublibs.items():
+        # print("\n{}: {}\n".format(pkg, files))
+        for f in files:
+            text = text + "  " + f + " {{ \"{}/{} }}\n".format(
+                pkg, paths.basename(f))
+    return text
+
+###############
+def _gather(ctx, libs, provider):
+    for item in provider.archives.to_list():
+        libs.add('"{}"'.format(item.path))
+    for item in provider.archives.to_list():
+        libs.add('"{}"'.format(item.path))
+    for item in provider.sigs.to_list():
+        libs.add('"{}"'.format(item.path))
+    if ctx.attr.tc == "ocamlopt":
+        for item in provider.structs.to_list():
+            libs.add('"{}"'.format(item.path))
+    for item in provider.astructs.to_list():
+        libs.add('"{}"'.format(item.path))
+    for item in provider.afiles.to_list():
+        libs.add('"{}"'.format(item.path))
+    for item in provider.srcs.to_list():
+        libs.add('"{}"'.format(item.path))
+    for item in provider.cmts.to_list():
+        libs.add('"{}"'.format(item.path))
+    for item in provider.cmtis.to_list():
+        libs.add('"{}"'.format(item.path))
+
+###############
+def _libexec(ctx):
+    libs = set()
+    for dep in ctx.attr.libexec:
+        provider = dep[OCamlDepsProvider]
+        for item in provider.cmxs.to_list():
+            libs.add('"{}"'.format(item.path))
+        # _gather(ctx, libs, provider)
+
+    libs = sorted(libs)
+    text = ""
+    for lib in libs:
+        text = text + "  " + lib + "\n"
+    return text
+
+###############
+def _sublibexecs(ctx):
+    sublibs = dict()
+    for dep, sublib in ctx.attr.sublibexecs.items():
         pkg = dep.label.package
         sublibs[sublib] = []
         provider = dep[OCamlDepsProvider]
-        for item in provider.archives.to_list():
+        for item in provider.cmxs.to_list():
             if item.short_path.startswith(pkg):
                 sublibs[sublib].append('"{}"'.format(item.path))
-        for item in provider.sigs.to_list():
-            if item.short_path.startswith(pkg):
-                sublibs[sublib].append('"{}"'.format(item.path))
-        for item in provider.structs.to_list():
-            if item.short_path.startswith(pkg):
-                sublibs[sublib].append('"{}"'.format(item.path))
-        for item in provider.astructs.to_list():
-            if item.short_path.startswith(pkg):
-                sublibs[sublib].append('"{}"'.format(item.path))
-        for item in provider.afiles.to_list():
-            if item.short_path.startswith(pkg):
-                sublibs[sublib].append('"{}"'.format(item.path))
-        for item in provider.srcs.to_list():
-            if item.short_path.startswith(pkg):
-                sublibs[sublib].append('"{}"'.format(item.path))
-        for item in provider.cmts.to_list():
-            if item.short_path.startswith(pkg):
-                sublibs[sublib].append('"{}"'.format(item.path))
-        for item in provider.cmtis.to_list():
-            if item.short_path.startswith(pkg):
-                sublibs[sublib].append('"{}"'.format(item.path))
-        # print("OFILES: %s" % provider.ofiles)
-
-    # fail("SUBLIBS %s" % sublibs)
+        # _gather_subitems(ctx, sublibs, dep, sublib)
 
     text = ""
     for (pkg, files) in sublibs.items():
@@ -127,13 +191,18 @@ def _opam_install_impl(ctx):
     tc = ctx.toolchains["@rules_ocaml//toolchain/type:std"]
 
     lib_files = _libs(ctx)
-    # print("LIBS:\n%s" % text)
     sublib_files = _sublibs(ctx)
 
-    text = "\n" + lib_files + sublib_files
+    libexec_files = _libexec(ctx)
+    sublibexec_files = _sublibexecs(ctx)
+
+    text = "\n" + lib_files + sublib_files + libexec_files + sublibexec_files
+    # text = libexec_files + sublibexec_files
+
+    inputs = ctx.files.lib + ctx.files.sublibs + ctx.files.libexec + ctx.files.sublibexecs
 
     ctx.actions.run_shell(
-        inputs = ctx.files.lib + ctx.files.sublibs,
+        inputs = inputs,
         outputs = [ctx.outputs.out],
         progress_message = "Generating %s" % ctx.outputs.out.short_path,
         command = "echo '{}' > '{}'".format(
@@ -160,11 +229,24 @@ opam_install = rule(
             providers = [OCamlDepsProvider]
         ),
         lib = attr.label_list(
-            providers = [OCamlDepsProvider]
+            providers = [OCamlDepsProvider],
         ),
         sublibs = attr.label_keyed_string_dict(
-            providers = [OCamlDepsProvider]
+            providers = [OCamlDepsProvider],
         ),
+        libexec = attr.label_list(
+            providers = [OCamlDepsProvider],
+        ),
+        sublibexecs = attr.label_keyed_string_dict(
+            providers = [OCamlDepsProvider],
+        ),
+        linkage = attr.string(
+            values = ["static", "shared", "none"],
+            default = "none"
+        ),
+        # _allowlist_function_transition = attr.label(
+        #     default = "@bazel_tools//tools/allowlists/function_transition_allowlist"
+        # )
     ),
     cfg = _in_transition,
     toolchains = ["@rules_ocaml//toolchain/type:std"],

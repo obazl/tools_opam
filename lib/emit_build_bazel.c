@@ -844,7 +844,7 @@ LOCAL void emit_bazel_plugin_rule(FILE* ostream, int level,
   num is a special case. was part of core distrib, now it's a pkg
 
   we emit an alias to redirect from standalone to @ocaml
-  e.g. @bigarray//bigarray => @ocaml//lib/bigarray
+  e.g. @bigarray//bigarray => @ocaml//bigarray/lib
 
   this is an OPAM legacy thing in case people depend on these pkgs. we
   don't really need to do this since legacy-to-obazl conversion should
@@ -866,7 +866,7 @@ bool emit_special_case_rule(FILE* ostream,
 
         char *s = "alias(\n"
             "    name = \"bigarray\",\n"
-            "    actual = \"@%socamlsdk//lib/bigarray\",\n"
+            "    actual = \"@%socamlsdk//bigarray/lib\",\n"
             "    visibility = [\"//visibility:public\"]\n"
             ")\n";
         fprintf(ostream, s, obazl_pfx);
@@ -882,7 +882,7 @@ bool emit_special_case_rule(FILE* ostream,
         fprintf(ostream, "## special case: dynlink");
         fprintf(ostream, "alias(\n"
                 "    name = \"dynlink\",\n"
-                "    actual = \"@%socamlsdk//lib/dynlink\",\n"
+                "    actual = \"@%socamlsdk//dynlink/lib\",\n"
                 "    visibility = [\"//visibility:public\"]\n"
                 ")\n", obazl_pfx);
         return true;
@@ -903,7 +903,7 @@ bool emit_special_case_rule(FILE* ostream,
 
         fprintf(ostream, "alias(\n"
                 "    name = \"compiler-libs\",\n"
-                "    actual = \"@%socamlsdk//lib/compiler-libs/common\",\n"
+                "    actual = \"@%socamlsdk//compiler-libs:common\",\n"
                 "    visibility = [\"//visibility:public\"]\n"
                 ")\n", obazl_pfx);
         return true;
@@ -911,19 +911,19 @@ bool emit_special_case_rule(FILE* ostream,
 
     //FIXME: lib/ctypes/foreign/BUILD.bazel emits only
     // if lib/ctypes-foreign exists
-    if ((strncmp(_pkg->name, "foreign", 7) == 0)
-        && strlen(_pkg->name) == 7) {
-#if defined(PROFILE_fastbuild)
-        LOG_TRACE(0, "emit_special_case_rule: %s", "ctypes.foreign");
-#endif
+/*     if ((strncmp(_pkg->name, "foreign", 7) == 0) */
+/*         && strlen(_pkg->name) == 7) { */
+/* #if defined(PROFILE_fastbuild) */
+/*         LOG_TRACE(0, "emit_special_case_rule: %s", "ctypes.foreign"); */
+/* #endif */
 
-        fprintf(ostream, "alias(\n"
-                "    name = \"foreign\",\n"
-                "    actual = \"@ctypes-foreign//lib/ctypes-foreign\",\n"
-                "    visibility = [\"//visibility:public\"]\n"
-                ")\n");
-        return true;
-    }
+/*         fprintf(ostream, "alias(\n" */
+/*                 "    name = \"foreign\",\n" */
+/*                 "    actual = \"@ctypes-foreign//ctypes-foreign\",\n" */
+/*                 "    visibility = [\"//visibility:public\"]\n" */
+/*                 ")\n"); */
+/*         return true; */
+/*     } */
 
     if ((strncmp(_pkg->name, "ocamldoc", 8) == 0)
         && strlen(_pkg->name) == 8) {
@@ -933,7 +933,7 @@ bool emit_special_case_rule(FILE* ostream,
 
         fprintf(ostream, "alias(\n"
                 "    name = \"ocamldoc\",\n"
-                "    actual = \"@%socamlsdk//lib/ocamldoc\",\n"
+                "    actual = \"@%socamlsdk//ocamldoc/lib\",\n"
                 "    visibility = [\"//visibility:public\"]\n"
                 ")\n", obazl_pfx);
         return true;
@@ -946,7 +946,7 @@ bool emit_special_case_rule(FILE* ostream,
 #endif
         fprintf(ostream, "alias(\n"
                 "    name = \"str\",\n"
-                "    actual = \"@%socamlsdk//lib/str\",\n"
+                "    actual = \"@%socamlsdk//str/lib\",\n"
                 "    visibility = [\"//visibility:public\"]\n"
                 ")\n", obazl_pfx);
         return true;
@@ -960,7 +960,7 @@ bool emit_special_case_rule(FILE* ostream,
 
         fprintf(ostream, "alias(\n"
                 "    name = \"threads\",\n"
-                "    actual = \"@%socamlsdk//lib/threads\",\n"
+                "    actual = \"@%socamlsdk//threads/lib\",\n"
                 "    visibility = [\"//visibility:public\"]\n"
                 ")\n", obazl_pfx);
         return true;
@@ -974,7 +974,7 @@ bool emit_special_case_rule(FILE* ostream,
 
         fprintf(ostream, "alias(\n"
                 "    name = \"unix\",\n"
-                "    actual = \"@%socamlsdk//lib/unix\",\n"
+                "    actual = \"@%socamlsdk//unix/lib\",\n"
                 "    visibility = [\"//visibility:public\"]\n"
                 ")\n", obazl_pfx);
         return true;
@@ -991,12 +991,12 @@ EXPORT bool special_case_multiseg_dep(FILE* ostream,
 {
     if (delim1 == NULL) {
         if (strncmp(*dep_name, "compiler-libs", 13) == 0) {
-            fprintf(ostream, "%*s    \"@%socamlsdk//lib/compiler-libs/common\",\n",
+            fprintf(ostream, "%*s    \"@%socamlsdk//compiler-libs:common\",\n",
                     (1+level)*spfactor, sp, obazl_pfx);
             return true;
         } else {
             if (strncmp(*dep_name, "threads", 13) == 0) {
-                fprintf(ostream, "%*s    \"@%socamlsdk//lib/threads\",\n",
+                fprintf(ostream, "%*s    \"@%socamlsdk//threads/lib\",\n",
                         (1+level)*spfactor, sp,  obazl_pfx);
                 return true;
             }
@@ -1004,7 +1004,7 @@ EXPORT bool special_case_multiseg_dep(FILE* ostream,
     } else {
         if (strncmp(*dep_name, "compiler-libs/", 14) == 0) {
             fprintf(ostream,
-                    "%*s    \"@%socamlsdk//lib/compiler-libs/%s\",\n",
+                    "%*s    \"@%socamlsdk//compiler-libs:%s\",\n",
                     (1+level)*spfactor, sp,
                     obazl_pfx, delim1+1);
             return true;
@@ -1012,7 +1012,7 @@ EXPORT bool special_case_multiseg_dep(FILE* ostream,
 
         if (strncmp(*dep_name, "threads/", 8) == 0) {
             /* threads.posix, threads.vm => threads */
-            fprintf(ostream, "        \"@%socamlsdk//lib/threads\",\n", obazl_pfx);
+            fprintf(ostream, "        \"@%socamlsdk//threads/lib\",\n", obazl_pfx);
             return true;
         }
     }
@@ -1145,32 +1145,75 @@ EXPORT void emit_bazel_deps_attribute(FILE* ostream, int level,
                         /* FIXME: obsolete? */
                         if ((strncmp(dep_name, "bigarray", 8) == 0)
                             && strlen(dep_name) == 8) {
-                            fprintf(ostream, "%*s\"@%socamlsdk//lib/bigarray\",\n",
+                            fprintf(ostream, "%*s\"@%socamlsdk//bigarray/lib\",\n",
                                     (1+level)*spfactor, sp,
                                     obazl_pfx);
-                        } else {
-                            if ((strncmp(dep_name, "unix", 4) == 0)
-                                && strlen(dep_name) == 4) {
-                                fprintf(ostream, "%*s\"@%socamlsdk//lib/unix\",\n",
+                        }
+                        else if ((strncmp(dep_name, "str", 3) == 0)
+                                && strlen(dep_name) == 3) {
+                                fprintf(ostream, "%*s\"@%socamlsdk//str/lib\",\n",
                                         (1+level)*spfactor, sp,
                                         obazl_pfx);
-                            } else {
-                                /* WARNING: for distrib-pkgs, form @opam.ocamlsdk//lib/<pkg>,
-                                   not @<pkg>//lib/<pkg>
-                                 */
-                                if (strncmp("dynlink", dep_name, 7) == 0)
-                                    distrib_pkg = true;
-                                else
-                                    distrib_pkg = false;
-                                fprintf(ostream,
-                                        "%*s\"@%s%s//lib\",\n",
-                                        (1+level)*spfactor, sp,
-                                        (char*)obazl_pfx,
-                                        distrib_pkg? "ocaml" : dep_name);
-                                        /* dep_name, */
-                                        /* jsoo? ":js" : ""); */
-                            }
                         }
+                        else if ((strncmp(dep_name, "ffi", 3) == 0)
+                                && strlen(dep_name) == 3) {
+                                fprintf(ostream, "%*s\"@%socamlsdk//ffi/lib\",\n",
+                                        (1+level)*spfactor, sp,
+                                        obazl_pfx);
+                        }
+                        else if ((strncmp(dep_name, "dynlink", 7) == 0)
+                                && strlen(dep_name) == 7) {
+                                fprintf(ostream, "%*s\"@%socamlsdk//dynlink/lib\",\n",
+                                        (1+level)*spfactor, sp,
+                                        obazl_pfx);
+                        }
+                        else if ((strncmp(dep_name, "profiling", 9) == 0)
+                                && strlen(dep_name) == 9) {
+                                fprintf(ostream, "%*s\"@%socamlsdk//profiling/lib\",\n",
+                                        (1+level)*spfactor, sp,
+                                        obazl_pfx);
+                        }
+                        else if ((strncmp(dep_name, "ocamldoc", 8) == 0)
+                                && strlen(dep_name) == 8) {
+                                fprintf(ostream, "%*s\"@%socamlsdk//ocamldoc/lib\",\n",
+                                        (1+level)*spfactor, sp,
+                                        obazl_pfx);
+                        }
+                        else if ((strncmp(dep_name, "threads", 7) == 0)
+                                && strlen(dep_name) == 7) {
+                                fprintf(ostream, "%*s\"@%socamlsdk//threads/lib\",\n",
+                                        (1+level)*spfactor, sp,
+                                        obazl_pfx);
+                        }
+                        else if ((strncmp(dep_name, "compiler-libs", 13) == 0)
+                                && strlen(dep_name) == 13) {
+                                fprintf(ostream, "%*s\"@%socamlsdk//compiler-libs/lib\",\n",
+                                        (1+level)*spfactor, sp,
+                                        obazl_pfx);
+                        }
+                        else if ((strncmp(dep_name, "unix", 4) == 0)
+                                && strlen(dep_name) == 4) {
+                                fprintf(ostream, "%*s\"@%socamlsdk//unix/lib\",\n",
+                                        (1+level)*spfactor, sp,
+                                        obazl_pfx);
+                        }
+                        else {
+                            /* WARNING: for distrib-pkgs, form @opam.ocamlsdk//lib/<pkg>,
+                               not @<pkg>//lib/<pkg>
+                            */
+                            /* if (strncmp("dynlink", dep_name, 7) == 0) */
+                            /*     distrib_pkg = true; */
+                            /* else */
+                            /*     distrib_pkg = false; */
+                            /* fprintf(ostream, */
+                            /*         "%*s\"@%s%s//lib\",\n", */
+                            /*         (1+level)*spfactor, sp, */
+                            /*         (char*)obazl_pfx, */
+                            /*         distrib_pkg? "ocaml" : dep_name); */
+                            /* dep_name, */
+                            /* jsoo? ":js" : ""); */
+                        }
+                        /* } // else */
                     }
                 } else {
                     /* multi-seg pkg, e.g. lwt.unix, ptime.clock.os */

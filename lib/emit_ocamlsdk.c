@@ -949,17 +949,15 @@ EXPORT void emit_ocaml_sdkbin_symlinks(UT_string *dst_dir,
   pre-v5: <switch-pfx>/lib/bigarray, redirects to lib/ocaml
   v5+: no bigarray subdir anywhere
 */
-EXPORT void emit_ocaml_bigarray_pkg(char *runfiles,
-                                    char *obazl_pfx,
-                                    char *switch_lib,
-                                    char *coswitch_lib)
+EXPORT void emit_ocaml_bigarray_pkg(UT_string *dst_dir,
+                                    char *switch_lib)
 {
     TRACE_ENTRY;
 
     UT_string *bigarray_dir;
     utstring_new(bigarray_dir);
     utstring_printf(bigarray_dir,
-                    "%s/bigarray",
+                    "%s/bigarray", /* < 5.0.0 */
                     switch_lib);
     int rc = access(utstring_body(bigarray_dir), F_OK);
     if (rc != 0) {
@@ -970,32 +968,30 @@ EXPORT void emit_ocaml_bigarray_pkg(char *runfiles,
         return;
     }
 
-    UT_string *templates;
-    utstring_new(templates);
-    utstring_printf(templates, "%s/%s",
-                    runfiles, "/templates/ocaml");
+    /* UT_string *templates; */
+    /* utstring_new(templates); */
+    /* utstring_printf(templates, "%s/%s", */
+    /*                 runfiles, "/templates/ocaml"); */
 
-    UT_string *src;
-    UT_string *dst_dir;
+    /* UT_string *src; */
+    /* utstring_new(src); */
     UT_string *dst_file;
-    utstring_new(src);
-    utstring_new(dst_dir);
     utstring_new(dst_file);
 
-    utstring_printf(src, "%s/%s",
-                    utstring_body(templates),
-                    "ocaml_bigarray.BUILD");
+    /* utstring_printf(src, "%s/%s", */
+    /*                 utstring_body(templates), */
+    /*                 "ocaml_bigarray.BUILD"); */
+    /* utstring_printf(dst_dir, */
+    /*                 "%s/ocamlsdk/lib/bigarray", */
+    /*                 coswitch_lib); */
+    /* mkdir_r(utstring_body(dst_dir)); */
 
-    utstring_printf(dst_dir,
-                    "%s/ocamlsdk/lib/bigarray",
-                    coswitch_lib);
-    mkdir_r(utstring_body(dst_dir));
+    /* dst_dir == lib/bigarray */
     utstring_printf(dst_file, "%s/BUILD.bazel",
                     utstring_body(dst_dir));
-    write_template(obazl_pfx,
-                   ocamlsdk_bigarray_BUILD,
-                   ocamlsdk_bigarray_BUILD_len,
-                   utstring_body(dst_file));
+    write_buf(ocamlsdk_bigarray_BUILD,
+              ocamlsdk_bigarray_BUILD_len,
+              utstring_body(dst_file));
 
     // if we found <switch>/lib/bigarray,
     // then the files will be in <switch>/lib/ocaml
@@ -1007,9 +1003,9 @@ EXPORT void emit_ocaml_bigarray_pkg(char *runfiles,
     _symlink_ocaml_bigarray(bigarray_dir, utstring_body(dst_dir))
         ;
 
-    utstring_free(src);
+    /* utstring_free(src); */
     utstring_free(dst_file);
-    utstring_free(templates);
+    /* utstring_free(templates); */
     utstring_free(bigarray_dir);
     TRACE_EXIT;
 }
@@ -1081,8 +1077,7 @@ EXPORT void _symlink_ocaml_bigarray(UT_string *bigarray_dir,
   pre 5.0.0 only?
   all targets aliased to <switch>/lib/ocaml/compiler-libs
 */
-EXPORT void emit_compiler_libs_pkg(char *obazl_pfx,
-                                   UT_string *dst_dir,
+EXPORT void emit_compiler_libs_pkg(UT_string *dst_dir,
                                    char *coswitch_lib)
 {
     TRACE_ENTRY;
@@ -1097,8 +1092,7 @@ EXPORT void emit_compiler_libs_pkg(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   compiler_libs_common_BUILD,
+    write_buf(compiler_libs_common_BUILD,
                    compiler_libs_common_BUILD_len,
                    utstring_body(dst_file));
 
@@ -1108,10 +1102,9 @@ EXPORT void emit_compiler_libs_pkg(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   compiler_libs_bytecomp_BUILD,
-                   compiler_libs_bytecomp_BUILD_len,
-                   utstring_body(dst_file));
+    write_buf(compiler_libs_bytecomp_BUILD,
+              compiler_libs_bytecomp_BUILD_len,
+              utstring_body(dst_file));
 
     utstring_renew(dst_file);
     utstring_printf(dst_file,
@@ -1119,10 +1112,9 @@ EXPORT void emit_compiler_libs_pkg(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   compiler_libs_optcomp_BUILD,
-                   compiler_libs_optcomp_BUILD_len,
-                   utstring_body(dst_file));
+    write_buf(compiler_libs_optcomp_BUILD,
+              compiler_libs_optcomp_BUILD_len,
+              utstring_body(dst_file));
 
     utstring_renew(dst_file);
     utstring_printf(dst_file,
@@ -1130,10 +1122,9 @@ EXPORT void emit_compiler_libs_pkg(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   compiler_libs_toplevel_BUILD,
-                   compiler_libs_toplevel_BUILD_len,
-                   utstring_body(dst_file));
+    write_buf(compiler_libs_toplevel_BUILD,
+              compiler_libs_toplevel_BUILD_len,
+              utstring_body(dst_file));
 
     utstring_renew(dst_file);
     utstring_printf(dst_file,
@@ -1141,10 +1132,9 @@ EXPORT void emit_compiler_libs_pkg(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   compiler_libs_native_toplevel_BUILD,
-                   compiler_libs_native_toplevel_BUILD_len,
-                   utstring_body(dst_file));
+    write_buf(compiler_libs_native_toplevel_BUILD,
+              compiler_libs_native_toplevel_BUILD_len,
+              utstring_body(dst_file));
     utstring_free(dst_file);
 
     TRACE_EXIT;
@@ -1808,15 +1798,20 @@ EXPORT void emit_ocaml_str_pkg(UT_string *dst_dir,
     UT_string *str_dir;
     utstring_new(str_dir);
     utstring_printf(str_dir,
-                    "%s/str",
+                    "%s/str",   /* < 5.0.0 */
                     switch_lib);
     int rc = access(utstring_body(str_dir), F_OK);
-    if (rc != 0) {
+    if (rc == 0) {
+        /* found lib/str, < 5.0.0 */
+        LOG_WARN(0, YEL "FOUND: %s" CRESET,
+                 utstring_body(str_dir));
+
+    } else {
         LOG_WARN(0, YEL "NOT FOUND: %s" CRESET,
                  utstring_body(str_dir));
         utstring_new(str_dir);
         utstring_printf(str_dir,
-                        "%s/ocaml/str",
+                        "%s/ocaml/str", /* >= 5.0.0 */
                         switch_lib);
         int rc = access(utstring_body(str_dir), F_OK);
         if (rc != 0) {
@@ -1830,9 +1825,6 @@ EXPORT void emit_ocaml_str_pkg(UT_string *dst_dir,
                      utstring_body(str_dir));
             add_toplevel = true;
         }
-    } else {
-        LOG_WARN(0, YEL "FOUND: %s" CRESET,
-                 utstring_body(str_dir));
     }
 
     UT_string *dst_file;
@@ -1843,6 +1835,8 @@ EXPORT void emit_ocaml_str_pkg(UT_string *dst_dir,
         /* toplevel w/alias, lib/str */
         /* but we only symlink to lib/ocamlsdk/lib/str */
         /* LOG_DEBUG(0, "EMITTING STR TOPLEVEL"); */
+
+        /* dst_dir == "lib/str" */
         utstring_printf(dst_file, "%s/BUILD.bazel",
                         utstring_body(dst_dir));
         mkdir_r(utstring_body(dst_dir));
@@ -1862,6 +1856,7 @@ EXPORT void emit_ocaml_str_pkg(UT_string *dst_dir,
         // then we need to link
         // from <coswitch>/lib/ocaml
         // to <coswitch>/lib/ocaml/lib/str
+        /* dst_dir == "lib/str" */
         mkdir_r(utstring_body(dst_dir));
         utstring_printf(dst_file, "%s/BUILD.bazel",
                         utstring_body(dst_dir));
@@ -1877,7 +1872,6 @@ EXPORT void emit_ocaml_str_pkg(UT_string *dst_dir,
                            utstring_body(dst_dir));
 
     }
-
     utstring_free(dst_file);
     utstring_free(str_dir);
     TRACE_EXIT;

@@ -2,6 +2,10 @@
 
 load("@rules_ocaml//build:rules.bzl", "ocaml_import")
 
+package(default_visibility = ["//visibility:public"])
+
+alias(name = "lib", actual = ":runtime_events")
+
 ocaml_import(
     name       = "runtime_events",
     version    = """[distributed with Ocaml]""",
@@ -29,7 +33,6 @@ ocaml_import(
     cmtis      = glob(["*.cmti"], allow_empty=True),
     srcs       = glob(["*.ml", "*.mli"], allow_empty=True),
     all        = glob(["runtime_events.*"], allow_empty=True),
-    visibility = ["//visibility:public"]
 )
 
 ocaml_import(
@@ -40,5 +43,4 @@ ocaml_import(
     }),
     # cmxs       = "runtime_events.cmxs",
     # cma        = "runtime_events.cma",
-    visibility = ["//visibility:public"]
 )
