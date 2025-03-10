@@ -56,22 +56,25 @@ def _libs(ctx):
         provider = dep[OCamlDepsProvider]
         for item in provider.archives.to_list():
             libs.add('"{}"'.format(item.path))
-        for item in provider.sigs.to_list():
-            libs.add('"{}"'.format(item.path))
-        if ctx.attr.tc == "ocamlopt":
-            for item in provider.structs.to_list():
-                libs.add('"{}"'.format(item.path))
-        for item in provider.astructs.to_list():
-            libs.add('"{}"'.format(item.path))
-        for item in provider.afiles.to_list():
-            libs.add('"{}"'.format(item.path))
         for item in provider.srcs.to_list():
             libs.add('"{}"'.format(item.path))
         for item in provider.cmts.to_list():
             libs.add('"{}"'.format(item.path))
         for item in provider.cmtis.to_list():
             libs.add('"{}"'.format(item.path))
-        # print("OFILES: %s" % provider.ofiles)
+
+        if ctx.attr.tc == "ocamlopt":
+            for item in provider.sigs.to_list():
+                libs.add('"{}"'.format(item.path))
+            for item in provider.structs.to_list():
+                libs.add('"{}"'.format(item.path))
+            for item in provider.astructs.to_list():
+                libs.add('"{}"'.format(item.path))
+            for item in provider.afiles.to_list():
+                libs.add('"{}"'.format(item.path))
+            # ofiles are contained in afiles, so no need
+            # for item in provider.ofiles.to_list():
+            #     libs.add('"{}"'.format(item.path))
 
     libs = sorted(libs)
     text = ""
@@ -88,29 +91,33 @@ def _gather_subitems(ctx, sublibs, dep, sublib):
     for item in provider.archives.to_list():
         if item.short_path.startswith(pkg):
             sublibs[sublib].append('"{}"'.format(item.path))
-    for item in provider.sigs.to_list():
-        if item.short_path.startswith(pkg):
-            sublibs[sublib].append('"{}"'.format(item.path))
-    if ctx.attr.tc == "ocamlopt":
-        for item in provider.structs.to_list():
-            if item.short_path.startswith(pkg):
-                sublibs[sublib].append('"{}"'.format(item.path))
-    for item in provider.astructs.to_list():
-        if item.short_path.startswith(pkg):
-            sublibs[sublib].append('"{}"'.format(item.path))
-    for item in provider.afiles.to_list():
-        if item.short_path.startswith(pkg):
-            sublibs[sublib].append('"{}"'.format(item.path))
-    for item in provider.srcs.to_list():
-        if item.short_path.startswith(pkg):
-            sublibs[sublib].append('"{}"'.format(item.path))
     for item in provider.cmts.to_list():
         if item.short_path.startswith(pkg):
             sublibs[sublib].append('"{}"'.format(item.path))
     for item in provider.cmtis.to_list():
         if item.short_path.startswith(pkg):
             sublibs[sublib].append('"{}"'.format(item.path))
-    # print("OFILES: %s" % provider.ofiles)
+    for item in provider.srcs.to_list():
+        if item.short_path.startswith(pkg):
+            sublibs[sublib].append('"{}"'.format(item.path))
+
+    if ctx.attr.tc == "ocamlopt":
+        for item in provider.sigs.to_list():
+            if item.short_path.startswith(pkg):
+                sublibs[sublib].append('"{}"'.format(item.path))
+        for item in provider.structs.to_list():
+            if item.short_path.startswith(pkg):
+                sublibs[sublib].append('"{}"'.format(item.path))
+        for item in provider.astructs.to_list():
+            if item.short_path.startswith(pkg):
+                sublibs[sublib].append('"{}"'.format(item.path))
+        for item in provider.afiles.to_list():
+            if item.short_path.startswith(pkg):
+                sublibs[sublib].append('"{}"'.format(item.path))
+        # ofiles are contained in afiles, so no need
+        # for item in provider.ofiles.to_list():
+        #     if item.short_path.startswith(pkg):
+        #         sublibs[sublib].append('"{}"'.format(item.path))
 
 ##################
 def _sublibs(ctx):
@@ -128,26 +135,26 @@ def _sublibs(ctx):
     return text
 
 ###############
-def _gather(ctx, libs, provider):
-    for item in provider.archives.to_list():
-        libs.add('"{}"'.format(item.path))
-    for item in provider.archives.to_list():
-        libs.add('"{}"'.format(item.path))
-    for item in provider.sigs.to_list():
-        libs.add('"{}"'.format(item.path))
-    if ctx.attr.tc == "ocamlopt":
-        for item in provider.structs.to_list():
-            libs.add('"{}"'.format(item.path))
-    for item in provider.astructs.to_list():
-        libs.add('"{}"'.format(item.path))
-    for item in provider.afiles.to_list():
-        libs.add('"{}"'.format(item.path))
-    for item in provider.srcs.to_list():
-        libs.add('"{}"'.format(item.path))
-    for item in provider.cmts.to_list():
-        libs.add('"{}"'.format(item.path))
-    for item in provider.cmtis.to_list():
-        libs.add('"{}"'.format(item.path))
+# def _gather(ctx, libs, provider):
+#     for item in provider.archives.to_list():
+#         libs.add('"{}"'.format(item.path))
+#     for item in provider.archives.to_list():
+#         libs.add('"{}"'.format(item.path))
+#     for item in provider.sigs.to_list():
+#         libs.add('"{}"'.format(item.path))
+#     if ctx.attr.tc == "ocamlopt":
+#         for item in provider.structs.to_list():
+#             libs.add('"{}"'.format(item.path))
+#     for item in provider.astructs.to_list():
+#         libs.add('"{}"'.format(item.path))
+#     for item in provider.afiles.to_list():
+#         libs.add('"{}"'.format(item.path))
+#     for item in provider.srcs.to_list():
+#         libs.add('"{}"'.format(item.path))
+#     for item in provider.cmts.to_list():
+#         libs.add('"{}"'.format(item.path))
+#     for item in provider.cmtis.to_list():
+#         libs.add('"{}"'.format(item.path))
 
 ###############
 def _libexec(ctx):

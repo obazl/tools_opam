@@ -18,6 +18,7 @@
 
 #include "gopt.h"
 #include "liblogc.h"
+#include "librunfiles.h"
 #include "utstring.h"
 
 #include "main.h"
@@ -189,6 +190,8 @@ int main(int argc, char *argv[])
     /*     exit(EXIT_FAILURE); */
     /* } */
 
+    rf_init(argv[0]);
+
     char *cwd = getcwd(NULL, 0);
     (void)cwd;
     LOG_DEBUG(0, "cwd: '%s'", cwd);
@@ -201,8 +204,20 @@ int main(int argc, char *argv[])
     /*                 (int)length, cwd); */
     /* log_debug("runfiles: %s", utstring_body(dir)); */
 
-    LOG_INFO(0, "BAZEL_CURRENT_REPOSITORY: %s", BAZEL_CURRENT_REPOSITORY);
-    /* LOG_INFO(0, "rf_root: %s", rf_root()); */
+    /* printf("BAZEL_CURRENT_REPOSITORY: %s\n", BAZEL_CURRENT_REPOSITORY); */
+    /* printf("rf_root: %s\n", rf_root()); */
+
+    /* char *f = BAZEL_CURRENT_REPOSITORY */
+    /*     "lib/templates/ocamlsdk/bigarray.BUILD"; */
+    /* LOG_DEBUG(0, "searching for: %s", f); */
+    /* char *rf = rf_rlocation(f); */
+    /* int rc = access(rf, F_OK); */
+    /* if (rc == 0) { */
+    /*     LOG_DEBUG(0, "FOUND", ""); */
+    /* } else { */
+    /*     LOG_DEBUG(0, "NOT FOUND", ""); */
+    /* } */
+    /* exit(0); */
 
     opam_pkg_handler(options[OPT_SWITCH_PFX].argument,
                      options[OPT_OCAML_VERSION].argument,

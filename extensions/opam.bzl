@@ -18,7 +18,7 @@ local_opam_repo = repository_rule(
 )
 
 ################################################################
-def _build_config_tool(mctx, debug, verbosity):
+def _build_config_tool(mctx, toolchain, debug, verbosity):
     if debug > 1: print("_build_config_tool")
     bazel = mctx.which("bazel")
     # print("BAZEL: %s" % bazel)
@@ -48,25 +48,35 @@ module(
  )
 
 bazel_dep(name = "tools_opam", repo_name="tools", version = "1.0.0")
-bazel_dep(name = "rules_ocaml", version = "5.0.0")
+bazel_dep(name = "rules_ocaml", version = "3.0.0")
                """
               )
 
+    if toolchain == "opam":
+        cmd = [bazel,
+               "--ignore_all_rc_files",
+               "--output_base=../.bazel_base",
+               "--output_user_root=../.bazel_user",
+               "build",
+               "--lockfile_mode=off",
+               "--ignore_dev_dependency",
+               "--override_module=rules_ocaml=/Users/gar/obazl/rules_ocaml",
+               "--override_module=tools_opam=/Users/gar/obazl/tools_opam",
+               "--registry=file:///Users/gar/.local/share/registry",
+               "--registry=https://raw.githubusercontent.com/obazl/registry/main/",
+               "--registry=https://bcr.bazel.build",
+               "@tools//extensions/config"]
+    else:
+        cmd = [bazel,
+               "build",
+               "--lockfile_mode=off",
+               "--ignore_dev_dependency",
+               "@tools//extensions/config"]
+    if verbosity > 1:
+        cmd.append("--subcommands=pretty_print")
+
     mctx.report_progress("Building @tools_opam//extensions/config")
-    # print("Running cfg tool build")
-    cmd = [bazel,
-           "--ignore_all_rc_files",
-           "--output_base=../.bazel_base",
-           "--output_user_root=../.bazel_user",
-            "build",
-           "--lockfile_mode=off",
-           "--ignore_dev_dependency",
-           "--override_module=rules_ocaml=/Users/gar/obazl/rules_ocaml",
-           "--override_module=tools_opam=/Users/gar/obazl/tools_opam",
-           "--registry=file:///Users/gar/.local/share/registry",
-           "--registry=https://raw.githubusercontent.com/obazl/registry/main/",
-           "--registry=https://bcr.bazel.build",
-           "@tools//extensions/config"]
+    # print("Running cfg tool build: %s" % cmd)
     res = mctx.execute(cmd,
                        environment = {
                            "HOME": "../.cache",
@@ -166,24 +176,27 @@ def _opam_ext_impl(mctx):
             # print("ROOT mod: %s" % m.name)
             root_module = m
             for cfg in m.tags.deps:
-                # env var overrides toolchain param
-                ltc = mctx.getenv("OBAZL_USE_LOCAL_TC")
-                if debug > 1: print("OBAZL LTC: %s" % ltc)
-                if ltc:
-                    toolchain = ltc
-                    print("toolchain override: %s" % toolchain)
-                else:
-                    toolchain = cfg.toolchain
-                opam_version = cfg.opam_version
-                ocaml_version = cfg.ocaml_version
                 if mctx.is_dev_dependency(cfg):
                     dev_deps.extend(cfg.pkgs)
                 else:
+                    # env var overrides toolchain param
+                    ltc = mctx.getenv("OBAZL_USE_LOCAL_TC")
+                    if debug > 1: print("OBAZL LTC: %s" % ltc)
+                    if ltc:
+                        toolchain = ltc
+                        print("toolchain override: %s" % toolchain)
+                    else:
+                        toolchain = cfg.toolchain
+                    opam_version = cfg.opam_version
+                    ocaml_version = cfg.ocaml_version
+                    # if mctx.is_dev_dependency(cfg):
+                    #     dev_deps.extend(cfg.pkgs)
+                    # else:
                     direct_deps.extend(cfg.pkgs)
-                # subdeps.extend(cfg.indirect_deps)
-                debug      = cfg.debug
-                opam_verbosity = cfg.opam_verbosity
-                verbosity = cfg.verbosity
+                    # subdeps.extend(cfg.indirect_deps)
+                    debug      = cfg.debug
+                    opam_verbosity = cfg.opam_verbosity
+                    verbosity = cfg.verbosity
         else:
             for cfg in m.tags.deps:
                 if mctx.is_dev_dependency(cfg):
@@ -196,12 +209,13 @@ def _opam_ext_impl(mctx):
         #             print("DEPS: %s" % config.direct_deps)
         #             print("SUBDEPS: %s" % config.indirect_deps)
 
-    config_pkg_tool = _build_config_tool(mctx, debug, verbosity)
-    if debug > 0: print("CONFIG TOOL: %s" % config_pkg_tool)
-
     ## detect whether or not we are in an opam install env.
     if mctx.getenv("OBAZL_OPAM_ENV"):
         toolchain = "opam"
+
+    config_pkg_tool = _build_config_tool(mctx, toolchain,
+                                         debug, verbosity)
+    if debug > 0: print("CONFIG TOOL: %s" % config_pkg_tool)
 
     # stublibs is special. it's always configured,
     # but only as an indirect dep unless user explicitly

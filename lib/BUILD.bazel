@@ -27,9 +27,9 @@ cc_library(
         "versions.c",
         ":mkhdrs",
         "dune-package.c",
-        "//lib/templates/compiler_libs",
-        "//lib/templates/ocamlsdk",
-        "//lib/templates/toolchain",
+        # "//lib/templates/compiler_libs",
+        # "//lib/templates/ocamlsdk",
+        # "//lib/templates/toolchain",
     ],
     includes = [".", "$(GENDIR)"],
     hdrs = ["tools_opam.h"],
@@ -44,9 +44,11 @@ cc_library(
     # }),
     implementation_deps = [
         "@findlibc//lib:findlibc",
+        "@runfiles//lib:runfiles",
         "@sfsexp//src:sfsexp",
     ],
     copts = BASE_COPTS + [
+        # "-ftime-report"
         # only for clang 15/
         # "-Wno-gnu-statement-expression-from-macro-expansion"
     ],
@@ -57,6 +59,11 @@ cc_library(
     }),
     local_defines = [
         "BAZEL_CURRENT_REPOSITORY=\\\"{}\\\"".format(package_relative_label("@tools_opam").repo_name)
+    ],
+    data = [
+        "//lib/templates/compiler_libs:buildfiles",
+        "//lib/templates/ocamlsdk:buildfiles",
+        "//lib/templates/toolchain:buildfiles"
     ],
     visibility = ["//visibility:public"]
 )
@@ -73,9 +80,9 @@ makeheaders(
         "dune-package.c",
     ],
     additional_srcs = [
-        "//lib/templates/compiler_libs",
-        "//lib/templates/ocamlsdk",
-        "//lib/templates/toolchain",
+        # "//lib/templates/compiler_libs",
+        # "//lib/templates/ocamlsdk",
+        # "//lib/templates/toolchain",
         "@liblogc//macros:ansi_colors.h",
     ] + select({
         "@obazl_config_cc//profile:dev?": [

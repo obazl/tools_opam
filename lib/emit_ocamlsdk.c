@@ -13,6 +13,7 @@
 
 #include "liblogc.h"
 #include "findlibc.h"
+#include "librunfiles.h"
 #include "utarray.h"
 #if EXPORT_INTERFACE
 #include "utstring.h"
@@ -35,6 +36,9 @@ extern int  DEBUG_LEVEL;
 #define TRACE_FLAG coswitch_trace
 extern bool TRACE_FLAG;
 bool coswitch_debug_symlinks = false;
+
+char *f;
+char *rf;
 
 FILE *_open_buildfile(UT_string *ocaml_file)
 {
@@ -96,9 +100,13 @@ EXPORT void emit_ocaml_stdlib_pkg(UT_string *dst_dir,
     // always emit <coswitch>/lib/ocaml/stdlib
     utstring_printf(dst_file, "%s/BUILD.bazel",
                     utstring_body(dst_dir));
-    write_buf(ocamlsdk_stdlib_BUILD,
-              ocamlsdk_stdlib_BUILD_len,
-              utstring_body(dst_file));
+    /* write_buf(ocamlsdk_stdlib_BUILD, */
+    /*           ocamlsdk_stdlib_BUILD_len, */
+    /*           utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/stdlib.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     if (add_toplevel) {
         // not found: <switch>/lib/stdlib
@@ -208,9 +216,14 @@ EXPORT void emit_ocaml_runtime_pkg(UT_string *dst_dir,
                     "%s/BUILD.bazel",
                     utstring_body(dst_dir));
 
-    write_buf(ocamlsdk_runtime_BUILD,
-              ocamlsdk_runtime_BUILD_len,
-              utstring_body(dst_file));
+    /* write_buf(ocamlsdk_runtime_BUILD, */
+    /*           ocamlsdk_runtime_BUILD_len, */
+    /*           utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/runtime.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
+
 
     utstring_renew(dst_file);
     utstring_printf(dst_file,
@@ -221,9 +234,13 @@ EXPORT void emit_ocaml_runtime_pkg(UT_string *dst_dir,
     utstring_printf(dst_file,
                     "%s/sys/BUILD.bazel",
                     utstring_body(dst_dir));
-    write_buf(ocamlsdk_runtime_sys_BUILD,
-              ocamlsdk_runtime_sys_BUILD_len,
-              utstring_body(dst_file));
+    /* write_buf(ocamlsdk_runtime_sys_BUILD, */
+    /*           ocamlsdk_runtime_sys_BUILD_len, */
+    /*           utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/runtime_sys.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     utstring_renew(dst_file);
     utstring_printf(dst_file,
@@ -234,9 +251,14 @@ EXPORT void emit_ocaml_runtime_pkg(UT_string *dst_dir,
     utstring_printf(dst_file,
                     "%s/vm/BUILD.bazel",
                     utstring_body(dst_dir));
-    write_buf(ocamlsdk_runtime_vm_BUILD,
-              ocamlsdk_runtime_vm_BUILD_len,
-              utstring_body(dst_file));
+    /* write_buf(ocamlsdk_runtime_vm_BUILD, */
+    /*           ocamlsdk_runtime_vm_BUILD_len, */
+    /*           utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/runtime_vm.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
+
     TRACE_EXIT;
 }
 
@@ -631,6 +653,7 @@ EXPORT void _emit_lib_stublibs_symlinks(char *switch_stublibs,
 EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
                                             UT_string *dst_dir)
 {
+    (void)obazl_pfx;
     TRACE_ENTRY;
     UT_string *dst_file;
     utstring_new(dst_file);
@@ -640,10 +663,14 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   toolchain_toolchain_selector_local_BUILD,
-                   toolchain_toolchain_selector_local_BUILD_len,
-                   utstring_body(dst_file));
+    /* write_template(obazl_pfx, */
+    /*                toolchain_toolchain_selector_local_BUILD, */
+    /*                toolchain_toolchain_selector_local_BUILD_len, */
+    /*                utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/toolchain/toolchain_selector_local.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
 #if defined(XCOMPILE_MACOS)
     utstring_renew(dst_file);
@@ -652,10 +679,15 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   toolchain_toolchain_selector_macos_x86_64_BUILD,
-                   toolchain_toolchain_selector_macos_x86_64_BUILD_len,
-                   utstring_body(dst_file));
+    /* write_template(obazl_pfx, */
+    /*                toolchain_toolchain_selector_macos_x86_64_BUILD, */
+    /*                toolchain_toolchain_selector_macos_x86_64_BUILD_len, */
+    /*                utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/toolchain/toolchain_selector_macos_x86_64.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
+
 
     utstring_renew(dst_file);
     utstring_printf(dst_file,
@@ -663,23 +695,14 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   toolchain_toolchain_selector_macos_arm_BUILD,
-                   toolchain_toolchain_selector_macos_arm_BUILD_len,
-                   utstring_body(dst_file));
-#endif
-
-#if defined(XCOMPILE_LINUX)
-    utstring_renew(dst_file);
-    utstring_printf(dst_file,
-                    "%s/selectors/linux/x86_64",
-                    utstring_body(dst_dir));
-    mkdir_r(utstring_body(dst_file));
-    utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   toolchain_toolchain_selector_linux_x86_64_BUILD,
-                   toolchain_toolchain_selector_linux_x86_64_BUILD_len,
-                   utstring_body(dst_file));
+    /* write_template(obazl_pfx, */
+    /*                toolchain_toolchain_selector_macos_arm_BUILD, */
+    /*                toolchain_toolchain_selector_macos_arm_BUILD_len, */
+    /*                utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/toolchain/toolchain_selector_macos_arm.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     utstring_renew(dst_file);
     utstring_printf(dst_file,
@@ -687,10 +710,10 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   toolchain_toolchain_selector_linux_arm_BUILD,
-                   toolchain_toolchain_selector_linux_arm_BUILD_len,
-                   utstring_body(dst_file));
+    /* write_template(obazl_pfx, */
+    /*                toolchain_toolchain_selector_linux_arm_BUILD, */
+    /*                toolchain_toolchain_selector_linux_arm_BUILD_len, */
+    /*                utstring_body(dst_file)); */
 #endif
 
     utstring_renew(dst_file);
@@ -699,10 +722,14 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   toolchain_toolchain_profiles_BUILD,
-                   toolchain_toolchain_profiles_BUILD_len,
-                   utstring_body(dst_file));
+    /* write_template(obazl_pfx, */
+    /*                toolchain_toolchain_profiles_BUILD, */
+    /*                toolchain_toolchain_profiles_BUILD_len, */
+    /*                utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/toolchain/toolchain_profiles.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     utstring_new(dst_file);
     utstring_printf(dst_file,
@@ -711,10 +738,14 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
 
-    write_template(obazl_pfx,
-                   toolchain_toolchain_adapter_local_BUILD,
-                   toolchain_toolchain_adapter_local_BUILD_len,
-                   utstring_body(dst_file));
+    /* write_template(obazl_pfx, */
+    /*                toolchain_toolchain_adapter_local_BUILD, */
+    /*                toolchain_toolchain_adapter_local_BUILD_len, */
+    /*                utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/toolchain/toolchain_adapter_local.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
 #if defined(XCOMPILE_LINUX)
     utstring_renew(dst_file);
@@ -723,10 +754,10 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   toolchain_toolchain_adapter_linux_x86_64_BUILD,
-                   toolchain_toolchain_adapter_linux_x86_64_BUILD_len,
-                   utstring_body(dst_file));
+    /* write_template(obazl_pfx, */
+    /*                toolchain_toolchain_adapter_linux_x86_64_BUILD, */
+    /*                toolchain_toolchain_adapter_linux_x86_64_BUILD_len, */
+    /*                utstring_body(dst_file)); */
 
     utstring_renew(dst_file);
     utstring_printf(dst_file,
@@ -734,10 +765,10 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   toolchain_toolchain_adapter_linux_arm_BUILD,
-                   toolchain_toolchain_adapter_linux_arm_BUILD_len,
-                   utstring_body(dst_file));
+    /* write_template(obazl_pfx, */
+    /*                toolchain_toolchain_adapter_linux_arm_BUILD, */
+    /*                toolchain_toolchain_adapter_linux_arm_BUILD_len, */
+    /*                utstring_body(dst_file)); */
 #endif
 
 #if defined(XCOMPILE_MACOS)
@@ -747,10 +778,10 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   toolchain_toolchain_adapter_macos_x86_64_BUILD,
-                   toolchain_toolchain_adapter_macos_x86_64_BUILD_len,
-                   utstring_body(dst_file));
+    /* write_template(obazl_pfx, */
+    /*                toolchain_toolchain_adapter_macos_x86_64_BUILD, */
+    /*                toolchain_toolchain_adapter_macos_x86_64_BUILD_len, */
+    /*                utstring_body(dst_file)); */
 
     utstring_new(dst_file);
     utstring_printf(dst_file,
@@ -758,10 +789,10 @@ EXPORT void emit_ocaml_toolchain_buildfiles(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   toolchain_toolchain_adapter_macos_arm_BUILD,
-                   toolchain_toolchain_adapter_macos_arm_BUILD_len,
-                   utstring_body(dst_file));
+    /* write_template(obazl_pfx, */
+    /*                toolchain_toolchain_adapter_macos_arm_BUILD, */
+    /*                toolchain_toolchain_adapter_macos_arm_BUILD_len, */
+    /*                utstring_body(dst_file)); */
 #endif
     utstring_free(dst_file);
     TRACE_EXIT;
@@ -989,9 +1020,13 @@ EXPORT void emit_ocaml_bigarray_pkg(UT_string *dst_dir,
     /* dst_dir == lib/bigarray */
     utstring_printf(dst_file, "%s/BUILD.bazel",
                     utstring_body(dst_dir));
-    write_buf(ocamlsdk_bigarray_BUILD,
-              ocamlsdk_bigarray_BUILD_len,
-              utstring_body(dst_file));
+    /* write_buf(ocamlsdk_bigarray_BUILD, */
+    /*           ocamlsdk_bigarray_BUILD_len, */
+    /*           utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/bigarray.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     // if we found <switch>/lib/bigarray,
     // then the files will be in <switch>/lib/ocaml
@@ -1092,9 +1127,13 @@ EXPORT void emit_compiler_libs_pkg(UT_string *dst_dir,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_buf(compiler_libs_common_BUILD,
-                   compiler_libs_common_BUILD_len,
-                   utstring_body(dst_file));
+    /* write_buf(compiler_libs_common_BUILD, */
+    /*                compiler_libs_common_BUILD_len, */
+    /*                utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/compiler_libs/common.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     utstring_renew(dst_file);
     utstring_printf(dst_file,
@@ -1102,9 +1141,13 @@ EXPORT void emit_compiler_libs_pkg(UT_string *dst_dir,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_buf(compiler_libs_bytecomp_BUILD,
-              compiler_libs_bytecomp_BUILD_len,
-              utstring_body(dst_file));
+    /* write_buf(compiler_libs_bytecomp_BUILD, */
+    /*           compiler_libs_bytecomp_BUILD_len, */
+    /*           utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/compiler_libs/bytecomp.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     utstring_renew(dst_file);
     utstring_printf(dst_file,
@@ -1112,9 +1155,13 @@ EXPORT void emit_compiler_libs_pkg(UT_string *dst_dir,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_buf(compiler_libs_optcomp_BUILD,
-              compiler_libs_optcomp_BUILD_len,
-              utstring_body(dst_file));
+    /* write_buf(compiler_libs_optcomp_BUILD, */
+    /*           compiler_libs_optcomp_BUILD_len, */
+    /*           utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/compiler_libs/optcomp.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     utstring_renew(dst_file);
     utstring_printf(dst_file,
@@ -1122,9 +1169,13 @@ EXPORT void emit_compiler_libs_pkg(UT_string *dst_dir,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_buf(compiler_libs_toplevel_BUILD,
-              compiler_libs_toplevel_BUILD_len,
-              utstring_body(dst_file));
+    /* write_buf(compiler_libs_toplevel_BUILD, */
+    /*           compiler_libs_toplevel_BUILD_len, */
+    /*           utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/compiler_libs/toplevel.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     utstring_renew(dst_file);
     utstring_printf(dst_file,
@@ -1132,9 +1183,14 @@ EXPORT void emit_compiler_libs_pkg(UT_string *dst_dir,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_buf(compiler_libs_native_toplevel_BUILD,
-              compiler_libs_native_toplevel_BUILD_len,
-              utstring_body(dst_file));
+    /* write_buf(compiler_libs_native_toplevel_BUILD, */
+    /*           compiler_libs_native_toplevel_BUILD_len, */
+    /*           utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/compiler_libs/native_toplevel.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
+
     utstring_free(dst_file);
 
     TRACE_EXIT;
@@ -1146,6 +1202,7 @@ EXPORT void emit_ocaml_compiler_libs_pkg(char *obazl_pfx,
                                          UT_string *dst_dir,
                                          char *switch_lib)
 {
+    (void)obazl_pfx;
     TRACE_ENTRY;
     UT_string *dst_file;
     utstring_new(dst_file);
@@ -1155,10 +1212,14 @@ EXPORT void emit_ocaml_compiler_libs_pkg(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   ocamlsdk_compiler_libs_BUILD,
-                   ocamlsdk_compiler_libs_BUILD_len,
-                   utstring_body(dst_file));
+    /* write_template(obazl_pfx, */
+    /*                ocamlsdk_compiler_libs_BUILD, */
+    /*                ocamlsdk_compiler_libs_BUILD_len, */
+    /*                utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/compiler_libs.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     utstring_renew(dst_file);
     utstring_printf(dst_file,
@@ -1166,10 +1227,14 @@ EXPORT void emit_ocaml_compiler_libs_pkg(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   ocamlsdk_compiler_libs_common_BUILD,
-                   ocamlsdk_compiler_libs_common_BUILD_len,
-                   utstring_body(dst_file));
+    /* write_template(obazl_pfx, */
+    /*                ocamlsdk_compiler_libs_common_BUILD, */
+    /*                ocamlsdk_compiler_libs_common_BUILD_len, */
+    /*                utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/compiler_libs_common.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     utstring_renew(dst_file);
     utstring_printf(dst_file,
@@ -1177,10 +1242,14 @@ EXPORT void emit_ocaml_compiler_libs_pkg(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   ocamlsdk_compiler_libs_bytecomp_BUILD,
-                   ocamlsdk_compiler_libs_bytecomp_BUILD_len,
-                   utstring_body(dst_file));
+    /* write_template(obazl_pfx, */
+    /*                ocamlsdk_compiler_libs_bytecomp_BUILD, */
+    /*                ocamlsdk_compiler_libs_bytecomp_BUILD_len, */
+    /*                utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/compiler_libs_bytecomp.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     utstring_renew(dst_file);
     utstring_printf(dst_file,
@@ -1188,10 +1257,14 @@ EXPORT void emit_ocaml_compiler_libs_pkg(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   ocamlsdk_compiler_libs_optcomp_BUILD,
-                   ocamlsdk_compiler_libs_optcomp_BUILD_len,
-                   utstring_body(dst_file));
+    /* write_template(obazl_pfx, */
+    /*                ocamlsdk_compiler_libs_optcomp_BUILD, */
+    /*                ocamlsdk_compiler_libs_optcomp_BUILD_len, */
+    /*                utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/compiler_libs_optcomp.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     utstring_renew(dst_file);
     utstring_printf(dst_file,
@@ -1199,10 +1272,14 @@ EXPORT void emit_ocaml_compiler_libs_pkg(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   ocamlsdk_compiler_libs_toplevel_BUILD,
-                   ocamlsdk_compiler_libs_toplevel_BUILD_len,
-                   utstring_body(dst_file));
+    /* write_template(obazl_pfx, */
+    /*                ocamlsdk_compiler_libs_toplevel_BUILD, */
+    /*                ocamlsdk_compiler_libs_toplevel_BUILD_len, */
+    /*                utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/compiler_libs_toplevel.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     utstring_renew(dst_file);
     utstring_printf(dst_file,
@@ -1210,10 +1287,15 @@ EXPORT void emit_ocaml_compiler_libs_pkg(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   ocamlsdk_compiler_libs_native_toplevel_BUILD,
-                   ocamlsdk_compiler_libs_native_toplevel_BUILD_len,
-                   utstring_body(dst_file));
+    /* write_template(obazl_pfx, */
+    /*                ocamlsdk_compiler_libs_native_toplevel_BUILD, */
+    /*                ocamlsdk_compiler_libs_native_toplevel_BUILD_len, */
+    /*                utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/compiler_libs_native_toplevel.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
+
 
     _symlink_ocaml_compiler_libs(switch_lib,
                                  /* coswitch_lib); */
@@ -1291,6 +1373,7 @@ EXPORT void emit_ocaml_config_pkg(char *obazl_pfx,
                                   UT_string *dst_dir,
                                   char *switch_lib)
 {
+    (void)obazl_pfx;
     (void)switch_lib;
     TRACE_ENTRY;
     UT_string *dst_file;
@@ -1301,10 +1384,15 @@ EXPORT void emit_ocaml_config_pkg(char *obazl_pfx,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_template(obazl_pfx,
-                   ocamlsdk_config_BUILD,
-                   ocamlsdk_config_BUILD_len,
-                   utstring_body(dst_file));
+    /* write_template(obazl_pfx, */
+    /*                ocamlsdk_config_BUILD, */
+    /*                ocamlsdk_config_BUILD_len, */
+    /*                utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/config.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
+
     TRACE_EXIT;
 }
 
@@ -1345,9 +1433,13 @@ EXPORT void emit_ocaml_dynlink_pkg(UT_string *dst_dir,
     utstring_new(dst_file);
     utstring_printf(dst_file, "%s/BUILD.bazel",
                     utstring_body(dst_dir));
-    write_buf(ocamlsdk_dynlink_BUILD,
-              ocamlsdk_dynlink_BUILD_len,
-              utstring_body(dst_file));
+    /* write_buf(ocamlsdk_dynlink_BUILD, */
+    /*           ocamlsdk_dynlink_BUILD_len, */
+    /*           utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/dynlink.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     if (add_toplevel) {
         // not found: <switch>/lib/dynlink
@@ -1463,9 +1555,13 @@ EXPORT void emit_ocaml_num_pkg(UT_string *dst_dir,
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
     utstring_printf(dst_file, "/BUILD.bazel");
-    write_buf(ocamlsdk_num_BUILD,
-              ocamlsdk_num_BUILD_len,
-              utstring_body(dst_file));
+    /* write_buf(ocamlsdk_num_BUILD, */
+    /*           ocamlsdk_num_BUILD_len, */
+    /*           utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/num.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     _symlink_ocaml_num(switch_lib, utstring_body(dst_file));
 
@@ -1569,9 +1665,13 @@ EXPORT void emit_ocaml_profiling_pkg(UT_string *dst_dir,
     utstring_new(dst_file);
     utstring_printf(dst_file, "%s/BUILD.bazel",
                     utstring_body(dst_dir));
-    write_buf(ocamlsdk_profiling_BUILD,
-              ocamlsdk_profiling_BUILD_len,
-              utstring_body(dst_file));
+    /* write_buf(ocamlsdk_profiling_BUILD, */
+    /*           ocamlsdk_profiling_BUILD_len, */
+    /*           utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/profiling.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     _symlink_ocaml_profiling(profiling_dir,
                              utstring_body(dst_dir));
@@ -1689,9 +1789,13 @@ EXPORT void emit_ocaml_rtevents_pkg(UT_string *dst_dir,
     utstring_printf(dst_file,
                     "%s/BUILD.bazel",
                     utstring_body(dst_dir));
-    write_buf(ocamlsdk_rtevents_BUILD,
-              ocamlsdk_rtevents_BUILD_len,
-              utstring_body(dst_file));
+    /* write_buf(ocamlsdk_rtevents_BUILD, */
+    /*           ocamlsdk_rtevents_BUILD_len, */
+    /*           utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/rtevents.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     if (add_toplevel) {
         // not found: <switch>/lib/rtevents
@@ -1844,9 +1948,13 @@ EXPORT void emit_ocaml_str_pkg(UT_string *dst_dir,
         utstring_printf(dst_file,
                         "%s/BUILD.bazel",
                         utstring_body(dst_dir));
-        write_buf(ocamlsdk_str_BUILD,
-                  ocamlsdk_str_BUILD_len,
-                  utstring_body(dst_file));
+        /* write_buf(ocamlsdk_str_BUILD, */
+        /*           ocamlsdk_str_BUILD_len, */
+        /*           utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/str.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
         // but symlink to lib/ocaml/str
         _symlink_ocaml_str(str_dir, utstring_body(dst_dir));
@@ -1860,9 +1968,13 @@ EXPORT void emit_ocaml_str_pkg(UT_string *dst_dir,
         mkdir_r(utstring_body(dst_dir));
         utstring_printf(dst_file, "%s/BUILD.bazel",
                         utstring_body(dst_dir));
-        write_buf(ocamlsdk_str_BUILD,
-                  ocamlsdk_str_BUILD_len,
-                  utstring_body(dst_file));
+        /* write_buf(ocamlsdk_str_BUILD, */
+        /*           ocamlsdk_str_BUILD_len, */
+        /*           utstring_body(dst_file)); */
+        f = BAZEL_CURRENT_REPOSITORY
+            "/lib/templates/ocamlsdk/str.BUILD";
+        rf = rf_rlocation(f);
+        copy_buildfile(rf, dst_file);
 
         utstring_new(str_dir);
         utstring_printf(str_dir,
@@ -1990,9 +2102,13 @@ EXPORT void emit_ocaml_threads_pkg(UT_string *dst_dir,
 
     utstring_printf(dst_file, "%s/BUILD.bazel",
                     utstring_body(dst_dir));
-    write_buf(ocamlsdk_threads_BUILD,
-              ocamlsdk_threads_BUILD_len,
-              utstring_body(dst_file));
+    /* write_buf(ocamlsdk_threads_BUILD, */
+    /*           ocamlsdk_threads_BUILD_len, */
+    /*           utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/threads.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     if (add_toplevel) {
         // not found: <switch>/lib/threads
@@ -2174,9 +2290,13 @@ EXPORT void emit_ocaml_ocamldoc_pkg(UT_string *dst_dir,
 
     utstring_printf(dst_file, "%s/BUILD.bazel",
                     utstring_body(dst_dir));
-    write_buf(ocamlsdk_ocamldoc_BUILD,
-              ocamlsdk_ocamldoc_BUILD_len,
-              utstring_body(dst_file));
+    /* write_buf(ocamlsdk_ocamldoc_BUILD, */
+    /*           ocamlsdk_ocamldoc_BUILD_len, */
+    /*           utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/ocamldoc.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     _symlink_ocaml_ocamldoc(ocamldoc_dir, utstring_body(dst_dir));
 
@@ -2287,9 +2407,13 @@ EXPORT void emit_ocaml_unix_pkg(UT_string *dst_dir,
     utstring_printf(dst_file,
                     "%s/BUILD.bazel",
                     utstring_body(dst_dir));
-    write_buf(ocamlsdk_unix_BUILD,
-              ocamlsdk_unix_BUILD_len,
-              utstring_body(dst_file));
+    /* write_buf(ocamlsdk_unix_BUILD, */
+    /*           ocamlsdk_unix_BUILD_len, */
+    /*           utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/unix.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     if (add_toplevel) {
         // found <switch>/lib/ocaml/unix, not found <switch>/lib/unix, means >= 5.0.0
@@ -2511,9 +2635,13 @@ EXPORT void emit_ocaml_c_ffi_pkg(UT_string *dst_dir,
     utstring_printf(dst_file,
                     "%s/BUILD.bazel",
                     utstring_body(dst_dir));
-    write_buf(ocamlsdk_c_ffi_BUILD,
-              ocamlsdk_c_ffi_BUILD_len,
-              utstring_body(dst_file));
+    /* write_buf(ocamlsdk_c_ffi_BUILD, */
+    /*           ocamlsdk_c_ffi_BUILD_len, */
+    /*           utstring_body(dst_file)); */
+    f = BAZEL_CURRENT_REPOSITORY
+        "/lib/templates/ocamlsdk/c_ffi.BUILD";
+    rf = rf_rlocation(f);
+    copy_buildfile(rf, dst_file);
 
     _symlink_ocaml_c_hdrs(switch_lib, utstring_body(dst_dir));
 

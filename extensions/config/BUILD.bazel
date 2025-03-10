@@ -26,6 +26,7 @@ cc_binary(
         "@findlibc//lib:findlibc",
         "@gopt//lib:gopt",
         "@liblogc//lib:logc",
+        "@runfiles//lib:runfiles",
         "@uthash//lib:uthash",
     ],
     includes = ["."],
