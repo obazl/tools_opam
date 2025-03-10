@@ -33,7 +33,7 @@ ocaml_import(
     srcs       = glob(["*.ml", "*.mli"], allow_empty=True),
     all        = glob(["bigarray.*"], allow_empty=True),
 
-    deps       = ["@{{pfx}}ocamlsdk//lib/unix"],
+    deps       = ["@opam.ocamlsdk//lib/unix"],
 )
 
 ocaml_import(
@@ -43,5 +43,5 @@ ocaml_import(
         "@rules_ocaml//platform/executor:vm": "bigarray.cma",
         "//conditions:default":         "bigarray.cmxs",
     }),
-    deps       = ["@{{pfx}}ocamlsdk//lib/unix"],
+    deps       = ["@opam.ocamlsdk//lib/unix"],
 );

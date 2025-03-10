@@ -2,6 +2,6 @@
 
 alias(
     name   = "bytecomp",
-    actual = "@{{pfx}}ocamlsdk//compiler-libs:bytecomp",
+    actual = "@opam.ocamlsdk//compiler-libs:bytecomp",
     visibility = ["//visibility:public"]
 )

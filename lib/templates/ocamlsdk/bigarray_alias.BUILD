@@ -2,6 +2,6 @@
 
 alias(
     name   = "bigarray",
-    actual = "@{{pfx}}ocamlsdk//lib/bigarray",
+    actual = "@opam.ocamlsdk//lib/bigarray",
     visibility = ["//visibility:public"]
 )

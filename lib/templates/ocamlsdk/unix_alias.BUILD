@@ -2,6 +2,6 @@
 
 alias(
     name   = "unix",
-    actual = "@{{pfx}}ocamlsdk//lib/unix",
+    actual = "@opam.ocamlsdk//lib/unix",
     visibility = ["//visibility:public"]
 )

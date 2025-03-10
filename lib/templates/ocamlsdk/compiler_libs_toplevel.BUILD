@@ -2,6 +2,6 @@
 
 alias(
     name   = "toplevel",
-    actual = "@{{pfx}}ocamlsdk//compiler-libs:toplevel",
+    actual = "@opam.ocamlsdk//compiler-libs:toplevel",
     visibility = ["//visibility:public"]
 )

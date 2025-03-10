@@ -138,7 +138,7 @@ ocaml_import(
     cmtis       = glob(["*.cmti"], allow_empty=True),
     srcs = glob(["*.ml", "*.mli"], allow_empty=True),
     all = glob(["*.cmx", "*.cmi"], allow_empty=True),
-    deps = [":optcomp", "@{{pfx}}ocamlsdk//lib/dynlink"],
+    deps = [":optcomp", "@opam.ocamlsdk//lib/dynlink"],
 )
 
 # exports_files([
