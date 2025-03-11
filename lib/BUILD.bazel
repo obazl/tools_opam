@@ -85,7 +85,7 @@ makeheaders(
         # "//lib/templates/toolchain",
         "@liblogc//macros:ansi_colors.h",
     ] + select({
-        "@obazl_config_cc//profile:dev?": [
+        "@obazl_tools_cc//profile:dev?": [
             "@liblogc//macros:logging_debug.h",
             # "@libs7//macros:s7_logging_debug.h"
         ],
@@ -112,7 +112,7 @@ makeheaders(
     additional_srcs = [
         "@liblogc//macros:ansi_colors.h",
     ] + select({
-        "@obazl_config_cc//profile:dev?": [
+        "@obazl_tools_cc//profile:dev?": [
             "@liblogc//macros:logging_debug.h",
         ],
         "//conditions:default": [

@@ -71,7 +71,7 @@ makeheaders(
         "//lib:versions.c",
        "@liblogc//macros:ansi_colors.h"
     ] + select({
-        "@obazl_config_cc//profile:dev?": [
+        "@obazl_tools_cc//profile:dev?": [
             "@liblogc//macros:logging_debug.h"
         ],
         "//conditions:default": [

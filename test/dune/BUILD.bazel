@@ -34,7 +34,7 @@ makeheaders(
     ],
     additional_srcs = [
     ] + select({
-        "@obazl_config_cc//profile:dev?": [
+        "@obazl_tools_cc//profile:dev?": [
             "@liblogc//macros:ansi_colors.h",
             "@liblogc//macros:logging_debug.h",
         ],

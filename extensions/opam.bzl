@@ -29,7 +29,7 @@ def _build_config_tool(mctx, toolchain, debug, verbosity):
     mctx.file("REPO.bazel", content = "")
 
     mctx.file(".bazelrc", content = """
-common --registry=file:///Users/gar/.local/share/registry
+common --registry=file:///Users/gar/obazl/registry
 common --registry=https://raw.githubusercontent.com/obazl/registry/main/
 common --registry=https://bcr.bazel.build
 # common --announce_rc
@@ -47,8 +47,8 @@ module(
     version = "0.0.0",
  )
 
-bazel_dep(name = "tools_opam", repo_name="tools", version = "1.0.0")
-bazel_dep(name = "rules_ocaml", version = "3.0.0")
+bazel_dep(name = "tools_opam", repo_name="tools", version = "1.0.0.dev")
+bazel_dep(name = "rules_ocaml", version = "3.0.0.dev")
                """
               )
 
@@ -62,7 +62,7 @@ bazel_dep(name = "rules_ocaml", version = "3.0.0")
                "--ignore_dev_dependency",
                "--override_module=rules_ocaml=/Users/gar/obazl/rules_ocaml",
                "--override_module=tools_opam=/Users/gar/obazl/tools_opam",
-               "--registry=file:///Users/gar/.local/share/registry",
+               "--registry=file:///Users/gar/obazl/registry",
                "--registry=https://raw.githubusercontent.com/obazl/registry/main/",
                "--registry=https://bcr.bazel.build",
                "@tools//extensions/config"]
