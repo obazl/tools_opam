@@ -6,9 +6,9 @@ Definitions outside this file are private unless otherwise noted, and
 may change without notice.
 """
 
-load("//build/_rules:opam_install.bzl",
-     _opam_install = "opam_install")
+load("//build/_rules:opam_build.bzl",
+     _opam_build = "opam_build")
 # load("//build/_rules:opam_proxy.bzl", _opam_proxy = "opam_proxy")
 
-opam_install    = _opam_install
+opam_build    = _opam_build
 # opam_proxy = _opam_proxy

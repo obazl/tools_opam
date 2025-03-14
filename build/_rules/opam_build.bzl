@@ -192,9 +192,9 @@ def _sublibexecs(ctx):
     return text
 
 ############################
-def _opam_install_impl(ctx):
+def _opam_build_impl(ctx):
 
-    # print("opam_install rule: %s" % ctx.label)
+    # print("opam_build rule: %s" % ctx.label)
     tc = ctx.toolchains["@rules_ocaml//toolchain/type:std"]
 
     lib_files = _libs(ctx)
@@ -219,9 +219,9 @@ def _opam_install_impl(ctx):
     return DefaultInfo(files = depset([ctx.outputs.out]))
 
 ##########################
-opam_install = rule(
-    implementation = _opam_install_impl,
-    doc = """Rule for installing to OPAM.""",
+opam_build = rule(
+    implementation = _opam_build_impl,
+    doc = """Rule for build to OPAM.""",
     executable = False,
     attrs = dict(
         out = attr.output(

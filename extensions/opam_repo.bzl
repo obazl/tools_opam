@@ -24,8 +24,6 @@ os_map = {
 
 ##############################
 def _opam_repo_impl(rctx):
-    print("OPAM REPO running")
-
     # if tc == local: created if needed, symlink
     # elif tc == global, symlink to opam binary & root
     # else: embedded, proceed as follows:
@@ -39,170 +37,259 @@ module(
     name = "opam",
     version = "{}",
 )
+bazel_dep(name = "rules_cc", version = "0.1.1")
         """.format(rctx.attr.opam_version)
     )
 
-    rctx.file("bin/BUILD.bazel",
+    rctx.file(
+        "opam_runner.c",
         content = """
-exports_files(["opam", "ocamlfind"])
-        """)
-
-    #### download opam
-    OPAM_BIN_URL_BASE='https://github.com/ocaml/opam/releases/download'
-    # tag = "2.3.0"
-    arch = arch_map[rctx.os.arch]
-    os   = os_map[rctx.os.name]
-
-    OPAM_BIN="opam-{TAG}-{ARCH}-{OS}".format(
-        TAG=rctx.attr.opam_version,
-        ARCH=arch,
-        OS=os
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#define YEL "\033[0;33m"
+#define RED "\033[0;31m"
+#define CRESET "\033[0m"
+int main(int argc, char *argv[])
+{{
+    if (argc > 2) {{
+        if ((strncmp(argv[2], "init", 4) == 0)
+            || (strncmp(argv[2], "admin", 5) == 0)
+            || (strncmp(argv[2], "repository", 10) == 0)) {{
+            printf("runningX\\n");
+            fprintf(stderr, RED "ERROR: " CRESET
+            "opam operation not supported by OBazl: %s\\n", argv[2]);
+            return EXIT_FAILURE;
+        }}
+    }}
+    fprintf(stdout, YEL "Root module" CRESET
+        "  : %s\\n", "{root_module}");
+    fprintf(stdout, YEL "  opam bin" CRESET
+        "   : %s\\n", getenv("OPAMBIN"));
+    fprintf(stdout, YEL "  OPAMROOT" CRESET
+        "   : %s\\n", getenv("OPAMROOT"));
+    fprintf(stdout, YEL "  OPAMSWITCH" CRESET
+        " : %s\\n", getenv("OPAMSWITCH"));
+    fprintf(stdout, "\\n");
+    int ct = 1; /* for terminating \0 */
+    for (int i = 1; i < argc; i++) {{
+        ct += strlen(argv[i]) + 1;
+    }}
+    char *cmd = malloc(ct);
+    int offset = 0;
+    int written = 0;
+    int available_space = 0;
+    for (int i = 1; i < argc; i++) {{
+        available_space = ct - offset;
+        if (available_space <= 0) {{
+            break; // Prevent buffer overflow
+        }}
+        written = snprintf(cmd + offset, available_space,
+                           "%s ", argv[i]);
+        if (written < 0 || written >= available_space) {{
+            cmd[offset] = '\0'; // Ensure null termination
+            break; // Stop on encoding error or not enough space
+        }}
+        offset += written;
+    }}
+    system(cmd); //argv[1]);
+    free(cmd);
+}}
+        """.format(root_module = rctx.attr.root_module.name)
     )
-    OPAM_BIN_URL="{BASE}/{TAG}/{BIN}".format(
-        BASE=OPAM_BIN_URL_BASE,
-        TAG=rctx.attr.opam_version,
-        BIN=OPAM_BIN
+
+    rctx.file(
+        "BUILD.bzl",
+        content = """
+def _opam_runner_impl(ctx):
+    # args = ctx.actions.args()
+    # args.add_all(ctx.attr.args)
+    bin = ctx.actions.declare_file("opam")
+    ctx.actions.symlink(
+        output = bin,
+        target_file = ctx.file.bin,
+        is_executable = True)
+    print("SYMLINK %s" % bin)
+    # ctx.actions.run(
+    #     executable = ctx.file.bin,
+    #     arguments = [args],
+    #     inputs  = [],
+    #     outputs = [],
+    #     tools = [ctx.file.bin],
+    #     mnemonic = "opam",
+    #     progress_message = "running opam",
+    # )
+    return DefaultInfo(
+        executable=bin
     )
 
-    SHA256 = sha256[OPAM_BIN]
-
-    rctx.report_progress("Downloading: %s" % OPAM_BIN_URL)
-    rctx.download(
-        url = OPAM_BIN_URL,
-        output = "./bin/opam", # .format(OPAM_BIN),
-        executable = True,
-        sha256 = SHA256
+opam_runner = rule(
+    implementation = _opam_runner_impl,
+    doc = "Runs opam.",
+    executable = True,
+    attrs = dict(
+        bin = attr.label(
+            doc = "Bazel label of opam executable.",
+            mandatory = False,
+            allow_single_file = True,
+            executable = True,
+            default = ":opam.exe",
+            cfg = "exec"
+        ),
+        # args = attr.string_list()
     )
-    if rctx.attr.debug > 1:
-        print_cwd(rctx)
-        print_tree(rctx)
-    opambin = rctx.path("./bin/opam")
-    print("OPAMBIN dl: %s" % opambin)
-    run_cmd(rctx, ["bin/opam", "--version"])
+)
+        """.format(rctx.attr.opam_version)
+    )
+
+    rctx.file("BUILD.bazel",
+        content = """
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+ARGS = ["--root", "{root}", "--switch", "{switch}"]
+ENV = {{"OPAMBIN": "{bin}", "OPAMROOT": "{root}", "OPAMSWITCH": "{switch}"}}
+
+alias(name = "opam", actual=":opam_runner")
+
+cc_binary(
+    name = "opam_runner",
+    srcs = ["opam_runner.c"],
+    copts = ["-Wno-null-character"],
+    args = ["{bin}"],
+    env  = ENV,
+    # data = ["{bin}"]
+)
+        """.format(root   = rctx.attr.opam_root,
+                   switch = rctx.attr.switch_id,
+                   bin    = rctx.attr.opam_bin)
+              )
+
+    rctx.file("reconfig/reconfig.c",
+        content = """
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#define YEL "\033[0;33m"
+#define RED "\033[0;31m"
+#define CRESET "\033[0m"
+int main(int argc, char *argv[])
+{{
+    if (argc > 2) {{
+        fprintf(stderr, RED "ERROR: " CRESET
+        "no arguments allowed for %s\\n", argv[2]);
+            return EXIT_FAILURE;
+    }}
+    fprintf(stdout, YEL "Root module" CRESET
+        "  : %s\\n", "{root_module}");
+    fprintf(stdout, YEL "  opam bin" CRESET
+        "   : %s\\n", getenv("OPAMBIN"));
+    fprintf(stdout, YEL "  OPAMROOT" CRESET
+        "   : %s\\n", getenv("OPAMROOT"));
+    fprintf(stdout, YEL "  OPAMSWITCH" CRESET
+        " : %s\\n", getenv("OPAMSWITCH"));
+    fprintf(stdout, "\\n");
+
+    fprintf(stdout, RED "WARNING: " CRESET
+        "reconfiguring opam installation to support Bazel operations.\\n");
+    fprintf(stdout, "Bazel builds require network access.\\n");
+
+    char *cmd = "opam init --reinit "
+        "--no "
+        "--bypass-checks "
+        "--no-opamrc "
+        "--quiet "
+        "--config=../tools_opam+/extensions/{config}";
+    printf("cwd: %s\\n", getcwd(NULL,0));
+    fprintf(stdout, YEL "cmd" CRESET ": %s\\n\\n", cmd);
+    system(cmd);
+}}
+        """.format(
+            root_module = rctx.attr.root_module.name,
+            config = rctx.attr.config_file.name)
+              )
+
+    rctx.file("reconfig/BUILD.bazel",
+        content = """
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+ARGS = ["--root", "{root}", "--switch", "{switch}"]
+ENV = {{"OPAMBIN": "{bin}", "OPAMROOT": "{root}", "OPAMSWITCH": "{switch}"}}
+
+cc_binary(
+    name = "reconfig",
+    srcs = ["reconfig.c"],
+    copts = ["-Wno-null-character"],
+    args = ["{bin}"],
+    env  = ENV,
+    data = ["{config_file}"]
+)
+        """.format(root   = rctx.attr.opam_root,
+                   switch = rctx.attr.switch_id,
+                   bin    = rctx.attr.opam_bin,
+                   config_file = rctx.attr.config_file)
+              )
+
+    #### REINIT ####
+    rctx.file("reinit/reinit.c",
+        content = """
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#define YEL "\033[0;33m"
+#define RED "\033[0;31m"
+#define CRESET "\033[0m"
+int main(int argc, char *argv[])
+{{
+    if (argc > 2) {{
+        fprintf(stderr, RED "ERROR: " CRESET
+        "no arguments allowed for %s\\n", argv[2]);
+            return EXIT_FAILURE;
+    }}
+    fprintf(stdout, YEL "Root module" CRESET
+        "  : %s\\n", "{root_module}");
+    fprintf(stdout, YEL "  opam bin" CRESET
+        "   : %s\\n", getenv("OPAMBIN"));
+    fprintf(stdout, YEL "  OPAMROOT" CRESET
+        "   : %s\\n", getenv("OPAMROOT"));
+    fprintf(stdout, YEL "  OPAMSWITCH" CRESET
+        " : %s\\n", getenv("OPAMSWITCH"));
+    fprintf(stdout, "\\n");
+
+    fprintf(stdout, YEL "INFO: " CRESET
+        "reinitializing opam installation.\\n");
+    fprintf(stdout, "Bazel support (network access) will be removed.\\n");
+
+    char *cmd = "opam init --reinit --quiet ";
+    system(cmd);
+}}
+        """.format(
+            root_module = rctx.attr.root_module.name,
+            config = rctx.attr.config_file.name)
+              )
+
+    rctx.file("reinit/BUILD.bazel",
+        content = """
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+ARGS = ["--root", "{root}", "--switch", "{switch}"]
+ENV = {{"OPAMBIN": "{bin}", "OPAMROOT": "{root}", "OPAMSWITCH": "{switch}"}}
+
+cc_binary(
+    name = "reinit",
+    srcs = ["reinit.c"],
+    copts = ["-Wno-null-character"],
+    args = ["{bin}"],
+    env  = ENV
+)
+        """.format(root   = rctx.attr.opam_root,
+                   switch = rctx.attr.switch_id,
+                   bin    = rctx.attr.opam_bin)
+              )
+
+    ################
 
     root = rctx.path("./.opam")
-    rctx.symlink("./.opam", "./config/root")
-    if rctx.attr.debug > 1:
-        print("OPAM ROOT: %s" % root)
-    # root = root + ".opam"
-    # print("ROOT: %s" % root)
-
-    # if rctx.attr.root == None:
-    cmd = [opambin,
-           "init",
-           "--root={}".format(root),
-           "--bare",
-           "--no-setup", # don't update shell stuff
-           "--no-opamrc",
-           "--no" # answer no to q about modifying shell rcfiles
-           ]
-    if rctx.attr.debug > 0:
-        print("Initializing opam root:\n%s" % cmd)
-    rctx.report_progress("Initializing opam root: {}".format(
-        root
-    ))
-    res = rctx.execute(cmd,
-                           quiet = rctx.attr.verbosity < 1)
-    if res.return_code != 0:
-        print("cmd: %s" % cmd)
-        print("rc: %s" % res.return_code)
-        print("stdout: %s" % res.stdout)
-        print("stderr: %s" % res.stderr)
-        fail("cmd failure")
-
-    cmd = [opambin,
-           "switch",
-           "create",
-           rctx.attr.ocaml_version,
-           "--root={}".format(root),
-           # "--verbose"
-           ]
-    if rctx.attr.debug > 0: print("Creating switch:\n%s" % cmd)
-    rctx.report_progress("Creating opam switch %s" % rctx.attr.ocaml_version)
-    res = rctx.execute(cmd, quiet = rctx.attr.verbosity < 1)
-    if res.return_code != 0:
-        print("cmd: %s" % cmd)
-        print("rc: %s" % res.return_code)
-        print("stdout: %s" % res.stdout)
-        print("stderr: %s" % res.stderr)
-        fail("cmd failure: %s" % cmd)
-
-    if rctx.attr.debug > 1:
-        print_cwd(rctx)
-        print_tree(rctx, root, 1)
-
-    switch = None
-    cmd = [opambin, "var", "switch",
-           "--root",  root]
-    res = rctx.execute(cmd, quiet = rctx.attr.verbosity < 1)
-    if res.return_code == 0:
-        switch = res.stdout
-    if res.return_code != 0:
-        print("cmd: %s" % cmd)
-        print("rc: %s" % res.return_code)
-        print("stdout: %s" % res.stdout)
-        print("stderr: %s" % res.stderr)
-        fail("cmd failure: %s" % cmd)
-
-    print("OPAM SWITCH %s" % switch)
-
-    ## FIXME: do we really need ocamlfind?
-    ## install ocamlfind
-    rctx.report_progress("Installing pkg 'ocamlfind'")
-    cmd = [opambin,
-           "install",
-           "ocamlfind",
-           "--switch", rctx.attr.ocaml_version,
-           "--root", "{}".format(root),
-           "--yes"]
-
-    res = rctx.execute(cmd, quiet = (rctx.attr.verbosity < 1))
-    if res.return_code == 0:
-        if rctx.attr.debug > 0:
-            print("ocamlfind installed: ocamlfind")
-        else:
-            print("cmd: %s" % cmd)
-            print("rc: %s" % res.return_code)
-            print("stdout: %s" % res.stdout)
-            print("stderr: %s" % res.stderr)
-            fail("cmd failure")
-
-    ## now get path to ocamlfind
-    cmd = [opambin,
-           "var",
-           "ocamlfind:bin",
-           "--switch", rctx.attr.ocaml_version,
-           "--root", "{}".format(root),
-          "--yes"]
-    ocamlfind = None
-    res = rctx.execute(cmd, quiet = (rctx.attr.verbosity < 1))
-    if res.return_code == 0:
-        ocamlfind = res.stdout.strip() + "/ocamlfind"
-        if rctx.attr.debug > 0: print("ocamlfind bin: %s" % ocamlfind)
-        else:
-            print("cmd: %s" % cmd)
-            print("rc: %s" % res.return_code)
-            print("stdout: %s" % res.stdout)
-            print("stderr: %s" % res.stderr)
-            fail("cmd failure")
-
-    rctx.symlink(ocamlfind, "bin/ocamlfind")
-
-    rctx.file("config/BUILD.bazel",
-        content = """
-exports_files(["root", "switch"])
-# load("@bazel_skylib//rules:common_settings.bzl", "string_setting")
-# string_setting(name = "root", build_setting_default = {})
-# string_setting(name = "switch", build_setting_default = {})
-        """.format(root, rctx.attr.ocaml_version))
-
-    for pkg in rctx.attr.pkgs:
-        opam_install_pkg(rctx,
-                          opambin,
-                          pkg,  rctx.attr.ocaml_version,
-                          root,
-                          rctx.attr.debug,
-                          rctx.attr.verbosity)
+    rctx.symlink(rctx.attr.opam_bin, "opam.exe")
 
     if rctx.attr.debug > 1:
         print_cwd(rctx)
@@ -212,13 +299,17 @@ exports_files(["root", "switch"])
 opam_repo = repository_rule(
     implementation = _opam_repo_impl,
     attrs = {
-        "toolchain": attr.string(),
+        "root_module": attr.label(),
+        "opam_bin": attr.string(),
         "opam_version": attr.string(),
-        "ocaml_version": attr.string(),
-        "pkgs": attr.string_list(
-            mandatory = True,
-            allow_empty = False
-        ),
+        "opam_root": attr.string(),
+        "config_file": attr.label(),
+        "switch_id": attr.string(),
+        # "ocaml_version": attr.string(),
+        # "pkgs": attr.string_list(
+        #     mandatory = True,
+        #     allow_empty = False
+        # ),
         "debug": attr.int(default=0),
         "verbosity": attr.int(default=0)
     },

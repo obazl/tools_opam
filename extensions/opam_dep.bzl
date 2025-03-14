@@ -15,33 +15,6 @@ OBAZL_PKGS = [
     "findlib",
     "stublibs"
 ]
-    # if repo_pkg not in ["ocamlsdk",
-
-
-# def _opam_install_pkg(rctx,
-#                       xopam,
-#                       repo_pkg,  ocaml_version, root,
-#                       debug, verbosity):
-#     if repo_pkg not in OBAZL_PKGS:
-#         rctx.report_progress("Installing pkg %s" % repo_pkg)
-#         cmd = [xopam,
-#                "install",
-#                repo_pkg,
-#                "--switch", ocaml_version,
-#                "--root", "{}".format(root),
-#                "--yes"]
-
-#         res = rctx.execute(cmd, quiet = (verbosity < 1))
-#         if res.return_code == 0:
-#             if rctx.attr.debug > 0:
-#                 print("pkg installed: %s" % repo_pkg)
-#         else:
-#             print("cmd: %s" % cmd)
-#             print("rc: %s" % res.return_code)
-#             print("stdout: %s" % res.stdout)
-#             print("stderr: %s" % res.stderr)
-#             fail("cmd failure")
-
 ##############################
 def _opam_dep_repo_impl(rctx):
     ## repo_cts.name == tools_opam++opam+opam.ounit2

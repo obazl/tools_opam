@@ -10,12 +10,12 @@ load("opam_ops.bzl",
      "print_cwd", "print_tree")
 
 ##############################
-def _local_opam_repo_impl(repo_ctx):
-    repo_ctx.file("dummy", content="")
+# def _local_opam_repo_impl(repo_ctx):
+#     repo_ctx.file("dummy", content="")
 
-local_opam_repo = repository_rule(
-    implementation = _local_opam_repo_impl,
-)
+# local_opam_repo = repository_rule(
+#     implementation = _local_opam_repo_impl,
+# )
 
 ################################################################
 def _build_config_tool(mctx, toolchain, debug, verbosity):
@@ -29,6 +29,7 @@ def _build_config_tool(mctx, toolchain, debug, verbosity):
     mctx.file("REPO.bazel", content = "")
 
     mctx.file(".bazelrc", content = """
+common --symlink_prefix=obazl-
 common --registry=file:///Users/gar/obazl/registry
 common --registry=https://raw.githubusercontent.com/obazl/registry/main/
 common --registry=https://bcr.bazel.build
@@ -52,6 +53,7 @@ bazel_dep(name = "rules_ocaml", version = "3.0.0.dev")
                """
               )
 
+    # only for opam install
     if toolchain == "opam":
         cmd = [bazel,
                "--ignore_all_rc_files",
@@ -96,8 +98,8 @@ bazel_dep(name = "rules_ocaml", version = "3.0.0.dev")
     # cmd = ["tree", "-a", "-L", "2"]
     # mctx.execute(cmd, quiet = False)
 
-    p1 = "bazel-bin/external/tools_opam+/extensions/config/config"
-    p2 = ".bazel/bin/extensions/config/config"
+    p1 = "obazl-bin/external/tools_opam+/extensions/config/config"
+    # p2 = "./bin/extensions/config/config"
     config_pkg_tool = mctx.path(p1)
     # this is the path on modextwd, we need the real path
     config_pkg_tool = config_pkg_tool.realpath
@@ -165,17 +167,19 @@ def _opam_ext_impl(mctx):
     obazl_pfx     = "opam."
     toolchain     = None
     debug         = 0
-    opam_verbosity    = 0
+    opam_verbosity = 0
     verbosity     = 0
     root_module   = None
-    direct_deps = []
-    dev_deps    = []
+    config_file   = None
+    direct_deps   = []
+    dev_deps      = []
 
     for m in mctx.modules:
         if m.is_root:
             # print("ROOT mod: %s" % m.name)
-            root_module = m
+            root_module = m.name
             for cfg in m.tags.deps:
+                config_file = cfg._opam_config_file
                 if mctx.is_dev_dependency(cfg):
                     dev_deps.extend(cfg.pkgs)
                 else:
@@ -257,7 +261,7 @@ def _opam_ext_impl(mctx):
              verbosity)
         if debug > 0: print("SDKLIB: %s" % sdklib)
     elif toolchain == "xdg":
-        if debug > 0: print("TC PRIVATE")
+        if debug > 0: print("TC XDG")
         (opam, opamroot, sdklib, switch,
          ocaml_version, deps) = config_xdg_toolchain(
              mctx,
@@ -278,23 +282,24 @@ def _opam_ext_impl(mctx):
         fail("unrecognized toolchain: %s" % toolchain)
     # if debug > 0: print(print_cwd(mctx))
 
-    ## now create @opam
-    # opam_repo(name = "opam",
-    #           toolchain     = toolchain,
-    #           # opam          = "//bin:opam",
-    #           opam_version  = opam_version,
-    #           # opam_root     = opamroot,
-    #           ocaml_version = ocaml_version,
-    #           pkgs          = deps,
-    #           debug         = debug,
-    #           verbosity     = verbosity)
-    # print("registered repo @opam")
-
     opampath = str(opam)
     rootpath = str(opamroot)
     sdklib = str(sdklib)
 
-    # always configure ocamlsdk & stublibs
+    # always configure opam, ocamlsdk & stublibs
+    ## now create @opam
+    opam_repo(name = "opam",
+              # toolchain     = toolchain,
+              root_module   = root_module,
+              opam_bin      = opampath,
+              opam_version  = opam_version,
+              opam_root     = rootpath,
+              config_file   = config_file,
+              switch_id     = switch,
+              # ocaml_version = ocaml_version,
+              # pkgs          = deps,
+              debug         = debug,
+              verbosity     = verbosity)
     opam_dep(name="{}ocamlsdk".format(obazl_pfx),
              opam = opampath,
              switch = switch,
@@ -390,7 +395,7 @@ def _opam_ext_impl(mctx):
     #          debug = debug,
     #          verbosity = verbosity)
 
-    rmdirects = ["opam.ocamlsdk"]
+    rmdirects = ["opam.ocamlsdk", "opam"]
     if stublibs_direct:
         rmdirects.append("opam.stublibs")
     for dep in direct_deps:
@@ -420,20 +425,22 @@ opam = module_extension(
                   mandatory = False,
                   default = "2.3.0"
               ),
-              "ocaml_version": attr.string(
-                  mandatory = False
+              "_opam_config_file": attr.label(
+                  default = "obazl.opamrc"
               ),
-    # or:
-    # xdg_switch = {"id": "ocaml_version"}
+              "ocaml_version": attr.string(
+                  mandatory = False,
+                  default = "5.3.0"
+              ),
 
               "pkgs": attr.string_dict(
                   # mandatory = True,
                   allow_empty = False
               ),
-              "dev_deps": attr.string_dict(
-                  mandatory = False,
-                  allow_empty = True
-              ),
+              # "dev_deps": attr.string_dict(
+              #     mandatory = False,
+              #     allow_empty = True
+              # ),
               "debug"     : attr.int(default = 0),
               "verbosity" : attr.int(default = 0),
               "opam_verbosity": attr.int(default = 0),

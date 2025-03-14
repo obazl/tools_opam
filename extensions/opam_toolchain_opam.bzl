@@ -21,7 +21,10 @@ def config_opam_toolchain(mctx,
                           debug, opam_verbosity, verbosity):
     if verbosity > 0: print("\n  Configuring opam toolchain")
 
-    opambin = mctx.which("opam")
+    opambin = mctx.getenv("OPAMBIN")
+    if not opambin:
+        opambin = mctx.which("opam")
+    if debug > 0: print("opambin: %s" % opambin)
     if verbosity > 0:
         cmd = [opambin, "--version"]
         res = mctx.execute(cmd)
