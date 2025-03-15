@@ -28,15 +28,14 @@ def _build_config_tool(mctx, toolchain, debug, verbosity):
     # in order to run bazel in it:
     mctx.file("REPO.bazel", content = "")
 
-    mctx.file(".bazelrc", content = """
-common --symlink_prefix=obazl-
-common --registry=file:///Users/gar/obazl/registry
-common --registry=https://raw.githubusercontent.com/obazl/registry/main/
-common --registry=https://bcr.bazel.build
-# common --announce_rc
-# common --config=showpp
-    """
-              )
+#     mctx.file(".bazelrc", content = """
+# common --registry=file:///Users/gar/obazl/registry
+# common --registry=https://raw.githubusercontent.com/obazl/registry/main/
+# common --registry=https://bcr.bazel.build
+# # common --announce_rc
+# # common --config=showpp
+#     """
+#               )
 
     # cmd = ["tree", "-aL", "1", "../../external"]
     # mctx.execute(cmd, quiet = False)
@@ -57,9 +56,13 @@ bazel_dep(name = "rules_ocaml", version = "3.0.0.dev")
     if toolchain == "opam":
         cmd = [bazel,
                "--ignore_all_rc_files",
-               "--output_base=../.bazel_base",
-               "--output_user_root=../.bazel_user",
+               # WARNING: a different output base than the
+               # one set by the opam build cmd will cause
+               # a new bazel server to run
+               # "--output_base=../.config_base",
+               # "--output_user_root=../.config_user",
                "build",
+               "--symlink_prefix=config-",
                "--lockfile_mode=off",
                "--ignore_dev_dependency",
                "--override_module=rules_ocaml=/Users/gar/obazl/rules_ocaml",
@@ -67,25 +70,39 @@ bazel_dep(name = "rules_ocaml", version = "3.0.0.dev")
                "--registry=file:///Users/gar/obazl/registry",
                "--registry=https://raw.githubusercontent.com/obazl/registry/main/",
                "--registry=https://bcr.bazel.build",
+               "--subcommands=pretty_print",
+               "--compilation_mode", "fastbuild",
                "@tools//extensions/config"]
     else:
-        cmd = [bazel,
+        cmd = ["bazel",
+               "--output_base=../.config_base",
+               # "--output_user_root=../.config_user",
                "build",
+               "--symlink_prefix=config-",
+               "--registry=file:///Users/gar/obazl/registry",
+               "--registry=https://raw.githubusercontent.com/obazl/registry/main/",
+               "--registry=https://bcr.bazel.build",
                "--lockfile_mode=off",
                "--ignore_dev_dependency",
+               "--compilation_mode", "fastbuild",
                "@tools//extensions/config"]
     if verbosity > 1:
         cmd.append("--subcommands=pretty_print")
 
     mctx.report_progress("Building @tools_opam//extensions/config")
-    # print("Running cfg tool build: %s" % cmd)
+    # print("\nRunning cfg tool build:\n%s" % cmd)
     res = mctx.execute(cmd,
                        environment = {
                            "HOME": "../.cache",
                            "XDG_CACHE_HOME": "../.cache"},
                        quiet = (verbosity < 1))
     if res.return_code == 0:
-        res = res.stdout.strip()
+        # stdout = res.stdout.strip()
+        # print("\nSTDOUT:\n%s" % stdout)
+        # stderr = res.stderr.strip()
+        # print("\nSTDERR:\n%s" % stderr)
+        # print("\nEND\n")
+        pass
     else:
         print("cmd: %s" % cmd)
         print("rc: %s" % res.return_code)
@@ -95,14 +112,17 @@ bazel_dep(name = "rules_ocaml", version = "3.0.0.dev")
 
     # cmd = ["pwd"]
     # mctx.execute(cmd, quiet = False)
-    # cmd = ["tree", "-a", "-L", "2"]
+    # stdout = res.stderr.strip()
+    # print("\nPWD:\n%s" % stderr)
+    # cmd = ["tree", "..", "-a", "-L", "2"]
     # mctx.execute(cmd, quiet = False)
 
-    p1 = "obazl-bin/external/tools_opam+/extensions/config/config"
+    p1 = "config-bin/external/tools_opam+/extensions/config/config"
     # p2 = "./bin/extensions/config/config"
     config_pkg_tool = mctx.path(p1)
     # this is the path on modextwd, we need the real path
     config_pkg_tool = config_pkg_tool.realpath
+    # print("CONFIG TOOL %s" % config_pkg_tool)
 
     return config_pkg_tool
 
