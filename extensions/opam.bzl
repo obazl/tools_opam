@@ -79,7 +79,7 @@ bazel_dep(name = "rules_ocaml", version = "3.0.0.dev")
                # "--output_user_root=../.config_user",
                "build",
                "--symlink_prefix=config-",
-               "--registry=file:///Users/gar/obazl/registry",
+               "--registry=file:///{}/obazl/registry".format(HOME),
                "--registry=https://raw.githubusercontent.com/obazl/registry/main/",
                "--registry=https://bcr.bazel.build",
                "--lockfile_mode=off",
