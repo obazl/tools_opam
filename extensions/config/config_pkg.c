@@ -56,7 +56,6 @@ extern bool xdgc_trace;
 extern int  xdgc_debug;
 
 bool quiet;
-bool verbose;
 int  verbosity;
 
 extern char *findlibc_version;
