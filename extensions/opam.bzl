@@ -28,15 +28,6 @@ def _build_config_tool(mctx, toolchain, debug, verbosity):
     # in order to run bazel in it:
     mctx.file("REPO.bazel", content = "")
 
-#     mctx.file(".bazelrc", content = """
-# common --registry=file:///Users/gar/obazl/registry
-# common --registry=https://raw.githubusercontent.com/obazl/registry/main/
-# common --registry=https://bcr.bazel.build
-# # common --announce_rc
-# # common --config=showpp
-#     """
-#               )
-
     # cmd = ["tree", "-aL", "1", "../../external"]
     # mctx.execute(cmd, quiet = False)
 

@@ -163,35 +163,6 @@ EXPORT char *_opam_root(void)
     return strdup(buf);
 }
 
-/* ******************************** */
-/* char *_get_system_compiler_pfx(char *_switch_pfx) */
-/* { */
-/*     char *root = getenv("OBAZL_SDKROOT"); */
-/*     return root; */
-
-/*     UT_string *work; */
-/*     utstring_new(work); */
-/*     utstring_printf(work, "%s/.opam-switch/switch-state", */
-/*                     _switch_pfx); */
-/*     LOG_DEBUG(0, "looking for %s", utstring_body(work)); */
-/*     int rc = access(utstring_body(work), F_OK); */
-/*     if (rc == 0) { */
-/*         /\* found switch-state file, now parse it *\/ */
-/*         LOG_INFO(0, "found config file: %s", */
-/*                  utstring_body(work)); */
-/*         /\* char *ld_path = getenv("CAML_LD_LIBRARY_PATH"); *\/ */
-/*         /\* LOG_INFO(0, "CAML_LD_LIBRARY_PATH: %s", ld_path); *\/ */
-/*         switch_pfx = "/Users/gar/.opam/5.2.1"; */
-/*         switch_lib = "/Users/gar/.opam/5.2.1/lib"; */
-/*         return "5.2.1";         /\* FIXME FIXME *\/ */
-/*     } else { */
-/*         perror("WTF?"); */
-/*         LOG_DEBUG(0, "Not found: %s\n", */
-/*                   utstring_body(work)); */
-/*         exit(EXIT_FAILURE); */
-/*     } */
-/* } */
-
 EXPORT void ext_emit_module_file(UT_string *module_file,
                                  struct obzl_meta_package *_pkg,
                                  bool alias)

@@ -25,12 +25,15 @@ os_map = {
     "linux": "linux"
 }
 
-XDG_ROOT    = "/Users/gar/.local/share/obazl"
-
 ################
 def _get_xdg_ctx(ctx, debug, verbosity):
 
-    return "/Users/gar/.local/share/obazl/opam"
+    xdg = ctx.getenv("XDG_DATA_HOME")
+    if xdg:
+        return xdg + "/obazl/opam"
+    else:
+        home = ctx.getenv("HOME")
+        return home + "/.local/share/obazl/opam"
 
 ################
 def _install_opam(mctx, XDG_OPAM_BINDIR, opam_version, verbosity):
