@@ -52,6 +52,8 @@ bazel_dep(name = "rules_ocaml", version = "3.0.0.dev")
                """
               )
 
+    HOME = mctx.getenv("HOME")
+
     # only for opam install
     if toolchain == "opam":
         cmd = [bazel,
@@ -65,9 +67,7 @@ bazel_dep(name = "rules_ocaml", version = "3.0.0.dev")
                "--symlink_prefix=config-",
                "--lockfile_mode=off",
                "--ignore_dev_dependency",
-               "--override_module=rules_ocaml=/Users/gar/obazl/rules_ocaml",
-               "--override_module=tools_opam=/Users/gar/obazl/tools_opam",
-               "--registry=file:///Users/gar/obazl/registry",
+               "--registry=file:///{}/obazl/registry".format(HOME),
                "--registry=https://raw.githubusercontent.com/obazl/registry/main/",
                "--registry=https://bcr.bazel.build",
                "--subcommands=pretty_print",
