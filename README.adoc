@@ -13,46 +13,44 @@ system.  The `tools_opam` extension seamlessly integrates `opam` into bazel so t
 link:https://bazel.build/install[Install Bazel].  Then:
 
 ----
-    git clone https://github.com/obazl/obazl_hello.git
-    cd obazl_hello
-    bazel test //... --build_tests_only
+git clone https://github.com/obazl/demo_hello.git
+cd demo_hello
+bazel run bin:hello
+bazel test test
+bazel build //...                         <1>
+bazel test //...                          <2>
+bazel test //... --build_tests_only       <3>
 ----
-
+<1>  Builds all targets
+<2>  Builds all targets and runs all tests
+<3>  Runs all tests but only builds targets required by the tests
 
 == Configuration
 
 [source="starlark", title="MODULE.bazel"]
 ----
 bazel_dep(name = "tools_opam", version = "1.0.0")
-git_override(module_name = "tools_opam",                                     <1>
-             branch  = "1.0.0.alpha",
-             remote = "https://github.com/obazl/tools_opam.git")
 opam = use_extension("@tools_opam//extensions:opam.bzl", "opam")
-opam.deps(                                                                   <2>
+opam.deps(                                                                   <1>
     toolchain      = "local",  # "global" | "xdg" | "local" (default)
     opam_version   = "2.3.0",  # ignored unless toolchain = "xdg"
     ocaml_version  = "5.3.0",
-    pkgs           = {"ounit2": "2.2.7"},  # version ignored currently
+    pkgs           = {"cmdliner": "1.3.0"}  # version ignored currently
 )
-use_repo(opam, "opam.ounit2")                                                <3>
-use_repo(opam, "opam.ocamlsdk")                                              <4>
-register_toolchains("@opam.ocamlsdk//toolchain/selectors/local:all")         <5>
-register_toolchains("@opam.ocamlsdk//toolchain/profiles:all")                <5>
+use_repo(opam, "opam.cmdliner")                                              <2>
+use_repo(opam, "opam", "opam.ocamlsdk")                                      <3>
+register_toolchains("@opam.ocamlsdk//toolchain/selectors/local:all")         <4>
+register_toolchains("@opam.ocamlsdk//toolchain/profiles:all")                <4>
 
-opamdev = use_extension("@tools_opam//extensions:opam.bzl", "opam",
-                               dev_dependencies = True)
-opamdev.deps(
-    pkgs           = {"ounit2": "2.2.7"},  # version ignored currently
-)
+opamdev = use_extension("@tools_opam//extensions:opam.bzl", "opam",          <5>
+                         dev_dependencies = True)
+opamdev.deps(pkgs = {"ounit2": "2.2.7"})
 ----
-<1> This is currently alpha software; it has not yet been released to
-any Bazel registry, so the `bazel_dep` directive would fail. This
-`git_override` tells Bazel to fetch `tools_opam` from the
-`1.0.0.alpha` branch of the dev repo.
-<2> `deps` is a "tag" supported by the extension; a tag is essentially a method.  This instruction tells Bazel to execute the module extension function; see below for more information.
-<3> The module extension function runs a "repo rule" for every package in `pkgs` (and all their dependencies); the `use_repo` directive tells Bazel which of those repos are direct dependencies of this (root) module. It "imports" the module, making it accessible to `BUILD.bazel` files in this module.
-<4> The `opam.ocamlsdk` module is always implicitly created by the extension and must be imported. Do not list it in `pkgs`.
-<5> The toolchains created by `opam.ocamlsdk` must be registered.
+<1> `deps` is a "tag" supported by the extension; a tag is essentially a method.  This instruction tells Bazel to execute the module extension function; see below for more information.
+<2> The module extension function runs a "repo rule" for every package in `pkgs` (and all their dependencies); the `use_repo` directive tells Bazel which of those repos are direct dependencies of this (root) module. It "imports" the module, making it accessible to `BUILD.bazel` files in this module.
+<3> The `opam` and `opam.ocamlsdk` modules are always implicitly created by the extension and must be imported. Do not list in `pkgs`.
+<4> The toolchains created by `opam.ocamlsdk` must be registered.
+<5> The same extension used with `dev_dependencies = True` means it will be ignored if the current module is not the root module.
 
 === Bazel labels for opam packages
 
@@ -60,7 +58,7 @@ With legacy build systems (Dune, ocamlfind, etc.) the opam package
 name is sufficient to express a dependency in a build file. With
 Bazel, we need:
 
-* a label expressing a repo (e.g. `@ounit2`)
+* a label expressing a repo (e.g. `@opam.ounit2`)
 * a (Bazel) package within the repo (e.g. `//lib`)
 * a target within the package (e.g. `:ounit2`)
 
@@ -69,12 +67,9 @@ For example, `@opam.ounit2//lib:ounit2`.
 [source="starlark", title="BUILD.bazel"]
 ----
 ocaml_module(name = "Test", struct = "test.ml",
-             deps = [
-                 "@opam.ounit2//lib:ounit2",          <1>
-                 ...
-             ])
+             deps = ["@opam.ounit2//lib", ...])           <1>
 ----
-<1> Alternatively, `@opam.ounit2//lib`, which abbreviates `@opam.ounit2//lib:lib`, which is an alias of "@opam.ounit2//lib:ounit2".
+<1> `@opam.ounit2//lib` abbreviates `@opam.ounit2//lib:lib`, which is an alias of `@opam.ounit2//lib:ounit2`. Any of the three forms may be used.
 
 WARNING: Do not confuse Bazel's concept of _package_ with that of opam (or Dune, or findlib, or ...). See the Bazel documentation on link:https://bazel.build/concepts/build-ref#packages[packages] for details.
 
@@ -117,12 +112,6 @@ Bazel packages within the repo; i.e. `+mtime.clock+` becomes
 
 === Building
 
-WARNING: This is an alpha version. There is still some flakiness in some
-situations involving opam commands (like creating a switch) that I
-haven't worked out. If you see error messages, try running the build
-again. You may need to run `bazel clean --expunge`. Once your switch
-is properly configured (which you can do manually if you prefer), you
-should not see such errors.  If you do, please file an issue.
 
 You'll see some messages the first time you build, as the extension
 configures an opam switch, possibly creating it and/or installing
@@ -137,6 +126,8 @@ Fetching module extension @@tools_opam+//extensions:opam.bzl%opam; Installing pk
 You can use the `verbosity` and `opam_verbosity` attributes to get
 more information; see <<Getting more info>> below.
 
+NOTE: The initial build may take a while, especially if it needs to create and populate an opam switch.
+
 == Toolchain strategies
 
 _Toolchain strategy_ refers to the _opam toolchain_ encompassing
@@ -149,12 +140,31 @@ defined by `+rules_ocaml+`, which model the four basic OCaml compiler
 types: `+ocamlopt.opt+` (sys>sys), `ocamlc.byte` (vm>vm),
 `+ocamlopt.byte+` (vm>sys), and `+ocamlc.opt+` (sys>vm).
 
+=== XDG
+
+This is the default. The extension will create the entire `+opam+`
+toolchain (including opam) in your `XDG_DATA_HOME` directory (default:
+`$HOME/.local/share`).  In that case, it
+will:
+
+* download opam (default version 2.3.0, overridable using the
+  `opam_version` attribute) to `$XDG_DATA_HOME/obazl/opam/<opam_version>/bin/opam`
+* initialize an opam root at `$XDG_DATA_HOME/obazl/opam/<opam_version>/root`
+* create a switch, which will go in the root (e.g. `$XDG_DATA_HOME/obazl/opam/<opam_version>/root/5.3.0`)
+* install your opam package dependencies in that switch
+
+Such XDG toolchains are effectively global toolchains that are
+quasi-private to Obazl. They are completely separate from your system
+opam configuration. They will be shared across OBazl projects that use
+`toolchain = "xdg"`.
+
 === Local
 
-By default the extension will use the local switch it it finds one. If
-you have specified `ocaml_version` then the extension will check to
-see if the compiler it uses matches and print a warning if not. If the
-switch is missing required packages the extension will install them.
+Setting `toolchain="local"` tells the extension to use the local
+switch it it finds one, and create it if not. If you have specified
+`ocaml_version` then the extension will check to see if the compiler
+it uses matches and print a warning if not. If the switch is missing
+required packages the extension will install them.
 
 If you do not have a local switch, the extension will create one and
 install your required packages.
@@ -173,27 +183,6 @@ If it finds that the current switch lacks any of the packages you
 require, it will print an Error message and abort the build; it will
 not automatically install them. You can override this by setting the
 environment variable `OBAZL_FORCE_INSTALL=1`.
-
-=== XDG
-
-You can tell the extension to create the entire `+opam+` toolchain
-(including opam) in your `XDG_DATA_HOME` directory (default:
-`$HOME/.local/share`) by setting `toolchain="xdg"`. In that case, it
-will:
-
-* download opam (default version 2.3.0, overridable using the
-  `opam_version` attribute) to `$XDG_DATA_HOME/obazl/opam/<opam_version>/bin/opam`
-* initialize an opam root at `$XDG_DATA_HOME/obazl/opam/<opam_version>/root`
-* create a switch, which will go in the root (e.g. `$XDG_DATA_HOME/obazl/opam/<opam_version>/root/5.3.0`)
-* install your opam package dependencies in that switch
-
-Such XDG toolchains are effectively global toolchains that are
-quasi-private to Obazl. They are completely separate from your system
-opam configuration. They will be shared across OBazl projects that use
-`toolchain = "xdg"`.
-
-WARNING: Currently the extension always uses `$HOME/.local/share`.
-Support for using the `$XDG_DATA_HOME` environment variable will soon be added.
 
 == What does the extension do?
 
@@ -240,6 +229,39 @@ See link:https://bazel.build/extending/repo#when_is_the_implementation_function_
 See also link:https://bazel.build/extending/concepts#evaluation-model[Evaluation model].
 
 
+== Interacting with opam
+
+When you build with `tools_opam`, Bazel will only use opam resources
+as configured in your `MODULE.bazel` file. It will ignore opam-related
+environment variables, current switch, etc. Furthermore, if you use
+the `xdg` toolchain strategy, your builds will use a switch configured
+with the opam installation, in `$XDG_DATA_HOME`, that you specified.
+
+It follows that running `opam` from the command line to interact with
+the switch your are using is not correct. Instead you should always
+run `bazel run @opam`, which will ensure that your opam commands are
+properly configured to use the correct opam binary, `--root`, and
+`--switch`.  For example:
+
+.Usage example
+[%collapsible]
+====
+[source="shell"]
+----
+$ bazel run @opam -- list
+...
+Root module  : demos_obazl
+  opam bin   : /Users/<uid>/.local/share/obazl/opam/2.3.0/bin/opam
+  OPAMROOT   : /Users/<uid>/.local/share/obazl/opam/2.3.0/root
+  OPAMSWITCH : 5.1.1
+
+# Packages matching: installed
+# Name                      # Installed # Synopsis
+alcotest                    1.8.0       Alcotest is a lightweight and colourful test framework
+astring                     0.8.5       Alternative String module for OCaml
+...
+----
+====
 
 == Getting more info
 
@@ -278,6 +300,7 @@ The repositories generated by the `tools_opam` extension look like this:
 
 ----
 tools_opam+
+tools_opam++opam+opam
 tools_opam++opam+opam.ocamlsdk
 tools_opam++opam+opam.ounit2
 tools_opam++opam+opam.seq

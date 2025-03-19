@@ -421,41 +421,91 @@ def _opam_ext_impl(mctx):
 
 ##############################
 opam = module_extension(
-  implementation = _opam_ext_impl,
-  tag_classes = {
-      "deps": tag_class(
-          attrs = {
-              "toolchain": attr.string(
-                  mandatory = False,
-                  default = "xdg",
-                  values  = ["local", "global", "xdg",
-                             # future: "xdg_local"
-                             ]
-              ),
-              "opam_version": attr.string(
-                  mandatory = False,
-                  default = "2.3.0"
-              ),
-              "_opam_config_file": attr.label(
-                  default = "obazl.opamrc"
-              ),
-              "ocaml_version": attr.string(
-                  mandatory = False,
-                  default = "5.3.0"
-              ),
+    doc = """
+This module extension enables seamless integration of opam dependencies into the Bazel environment.
+    """,
+    implementation = _opam_ext_impl,
+    tag_classes = {
+        "deps": tag_class(
+            doc = """
+The `deps` method (tag class) runs code that
 
-              "pkgs": attr.string_dict(
-                  # mandatory = True,
+1. ensures the selected opam switch is properly configured, and
+2. generates a Bazel repository for each opam package listed in the `pkgs` attribute
+
+The Bazel repository for package `pkg` will be named `opam.pkg`, so in
+your `BUILD.bazel` files you refer to it as `@opam.pkg//lib`.
+
+The Bazel repositories are lazily evaluated. The method will
+__configure__ a repository for every package in the complete
+dependency graph - that is, generate Bazel files for it and register
+it with Bazel. But repositories are not ``materialized'' (evaluated)
+until needed. So your project might have many opam dependencies, but
+if you build a target that only depends on one, then only that one
+repository will actually be constructed and used.
+
+.Usage example
+[%collapsible]
+====
+[source="starlark",title="MODULE.bazel"]
+----
+bazel_dep(name = "tools_opam", version = "1.0.0")
+opam = use_extension("@tools_opam//extensions:opam.bzl", "opam")
+opam.deps(pkgs = {"ounit2": "2.2.7"})
+use_repo(opam, "opam.ounit2")
+use_repo(opam, "opam", "opam.ocamlsdk")                               <1>
+register_toolchains("@opam.ocamlsdk//toolchain/selectors/local:all")  <2>
+register_toolchains("@opam.ocamlsdk//toolchain/profiles:all")         <2>
+----
+<1> Modules `opam` and `opam.ocamlsdk` are always implicitly configured.
+<2> The toolchains defined by module `opam.ocamlsdk` must always be registered.
+
+[source="starlark",title="BUILD.bazel"]
+----
+ocaml_module(name="A", struct="a.ml", deps=["@opam.ounit2//lib"],...)
+----
+====
+
+            """,
+            attrs = {
+                "toolchain": attr.string(
+                    doc = "opam toolchain: xdg, local, or global",
+                    mandatory = False,
+                    default = "xdg",
+                    values  = ["local", "global", "xdg",
+                               # future: "xdg_local"
+                             ]
+                ),
+                "opam_version": attr.string(
+                    doc = "Version of opam to use for xdg toolchain",
+                    mandatory = False,
+                    default = "2.3.0"
+                ),
+                "ocaml_version": attr.string(
+                    doc = "Version of OCaml",
+                    mandatory = False,
+                    default = "5.3.0"
+                ),
+                "pkgs": attr.string_dict(
+                    doc = "List of opam pkg Ids",
+                    # mandatory = True,
                   allow_empty = False
-              ),
-              # "dev_deps": attr.string_dict(
-              #     mandatory = False,
-              #     allow_empty = True
-              # ),
-              "debug"     : attr.int(default = 0),
-              "verbosity" : attr.int(default = 0),
-              "opam_verbosity": attr.int(default = 0),
-          }
-      )
-  }
+                ),
+                "_opam_config_file": attr.label(
+                    default = "obazl.opamrc"
+                ),
+                "debug"     : attr.int(
+                    doc = "Debug level",
+                    default = 0
+                ),
+                "verbosity" : attr.int(
+                    doc = "Verbosity level",
+                    default = 0),
+                "opam_verbosity": attr.int(
+                    doc = "Verbosity level for opam commands",
+                    default = 0
+                ),
+            }
+        )
+    }
 )
