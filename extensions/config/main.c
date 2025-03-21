@@ -39,7 +39,7 @@ extern int  coswitch_debug;
 extern bool coswitch_trace;
 
 extern bool quiet;
-extern bool verbose;
+bool verbose;
 extern int  verbosity;
 
 enum OPTS {

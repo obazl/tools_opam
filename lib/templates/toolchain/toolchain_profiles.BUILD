@@ -6,10 +6,10 @@ load("@rules_ocaml//toolchain:profiles.bzl",
 
 COMPILE_WARNINGS = []
 COMPILE_OPTIONS  = [
-    "-keep-locs",
-    "-short-paths",
-    "-strict-formats",
-    "-strict-sequence"
+    # "-keep-locs",
+    # "-short-paths",
+    # "-strict-formats",
+    # "-strict-sequence"
     # "-noassert",
 ]
 
@@ -18,11 +18,10 @@ LINK_OPTIONS  = [
     # "-bin-annot",               # dune
     # "-annot",                   # dune
     # "-no-alias-deps",           # dune
-    "-keep-locs",               # dune
     # "-noassert",
     # "-short-paths",
     # "-strict-formats",
-    "-strict-sequence"          # dune
+    # "-strict-sequence"          # dune
 ]
 # dune exe native:
 # -bin-annot -annot -strict-sequence -keep-locs -no-alias-deps -w A-4-42-41-48-70 -g
@@ -43,8 +42,8 @@ ocaml_toolchain_profile(
 
 ocaml_toolchain_profile(
     name         = "vm_dbg_profile",
-    compile_opts = COMPILE_OPTIONS + COMPILE_WARNINGS + ["-g"],
-    link_opts    = LINK_OPTIONS + LINK_WARNINGS + ["-g"]
+    compile_opts = COMPILE_OPTIONS + COMPILE_WARNINGS,
+    link_opts    = LINK_OPTIONS + LINK_WARNINGS
 )
 
 ocaml_toolchain_profile(
@@ -67,8 +66,8 @@ ocaml_toolchain_profile(
 
 ocaml_toolchain_profile(
     name         = "sys_dbg_profile",
-    compile_opts = COMPILE_OPTIONS + COMPILE_WARNINGS + ["-g"],
-    link_opts    = LINK_OPTIONS + LINK_WARNINGS + ["-g"]
+    compile_opts = COMPILE_OPTIONS + COMPILE_WARNINGS,
+    link_opts    = LINK_OPTIONS + LINK_WARNINGS,
 )
 
 ocaml_toolchain_profile(

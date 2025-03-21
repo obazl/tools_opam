@@ -12,6 +12,9 @@ system.  The `tools_opam` extension seamlessly integrates `opam` into bazel so t
 
 link:https://bazel.build/install[Install Bazel].  Then:
 
+.Clone a demo
+[%collapsible%open]
+====
 ----
 git clone https://github.com/obazl/demo_hello.git
 cd demo_hello
@@ -24,6 +27,7 @@ bazel test //... --build_tests_only       <3>
 <1>  Builds all targets
 <2>  Builds all targets and runs all tests
 <3>  Runs all tests but only builds targets required by the tests
+====
 
 == Configuration
 
@@ -244,7 +248,7 @@ properly configured to use the correct opam binary, `--root`, and
 `--switch`.  For example:
 
 .Usage example
-[%collapsible]
+[%collapsible%open]
 ====
 [source="shell"]
 ----

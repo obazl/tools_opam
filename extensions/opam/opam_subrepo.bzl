@@ -1,7 +1,6 @@
 load("opam_dep.bzl", "OBAZL_PKGS")
 load("opam_ops.bzl", "opam_install_pkg",
      "print_cwd", "print_tree", "run_cmd")
-load("opam_checksums.bzl", "sha256")
 
 arch_map = {
     "x86": "i686",

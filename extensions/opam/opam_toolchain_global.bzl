@@ -5,7 +5,7 @@ load("opam_ops.bzl",
      "run_cmd")
 load("opam_utils.bzl", "get_sdk_root")
 
-load("colors.bzl",
+load("//extensions:colors.bzl",
      "CCRED", "CCYEL", "CCYELBGH", "CCRESET")
 
 DEFAULT_PATH = "/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"

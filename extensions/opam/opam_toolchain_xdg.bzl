@@ -2,8 +2,8 @@ load("opam_ops.bzl",
      "opam_install_pkg",
      "is_pkg_installed",
      "file_exists", "run_cmd", "print_cwd", "print_tree")
-load("opam_checksums.bzl", "sha256")
-load("colors.bzl",
+load("//extensions/opam:opam_checksums.bzl", "sha256")
+load("//extensions:colors.bzl",
      "CCRED", "CCYEL", "CCYELBGH", "CCRESET")
 
 arch_map = {

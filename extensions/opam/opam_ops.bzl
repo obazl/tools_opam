@@ -62,6 +62,7 @@ def is_pkg_installed(mctx, opambin, pkg,
                       OPAMROOT, ocaml_version):
     pkg_path = "{}/{}/lib/{}".format(
         OPAMROOT, ocaml_version, pkg)
+    # print("pkg-path: %s" % pkg_path)
 
     if file_exists(mctx, pkg_path):
         return True

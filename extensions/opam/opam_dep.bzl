@@ -12,8 +12,8 @@ OBAZL_PKGS = [
     "threads",
     "unix",
     ## special cases
-    "findlib",
-    "stublibs"
+    # "findlib",
+    "stublibs",
 ]
 ##############################
 def _opam_dep_repo_impl(rctx):

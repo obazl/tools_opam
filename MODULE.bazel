@@ -11,10 +11,10 @@ bazel_dep(name = "bazel_skylib",   version = "1.7.1")
 bazel_dep(name = "rules_cc",       version = "0.1.1")
 
 ## obazl
-bazel_dep(name = "obazl_tools_cc",  version = "3.0.0.dev")
-bazel_dep(name = "findlibc",        version = "3.0.0.dev")
-bazel_dep(name = "runfiles",        version = "3.0.0.dev")
-bazel_dep(name = "xdgc",            version = "3.0.0.dev")
+bazel_dep(name = "obazl_tools_cc",  version = "3.0.0")
+bazel_dep(name = "findlibc",        version = "3.0.0")
+bazel_dep(name = "runfiles",        version = "3.0.0")
+bazel_dep(name = "xdgc",            version = "3.0.0")
 bazel_dep(name = "rules_ocaml", version = "3.0.0.dev")
 
 ## 3rd party
@@ -26,5 +26,5 @@ bazel_dep(name = "sfsexp",          version = "1.4.1.bzl")
 bazel_dep(name = "uthash",          version = "2.3.0.bzl")
 
 ## test
-bazel_dep(name = "unity",           version = "2.6.1.bzl.7",
+bazel_dep(name = "unity",           version = "2.6.1.bzl",
           dev_dependency = True)
