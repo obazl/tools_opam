@@ -21,6 +21,61 @@ os_map = {
     "linux": "linux"
 }
 
+###################
+def utop_get_paths(rctx, opambin, opam_root, switch_id,
+                  debug, verbosity, opam_verbosity):
+    cmd = [opambin, "var", "bin",
+           "--switch", "{}".format(switch_id),
+           "--root", opam_root]
+    res = rctx.execute(cmd, quiet = (opam_verbosity < 1))
+    if res.return_code == 0:
+        switch_bin = res.stdout.strip()
+    else:
+        print("cmd: %s" % cmd)
+        print("rc: %s" % res.return_code)
+        print("stdout: %s" % res.stdout)
+        print("stderr: %s" % res.stderr)
+        fail("cmd failure")
+
+    utop_path = switch_bin + "/utop"
+    if not rctx.path(utop_path).exists:
+        utop_path = None
+        # fail("utop executable not found: %s" % utop_path)
+
+    cmd = [opambin, "var", "stublibs",
+           "--switch", "{}".format(switch_id),
+           "--root", opam_root]
+    res = rctx.execute(cmd, quiet = (opam_verbosity < 1))
+    if res.return_code == 0:
+        stublibs = res.stdout.strip()
+    else:
+        print("cmd: %s" % cmd)
+        print("rc: %s" % res.return_code)
+        print("stdout: %s" % res.stdout)
+        print("stderr: %s" % res.stderr)
+        fail("cmd failure")
+
+    if not rctx.path(stublibs).exists:
+        fail("utop stublibs not found: %s" % stublibs)
+
+    cmd = [opambin, "var", "ocaml:lib",
+           "--switch", "{}".format(switch_id),
+           "--root", opam_root]
+    res = rctx.execute(cmd, quiet = (opam_verbosity < 1))
+    if res.return_code == 0:
+        ocaml_stublibs = res.stdout.strip() + "/stublibs"
+    else:
+        print("cmd: %s" % cmd)
+        print("rc: %s" % res.return_code)
+        print("stdout: %s" % res.stdout)
+        print("stderr: %s" % res.stderr)
+        fail("cmd failure")
+
+    if not rctx.path(ocaml_stublibs).exists:
+        fail("utop ocaml stublibs not found: %s" % ocaml_stublibs)
+
+    return utop_path, stublibs, ocaml_stublibs
+
 ##############################
 def _opam_repo_impl(rctx):
     # if tc == local: created if needed, symlink

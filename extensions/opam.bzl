@@ -4,9 +4,10 @@ load("//extensions/opam:opam_toolchain_local.bzl", "config_local_toolchain")
 load("//extensions/opam:opam_toolchain_global.bzl", "config_global_toolchain")
 load("//extensions/opam:opam_toolchain_opam.bzl", "config_opam_toolchain")
 load("//extensions/opam:opam_dep.bzl", "opam_dep", "OBAZL_PKGS")
-load("//extensions/opam:opam_repo.bzl", "opam_repo")
-load("//extensions/utop:utop_repo.bzl",
-     "utop_repo", "utop_get_paths")
+load("//extensions/opam:opam_repo.bzl", "opam_repo",
+     "utop_get_paths")
+load("//extensions/dbg:dbg_repo.bzl", "dbg_repo")
+load("//extensions/utop:utop_repo.bzl", "utop_repo")
 load("//extensions/opam:opam_ops.bzl",
      "opam_install_pkg",
      "print_cwd", "print_tree")
@@ -178,7 +179,7 @@ def _opam_ext_impl(mctx):
     config_file   = "obazl.opamrc"
     direct_deps   = []
     dev_deps      = []
-    utop          = True
+    utop          = None
     ocamlinit     = None
 
     for m in mctx.modules:
@@ -190,13 +191,16 @@ def _opam_ext_impl(mctx):
             ## always config opam, opam.ocamlsdk, opam.stublibs
             ## even if root module does not use opam.deps
 
+            if m.tags.utop:
+                utop = m.tags.utop[0].version
+                ocamlinit    = m.tags.utop[0].ocamlinit
+                if mctx.is_dev_dependency(m.tags.utop[0]):
+                    dev_deps.extend(
+                        {"utop": utop})
+
             for cfg in m.tags.deps:
                 config_file = cfg._opam_config_file
-                utop        = cfg.utop
                 if mctx.is_dev_dependency(cfg):
-                    if cfg.utop:
-                        ocamlinit = cfg.ocamlinit
-                        dev_deps.extend({"utop": cfg.utop})
                     dev_deps.extend(cfg.pkgs)
                 else:
                     # env var overrides toolchain param
@@ -223,7 +227,6 @@ def _opam_ext_impl(mctx):
                 if mctx.is_dev_dependency(cfg):
                     dev_deps.extend(cfg.pkgs)
                 else:
-                    fail("foo")
                     direct_deps.extend(cfg.pkgs)
         #         subdeps.extend(cfg.indirect_deps)
         #         if debug > 0:
@@ -340,7 +343,21 @@ def _opam_ext_impl(mctx):
               # ocaml_version = ocaml_version,
               # pkgs          = deps,
               debug         = debug,
+              verbosity     = verbosity,
+              opam_verbosity= opam_verbosity)
+
+    # sdk tool: ocamldebug
+    # FIXME: only on demand?
+    dbg_repo(name = "dbg",
+             root_module   = root_module,
+             opam_root     = rootpath,
+             switch_id     = switch,
+             dbg_version   = ocaml_version,
+             # ini_file      = ini_file,
+             # ld_lib_path   = ld_lib_path,
+              debug         = debug,
               verbosity     = verbosity)
+              # opam_verbosity= opam_verbosity)
 
     if utop:
         # @utop gets a special repo
@@ -349,7 +366,7 @@ def _opam_ext_impl(mctx):
             mctx, opampath, rootpath, switch,
             debug, verbosity, opam_verbosity)
         ld_lib_path = stublibs + ":" + ocaml_stublibs
-        utop_repo(name = "utop",
+        utop_repo(name = "{}utop".format(obazl_pfx),
                   # toolchain     = toolchain,
                   root_module   = root_module,
                   utop_bin      = utop_bin,
@@ -371,7 +388,11 @@ def _opam_ext_impl(mctx):
     for i, pkg in enumerate(deps):
         ## FIXME: for ocaml >= 5, dynlink etc. not toplevel pkgs?
         if pkg in OBAZL_PKGS: # e.g. dynlink, str, unix
-            pkg = pkg
+            # pkg = pkg
+            continue # not installable (part of SDK)
+        elif pkg == "stublibs":
+            ## already installed
+            continue
         else:
             pkg = "{pfx}{pkg}".format(pfx=obazl_pfx, pkg=pkg)
         if verbosity > 1: print(
@@ -443,11 +464,13 @@ def _opam_ext_impl(mctx):
         rmdirects.append("opam.stublibs")
     for dep in direct_deps:
         rmdirects.append("{}{}".format(obazl_pfx, dep))
-    devdeps = [] # ["utop"] if utop else []
+    devdeps = ["dbg"] # ["utop"] if utop else []
+    if stublibs_indirect:
+        devdeps.append("opam.stublibs")
 
     for dep in dev_deps:
         if dep == "utop":
-            devdeps.append("utop")
+            devdeps.append("{}utop".format(obazl_pfx))
         else:
             devdeps.append("{}{}".format(obazl_pfx, dep))
     return mctx.extension_metadata(
@@ -462,11 +485,16 @@ This module extension enables seamless integration of opam dependencies into the
     """,
     implementation = _opam_ext_impl,
     tag_classes = {
-#         "utop": tag_class(
-#             doc = """
-# The `utop` method (tag class) runs utop.
-#             """
-#         ),
+        "utop": tag_class(
+            doc = """
+The `utop` method (tag class) runs utop.
+            """,
+            attrs = {
+                "version": attr.string(),
+                "ocamlinit": attr.label(),
+            }
+        ),
+
         "deps": tag_class(
             doc = """
 The `deps` method (tag class) runs code that
@@ -532,10 +560,6 @@ ocaml_module(name="A", struct="a.ml", deps=["@opam.ounit2//lib"],...)
                     # mandatory = True,
                   allow_empty = False
                 ),
-                "utop": attr.string(
-                    doc = "Version number of utop",
-                ),
-                "ocamlinit": attr.label( ),
                 "_opam_config_file": attr.label(
                     default = "obazl.opamrc"
                 ),
