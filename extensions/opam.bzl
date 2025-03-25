@@ -61,10 +61,10 @@ bazel_dep(name = "rules_ocaml", version = "3.0.0.dev")
                "@tools//extensions/config"]
     else:
         cmd = ["bazel",
-               "--output_base=../.config_base",
+               # "--output_base=../.config_base",
                # "--output_user_root=../.config_user",
                "build",
-               "--symlink_prefix=config-",
+               # "--symlink_prefix=config-",
                "--registry=file:///{}/obazl/registry".format(HOME),
                "--registry=https://raw.githubusercontent.com/obazl/registry/main/",
                "--registry=https://bcr.bazel.build",
@@ -103,8 +103,9 @@ bazel_dep(name = "rules_ocaml", version = "3.0.0.dev")
     # cmd = ["tree", "..", "-a", "-L", "2"]
     # mctx.execute(cmd, quiet = False)
 
-    p1 = "config-bin/external/tools_opam+/extensions/config/config"
-    # p2 = "./bin/extensions/config/config"
+    ## FIXME: run bazel cquery to get this?
+    p1 = "bazel-bin/external/tools_opam+/extensions/config/config"
+
     config_pkg_tool = mctx.path(p1)
     # this is the path on modextwd, we need the real path
     config_pkg_tool = config_pkg_tool.realpath
