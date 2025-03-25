@@ -476,6 +476,13 @@ void ext_emit_ocamlsdk_module(char *_ocaml_version,
     mkdir_r(utstring_body(dst_dir));
     emit_ocaml_stdlib_pkg(dst_dir, sdk_lib);
 
+    /* SPECIAL CASE: lib/ocaml/expunge
+       This is an executable used to build toplevel repls */
+    utstring_renew(dst_dir);
+    utstring_printf(dst_dir, "bin");
+    mkdir_r(utstring_body(dst_dir));
+    emit_ocaml_expunge(dst_dir, sdk_lib);
+
     utstring_renew(dst_dir);
     utstring_printf(dst_dir, "stublibs/lib");
     mkdir_r(utstring_body(dst_dir));

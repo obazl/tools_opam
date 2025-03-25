@@ -203,6 +203,77 @@ void _symlink_ocaml_stdlib(UT_string *stdlib_srcdir, char *tgtdir)
     TRACE_EXIT;
 }
 
+EXPORT void emit_ocaml_expunge(UT_string *dst_dir,
+                              char *switch_lib)
+{
+    TRACE_ENTRY;
+    LOG_DEBUG(0, "dstdir: %s", utstring_body(dst_dir));
+    LOG_DEBUG(0, "switch_lib: %s", switch_lib);
+
+    /* bool add_toplevel = false; */
+
+    UT_string *dst_file;
+    utstring_new(dst_file);
+
+    /* stdlib files are always in <switchpfx>/lib/ocaml
+       even for v5
+    */
+    UT_string *stdlib_dir;
+    utstring_new(stdlib_dir);
+    utstring_printf(stdlib_dir,
+                    "%s/ocaml",
+                    switch_lib);
+    _symlink_ocaml_expunge(stdlib_dir,
+                           utstring_body(dst_dir));
+
+    utstring_free(dst_file);
+    utstring_free(stdlib_dir);
+    TRACE_EXIT;
+}
+
+void _symlink_ocaml_expunge(UT_string *stdlib_srcdir, char *tgtdir)
+{
+    TRACE_ENTRY;
+    LOG_DEBUG(0, "srcdir: %s", utstring_body(stdlib_srcdir));
+    LOG_DEBUG(0, "tgtdir: %s", tgtdir);
+
+    UT_string *src;
+    utstring_new(src);
+    UT_string *dst;
+    utstring_new(dst);
+    int rc;
+
+    utstring_renew(src);
+    utstring_printf(src, "%s/expunge",
+                    utstring_body(stdlib_srcdir));
+    static char *srcfile;
+    srcfile = realpath(utstring_body(src), NULL);
+
+    utstring_renew(dst);
+    utstring_printf(dst, "%s/expunge", tgtdir);
+
+    fprintf(stdout, "symlinking %s to %s\n",
+              srcfile,
+              /* utstring_body(src), */
+              utstring_body(dst));
+    fprintf(stderr, "symlinking %s to %s\n",
+              srcfile,
+              /* utstring_body(src), */
+              utstring_body(dst));
+
+    rc = symlink(srcfile, /* utstring_body(src), */
+                 utstring_body(dst));
+    if (rc != 0) {
+        if (errno != EEXIST) {
+            perror(utstring_body(src));
+            fprintf(stderr, "exiting\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+    free(srcfile);
+    TRACE_EXIT;
+}
+
 EXPORT void emit_ocaml_runtime_pkg(UT_string *dst_dir,
                                    char *switch_lib)
 {
