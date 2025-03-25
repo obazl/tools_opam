@@ -15,8 +15,8 @@ int main(int argc, char *argv[])
     }
     fprintf(stdout, YEL "Root module" CRESET
         "  : %s\n", getenv("ROOTMODULE"));
-    fprintf(stdout, YEL "  opam bin" CRESET
-        "   : %s\n", getenv("OPAMBIN"));
+    fprintf(stdout, YEL "  OPAMBINDIR" CRESET
+        " : %s\n", getenv("OPAMBINDIR"));
     fprintf(stdout, YEL "  OPAMROOT" CRESET
         "   : %s\n", getenv("OPAMROOT"));
     fprintf(stdout, YEL "  OPAMSWITCH" CRESET
@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
         "Reinitializing opam installation.  ");
     fprintf(stdout, "Bazel support (network access) will be removed.\n");
 
-    char *cmd = "opam init --reinit --quiet ";
+    char *cmd = "opam init --reinit --bypass-checks --no --quiet ";
     fprintf(stdout, YEL "INFO: " CRESET "cmd: '%s'\n", cmd);
     fprintf(stdout, "\n");
 

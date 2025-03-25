@@ -15,9 +15,9 @@ int main(int argc, char *argv[])
     }
     fprintf(stdout, YEL "Root module" CRESET
         "  : %s\n", getenv("ROOTMODULE"));
-    char *opam = getenv("OPAMBIN");
-    fprintf(stdout, YEL "  opam bin" CRESET
-        "   : %s\n", opam);
+    char *opam_bindir = getenv("OPAMBINDIR");
+    fprintf(stdout, YEL "  OPAMBINDIR" CRESET
+        " : %s\n", opam_bindir);
     char *opam_root = getenv("OPAMROOT");
     fprintf(stdout, YEL "  OPAMROOT" CRESET
         "   : %s\n", opam_root);
@@ -33,15 +33,14 @@ int main(int argc, char *argv[])
 
     char *precmd = "init --reinit "
         "--no "
-        "-vv "
         "--bypass-checks "
         "--no-opamrc "
         "--quiet ";
-    int ct = strlen(opam) + strlen(opam_root) + strlen(precmd) + strlen(argv[2]) + 15;
+    int ct = strlen(opam_bindir) + strlen(opam_root) + strlen(precmd) + strlen(argv[2]) + 20; /* account for chars in format string */
     char *cmd = malloc(ct);
     int written = snprintf(cmd, ct,
-                           "%s %s --root %s %s",
-                           opam, precmd, opam_root,
+                           "%s/opam %s --root %s %s",
+                           opam_bindir, precmd, opam_root,
                            argv[2]);
     /* printf("cwd: %s\n", getcwd(NULL,0)); */
     fprintf(stdout, YEL "cmd" CRESET ": %s\n\n", cmd);

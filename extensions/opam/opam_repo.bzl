@@ -97,6 +97,8 @@ bazel_dep(name = "rules_cc", version = "0.1.1")
         """.format(rctx.attr.opam_version)
     )
 
+    opam_bindir = paths.dirname(rctx.attr.opam_bin)
+
     rctx.template("opam_runner.c",
                   rctx.attr._opam_runner)
 
@@ -104,7 +106,7 @@ bazel_dep(name = "rules_cc", version = "0.1.1")
         content = """
 load("@rules_cc//cc:defs.bzl", "cc_binary")
 ARGS = ["--root", "{root}", "--switch", "{switch}"]
-ENV = {{"OPAMBIN": "{bin}",
+ENV = {{"OPAMBINDIR": "{bin}",
         "OPAMROOT": "{root}",
         "OPAMSWITCH": "{switch}",
         "ROOTMODULE": "{root_module}"}}
@@ -115,14 +117,40 @@ cc_binary(
     name = "opam_runner",
     srcs = ["opam_runner.c"],
     copts = ["-Wno-null-character"],
-    args = ["{bin}"],
+    args = ["{bin}/opam"],
     env  = ENV,
     # data = ["{bin}"]
 )
+
         """.format(root   = rctx.attr.opam_root,
                    switch = rctx.attr.switch_id,
-                   bin    = rctx.attr.opam_bin,
+                   bin    = opam_bindir,
                    root_module = rctx.attr.root_module)
+              )
+
+    utop_bin, stublibs, ocaml_stublibs = utop_get_paths(
+        rctx, rctx.attr.opam_bin,
+        rctx.attr.opam_root,
+        rctx.attr.switch_id,
+        rctx.attr.debug,
+        rctx.attr.verbosity,
+        rctx.attr.opam_verbosity)
+
+    ld_lib_path = stublibs + ":" + ocaml_stublibs
+
+    rctx.file("config/BUILD.bazel", content = "")
+    rctx.file("config/defs.bzl",
+              content = """
+OPAMBINDIR = "{opambin}"
+OPAMROOT   = "{opamroot}"
+OPAMSWITCH = "{opamswitch}"
+CAML_LD_LIBRARY_PATH = "{ld_path}"
+              """.format(
+                  opambin    = opam_bindir,
+                  opamroot   = rctx.attr.opam_root,
+                  opamswitch = rctx.attr.switch_id,
+                  ld_path    = ld_lib_path
+              )
               )
 
     rctx.template("reconfig/reconfig.c",
@@ -133,7 +161,7 @@ cc_binary(
         content = """
 load("@rules_cc//cc:defs.bzl", "cc_binary")
 ARGS = ["--root", "{root}", "--switch", "{switch}"]
-ENV = {{"OPAMBIN": "{bin}",
+ENV = {{"OPAMBINDIR": "{bin}",
         "OPAMROOT": "{root}",
         "OPAMSWITCH": "{switch}",
         "CONFIGFILE": "{config_file}",
@@ -143,13 +171,13 @@ cc_binary(
     name = "reconfig",
     srcs = ["reconfig.c"],
     copts = ["-Wno-null-character"],
-    args = ["{bin}", "--config=../tools_opam+/extensions/{config_file_name}"],
+    args = ["{bin}/opam", "--config=../tools_opam+/extensions/{config_file_name}"],
     env  = ENV,
     data = ["{config_file}"]
 )
         """.format(root   = rctx.attr.opam_root,
                    switch = rctx.attr.switch_id,
-                   bin    = rctx.attr.opam_bin,
+                   bin    = opam_bindir,
                    config_file = rctx.attr.config_file,
                    config_file_name = rctx.attr.config_file.name,
                    root_module = rctx.attr.root_module.name)
@@ -163,7 +191,7 @@ cc_binary(
         content = """
 load("@rules_cc//cc:defs.bzl", "cc_binary")
 ARGS = ["--root", "{root}", "--switch", "{switch}"]
-ENV = {{"OPAMBIN": "{bin}",
+ENV = {{"OPAMBINDIR": "{bin}",
         "OPAMROOT": "{root}",
         "OPAMSWITCH": "{switch}",
         "ROOTMODULE": "{root_module}"}}
@@ -172,12 +200,12 @@ cc_binary(
     name = "reinit",
     srcs = ["reinit.c"],
     copts = ["-Wno-null-character"],
-    args = ["{bin}"],
+    args = ["{bin}/opam"],
     env  = ENV
 )
         """.format(root   = rctx.attr.opam_root,
                    switch = rctx.attr.switch_id,
-                   bin    = rctx.attr.opam_bin,
+                   bin    = opam_bindir,
                    root_module = rctx.attr.root_module)
               )
 
@@ -206,6 +234,7 @@ opam_repo = repository_rule(
             default = "opam_reinit.c"
         ),
         "debug": attr.int(default=0),
-        "verbosity": attr.int(default=0)
+        "verbosity": attr.int(default=0),
+        "opam_verbosity": attr.int(default=0)
     },
 )

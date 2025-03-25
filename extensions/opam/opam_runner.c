@@ -20,8 +20,8 @@ int main(int argc, char *argv[])
     }
     fprintf(stdout, YEL "Root module" CRESET
         "  : %s\n", getenv("ROOTMODULE"));
-    fprintf(stdout, YEL "  opam bin" CRESET
-        "   : %s\n", getenv("OPAMBIN"));
+    fprintf(stdout, YEL "  OPAMBINDIR" CRESET
+        " : %s\n", getenv("OPAMBINDIR"));
     fprintf(stdout, YEL "  OPAMROOT" CRESET
         "   : %s\n", getenv("OPAMROOT"));
     fprintf(stdout, YEL "  OPAMSWITCH" CRESET

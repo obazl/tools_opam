@@ -289,5 +289,7 @@ EXPORT void emit_pkg_bindir(UT_string *dst_dir,
                               opam_switch_pfx,
                               coswitch_lib,
                               pkg);
+    } else {
+        /* FIXME: handle error */
     }
 }
