@@ -13,7 +13,7 @@ OBAZL_PKGS = [
     "unix",
     ## special cases
     # "findlib",
-    "stublibs",
+    # "stublibs",
 ]
 ##############################
 def _opam_dep_repo_impl(rctx):

@@ -29,8 +29,14 @@ ocaml_toolchain_adapter(
     instrumented_runtime = "@opam.ocamlsdk//runtime:libasmruni.a",
     pic_runtime          = "@opam.ocamlsdk//runtime:libasmrun_pic.a",
     shared_runtime       = "@opam.ocamlsdk//runtime:libasmrun_shared.so",
-    dllibs               = "@stublibs//lib/stublibs",
-    dllibs_path          = "@stublibs//lib/stublibs:path",
+    stublibs               = ["@opam.ocamlsdk//stublibs/lib",
+                              "@opam.stublibs//lib"],
+    stublibs_path          = ["@opam.ocamlsdk//stublibs/lib:path",
+                              "@opam.stublibs//lib:path"],
+
+    objinfo     = "@opam.ocamlsdk//bin:ocamlobjinfo.opt",
+    ocamlcmt    = "@opam.ocamlsdk//bin:ocamlcmt",
+    ocamldoc    = "@opam.ocamlsdk//bin:ocamldoc.opt",
 
     ## omit vm stuff for >sys toolchains?
     # vmruntime            = "@opam.ocamlsdk//bin:ocamlrun",
@@ -58,9 +64,12 @@ ocaml_toolchain_adapter(
     instrumented_runtime = "@opam.ocamlsdk//runtime:libasmruni.a",
     pic_runtime          = "@opam.ocamlsdk//runtime:libasmrun_pic.a",
     shared_runtime       = "@opam.ocamlsdk//runtime:libasmrun_shared.so",
-    dllibs               = "@stublibs//lib/stublibs",
-    dllibs_path          = "@stublibs//lib/stublibs:path",
+    stublibs               = ["@opam.stublibs//lib"],
+    stublibs_path          = ["@opam.stublibs//lib:path"],
 
+    objinfo     = "@opam.ocamlsdk//bin:ocamlobjinfo.opt",
+    ocamlcmt    = "@opam.ocamlsdk//bin:ocamlcmt",
+    ocamldoc    = "@opam.ocamlsdk//bin:ocamldoc.opt",
     ## omit vm stuff for >sys toolchains?
     # vmruntime              = "@opam.ocamlsdk//bin:ocamlrun",
     # vmruntime_debug        = "@opam.ocamlsdk//bin:ocamlrund",
@@ -87,9 +96,12 @@ ocaml_toolchain_adapter(
     instrumented_runtime = "@opam.ocamlsdk//runtime:libcamlruni.a",
     pic_runtime          = "@opam.ocamlsdk//runtime:libcamlrun_pic.a",
     shared_runtime       = "@opam.ocamlsdk//runtime:libcamlrun_shared.so",
-    dllibs               = "@stublibs//lib/stublibs",
-    # dllibs               = "@stublibs//lib/stublibs",
-    dllibs_path          = "@stublibs//lib/stublibs:path",
+    stublibs               = ["@opam.stublibs//lib"],
+    stublibs_path          = ["@opam.stublibs//lib:path"],
+
+    objinfo     = "@opam.ocamlsdk//bin:ocamlobjinfo.opt",
+    ocamlcmt    = "@opam.ocamlsdk//bin:ocamlcmt",
+    ocamldoc    = "@opam.ocamlsdk//bin:ocamldoc.opt",
 
     # vmruntime              = "@opam.ocamlsdk//bin:ocamlrun",
     # vmruntime_debug        = "@opam.ocamlsdk//bin:ocamlrund",
@@ -116,8 +128,12 @@ ocaml_toolchain_adapter(
     instrumented_runtime = "@opam.ocamlsdk//runtime:libcamlruni.a",
     pic_runtime          = "@opam.ocamlsdk//runtime:libcamlrun_pic.a",
     shared_runtime       = "@opam.ocamlsdk//runtime:libcamlrun_shared.so",
-    dllibs               = "@stublibs//lib/stublibs",
-    dllibs_path          = "@stublibs//lib/stublibs:path",
+    stublibs               = ["@opam.stublibs//lib"],
+    stublibs_path          = ["@opam.stublibs//lib:path"],
+
+    objinfo     = "@opam.ocamlsdk//bin:ocamlobjinfo.byte",
+    ocamlcmt    = "@opam.ocamlsdk//bin:ocamlcmt",
+    ocamldoc    = "@opam.ocamlsdk//bin:ocamldoc.byte",
 
     # vmruntime              = "@opam.ocamlsdk//bin:ocamlrun",
     # vmruntime_debug        = "@opam.ocamlsdk//bin:ocamlrund",
@@ -144,8 +160,12 @@ ocaml_toolchain_adapter(
     instrumented_runtime = "@opam.ocamlsdk//runtime:libasmruni.a",
     pic_runtime          = "@opam.ocamlsdk//runtime:libasmrun_pic.a",
     shared_runtime       = "@opam.ocamlsdk//runtime:libasmrun_shared.so",
-    dllibs               = "@stublibs//lib/stublibs",
-    dllibs_path          = "@stublibs//lib/stublibs:path",
+    stublibs               = ["@opam.stublibs//lib"],
+    stublibs_path          = ["@opam.stublibs//lib:path"],
+
+    objinfo     = "@opam.ocamlsdk//bin:ocamlobjinfo.byte",
+    ocamlcmt    = "@opam.ocamlsdk//bin:ocamlcmt",
+    ocamldoc    = "@opam.ocamlsdk//bin:ocamldoc.byte",
 
     # vmruntime              = "@opam.ocamlsdk//bin:ocamlrun",
     # vmruntime_debug        = "@opam.ocamlsdk//bin:ocamlrund",
@@ -171,8 +191,12 @@ ocaml_toolchain_adapter(
     instrumented_runtime = "@opam.ocamlsdk//runtime:libasmruni.a",
     pic_runtime          = "@opam.ocamlsdk//runtime:libasmrun_pic.a",
     shared_runtime       = "@opam.ocamlsdk//runtime:libasmrun_shared.so",
-    dllibs               = "@stublibs//lib/stublibs",
-    dllibs_path          = "@stublibs//lib/stublibs:path",
+    stublibs               = ["@opam.stublibs//lib"],
+    stublibs_path          = ["@opam.stublibs//lib:path"],
+
+    objinfo     = "@opam.ocamlsdk//bin:ocamlobjinfo.byte",
+    ocamlcmt    = "@opam.ocamlsdk//bin:ocamlcmt",
+    ocamldoc    = "@opam.ocamlsdk//bin:ocamldoc.byte",
 
     # vmruntime              = "@opam.ocamlsdk//bin:ocamlrun",
     # vmruntime_debug        = "@opam.ocamlsdk//bin:ocamlrund",

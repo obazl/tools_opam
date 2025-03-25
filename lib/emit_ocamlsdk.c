@@ -351,9 +351,21 @@ EXPORT void emit_ocaml_stublibs(UT_string *dst_dir,
         exit(EXIT_FAILURE);
     }
     fprintf(ostream, "# generated file - DO NOT EDIT\n");
-    fprintf(ostream, "exports_files(glob([\"**\"]))\n");
     fprintf(ostream,
-            "package(default_visibility=[\"//visibility:public\"])\n\n");
+            "load(\"@bazel_skylib//rules:common_settings.bzl\",\n");
+    fprintf(ostream, "     \"string_setting\")\n\n");
+    fprintf(ostream,
+            "package(default_visibility=[\"//visibility:public\"])\n");
+    fprintf(ostream, "exports_files(glob([\"**\"]))\n\n");
+
+    fprintf(ostream,
+            "string_setting(name = \"path\",\n");
+    fprintf(ostream,
+            "               build_setting_default = \"%s/ocaml/stublibs/lib\")\n\n",
+            utstring_body(dst_dir)
+            );
+
+    fprintf(ostream, "alias(name=\"lib\", actual=\":stublibs\")\n\n");
 
     fprintf(ostream, "filegroup(\n");
     fprintf(ostream, "    name = \"stublibs\",\n");
@@ -503,7 +515,7 @@ EXPORT void emit_lib_stublibs_pkg(UT_string *dst_dir,
     fprintf(ostream, " version = \"%s\")\n", rules_ocaml_version);
 
     fprintf(ostream,
-            "bazel_dep(name = \"ocaml\", version = \"%s\")\n", compiler_version);
+            "bazel_dep(name = \"ocamlsdk\", version = \"%s\")\n", ocaml_version);
 
     fprintf(ostream,
             "bazel_dep(name = \"bazel_skylib\", version = \"%s\")\n", skylib_version);
@@ -513,13 +525,13 @@ EXPORT void emit_lib_stublibs_pkg(UT_string *dst_dir,
 
     /* now BUILD.bazel */
     utstring_renew(dst_file);
-    utstring_printf(dst_file, "%s/lib/stublibs",
+    utstring_printf(dst_file, "%s/lib",
                     utstring_body(dst_dir));
     mkdir_r(utstring_body(dst_file));
 
     utstring_renew(dst_file);
     utstring_printf(dst_file,
-                    "%s/lib/stublibs/BUILD.bazel",
+                    "%s/lib/BUILD.bazel",
                     utstring_body(dst_dir));
 
     ostream = fopen(utstring_body(dst_file), "w");
@@ -546,10 +558,11 @@ EXPORT void emit_lib_stublibs_pkg(UT_string *dst_dir,
     fprintf(ostream,
             "string_setting(name = \"path\",\n");
     fprintf(ostream,
-            "               build_setting_default = \"%s/stublibs/lib/stublibs\")\n\n",
+            "               build_setting_default = \"%s/stublibs/lib\")\n\n",
             utstring_body(dst_dir)
             );
 
+    fprintf(ostream, "alias(name=\"lib\", actual=\":stublibs\")\n\n");
     fprintf(ostream, "filegroup(\n");
     fprintf(ostream, "    name = \"stublibs\",\n");
     fprintf(ostream, "    srcs = glob([\"**\"], allow_empty=True),\n");
@@ -570,7 +583,7 @@ EXPORT void _emit_lib_stublibs_symlinks(char *switch_stublibs,
     TRACE_ENTRY;
     UT_string *dst_dir;
     utstring_new(dst_dir);
-    utstring_printf(dst_dir, "%s/lib/stublibs",
+    utstring_printf(dst_dir, "%s/lib",
                     coswitch_lib);
     mkdir_r(utstring_body(dst_dir));
 
@@ -814,7 +827,7 @@ EXPORT void emit_ocaml_bin_build_file(char *bld_file)
         exit(EXIT_FAILURE);
     }
     fprintf(ostream, "# generated file - DO NOT EDIT\n");
-    fprintf(ostream, "exports_files(glob([\"**\"]))\n");
+    fprintf(ostream, "exports_files(glob([\"**\"]))\n\n");
     fclose(ostream);
     LOG_DEBUG(0, " wrote %s\n", bld_file);
 

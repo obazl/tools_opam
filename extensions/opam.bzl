@@ -248,9 +248,14 @@ def _opam_ext_impl(mctx):
     # a direct dep and the user must also import it
     # with use_repo.
     if "stublibs" in direct_deps:
-        stublibs_direct = True
+        stublibs_direct   = True
+        stublibs_indirect = False
+    elif "stublibs" in dev_deps:
+        stublibs_indirect = True
+        stublibs_direct   = False
     else:
-        stublibs_direct = False
+        stublibs_indirect = False
+        stublibs_direct   = False
     # print("DEPS %s" % direct_deps)
     for pkg in OBAZL_PKGS: # e.g. dynlink, str, unix
         if pkg in direct_deps:
@@ -412,56 +417,9 @@ def _opam_ext_impl(mctx):
                  )
         # if debug > 1: print("done")
 
-    ## installing deps already installs subdeps
-    ## so we create repo & config w/o installing opam pkg
-    ## FIXME: this install is only for hermetic tc
-    ## for local tc they're already installed
-    # for pkg in newsubdeps:
-    #     if pkg in OBAZL_PKGS:
-    #         pkg = pkg
-    #     else:
-    #         pkg = "{pfx}{pkg}".format(pfx=obazl_pfx, pkg=pkg)
-    #     if debug > 1: print("creating repo for: " + pkg)
-    #     # if pkg == "stublibs": # special case
-    #     #     install = True
-    #     # else:
-    #     install = False
-    #     opam_dep(name=pkg,
-    #              install = install,
-    #              opam = opampath,
-    #              switch = switch,
-    #              root   = rootpath,
-    #              sdklib = sdklib,
-    #              ocaml_version = ocaml_version,
-    #              obazl_pfx = obazl_pfx,
-    #              config_tool = str(config_pkg_tool),
-    #              debug = debug,
-    #              verbosity = verbosity
-    #              )
-    #     if debug > 1: print("done")
-
-    # opam_dep(name="{}ocamlfind".format(obazl_pfx),
-    #          opam = opampath,
-    #          switch = switch,
-    #          root   = rootpath,
-    #          ocaml_version = ocaml_version,
-    #          obazl_pfx = obazl_pfx,
-    #          config_tool = str(config_pkg_tool),
-    #          debug = debug,
-    #          verbosity = verbosity)
-    # opam_dep(name="{}findlib".format(obazl_pfx),
-    #          opam = opampath,
-    #          switch = switch,
-    #          root   = rootpath,
-    #          ocaml_version = ocaml_version,
-    #          obazl_pfx = obazl_pfx,
-    #          config_tool = str(config_pkg_tool),
-    #          debug = debug,
-    #          verbosity = verbosity)
-
     rmdirects = ["opam.ocamlsdk", "opam"]
-    if stublibs_direct:
-        rmdirects.append("opam.stublibs")
+    # if stublibs_direct:
+    #     rmdirects.append("opam.stublibs")
     for dep in direct_deps:
         rmdirects.append("{}{}".format(obazl_pfx, dep))
     devdeps = ["dbg"] # ["utop"] if utop else []

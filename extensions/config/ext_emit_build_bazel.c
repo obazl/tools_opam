@@ -435,9 +435,9 @@ void ext_emit_ocamlsdk_module(char *_ocaml_version,
     fprintf(ostream,
             "bazel_dep(name = \"rules_ocaml\", version = \"%s\")\n", rules_ocaml_version);
 
-    fprintf(ostream,
-            "bazel_dep(name = \"stublibs\", version = \"%s\")\n",
-            default_version);
+    /* fprintf(ostream, */
+    /*         "bazel_dep(name = \"stublibs\", version = \"%s\")\n", */
+    /*         default_version); */
 
     fclose(ostream);
     if (verbosity > log_writes)

@@ -1,3 +1,5 @@
+load("@bazel_skylib//lib:paths.bzl", "paths")
+
 load("opam_dep.bzl", "OBAZL_PKGS")
 load("opam_ops.bzl", "opam_install_pkg",
      "print_cwd", "print_tree", "run_cmd")
