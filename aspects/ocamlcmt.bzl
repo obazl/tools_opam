@@ -17,7 +17,7 @@ def _ocamlcmt_aspect_impl(target, ctx):
             cmt = target[OutputGroupInfo].cmt.to_list()[0]
             inputs = [cmt]
             inpath = cmt.path
-            outfile = ctx.actions.declare_file(cmt.basename + ".cmt_info")
+            outfile = ctx.actions.declare_file(cmt.basename + ".info")
         else:
             return []
     elif ctx.attr._t == "cmti":
@@ -26,14 +26,14 @@ def _ocamlcmt_aspect_impl(target, ctx):
                 cmti = target[OutputGroupInfo].cmti.to_list()[0]
                 inputs = [cmti]
                 inpath = cmti.path
-                outfile = ctx.actions.declare_file(cmti.basename + ".cmti_info")
+                outfile = ctx.actions.declare_file(cmti.basename + ".info")
             else:
                 return []
         elif OCamlSignatureProvider in target:
             inputs = [target[OCamlSignatureProvider].cmti]
             inpath = target[OCamlSignatureProvider].cmti.path
             x = target[OutputGroupInfo].cmti.to_list()[0]
-            outfile = ctx.actions.declare_file(x.basename + ".cmti_info")
+            outfile = ctx.actions.declare_file(x.basename + ".info")
 
     ctx.actions.run_shell(
         tools      = [
@@ -46,7 +46,6 @@ def _ocamlcmt_aspect_impl(target, ctx):
             # "-save-cmt-info",
             # "-src",
             # "-o", objinfo.path,
-            # target[OutputGroupInfo].cmt.to_list()[0].path,
             inpath
         ],
         inputs = inputs,
