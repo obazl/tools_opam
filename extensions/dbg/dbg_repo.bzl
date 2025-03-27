@@ -20,19 +20,39 @@ module(
     )
     # bazel_dep(name = "rules_cc", version = "0.1.1")
 
+    rctx.template("ocamldebug_runner.c",
+                  rctx.attr._ocamldebug_runner)
+
     rctx.template("dbg_runner.bzl",
                   rctx.attr._dbg_runner)
 
     rctx.file("BUILD.bazel",
         content = """
 load(":dbg_runner.bzl", "ocamldebug_runner")
+exports_files(["**"])
 
 alias(name = "dbg", actual="dbg_runner")
 
+cc_binary(
+    name = "ocamldebug_runner",
+    srcs = ["ocamldebug_runner.c"],
+    copts = ["-Wno-null-character"],
+    args = [
+        "$(location @opam.ocamlsdk//bin:ocamldebug)"
+    ],
+    data = ["@opam.ocamlsdk//bin:ocamldebug"],
+    env  = {{
+        "OPAMROOT": "{root}",
+        "OPAMSWITCH": "{switch}",
+        }}
+)
+
 ocamldebug_runner(
     name = "dbg_runner",
-    data = ["@dbg//x"],
-    args = ["$(location @dbg//x)"],
+    runner = ":ocamldebug_runner",
+    # pgm    = "@dbg//pgm",
+    bin = "@opam.ocamlsdk//bin:ocamldebug",
+    # args = ["$(location @opam.ocamlsdk//bin:ocamldebug)"],
     env  = {{
         "OPAMROOT": "{root}",
         "OPAMSWITCH": "{switch}",
@@ -43,19 +63,29 @@ ocamldebug_runner(
             # inifile = rctx.attr.ini_file,
             # ld_path = rctx.attr.ld_lib_path,
             root = rctx.attr.opam_root,
-            switch = rctx.attr.switch_id
+            switch = rctx.attr.switch_id,
+            dbgbin = rctx.attr.ocamldebug_bin,
+            # ocamlinit = ocamlinit,
+            # ld_path = rctx.attr.ld_lib_path,
+            # opambin = rctx.attr.opam_bin,
+            # rf = "" # sources as runfiles
         )
               )
         # "CAML_LD_LIBRARY_PATH": "{ld_path}"
+#        "CAML_LD_LIBRARY_PATH": "{ld_path}"}},
 
 
-    ## bazel run @dbg --@dbg//x=foo/bar:baz.exe
-    rctx.file("x/BUILD.bazel",
+    ## bazel run @dbg --@dbg//pgm=foo/bar:baz.exe
+    rctx.file("pgm/dummy", content = "")
+
+    rctx.file("pgm/BUILD.bazel",
         content = """
 
+    # rctx.file("pgm", content="")
+
 label_flag(
-        name = "x",
-        build_setting_default = "@rules_ocaml//cfg:nil",
+        name = "pgm",
+        build_setting_default = "@dbg//pgm:dummy",
         visibility = ["@dbg//:__pkg__"],
 )
         """
@@ -72,6 +102,12 @@ dbg_repo = repository_rule(
         "dbg_version": attr.string(),
         "_dbg_runner": attr.label(
             default = "dbg_runner.bzl"
+        ),
+        "ocamldebug_bin": attr.string(
+            # mandatory=True
+        ),
+        "_ocamldebug_runner": attr.label(
+            default = "ocamldebug_runner.c"
         ),
         # "ld_lib_path": attr.string(
         #     mandatory = True

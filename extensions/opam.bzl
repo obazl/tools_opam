@@ -181,6 +181,7 @@ def _opam_ext_impl(mctx):
     direct_deps   = []
     dev_deps      = []
     utop          = None
+    dbg           = None
     ocamlinit     = None
 
     for m in mctx.modules:
@@ -192,6 +193,8 @@ def _opam_ext_impl(mctx):
             ## always config opam, opam.ocamlsdk, opam.stublibs
             ## even if root module does not use opam.deps
 
+            if m.tags.dbg:
+                dbg = True
             if m.tags.utop:
                 utop = m.tags.utop[0].version
                 ocamlinit    = m.tags.utop[0].ocamlinit
@@ -423,9 +426,11 @@ def _opam_ext_impl(mctx):
     #     rmdirects.append("opam.stublibs")
     for dep in direct_deps:
         rmdirects.append("{}{}".format(obazl_pfx, dep))
-    devdeps = ["dbg"] # ["utop"] if utop else []
+    devdeps = [] # ["utop"] if utop else []
     if stublibs_indirect:
         devdeps.append("opam.stublibs")
+    if dbg:
+        devdeps.append("dbg")
 
     for dep in dev_deps:
         if dep == "utop":
@@ -444,10 +449,14 @@ This module extension enables seamless integration of opam dependencies into the
     """,
     implementation = _opam_ext_impl,
     tag_classes = {
+        "dbg": tag_class(
+            doc = """The `dbg` method (tag class) configures ocamldebug.""",
+            attrs = {
+                "version": attr.string(),
+            }
+        ),
         "utop": tag_class(
-            doc = """
-The `utop` method (tag class) runs utop.
-            """,
+            doc = """The `utop` method (tag class) configures utop.""",
             attrs = {
                 "version": attr.string(),
                 "ocamlinit": attr.label(),

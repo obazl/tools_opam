@@ -133,7 +133,7 @@ ocaml_toolchain_adapter(
 
     objinfo     = "@opam.ocamlsdk//bin:ocamlobjinfo.byte",
     ocamlcmt    = "@opam.ocamlsdk//bin:ocamlcmt",
-    ocamldoc    = "@opam.ocamlsdk//bin:ocamldoc.byte",
+    ocamldoc    = "@opam.ocamlsdk//bin:ocamldoc",
 
     # vmruntime              = "@opam.ocamlsdk//bin:ocamlrun",
     # vmruntime_debug        = "@opam.ocamlsdk//bin:ocamlrund",
@@ -165,7 +165,7 @@ ocaml_toolchain_adapter(
 
     objinfo     = "@opam.ocamlsdk//bin:ocamlobjinfo.byte",
     ocamlcmt    = "@opam.ocamlsdk//bin:ocamlcmt",
-    ocamldoc    = "@opam.ocamlsdk//bin:ocamldoc.byte",
+    ocamldoc    = "@opam.ocamlsdk//bin:ocamldoc",
 
     # vmruntime              = "@opam.ocamlsdk//bin:ocamlrun",
     # vmruntime_debug        = "@opam.ocamlsdk//bin:ocamlrund",
@@ -196,7 +196,7 @@ ocaml_toolchain_adapter(
 
     objinfo     = "@opam.ocamlsdk//bin:ocamlobjinfo.byte",
     ocamlcmt    = "@opam.ocamlsdk//bin:ocamlcmt",
-    ocamldoc    = "@opam.ocamlsdk//bin:ocamldoc.byte",
+    ocamldoc    = "@opam.ocamlsdk//bin:ocamldoc",
 
     # vmruntime              = "@opam.ocamlsdk//bin:ocamlrun",
     # vmruntime_debug        = "@opam.ocamlsdk//bin:ocamlrund",
