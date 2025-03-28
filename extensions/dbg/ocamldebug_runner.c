@@ -82,9 +82,10 @@ int main(int argc, char *argv[])
     printf("\n");
 
     char *bwsd = getenv("BUILD_WORKSPACE_DIRECTORY");
-    (void)chdir(bwsd);
+    int rc = chdir(bwsd);
 
-    (void)system(cmd);
+    rc = system(cmd);
+    (void)rc;
 
     free(cmd);
 }
