@@ -28,3 +28,7 @@ bazel_dep(name = "uthash",          version = "2.3.0.bzl")
 ## test
 bazel_dep(name = "unity",           version = "2.6.1.bzl",
           dev_dependency = True)
+
+opam = use_extension("//extensions:opam.bzl", "opam",
+                     dev_dependency = True)
+use_repo(opam, "opam.ocamlsdk")

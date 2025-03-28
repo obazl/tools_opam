@@ -16,9 +16,9 @@ module(
     name = "dbg",
     version = "{}",
 )
+bazel_dep(name = "rules_cc", version = "0.1.1")
         """.format(rctx.attr.dbg_version)
     )
-    # bazel_dep(name = "rules_cc", version = "0.1.1")
 
     rctx.template("ocamldebug_runner.c",
                   rctx.attr._ocamldebug_runner)
@@ -29,7 +29,6 @@ module(
     rctx.file("BUILD.bazel",
         content = """
 load(":dbg_runner.bzl", "ocamldebug_runner")
-exports_files(["**"])
 
 alias(name = "dbg", actual="dbg_runner")
 
@@ -50,13 +49,10 @@ cc_binary(
 ocamldebug_runner(
     name = "dbg_runner",
     runner = ":ocamldebug_runner",
-    # pgm    = "@dbg//pgm",
     bin = "@opam.ocamlsdk//bin:ocamldebug",
-    # args = ["$(location @opam.ocamlsdk//bin:ocamldebug)"],
     env  = {{
         "OPAMROOT": "{root}",
         "OPAMSWITCH": "{switch}",
-        "OCAML_TOPLEVEL_PATH": "",
         }},
 )
         """.format(
@@ -64,11 +60,6 @@ ocamldebug_runner(
             # ld_path = rctx.attr.ld_lib_path,
             root = rctx.attr.opam_root,
             switch = rctx.attr.switch_id,
-            dbgbin = rctx.attr.ocamldebug_bin,
-            # ocamlinit = ocamlinit,
-            # ld_path = rctx.attr.ld_lib_path,
-            # opambin = rctx.attr.opam_bin,
-            # rf = "" # sources as runfiles
         )
               )
         # "CAML_LD_LIBRARY_PATH": "{ld_path}"
@@ -103,9 +94,9 @@ dbg_repo = repository_rule(
         "_dbg_runner": attr.label(
             default = "dbg_runner.bzl"
         ),
-        "ocamldebug_bin": attr.string(
-            # mandatory=True
-        ),
+        # "ocamldebug_bin": attr.string(
+        #     # mandatory=True
+        # ),
         "_ocamldebug_runner": attr.label(
             default = "ocamldebug_runner.c"
         ),

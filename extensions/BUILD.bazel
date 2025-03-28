@@ -7,6 +7,10 @@ bzl_library(
     name = "stardoc",
     srcs = glob(["*.bzl"]),
     deps = [
+        "//extensions/dbg:stardoc",
+        "//extensions/ocaml:stardoc",
+        "//extensions/opam:stardoc",
+        "//extensions/utop:stardoc",
         "@bazel_skylib//lib:collections",
         # "//build/_actions:stardoc",
         # "//build/_lib:stardoc",

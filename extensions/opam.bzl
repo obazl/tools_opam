@@ -7,6 +7,7 @@ load("//extensions/opam:opam_dep.bzl", "opam_dep", "OBAZL_PKGS")
 load("//extensions/opam:opam_repo.bzl", "opam_repo",
      "utop_get_paths")
 load("//extensions/dbg:dbg_repo.bzl", "dbg_repo")
+load("//extensions/ocaml:ocaml_repo.bzl", "ocaml_repo")
 load("//extensions/utop:utop_repo.bzl", "utop_repo")
 load("//extensions/opam:opam_ops.bzl",
      "opam_install_pkg",
@@ -182,6 +183,7 @@ def _opam_ext_impl(mctx):
     dev_deps      = []
     utop          = None
     dbg           = None
+    ocaml         = None
     ocamlinit     = None
 
     for m in mctx.modules:
@@ -195,6 +197,8 @@ def _opam_ext_impl(mctx):
 
             if m.tags.dbg:
                 dbg = True
+            if m.tags.ocaml:
+                ocaml = True
             if m.tags.utop:
                 utop = m.tags.utop[0].version
                 ocamlinit    = m.tags.utop[0].ocamlinit
@@ -356,17 +360,27 @@ def _opam_ext_impl(mctx):
               opam_verbosity= opam_verbosity)
 
     # sdk tool: ocamldebug
-    # FIXME: only on demand?
-    dbg_repo(name = "dbg",
-             root_module   = root_module,
-             opam_root     = rootpath,
-             switch_id     = switch,
-             dbg_version   = ocaml_version,
-             # ini_file      = ini_file,
-             # ld_lib_path   = ld_lib_path,
-              debug         = debug,
-              verbosity     = verbosity)
-              # opam_verbosity= opam_verbosity)
+    if dbg:
+        dbg_repo(name = "dbg",
+                 root_module   = root_module,
+                 opam_root     = rootpath,
+                 switch_id     = switch,
+                 dbg_version   = ocaml_version,
+                 # ini_file      = ini_file,
+                 # ld_lib_path   = ld_lib_path,
+                 debug         = debug,
+                 verbosity     = verbosity)
+    # sdk tool: ocaml repl
+    if ocaml:
+        ocaml_repo(name = "ocaml",
+                   root_module   = root_module,
+                   opam_root     = rootpath,
+                   switch_id     = switch,
+                   ocaml_version   = ocaml_version,
+                   # ini_file      = ini_file,
+                   # ld_lib_path   = ld_lib_path,
+                   debug         = debug,
+                   verbosity     = verbosity)
 
     if utop:
         # @utop gets a special repo
@@ -421,16 +435,18 @@ def _opam_ext_impl(mctx):
                  )
         # if debug > 1: print("done")
 
-    rmdirects = ["opam.ocamlsdk", "opam"]
+    rmdirects = ["opam.ocamlsdk"]
     # if stublibs_direct:
     #     rmdirects.append("opam.stublibs")
     for dep in direct_deps:
         rmdirects.append("{}{}".format(obazl_pfx, dep))
-    devdeps = [] # ["utop"] if utop else []
+    devdeps = ["opam"] # ["utop"] if utop else []
     if stublibs_indirect:
         devdeps.append("opam.stublibs")
     if dbg:
         devdeps.append("dbg")
+    if ocaml:
+        devdeps.append("ocaml")
 
     for dep in dev_deps:
         if dep == "utop":
@@ -451,6 +467,12 @@ This module extension enables seamless integration of opam dependencies into the
     tag_classes = {
         "dbg": tag_class(
             doc = """The `dbg` method (tag class) configures ocamldebug.""",
+            attrs = {
+                "version": attr.string(),
+            }
+        ),
+        "ocaml": tag_class(
+            doc = """The `ocaml` method (tag class) configures the ocaml repl.""",
             attrs = {
                 "version": attr.string(),
             }
