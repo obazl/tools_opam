@@ -11,20 +11,16 @@ int main(int argc, char *argv[])
 {
     bool verbose = false;
     int skip = 0;
-    if (argc > 2) {
-        if ((strncmp(argv[2], "-v", 2) == 0)
-            && (strlen(argv[2]) == 2)) {
+    if (argc > 1) {
+        if ((strncmp(argv[1], "-v", 2) == 0)
+            && (strlen(argv[1]) == 2)) {
             verbose = true;
             skip = 2;
         }
     }
     char *_dbg = getenv("OCAMLDEBUG");
-    printf("OCAMLDEBUG: %s\n", _dbg);
     char *real_dbg = realpath(_dbg, NULL);
-    printf("real: %s\n", real_dbg);
-
     char *_pgm = getenv("OBAZL_DEBUG_TGT");
-    printf("PGM: %s\n", _pgm);
     char *real_pgm = realpath(_pgm, NULL);
     int ct = strlen(real_dbg) + strlen(real_pgm) + 3;
 
@@ -39,7 +35,6 @@ int main(int argc, char *argv[])
 
     written = snprintf(cmd, ct, "%s %s ",
                        real_dbg, real_pgm);
-    printf("Cmd: %s\n", cmd);
     if (written < 0 || written >= available_space) {
         cmd[offset] = '\0'; // Ensure null termination
         /* ? */
@@ -60,8 +55,7 @@ int main(int argc, char *argv[])
         }
         offset += written;
     }
-    verbose = true;
-    if (verbose) {
+
         fprintf(stdout, YEL "Build workspace root" CRESET
                 "   : %s\n", getenv("BUILD_WORKSPACE_DIRECTORY"));
         fprintf(stdout, YEL "  OCAMLDEBUG" CRESET
@@ -70,6 +64,7 @@ int main(int argc, char *argv[])
                 "            : %s\n", real_pgm);
         fprintf(stdout, YEL "  OCAMLRUNPARAM" CRESET
                 "        : %s\n", getenv("OCAMLRUNPARAM"));
+    if (verbose) {
         fprintf(stdout, YEL "  OPAMROOT" CRESET
                 "             : %s\n", getenv("OPAMROOT"));
         fprintf(stdout, YEL "  OPAMSWITCH" CRESET
@@ -82,18 +77,14 @@ int main(int argc, char *argv[])
                 "                  : '%s'\n\n", cmd);
         /* exit(EXIT_SUCCESS); */
     }
-    /* if (verbose) { */
-        /* fprintf(stdout, YEL "cmd" CRESET */
-        /*         " : '%s'\n", cmd); */
-    /* } */
-    printf("cwd %s\n", getcwd(NULL,0));
+    /* printf("cwd %s\n", getcwd(NULL,0)); */
+
+    printf("\n");
 
     char *bwsd = getenv("BUILD_WORKSPACE_DIRECTORY");
-    printf("bwsd: %s\n", bwsd);
+    (void)chdir(bwsd);
 
-    chdir(bwsd);
-
-    system(cmd);
+    (void)system(cmd);
 
     free(cmd);
 }
