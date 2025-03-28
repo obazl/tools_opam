@@ -370,17 +370,20 @@ def _opam_ext_impl(mctx):
                  # ld_lib_path   = ld_lib_path,
                  debug         = debug,
                  verbosity     = verbosity)
+
     # sdk tool: ocaml repl
     if ocaml:
         ocaml_repo(name = "ocaml",
                    root_module   = root_module,
+                   opam_bin      = opampath,
                    opam_root     = rootpath,
                    switch_id     = switch,
                    ocaml_version   = ocaml_version,
                    # ini_file      = ini_file,
                    # ld_lib_path   = ld_lib_path,
                    debug         = debug,
-                   verbosity     = verbosity)
+                   verbosity     = verbosity,
+                   opam_verbosity= opam_verbosity)
 
     if utop:
         # @utop gets a special repo
