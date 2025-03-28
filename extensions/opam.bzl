@@ -363,13 +363,15 @@ def _opam_ext_impl(mctx):
     if dbg:
         dbg_repo(name = "dbg",
                  root_module   = root_module,
+                 opam_bin      = opampath,
                  opam_root     = rootpath,
                  switch_id     = switch,
                  dbg_version   = ocaml_version,
                  # ini_file      = ini_file,
                  # ld_lib_path   = ld_lib_path,
                  debug         = debug,
-                 verbosity     = verbosity)
+                 verbosity     = verbosity,
+                 opam_verbosity= opam_verbosity)
 
     # sdk tool: ocaml repl
     if ocaml:

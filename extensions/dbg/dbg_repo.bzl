@@ -7,6 +7,28 @@ def _dbg_repo_impl(rctx):
     # elif tc == global, symlink to opam binary & root
     # else: embedded, proceed as follows:
 
+    cmd = [rctx.attr.opam_bin, "var", "lib",
+           "--switch", "{}".format(rctx.attr.switch_id),
+           "--root", rctx.attr.opam_root]
+    res = rctx.execute(cmd, quiet = (rctx.attr.opam_verbosity < 1))
+    if res.return_code == 0:
+        switch_lib = res.stdout.strip()
+    else:
+        print("cmd: %s" % cmd)
+        print("rc: %s" % res.return_code)
+        print("stdout: %s" % res.stdout)
+        print("stderr: %s" % res.stderr)
+        fail("cmd failure")
+
+    stublibs = switch_lib + "/stublibs"
+    ocaml_stublibs = switch_lib + "/ocaml/stublibs"
+    ocaml_lib = switch_lib + "/ocaml"
+    if not rctx.path(ocaml_lib).exists:
+        fail("lib/ocaml not found: %s" % ocaml_lib)
+    caml_ld_library_path = ":".join([stublibs,
+                                     ocaml_stublibs,
+                                     ocaml_lib])
+
     rctx.file("REPO.bazel", content = "")
 
     rctx.file(
@@ -42,6 +64,7 @@ cc_binary(
     env  = {{
         "OPAMROOT": "{root}",
         "OPAMSWITCH": "{switch}",
+        "CAML_LD_LIBRARY_PATH": "{ld_path}"
         }}
 )
 
@@ -52,18 +75,16 @@ ocamldebug_runner(
     env  = {{
         "OPAMROOT": "{root}",
         "OPAMSWITCH": "{switch}",
+        "CAML_LD_LIBRARY_PATH": "{ld_path}"
         }},
 )
         """.format(
             # inifile = rctx.attr.ini_file,
-            # ld_path = rctx.attr.ld_lib_path,
+            ld_path = caml_ld_library_path,
             root = rctx.attr.opam_root,
             switch = rctx.attr.switch_id,
         )
               )
-        # "CAML_LD_LIBRARY_PATH": "{ld_path}"
-#        "CAML_LD_LIBRARY_PATH": "{ld_path}"}},
-
 
     ## bazel run @dbg --@dbg//pgm=foo/bar:baz.exe
     rctx.file("pgm/dummy", content = "")
@@ -86,6 +107,7 @@ dbg_repo = repository_rule(
     implementation = _dbg_repo_impl,
     attrs = {
         "root_module": attr.label(),
+        "opam_bin": attr.string(),
         "opam_root": attr.string(),
         "switch_id": attr.string(),
         # "ini_file": attr.label(),
@@ -103,6 +125,7 @@ dbg_repo = repository_rule(
         #     mandatory = True
         # ),
         "debug": attr.int(default=0),
-        "verbosity": attr.int(default=0)
+        "verbosity": attr.int(default=0),
+        "opam_verbosity": attr.int(default=0)
     },
 )
