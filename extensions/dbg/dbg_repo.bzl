@@ -35,7 +35,6 @@ alias(name = "dbg", actual="dbg_runner")
 cc_binary(
     name = "ocamldebug_runner",
     srcs = ["ocamldebug_runner.c"],
-    copts = ["-Wno-null-character"],
     args = [
         "$(location @opam.ocamlsdk//bin:ocamldebug)"
     ],
