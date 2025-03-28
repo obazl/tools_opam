@@ -63,6 +63,12 @@ int main(int argc, char *argv[])
     /*     fprintf(stdout, YEL "  cmd" CRESET */
     /*             "                  : '%s'\n", cmd); */
     /* } */
+
+    char *bwsd = getenv("BUILD_WORKSPACE_DIRECTORY");
+
+    chdir(bwsd);
+
     system(cmd); //argv[1]);
+
     free(cmd);
 }
