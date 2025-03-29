@@ -233,6 +233,8 @@
     "https://raw.githubusercontent.com/obazl/registry/main/modules/rules_license/0.0.3/MODULE.bazel": "not found",
     "https://raw.githubusercontent.com/obazl/registry/main/modules/rules_license/0.0.7/MODULE.bazel": "not found",
     "https://raw.githubusercontent.com/obazl/registry/main/modules/rules_license/1.0.0/MODULE.bazel": "not found",
+    "https://raw.githubusercontent.com/obazl/registry/main/modules/rules_ocaml/3.0.0.beta.1/MODULE.bazel": "53140f2d8eb9918781957792e23974c7cb91607b32d7631d6067b01095e5abe6",
+    "https://raw.githubusercontent.com/obazl/registry/main/modules/rules_ocaml/3.0.0.beta.1/source.json": "7fd983242582df1bf149434af016714c99da3b272345b04857e4ac32fa431b92",
     "https://raw.githubusercontent.com/obazl/registry/main/modules/rules_pkg/0.7.0/MODULE.bazel": "not found",
     "https://raw.githubusercontent.com/obazl/registry/main/modules/rules_pkg/1.0.1/MODULE.bazel": "not found",
     "https://raw.githubusercontent.com/obazl/registry/main/modules/rules_proto/4.0.0/MODULE.bazel": "not found",

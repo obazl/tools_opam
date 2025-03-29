@@ -13,12 +13,23 @@ load("//extensions/opam:opam_ops.bzl",
      "opam_install_pkg",
      "print_cwd", "print_tree")
 
+## RELEASE CHECKLIST
+## - set version ids of bazel_deps in _build_config_tool
+## - remove dev registry from bazel build cmd
+
 ################################################################
 def _build_config_tool(mctx, toolchain, debug, verbosity):
     if debug > 1: print("_build_config_tool")
     bazel = mctx.which("bazel")
     # print("BAZEL: %s" % bazel)
     # print("CWD: %s" % print_cwd(mctx))
+
+    # cmd = ["pwd"]
+    # res = mctx.execute(cmd, quiet = False)
+    # stdout = res.stdout.strip()
+    # print("\nPWD:\n%s" % stdout)
+    # cmd = ["tree", ".", "-a", "-L", "2"]
+    # mctx.execute(cmd, quiet = False)
 
     # we have to turn this into a bazel repo
     # in order to run bazel in it:
@@ -28,14 +39,15 @@ def _build_config_tool(mctx, toolchain, debug, verbosity):
     # mctx.execute(cmd, quiet = False)
 
     mctx.file("MODULE.bazel",
+
               content = """
 module(
     name = "config_tool",
     version = "0.0.0",
  )
 
-bazel_dep(name = "tools_opam", repo_name="tools", version = "1.0.0.dev")
-bazel_dep(name = "rules_ocaml", version = "3.0.0.dev")
+bazel_dep(name = "tools_opam",  version="1.0.0.beta.1")
+bazel_dep(name = "rules_ocaml", version = "3.0.0.beta.1")
                """
               )
 
@@ -54,25 +66,27 @@ bazel_dep(name = "rules_ocaml", version = "3.0.0.dev")
                "--symlink_prefix=config-",
                "--lockfile_mode=off",
                "--ignore_dev_dependency",
-               "--registry=file:///{}/obazl/registry".format(HOME),
+               ## testing:
+               # "--registry=file://{}/obazl/registry".format(HOME),
                "--registry=https://raw.githubusercontent.com/obazl/registry/main/",
                "--registry=https://bcr.bazel.build",
                "--subcommands=pretty_print",
                "--compilation_mode", "fastbuild",
-               "@tools//extensions/config"]
+               "@tools_opam//extensions/config"]
     else:
         cmd = ["bazel",
                # "--output_base=../.config_base",
                # "--output_user_root=../.config_user",
                "build",
                # "--symlink_prefix=config-",
-               "--registry=file:///{}/obazl/registry".format(HOME),
+               # testing:
+               # "--registry=file://{}/obazl/registry".format(HOME),
                "--registry=https://raw.githubusercontent.com/obazl/registry/main/",
                "--registry=https://bcr.bazel.build",
                "--lockfile_mode=off",
                "--ignore_dev_dependency",
                "--compilation_mode", "fastbuild",
-               "@tools//extensions/config"]
+               "@tools_opam//extensions/config"]
     if verbosity > 1:
         cmd.append("--subcommands=pretty_print")
 
@@ -181,6 +195,7 @@ def _opam_ext_impl(mctx):
     config_file   = "obazl.opamrc"
     direct_deps   = []
     dev_deps      = []
+    opamtgt       = None
     utop          = None
     dbg           = None
     ocaml         = None
@@ -196,9 +211,20 @@ def _opam_ext_impl(mctx):
             ## even if root module does not use opam.deps
 
             if m.tags.dbg:
-                dbg = True
+                if mctx.is_dev_dependency(m.tags.dbg[0]):
+                    dbg = True
+                else:
+                    fail("@dbg only available as a dev dependency")
             if m.tags.ocaml:
-                ocaml = True
+                if mctx.is_dev_dependency(m.tags.ocaml[0]):
+                    ocaml = True
+                else:
+                    fail("@ocaml only available as a dev dependency")
+            if m.tags.opam:
+                if mctx.is_dev_dependency(m.tags.opam[0]):
+                    opamtgt = True
+                else:
+                    fail("@opam only available as a dev dependency")
             if m.tags.utop:
                 utop = m.tags.utop[0].version
                 ocamlinit    = m.tags.utop[0].ocamlinit
@@ -225,7 +251,8 @@ def _opam_ext_impl(mctx):
                     # else:
                     if "utop" in cfg.pkgs.keys():
                         fail("""
-'utop' is a dev dependency. To use it put this in your MODULE.baze file:
+
+'utop' is a dev dependency. To use it put this in your MODULE.bazel file:
 
 opam_dev = use_extension("@tools_opam//extensions:opam.bzl",
                          "opam", dev_dependency = True)
@@ -268,6 +295,32 @@ use_repo(opam_dev, utop="opam.utop")
     config_pkg_tool = _build_config_tool(mctx, toolchain,
                                          debug, verbosity)
     if debug > 0: print("CONFIG TOOL: %s" % config_pkg_tool)
+
+    if "opam" in direct_deps:
+        fail("""
+
+'opam' is a dev-dependency but you have listed it as a direct
+opam package dependency.  To enable 'bazel run @opam', do this:
+
+opam_dev = use_extension("@tools_opam//extensions:opam.bzl",
+                         "opam", dev_dependency = True)
+opam_dev.ocaml()
+use_repo(opam_dev, "ocaml")
+
+        """)
+
+    if "ocamldebug" in direct_deps:
+        fail("""
+
+'ocamldebug' is a dev-dependency but you have listed it as a direct
+opam package dependency.  To enable 'bazel run @dbg', do this:
+
+opam_dev = use_extension("@tools_opam//extensions:opam.bzl",
+                         "opam", dev_dependency = True)
+opam_dev.dbg()
+use_repo(opam_dev, "dbg")
+
+        """)
 
     # stublibs is special. it's always configured,
     # but only as an indirect dep unless user explicitly
@@ -363,20 +416,22 @@ use_repo(opam_dev, utop="opam.utop")
              config_tool = str(config_pkg_tool),
              debug = debug,
              verbosity = verbosity)
+
     ## @opam gets a special repo
-    opam_repo(name = "opam",
-              # toolchain     = toolchain,
-              root_module   = root_module,
-              opam_bin      = opampath,
-              opam_version  = opam_version,
-              opam_root     = rootpath,
-              config_file   = config_file,
-              switch_id     = switch,
-              # ocaml_version = ocaml_version,
-              # pkgs          = deps,
-              debug         = debug,
-              verbosity     = verbosity,
-              opam_verbosity= opam_verbosity)
+    if opamtgt:
+        opam_repo(name = "opam",
+                  # toolchain     = toolchain,
+                  root_module   = root_module,
+                  opam_bin      = opampath,
+                  opam_version  = opam_version,
+                  opam_root     = rootpath,
+                  config_file   = config_file,
+                  switch_id     = switch,
+                  # ocaml_version = ocaml_version,
+                  # pkgs          = deps,
+                  debug         = debug,
+                  verbosity     = verbosity,
+                  opam_verbosity= opam_verbosity)
 
     # sdk tool: ocamldebug
     if dbg:
@@ -464,13 +519,16 @@ use_repo(opam_dev, utop="opam.utop")
     #     rmdirects.append("opam.stublibs")
     for dep in direct_deps:
         rmdirects.append("{}{}".format(obazl_pfx, dep))
-    devdeps = ["opam"]
+
+    devdeps = []
     if stublibs_indirect:
         devdeps.append("opam.stublibs")
     if dbg:
         devdeps.append("dbg")
     if ocaml:
         devdeps.append("ocaml")
+    if opamtgt:
+        devdeps.append("opam")
 
     for dep in dev_deps:
         if dep == "utop":
@@ -497,6 +555,12 @@ This module extension enables seamless integration of opam dependencies into the
         ),
         "ocaml": tag_class(
             doc = """The `ocaml` method (tag class) configures the ocaml repl.""",
+            attrs = {
+                "version": attr.string(),
+            }
+        ),
+        "opam": tag_class(
+            doc = """The `opam` method (tag class) configures the @opam run target.""",
             attrs = {
                 "version": attr.string(),
             }
