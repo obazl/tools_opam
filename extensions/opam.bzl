@@ -205,7 +205,6 @@ def _opam_ext_impl(mctx):
                 if mctx.is_dev_dependency(m.tags.utop[0]):
                     dev_deps.extend(
                         {"utop": utop})
-
             for cfg in m.tags.deps:
                 config_file = cfg._opam_config_file
                 if mctx.is_dev_dependency(cfg):
@@ -224,6 +223,16 @@ def _opam_ext_impl(mctx):
                     # if mctx.is_dev_dependency(cfg):
                     #     dev_deps.extend(cfg.pkgs)
                     # else:
+                    if "utop" in cfg.pkgs.keys():
+                        fail("""
+'utop' is a dev dependency. To use it put this in your MODULE.baze file:
+
+opam_dev = use_extension("@tools_opam//extensions:opam.bzl",
+                         "opam", dev_dependency = True)
+opam_dev.utop(version = "2.15.0-1",
+              ocamlinit = ".config/ocamlinit") # ocamlinit is optional
+use_repo(opam_dev, utop="opam.utop")
+                        """)
                     direct_deps.extend(cfg.pkgs)
                     # subdeps.extend(cfg.indirect_deps)
                     debug      = cfg.debug
@@ -235,6 +244,16 @@ def _opam_ext_impl(mctx):
                 if mctx.is_dev_dependency(cfg):
                     dev_deps.extend(cfg.pkgs)
                 else:
+                    if "utop" in cfg.pkgs.keys():
+                        fail("""
+'utop' is a dev dependency. To use it:
+opam_dev = use_extension("@tools_opam//extensions:opam.bzl",
+                         "opam", dev_dependency = True)
+opam_dev.utop(version = "2.15.0-1",
+              ocamlinit = ".config/ocamlinit")
+use_repo(opam_dev, utop="opam.utop")
+
+                        """)
                     direct_deps.extend(cfg.pkgs)
         #         subdeps.extend(cfg.indirect_deps)
         #         if debug > 0:
@@ -445,7 +464,7 @@ def _opam_ext_impl(mctx):
     #     rmdirects.append("opam.stublibs")
     for dep in direct_deps:
         rmdirects.append("{}{}".format(obazl_pfx, dep))
-    devdeps = ["opam"] # ["utop"] if utop else []
+    devdeps = ["opam"]
     if stublibs_indirect:
         devdeps.append("opam.stublibs")
     if dbg:
