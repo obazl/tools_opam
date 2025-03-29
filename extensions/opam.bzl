@@ -35,7 +35,7 @@ module(
  )
 
 bazel_dep(name = "tools_opam", repo_name="tools", version = "1.0.0.dev")
-bazel_dep(name = "rules_ocaml", version = "3.0.0.dev")
+bazel_dep(name = "rules_ocaml", version = "3.0.0.beta.1")
                """
               )
 
